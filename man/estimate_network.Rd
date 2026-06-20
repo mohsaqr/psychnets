@@ -6,7 +6,8 @@
 \usage{
 estimate_network(
   data,
-  method = c("EBICglasso", "cor", "pcor", "ising", "mgm"),
+  method = c("EBICglasso", "cor", "pcor", "ising", "mgm", "huge", "ggmModSelect",
+    "GGMncv", "TMFG", "LoGo", "relimp", "IsingSampler"),
   threshold = 0,
   gamma = 0.5,
   labels = NULL,
@@ -16,8 +17,10 @@ estimate_network(
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
-\item{method}{One of \code{"cor"}, \code{"pcor"}, \code{"EBICglasso"}, \code{"ising"}, \code{"mgm"}.
-Aliases: \code{"glasso"} -> \code{"EBICglasso"}, \code{"IsingFit"} -> \code{"ising"}.}
+\item{method}{Estimator: \code{"EBICglasso"}, \code{"cor"}, \code{"pcor"}, \code{"ising"},
+\code{"mgm"}, \code{"huge"}, \code{"ggmModSelect"}, \code{"GGMncv"}, \code{"TMFG"}, \code{"LoGo"},
+\code{"relimp"}, or \code{"IsingSampler"}. Common aliases are accepted (e.g.
+\code{"glasso"} -> \code{"EBICglasso"}, \code{"IsingFit"} -> \code{"ising"}).}
 
 \item{threshold}{Absolute-weight threshold below which edges are zeroed.}
 
@@ -25,7 +28,9 @@ Aliases: \code{"glasso"} -> \code{"EBICglasso"}, \code{"IsingFit"} -> \code{"isi
 
 \item{labels}{Optional node labels.}
 
-\item{...}{Passed to the underlying estimator.}
+\item{...}{Passed to the underlying estimator (e.g. \verb{penalty=} for \code{"GGMncv"},
+\verb{npn=} for \code{"huge"}, \verb{alpha=} for the correlation / \code{"IsingSampler"}
+methods).}
 }
 \value{
 A \code{psychnet} object.
@@ -38,5 +43,5 @@ downstream code. Mirrors \code{bootnet::estimateNetwork(data, default = ...)}.
 \examples{
 x <- matrix(stats::rnorm(200 * 5), 200, 5)
 estimate_network(x, method = "EBICglasso")
-estimate_network(x, method = "pcor")
+estimate_network(x, method = "GGMncv", penalty = "scad")
 }

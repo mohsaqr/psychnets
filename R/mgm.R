@@ -65,7 +65,10 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # Standardized asymmetric weights make cross-family edges comparable.
   B <- matrix(0, p, p, dimnames = list(labels, labels))
   for (i in seq_len(p)) B[i, -i] <- fits[[i]]$beta_std
+  intercepts <- vapply(fits, function(f) f$b0, numeric(1))
   worst_kkt <- max(vapply(fits, function(f) f$kkt, numeric(1)))
+  std <- .standardize(mat)
+  families <- ifelse(types == "c", "binomial", "gaussian")
 
   present <- (B != 0) & (t(B) != 0)            # AND rule
   W <- (B + t(B)) / 2
@@ -75,5 +78,10 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   .new_psychnet(W, labels, method = "mgm", directed = FALSE,
                 n_obs = nrow(mat),
                 extra = list(types = stats::setNames(types, labels),
-                             kkt = worst_kkt))
+                             kkt = worst_kkt,
+                             nodewise = list(intercept = intercepts,
+                                             beta_std = B,
+                                             families = families,
+                                             center = std$center,
+                                             scale = std$scale)))
 }

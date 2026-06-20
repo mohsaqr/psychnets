@@ -53,9 +53,11 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
 
   # Asymmetric matrix B: B[i, j] = effect of node j on node i.
   B <- matrix(0, p, p, dimnames = list(labels, labels))
-  for (i in seq_len(p)) B[i, -i] <- fits[[i]]$beta
+  B_std <- matrix(0, p, p, dimnames = list(labels, labels))
+  for (i in seq_len(p)) { B[i, -i] <- fits[[i]]$beta; B_std[i, -i] <- fits[[i]]$beta_std }
   thresholds <- vapply(fits, function(f) f$b0, numeric(1))
   worst_kkt  <- max(vapply(fits, function(f) f$kkt, numeric(1)))
+  std <- .standardize(mat)
 
   present <- if (rule == "AND") (B != 0) & (t(B) != 0) else (B != 0) | (t(B) != 0)
   W <- (B + t(B)) / 2
@@ -65,5 +67,10 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
   .new_psychnet(W, labels, method = "ising", directed = FALSE,
                 n_obs = nrow(mat),
                 extra = list(thresholds = stats::setNames(thresholds, labels),
-                             rule = rule, kkt = worst_kkt))
+                             rule = rule, kkt = worst_kkt,
+                             nodewise = list(intercept = thresholds,
+                                             beta_std = B_std,
+                                             families = rep("binomial", p),
+                                             center = std$center,
+                                             scale = std$scale)))
 }

@@ -30,15 +30,26 @@ independent-solver precision*, never as the definition of correct. In practice
 
 ## Estimators (v0.1)
 
+Full cross-sectional `bootnet` / `psychaj` estimator parity (temporal models
+excluded), each pure base R and self-certified.
+
 | Function | Model | Data |
 |---|---|---|
-| `cor_network()` | marginal correlations | continuous |
-| `pcor_network()` | partial correlations | continuous |
+| `cor_network()` | marginal correlations (+ significance threshold) | continuous |
+| `pcor_network()` | partial correlations (+ significance threshold) | continuous |
 | `ebic_glasso()` | EBIC graphical lasso (GGM) | continuous |
-| `ising_fit()` | Ising model | binary |
+| `huge_network()` | nonparanormal graphical model | continuous |
+| `ggmncv_network()` | non-convex GGM (SCAD / MCP / atan) | continuous |
+| `ggm_modselect()` | unregularized stepwise GGM | continuous |
+| `tmfg_network()` | Triangulated Maximally Filtered Graph | continuous |
+| `logo_network()` | Local-Global sparse inverse covariance | continuous |
+| `relimp_network()` | relative importance (LMG / Shapley, directed) | continuous |
+| `ising_fit()` | Ising model (L1-penalized) | binary |
+| `ising_sampler()` | Ising model (unregularized + Wald pruning) | binary |
 | `mgm_fit()` | mixed graphical model | gaussian + binary |
 | `estimate_network()` | unified front door (à la `bootnet`) | — |
 | `centrality()` | strength + expected influence | — |
+| `predictability()` | per-node R² / classification accuracy | — |
 | `bootstrap_network()` | edge / centrality accuracy CIs | — |
 | `centrality_stability()` | CS-coefficient (case-dropping) | — |
 | `nct()` | network comparison test | continuous |
@@ -67,5 +78,6 @@ glasso_kkt(fit$precision, S, fit$lambda)   # the certificate, directly
 - **Self-verifying.** Correctness is certified by the mathematics, not by an
   external dependency.
 
-Roadmap: full `bootnet` estimator parity (TMFG, LoGo, huge, ggmModSelect,
-GGMncv, relimp) and predictability, to match the `psychaj` estimator set.
+Roadmap: external cross-check suite at solver precision; multinormal / Poisson
+`mgm`; the `psychaj` framework-tier extras (bridge / betweenness / closeness
+centrality, community detection, graph metrics); plot methods.

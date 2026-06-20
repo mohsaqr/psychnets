@@ -8,6 +8,8 @@ pcor_network(
   data,
   method = c("pearson", "spearman", "kendall"),
   threshold = 0,
+  alpha = NULL,
+  adjust = "none",
   labels = NULL
 )
 }
@@ -20,11 +22,18 @@ pcor_network(
 \item{threshold}{Correlations with absolute value below this are set to zero.
 Default 0.}
 
+\item{alpha}{Significance level; if set, correlations not significant at
+\code{alpha} are zeroed. \code{NULL} (default) keeps every edge.}
+
+\item{adjust}{Multiple-comparison adjustment for the edge p-values (any
+\link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$graph} is the thresholded
-partial-correlation matrix, with \verb{$precision} and \verb{$cor_matrix}.
+partial-correlation matrix, with \verb{$precision}, \verb{$cor_matrix} (and
+\verb{$p_values} when \code{alpha} is used).
 }
 \description{
 Conditional (full-order) association network: each edge is the correlation
@@ -34,4 +43,5 @@ inverse correlation matrix. Equivalent to \code{bootnet}'s \code{"pcor"} default
 \examples{
 x <- matrix(stats::rnorm(200 * 4), 200, 4)
 pcor_network(x)
+pcor_network(x, alpha = 0.05, adjust = "holm")
 }

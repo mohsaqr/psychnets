@@ -35,3 +35,27 @@ test_that("estimate_network dispatches and aliases resolve", {
   expect_equal(estimate_network(X, "glasso")$method, "EBICglasso")
   expect_equal(estimate_network(X, "EBICglasso")$method, "EBICglasso")
 })
+
+test_that("significance thresholding zeros non-significant edges", {
+  set.seed(6)
+  # two correlated, three independent variables
+  z <- stats::rnorm(500)
+  X <- cbind(z + stats::rnorm(500), z + stats::rnorm(500),
+             stats::rnorm(500), stats::rnorm(500), stats::rnorm(500))
+  colnames(X) <- paste0("V", 1:5)
+  full <- cor_network(X)
+  sig  <- cor_network(X, alpha = 0.01)
+  expect_lt(sig$n_edges, full$n_edges)
+  expect_true(!is.null(sig$p_values))
+  # the genuine V1-V2 edge survives; a spurious one is unlikely to
+  expect_true(abs(sig$graph["V1", "V2"]) > 0)
+})
+
+test_that("p-value adjustment is at least as strict as no adjustment", {
+  set.seed(7)
+  X <- matrix(stats::rnorm(300 * 6), 300, 6)
+  colnames(X) <- paste0("V", 1:6)
+  none <- pcor_network(X, alpha = 0.05, adjust = "none")
+  bonf <- pcor_network(X, alpha = 0.05, adjust = "bonferroni")
+  expect_lte(bonf$n_edges, none$n_edges)
+})

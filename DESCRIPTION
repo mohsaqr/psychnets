@@ -4,10 +4,13 @@ Version: 0.1.0
 Authors@R:
     person("Mohammed", "Saqr", email = "ueflaunit@gmail.com",
            role = c("aut", "cre"))
-Description: Estimates psychometric network models -- correlation, partial
-    correlation, EBIC-regularized Gaussian graphical models (graphical lasso),
-    Ising, and mixed graphical models -- reimplemented from first principles in
-    base R with no compiled dependencies. Each regularized estimator ships a
+Description: Estimates psychometric network models -- correlation and partial
+    correlation, the EBIC-regularized Gaussian graphical model (graphical lasso),
+    its nonparanormal, non-convex (SCAD/MCP/atan), and unregularized stepwise
+    variants, information-filtering graphs (TMFG and LoGo), relative-importance
+    networks, and the Ising and mixed graphical models -- reimplemented from
+    first principles in base R with no compiled dependencies. Each regularized
+    estimator ships a
     dependency-free correctness certificate (for the Gaussian graphical model,
     the graphical-lasso stationarity / KKT residual) so a fitted network is
     self-verifying: its distance from the unique optimum of its own convex

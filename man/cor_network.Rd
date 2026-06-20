@@ -8,6 +8,8 @@ cor_network(
   data,
   method = c("pearson", "spearman", "kendall"),
   threshold = 0,
+  alpha = NULL,
+  adjust = "none",
   labels = NULL
 )
 }
@@ -20,11 +22,17 @@ cor_network(
 \item{threshold}{Correlations with absolute value below this are set to zero.
 Default 0.}
 
+\item{alpha}{Significance level; if set, correlations not significant at
+\code{alpha} are zeroed. \code{NULL} (default) keeps every edge.}
+
+\item{adjust}{Multiple-comparison adjustment for the edge p-values (any
+\link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$graph} is the thresholded correlation
-matrix.
+matrix, with \verb{$cor_matrix} (and \verb{$p_values} when \code{alpha} is used).
 }
 \description{
 Marginal (zero-order) association network: the Pearson correlation matrix
@@ -33,4 +41,5 @@ with the diagonal removed. Equivalent to \code{bootnet}'s \code{"cor"} default.
 \examples{
 x <- matrix(stats::rnorm(200 * 4), 200, 4)
 cor_network(x)
+cor_network(x, alpha = 0.05, adjust = "BH")
 }

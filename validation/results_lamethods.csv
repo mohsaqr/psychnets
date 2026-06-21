@@ -1,0 +1,2 @@
+"case","source","p","n","edges","mean_weight","max_edge_delta_vs_bootnet","struct_vs_bootnet","centrality_max_diff","mean_R2","cs_strength","cs_expinf"
+"LAMethods Ch.19 (university COVID)","lamethods.org/book1",6,7160,15,0.1419,1.2e-05,1,0,0.326,0.9,0.9

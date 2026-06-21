@@ -10,6 +10,7 @@ cor_network(
   threshold = 0,
   alpha = NULL,
   adjust = "none",
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -28,11 +29,17 @@ Default 0.}
 \item{adjust}{Multiple-comparison adjustment for the edge p-values (any
 \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
 
+\item{na_method}{Missing-data handling: \code{"pairwise"} (default) uses
+pairwise-complete correlations projected to the nearest positive-definite
+matrix; \code{"listwise"} drops rows with any \code{NA}. Identical when data is
+complete.}
+
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$graph} is the thresholded correlation
-matrix, with \verb{$cor_matrix} (and \verb{$p_values} when \code{alpha} is used).
+matrix, with \verb{$cor_matrix}, \verb{$n_eff}, \verb{$na_method} (and \verb{$p_values} when
+\code{alpha} is used).
 }
 \description{
 Marginal (zero-order) association network: the Pearson correlation matrix

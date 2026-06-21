@@ -39,7 +39,6 @@ excluded), each pure base R and self-certified.
 | `pcor_network()` | partial correlations (+ significance threshold) | continuous |
 | `ebic_glasso()` | EBIC graphical lasso (GGM) | continuous |
 | `huge_network()` | nonparanormal graphical model | continuous |
-| `ggmncv_network()` | non-convex GGM (SCAD / MCP / atan) | continuous |
 | `ggm_modselect()` | unregularized stepwise GGM | continuous |
 | `tmfg_network()` | Triangulated Maximally Filtered Graph | continuous |
 | `logo_network()` | Local-Global sparse inverse covariance | continuous |

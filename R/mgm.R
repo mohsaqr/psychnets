@@ -37,6 +37,11 @@
 #'   binary); auto-detected if `NULL`.
 #' @param nlambda Number of penalties per nodewise path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
+#' @param threshold Post-selection coefficient threshold: `"LW"` (default),
+#'   `"HW"`, or `"none"`, matching `mgm::mgm()`.
+#' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
+#'   each column over its observed values (mean for continuous, mode for binary),
+#'   keeping the full sample; `"listwise"` drops incomplete rows.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the symmetric standardized
 #'   weight matrix, with `$types` and `$kkt` (the worst nodewise residual).
@@ -49,8 +54,12 @@
 #' mgm_fit(d)
 #' @export
 mgm_fit <- function(data, gamma = 0.25, types = NULL,
-                    nlambda = 100L, lambda_min_ratio = 0.01, labels = NULL) {
-  mat <- .as_numeric_matrix(data)
+                    nlambda = 100L, lambda_min_ratio = 0.01,
+                    threshold = c("LW", "HW", "none"),
+                    na_method = c("pairwise", "listwise"), labels = NULL) {
+  threshold <- match.arg(threshold)
+  na_method <- match.arg(na_method)
+  mat <- .na_prep_nodewise(.as_numeric_matrix(data, drop_na = FALSE), na_method)
   p <- ncol(mat)
   if (is.null(labels)) labels <- colnames(mat)
   if (is.null(types))  types  <- .detect_types(mat)
@@ -65,13 +74,27 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # Standardized asymmetric weights make cross-family edges comparable.
   B <- matrix(0, p, p, dimnames = list(labels, labels))
   for (i in seq_len(p)) B[i, -i] <- fits[[i]]$beta_std
+  npar <- p - 1L
+  tau <- rep(0, p)
+  Bt <- B
+  if (threshold != "none") {
+    for (i in seq_len(p)) {
+      beta_i <- B[i, -i]
+      tau[i] <- if (threshold == "LW") {
+        sqrt(sum(beta_i^2)) * sqrt(log(npar) / nrow(mat))
+      } else {
+        sqrt(log(npar) / nrow(mat))
+      }
+      Bt[i, abs(Bt[i, ]) < tau[i]] <- 0
+    }
+  }
   intercepts <- vapply(fits, function(f) f$b0, numeric(1))
   worst_kkt <- max(vapply(fits, function(f) f$kkt, numeric(1)))
   std <- .standardize(mat)
   families <- ifelse(types == "c", "binomial", "gaussian")
 
-  present <- (B != 0) & (t(B) != 0)            # AND rule
-  W <- (B + t(B)) / 2
+  present <- (Bt != 0) & (t(Bt) != 0)          # AND rule
+  W <- (Bt + t(Bt)) / 2
   W[!present] <- 0
   diag(W) <- 0
 
@@ -79,8 +102,11 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                 n_obs = nrow(mat),
                 extra = list(types = stats::setNames(types, labels),
                              kkt = worst_kkt,
+                             threshold = threshold,
                              nodewise = list(intercept = intercepts,
                                              beta_std = B,
+                                             beta_std_thresholded = Bt,
+                                             tau = stats::setNames(tau, labels),
                                              families = families,
                                              center = std$center,
                                              scale = std$scale)))

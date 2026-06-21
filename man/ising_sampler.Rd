@@ -9,6 +9,7 @@ ising_sampler(
   rule = c("AND", "OR"),
   alpha = NULL,
   adjust = "none",
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -22,6 +23,9 @@ every edge.}
 
 \item{adjust}{Multiple-comparison adjustment for the edge p-values (any
 \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+
+\item{na_method}{Missing-data handling: \code{"pairwise"} (default, mode-impute) or
+\code{"listwise"}. See \code{\link[=ising_fit]{ising_fit()}}.}
 
 \item{labels}{Optional node labels.}
 }

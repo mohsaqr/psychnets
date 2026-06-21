@@ -12,6 +12,7 @@ ebic_glasso(
   nlambda = 100L,
   lambda_min_ratio = 0.01,
   threshold = 0,
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -33,6 +34,10 @@ Default 0.01.}
 
 \item{threshold}{Partial correlations with absolute value below this are set
 to zero. Default 0.}
+
+\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+(default, pairwise-complete correlations + nearest-PD projection) or
+\code{"listwise"} (drop incomplete rows). Identical for complete data.}
 
 \item{labels}{Optional node labels.}
 }

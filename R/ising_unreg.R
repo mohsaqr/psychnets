@@ -42,6 +42,8 @@ MASS_ginv <- function(A, tol = sqrt(.Machine$double.eps)) {
 #'   every edge.
 #' @param adjust Multiple-comparison adjustment for the edge p-values (any
 #'   [stats::p.adjust] method). Default `"none"`.
+#' @param na_method Missing-data handling: `"pairwise"` (default, mode-impute) or
+#'   `"listwise"`. See [ising_fit()].
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the symmetric weight matrix,
 #'   with `$thresholds` (node intercepts), `$rule`, `$p_values`, `$nodewise`
@@ -55,10 +57,12 @@ MASS_ginv <- function(A, tol = sqrt(.Machine$double.eps)) {
 #' ising_sampler(b)
 #' @export
 ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
-                          adjust = "none", labels = NULL) {
+                          adjust = "none", na_method = c("pairwise", "listwise"),
+                          labels = NULL) {
   rule <- match.arg(rule)
   adjust <- match.arg(adjust, stats::p.adjust.methods)
-  mat <- .as_binary_matrix(data)
+  na_method <- match.arg(na_method)
+  mat <- .as_binary_matrix(data, na_method)
   p <- ncol(mat)
   if (is.null(labels)) labels <- colnames(mat)
 

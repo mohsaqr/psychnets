@@ -7,24 +7,51 @@
 # glasso_kkt() on the transformed correlation. Equivalent in purpose to
 # huge::huge() with the nonparanormal transform.
 
-# Nonparanormal correlation matrix from a raw data matrix.
+# Per-column nonparanormal normal-score transform (NA-preserving): ranks each
+# column over its observed values. With no missing data this reproduces the
+# classic `qnorm(rank/(n+1))` transform exactly.
 #' @noRd
-.npn_cor <- function(mat, npn) {
-  n <- nrow(mat)
+.npn_scores <- function(mat, npn) {
+  Z <- vapply(seq_len(ncol(mat)), function(j) {
+    x <- mat[, j]; ok <- !is.na(x); nj <- sum(ok); out <- x
+    r <- rank(x[ok])
+    out[ok] <- if (npn == "shrinkage") {
+      stats::qnorm(r / (nj + 1))
+    } else {                                       # truncation
+      th <- 1 / (4 * nj^0.25 * sqrt(pi * log(nj)))
+      stats::qnorm(pmin(pmax(r / nj, th), 1 - th))
+    }
+    out
+  }, numeric(nrow(mat)))
+  colnames(Z) <- colnames(mat)
+  Z
+}
+
+# Nonparanormal correlation matrix + effective n from a (possibly incomplete)
+# data matrix, honouring `na_method` (see .cor_input).
+#' @noRd
+.npn_cor <- function(mat, npn, na_method = c("pairwise", "listwise")) {
+  na_method <- match.arg(na_method)
+  if (anyNA(mat) && na_method == "listwise") {
+    mat <- mat[stats::complete.cases(mat), , drop = FALSE]
+  }
+  has_na <- anyNA(mat)
+  use <- if (has_na) "pairwise.complete.obs" else "everything"
   if (npn == "skeptic") {
-    # Spearman skeptic: S = 2 sin(pi/6 rho_s) (Liu et al. 2012).
-    S <- 2 * sin(pi / 6 * stats::cor(mat, method = "spearman"))
+    S <- 2 * sin(pi / 6 * stats::cor(mat, use = use, method = "spearman"))
     diag(S) <- 1
-    return(S)
+  } else {
+    S <- stats::cor(.npn_scores(mat, npn), use = use)
   }
-  thresh <- 1 / (4 * n^0.25 * sqrt(pi * log(n)))
-  R <- apply(mat, 2L, rank)
-  Z <- if (npn == "shrinkage") {
-    stats::qnorm(R / (n + 1))                      # avoids qnorm(1) = Inf
-  } else {                                         # truncation
-    stats::qnorm(pmin(pmax(R / n, thresh), 1 - thresh))
+  if (anyNA(S)) {
+    stop("Pairwise nonparanormal correlation is undefined: a pair is never co-observed.",
+         call. = FALSE)
   }
-  stats::cor(Z)                                    # cor is scale-invariant
+  if (has_na) S <- .nearest_pd_cor(S)
+  n <- if (has_na) {
+    co <- crossprod(!is.na(mat)); max(round(stats::median(co[upper.tri(co)])), 2L)
+  } else nrow(mat)
+  list(S = S, n = n)
 }
 
 #' Nonparanormal graphical model (huge)
@@ -47,6 +74,9 @@
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #' @param threshold Partial correlations with absolute value below this are
 #'   zeroed. Default 0.
+#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
+#'   (default, with the nonparanormal transform applied per column over observed
+#'   values) or `"listwise"`. See [ebic_glasso()].
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix` (the transformed
@@ -60,13 +90,14 @@
 huge_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          npn = c("shrinkage", "truncation", "skeptic"),
                          gamma = 0.5, nlambda = 100L, lambda_min_ratio = 0.01,
-                         threshold = 0, labels = NULL) {
+                         threshold = 0, na_method = c("pairwise", "listwise"),
+                         labels = NULL) {
   npn <- match.arg(npn)
+  na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {
-    mat <- .as_numeric_matrix(data)
-    n   <- nrow(mat)
+    mat <- .as_numeric_matrix(data, drop_na = FALSE)
     if (is.null(labels)) labels <- colnames(mat)
-    S   <- .npn_cor(mat, npn)
+    nc  <- .npn_cor(mat, npn, na_method); S <- nc$S; n <- nc$n
   } else {
     S <- as.matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",

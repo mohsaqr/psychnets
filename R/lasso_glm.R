@@ -138,8 +138,7 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
       pr <- pmin(pmax(pr, 1e-10), 1 - 1e-10)
       dev <- -2 * sum(y * log(pr) + (1 - y) * log(1 - pr))
     } else {
-      rss <- sum((y - eta)^2)
-      dev <- n * log(rss / n)                           # gaussian deviance (up to const)
+      dev <- sum((y - eta)^2)                           # gaussian deviance = RSS (glmnet/mgm)
     }
     df <- sum(abs(fit$beta) > 1e-10)
     ebic <- dev + df * log(n) + 2 * gamma * df * log(p)

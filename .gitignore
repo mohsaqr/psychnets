@@ -22,3 +22,6 @@ AGENTS.md
 AGENT-NOTE-*.md
 cran-comments.md
 local_testing_and_equivalence/
+
+# Local report output
+tmp/

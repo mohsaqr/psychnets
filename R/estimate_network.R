@@ -8,25 +8,24 @@
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
 #' @param method Estimator: `"EBICglasso"`, `"cor"`, `"pcor"`, `"ising"`,
-#'   `"mgm"`, `"huge"`, `"ggmModSelect"`, `"GGMncv"`, `"TMFG"`, `"LoGo"`,
-#'   `"relimp"`, or `"IsingSampler"`. Common aliases are accepted (e.g.
-#'   `"glasso"` -> `"EBICglasso"`, `"IsingFit"` -> `"ising"`).
+#'   `"mgm"`, `"huge"`, `"ggmModSelect"`, `"TMFG"`, `"LoGo"`, `"relimp"`, or
+#'   `"IsingSampler"`. Common aliases are accepted (e.g. `"glasso"` ->
+#'   `"EBICglasso"`, `"IsingFit"` -> `"ising"`).
 #' @param threshold Absolute-weight threshold below which edges are zeroed.
 #' @param gamma EBIC hyperparameter for the regularized methods.
 #' @param labels Optional node labels.
-#' @param ... Passed to the underlying estimator (e.g. `penalty=` for `"GGMncv"`,
-#'   `npn=` for `"huge"`, `alpha=` for the correlation / `"IsingSampler"`
-#'   methods).
+#' @param ... Passed to the underlying estimator (e.g. `npn=` for `"huge"`,
+#'   `alpha=` for the correlation / `"IsingSampler"` methods).
 #' @return A `psychnet` object.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5)
 #' estimate_network(x, method = "EBICglasso")
-#' estimate_network(x, method = "GGMncv", penalty = "scad")
+#' estimate_network(x, method = "pcor")
 #' @export
 estimate_network <- function(data,
                              method = c("EBICglasso", "cor", "pcor",
                                         "ising", "mgm", "huge", "ggmModSelect",
-                                        "GGMncv", "TMFG", "LoGo", "relimp",
+                                        "TMFG", "LoGo", "relimp",
                                         "IsingSampler"),
                              threshold = 0, gamma = 0.5, labels = NULL, ...) {
   method <- .resolve_method(method)
@@ -42,8 +41,6 @@ estimate_network <- function(data,
                                 labels = labels, ...),
     ggmModSelect = ggm_modselect(data, gamma = gamma, threshold = threshold,
                                  labels = labels, ...),
-    GGMncv       = ggmncv_network(data, gamma = gamma, threshold = threshold,
-                                  labels = labels, ...),
     TMFG         = tmfg_network(data, labels = labels, ...),
     LoGo         = logo_network(data, threshold = threshold, labels = labels, ...),
     relimp       = relimp_network(data, labels = labels, ...),
@@ -63,7 +60,6 @@ estimate_network <- function(data,
                huge = "huge", nonparanormal = "huge", npn = "huge",
                ggmmodselect = "ggmModSelect", ggmModSelect = "ggmModSelect",
                modselect = "ggmModSelect", stepwise = "ggmModSelect",
-               ggmncv = "GGMncv", GGMncv = "GGMncv", ncv = "GGMncv",
                tmfg = "TMFG", TMFG = "TMFG",
                logo = "LoGo", LoGo = "LoGo",
                relimp = "relimp", relativeimportance = "relimp",

@@ -36,6 +36,8 @@
 #' @param method Correlation method when `data` is supplied.
 #' @param threshold Partial correlations with absolute value below this are
 #'   zeroed. Default 0.
+#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
+#'   (default) or `"listwise"`. See [ebic_glasso()].
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the partial-correlation matrix,
 #'   with `$precision`, `$support` (the TMFG graph), `$cor_matrix`, and `$kkt`.
@@ -46,13 +48,14 @@
 #' @export
 logo_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          method = c("pearson", "spearman", "kendall"),
-                         threshold = 0, labels = NULL) {
+                         threshold = 0, na_method = c("pairwise", "listwise"),
+                         labels = NULL) {
   method <- match.arg(method)
+  na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {
-    mat <- .as_numeric_matrix(data)
-    S   <- stats::cor(mat, method = method)
-    n   <- nrow(mat)
-    if (is.null(labels)) labels <- colnames(mat)
+    ci <- .cor_input(data, method = method, na_method = na_method)
+    S <- ci$S; n <- ci$n
+    if (is.null(labels)) labels <- ci$labels
   } else {
     S <- as.matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",

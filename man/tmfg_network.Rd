@@ -8,6 +8,7 @@ tmfg_network(
   data = NULL,
   cor_matrix = NULL,
   method = c("pearson", "spearman", "kendall"),
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -19,6 +20,9 @@ tmfg_network(
 
 \item{method}{Correlation method when \code{data} is supplied: \code{"pearson"}
 (default), \code{"spearman"}, or \code{"kendall"}.}
+
+\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+(default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
 \item{labels}{Optional node labels.}
 }

@@ -9,6 +9,7 @@ relimp_network(
   cor_matrix = NULL,
   method = c("pearson", "spearman", "kendall"),
   max_nodes = 21L,
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -22,6 +23,9 @@ relimp_network(
 
 \item{max_nodes}{Refuse to run above this many nodes (the cost grows as
 \code{2^(p-1)} per node). Default 21.}
+
+\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+(default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
 \item{labels}{Optional node labels.}
 }

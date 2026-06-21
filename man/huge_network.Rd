@@ -13,6 +13,7 @@ huge_network(
   nlambda = 100L,
   lambda_min_ratio = 0.01,
   threshold = 0,
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -36,6 +37,10 @@ or \code{"skeptic"} (Spearman).}
 
 \item{threshold}{Partial correlations with absolute value below this are
 zeroed. Default 0.}
+
+\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+(default, with the nonparanormal transform applied per column over observed
+values) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
 \item{labels}{Optional node labels.}
 }

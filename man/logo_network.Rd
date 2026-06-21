@@ -10,6 +10,7 @@ logo_network(
   n = NULL,
   method = c("pearson", "spearman", "kendall"),
   threshold = 0,
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -25,6 +26,9 @@ logo_network(
 
 \item{threshold}{Partial correlations with absolute value below this are
 zeroed. Default 0.}
+
+\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+(default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
 \item{labels}{Optional node labels.}
 }

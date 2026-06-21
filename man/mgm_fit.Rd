@@ -10,6 +10,8 @@ mgm_fit(
   types = NULL,
   nlambda = 100L,
   lambda_min_ratio = 0.01,
+  threshold = c("LW", "HW", "none"),
+  na_method = c("pairwise", "listwise"),
   labels = NULL
 )
 }
@@ -25,6 +27,13 @@ binary); auto-detected if \code{NULL}.}
 \item{nlambda}{Number of penalties per nodewise path. Default 100.}
 
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
+
+\item{threshold}{Post-selection coefficient threshold: \code{"LW"} (default),
+\code{"HW"}, or \code{"none"}, matching \code{mgm::mgm()}.}
+
+\item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
+each column over its observed values (mean for continuous, mode for binary),
+keeping the full sample; \code{"listwise"} drops incomplete rows.}
 
 \item{labels}{Optional node labels.}
 }

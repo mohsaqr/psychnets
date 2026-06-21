@@ -16,17 +16,14 @@
 .soft <- function(z, g) sign(z) * pmax(abs(z) - g, 0)
 
 # --- single-column lasso (coordinate descent) --------------------------------
-# `rho` is either a scalar penalty or a per-coordinate vector (length pp); the
-# latter is what the weighted glasso (GGMncv one-step LLA) feeds in.
 .glasso_lasso_column <- function(W11, s12, beta, rho, max_inner, tol_inner) {
   pp <- length(s12)
-  if (length(rho) == 1L) rho <- rep(rho, pp)
   for (inner in seq_len(max_inner)) {
     max_diff <- 0
     for (k in seq_len(pp)) {
       partial <- s12[k] - (sum(W11[k, ] * beta) - W11[k, k] * beta[k])
       wkk <- W11[k, k]
-      new_k <- if (wkk < 1e-12) 0 else .soft(partial, rho[k]) / wkk
+      new_k <- if (wkk < 1e-12) 0 else .soft(partial, rho) / wkk
       d <- abs(new_k - beta[k])
       if (d > max_diff) max_diff <- d
       beta[k] <- new_k
@@ -37,15 +34,11 @@
 }
 
 # --- single graphical-lasso fit at fixed penalty -----------------------------
-# `rho` is a scalar penalty or a symmetric p x p penalty MATRIX (per-edge
-# penalties, used by the weighted glasso). The diagonal of a matrix `rho` is
-# ignored (the diagonal is never penalized).
 .glasso_fit <- function(S, rho,
                         max_outer = 1e4, tol_outer = 1e-8,
                         max_inner = 1e4, tol_inner = 1e-10,
                         w_init = NULL, beta_init = NULL) {
   p <- ncol(S)
-  rho_mat <- if (length(rho) == 1L) NULL else rho      # per-edge penalty matrix
   W <- if (is.null(w_init)) S else w_init
   diag(W) <- diag(S)                                   # penalize.diagonal = FALSE
   Beta <- if (is.null(beta_init)) matrix(0, p, p) else beta_init
@@ -56,8 +49,7 @@
       idx  <- seq_len(p)[-j]
       W11  <- W[idx, idx, drop = FALSE]
       s12  <- S[idx, j]
-      rho_col <- if (is.null(rho_mat)) rho else rho_mat[idx, j]
-      beta <- .glasso_lasso_column(W11, s12, Beta[j, idx], rho_col,
+      beta <- .glasso_lasso_column(W11, s12, Beta[j, idx], rho,
                                    max_inner, tol_inner)
       w12  <- as.numeric(W11 %*% beta)
       d <- max(abs(w12 - W[idx, j]))
@@ -174,38 +166,6 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8) {
   max(diag_v, v_a, v_i)
 }
 
-#' Weighted graphical-lasso stationarity (KKT) residual
-#'
-#' Per-edge-penalty generalization of [glasso_kkt()], the certificate for a
-#' non-convex GGM solved by one-step local linear approximation (SCAD / MCP /
-#' atan), where edge \eqn{(i,j)} carries its own penalty \eqn{\rho_{ij}}. With
-#' \eqn{W = \Theta^{-1}}: \eqn{W_{ii} = S_{ii}};
-#' \eqn{W_{ij} - S_{ij} = \rho_{ij}\,\mathrm{sign}(\Theta_{ij})} for active
-#' edges; \eqn{|W_{ij} - S_{ij}| \le \rho_{ij}} otherwise.
-#'
-#' @param theta Precision matrix to test.
-#' @param cor_matrix Correlation / covariance the model was fit to.
-#' @param Rho Symmetric p x p matrix of per-edge penalties (diagonal ignored).
-#' @param active_tol Magnitude above which an off-diagonal entry is "active".
-#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum.
-#' @examples
-#' S <- 0.4^abs(outer(1:5, 1:5, "-"))
-#' fit <- ggmncv_network(cor_matrix = S, n = 200)
-#' glasso_kkt_weighted(fit$precision, S, fit$penalty_matrix)
-#' @export
-glasso_kkt_weighted <- function(theta, cor_matrix, Rho, active_tol = 1e-8) {
-  W <- solve(theta)
-  diag_v <- max(abs(diag(W) - diag(cor_matrix)))
-  off <- upper.tri(theta)
-  r   <- (W - cor_matrix)[off]
-  th  <- theta[off]
-  rho <- Rho[off]
-  active <- abs(th) > active_tol
-  v_a <- if (any(active))  max(abs(r[active] - rho[active] * sign(th[active]))) else 0
-  v_i <- if (any(!active)) max(pmax(abs(r[!active]) - rho[!active], 0)) else 0
-  max(diag_v, v_a, v_i)
-}
-
 #' Constrained Gaussian-MRF (graph-restricted MLE) stationarity residual
 #'
 #' Certificate for an *unregularized* Gaussian graphical model whose precision
@@ -259,6 +219,9 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #'   Default 0.01.
 #' @param threshold Partial correlations with absolute value below this are set
 #'   to zero. Default 0.
+#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
+#'   (default, pairwise-complete correlations + nearest-PD projection) or
+#'   `"listwise"` (drop incomplete rows). Identical for complete data.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix`, `$ebic`, and `$kkt`
@@ -271,12 +234,13 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #' @export
 ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
                         gamma = 0.5, nlambda = 100L, lambda_min_ratio = 0.01,
-                        threshold = 0, labels = NULL) {
+                        threshold = 0, na_method = c("pairwise", "listwise"),
+                        labels = NULL) {
+  na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {
-    mat <- .as_numeric_matrix(data)
-    S   <- stats::cor(mat)
-    n   <- nrow(mat)
-    if (is.null(labels)) labels <- colnames(mat)
+    ci <- .cor_input(data, na_method = na_method)
+    S <- ci$S; n <- ci$n
+    if (is.null(labels)) labels <- ci$labels
   } else {
     S <- as.matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
@@ -303,7 +267,7 @@ ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
     extra = list(
       precision = sel$wi, lambda = sel$lambda, gamma = gamma,
       cor_matrix = S, ebic = sel$ebic, ebic_path = sel$ebic_path,
-      lambda_path = lambda_path,
+      lambda_path = lambda_path, na_method = na_method,
       kkt = glasso_kkt(sel$wi, S, sel$lambda)
     )
   )

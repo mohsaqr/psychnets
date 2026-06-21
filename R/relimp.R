@@ -75,6 +75,8 @@ lmg_certificate <- function(x) {
 #' @param method Correlation method when `data` is supplied.
 #' @param max_nodes Refuse to run above this many nodes (the cost grows as
 #'   `2^(p-1)` per node). Default 21.
+#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
+#'   (default) or `"listwise"`. See [ebic_glasso()].
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the directed importance matrix
 #'   (`graph[k, j]` = importance of `k` for outcome `j`), with `$r2` (per-node
@@ -86,13 +88,14 @@ lmg_certificate <- function(x) {
 #' @export
 relimp_network <- function(data = NULL, cor_matrix = NULL,
                            method = c("pearson", "spearman", "kendall"),
-                           max_nodes = 21L, labels = NULL) {
+                           max_nodes = 21L,
+                           na_method = c("pairwise", "listwise"), labels = NULL) {
   method <- match.arg(method)
+  na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {
-    mat <- .as_numeric_matrix(data)
-    S   <- stats::cor(mat, method = method)
-    if (is.null(labels)) labels <- colnames(mat)
-    n_obs <- nrow(mat)
+    ci <- .cor_input(data, method = method, na_method = na_method)
+    S <- ci$S; n_obs <- ci$n
+    if (is.null(labels)) labels <- ci$labels
   } else {
     S <- as.matrix(cor_matrix)
     if (is.null(labels)) {

@@ -3,15 +3,16 @@
 # (R/lasso_glm.R) with per-node EBIC selection; the asymmetric nodewise
 # estimates are combined by the AND or OR rule and symmetrized.
 
-# Coerce + validate a binary (0/1) matrix.
+# Coerce + validate a binary (0/1) matrix, then apply NA handling.
 #' @noRd
-.as_binary_matrix <- function(data) {
-  mat <- .as_numeric_matrix(data)
-  u <- unique(as.vector(mat))
+.as_binary_matrix <- function(data, na_method = c("pairwise", "listwise")) {
+  na_method <- match.arg(na_method)
+  mat <- .as_numeric_matrix(data, drop_na = FALSE)
+  u <- unique(as.vector(mat)); u <- u[!is.na(u)]
   if (!all(u %in% c(0, 1))) {
     stop("ising_fit() requires binary (0/1) data.", call. = FALSE)
   }
-  mat
+  .na_prep_nodewise(mat, na_method)
 }
 
 #' Ising network for binary data
@@ -27,6 +28,9 @@
 #' @param rule Edge-combination rule: `"AND"` (default) or `"OR"`.
 #' @param nlambda Number of penalties per nodewise path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
+#' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
+#'   each column over its observed values (mode for binary), keeping the full
+#'   sample; `"listwise"` drops incomplete rows. Identical for complete data.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the symmetric weight matrix,
 #'   with `$thresholds` (node intercepts) and `$kkt` (the worst nodewise
@@ -40,9 +44,11 @@
 #' ising_fit(b)
 #' @export
 ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
-                      nlambda = 100L, lambda_min_ratio = 0.01, labels = NULL) {
+                      nlambda = 100L, lambda_min_ratio = 0.01,
+                      na_method = c("pairwise", "listwise"), labels = NULL) {
   rule <- match.arg(rule)
-  mat <- .as_binary_matrix(data)
+  na_method <- match.arg(na_method)
+  mat <- .as_binary_matrix(data, na_method)
   p <- ncol(mat)
   if (is.null(labels)) labels <- colnames(mat)
 

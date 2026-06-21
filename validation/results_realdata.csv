@@ -1,0 +1,20 @@
+"dataset","citation","p","n","max_delta","struct","edges_psychnet","edges_qgraph"
+"qgraph::big5","Dolan, Oort, Stoel & Wicherts (2009)",240,500,3.6e-05,1,549,549
+"psych::bfi","Revelle, Wilt & Rosenthal (2010)",25,2760,3e-06,1,155,155
+"psych::sat.act","Revelle (psych package)",6,700,2e-06,1,12,12
+"psychTools::msq","Revelle & Anderson (1998)",50,3876,1.2e-05,1,454,454
+"psychTools::epi.bfi","Eysenck & Eysenck (1964); psychTools",13,231,0.008015,1,58,58
+"psychTools::epi","Eysenck Personality Inventory; psychTools",50,3476,6e-06,1,371,371
+"psychTools::sai","Spielberger State Anxiety; psychTools",22,5282,3.5e-05,1,154,154
+"psychTools::tai","Spielberger Trait Anxiety; psychTools",21,3016,7e-06,1,127,127
+"psychTools::spi","Condon (2018), SAPA Personality Inventory",50,4000,1.6e-05,1,572,572
+"psychTools::blot","Bond's Logical Operations Test; psychTools",35,150,0,1,6,6
+"mgm::Fried2015","Fried et al. (2015)",11,515,8e-06,1,45,45
+"mgm::PTSD_data","McNally et al. (2015)",6,344,1.9e-05,1,13,13
+"mgm::B5MS","Haslbeck & Waldorp (mgm package)",5,500,0,1,6,6
+"mgm::symptom_data","Haslbeck & Waldorp (mgm package)",48,1476,1.5e-05,1,358,358
+"NetworkToolbox::neoOpen","Christensen, Cotter & Silvia (2019)",48,802,4e-06,1,357,357
+"networktools::depression","Jones (networktools package)",9,1000,6.5e-05,1,36,36
+"networktools::social","Jones (networktools package)",16,350,7e-06,1,70,70
+"EGAnet::optimism","Golino & Christensen (EGAnet)",10,272,6e-06,1,26,26
+"EGAnet::intelligenceBattery","Golino & Christensen (EGAnet)",50,1152,2.2e-05,1,532,532

@@ -1,0 +1,5 @@
+"structure","p","n","max_delta","struct_vs_qgraph","F1_psychnet","F1_qgraph"
+"chain",10,400,1e-06,1,0.9,0.9
+"chain",8,200,1e-06,1,0.737,0.737
+"two-block",8,400,2e-06,1,1,1
+"two-block",10,250,7e-06,1,1,1

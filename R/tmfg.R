@@ -11,9 +11,13 @@
 #' @noRd
 .tmfg_build <- function(W) {
   p <- ncol(W)
+  # Seed tetrahedron: the 4 vertices maximizing the sum of their ABOVE-MEAN
+  # absolute associations (Massara et al. 2016), the canonical rule used by
+  # NetworkToolbox::TMFG. The threshold/mean is taken over the full matrix
+  # (diagonal included, as in the reference) before the diagonal is zeroed.
+  seed <- order(rowSums(W * (W > mean(W))), decreasing = TRUE)[1:4]
   diag(W) <- 0
   adj <- matrix(FALSE, p, p)
-  seed <- order(rowSums(W), decreasing = TRUE)[1:4]   # most-connected tetrahedron
   for (a in 1:3) for (b in (a + 1):4) {
     adj[seed[a], seed[b]] <- adj[seed[b], seed[a]] <- TRUE
   }

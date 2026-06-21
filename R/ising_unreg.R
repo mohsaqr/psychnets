@@ -79,17 +79,26 @@ ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
          kkt = kkt, p = pv)
   })
 
-  # Asymmetric matrices on the standardized scale (comparable across nodes).
+  # Raw-scale edge matrix B (the Ising interaction, consistent with ising_fit)
+  # with its standardized counterpart B_std for predictability and the per-node
+  # certificate. The pruning p-values are scale-invariant.
   B <- matrix(0, p, p, dimnames = list(labels, labels))
+  B_std <- matrix(0, p, p, dimnames = list(labels, labels))
   P <- matrix(1, p, p, dimnames = list(labels, labels))
-  for (i in seq_len(p)) { B[i, -i] <- fits[[i]]$beta_std; P[i, -i] <- fits[[i]]$p }
-  thresholds <- vapply(fits, function(f) f$b0, numeric(1))
+  for (i in seq_len(p)) {
+    B[i, -i] <- fits[[i]]$beta; B_std[i, -i] <- fits[[i]]$beta_std
+    P[i, -i] <- fits[[i]]$p
+  }
+  b0_std <- vapply(fits, function(f) f$b0, numeric(1))
+  thresholds <- vapply(seq_len(p), function(i)
+    b0_std[i] - sum(fits[[i]]$beta * std$center[-i]), numeric(1))
   worst_kkt  <- max(vapply(fits, function(f) f$kkt, numeric(1)))
 
   if (!is.null(alpha)) {
     Padj <- P; off <- row(P) != col(P)
     Padj[off] <- stats::p.adjust(P[off], method = adjust)
-    B[Padj > alpha] <- 0
+    drop <- Padj > alpha
+    B[drop] <- 0; B_std[drop] <- 0
   }
 
   present <- if (rule == "AND") (B != 0) & (t(B) != 0) else (B != 0) | (t(B) != 0)
@@ -102,7 +111,7 @@ ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
     extra = list(
       thresholds = stats::setNames(thresholds, labels), rule = rule,
       p_values = P, alpha = alpha, kkt = worst_kkt,
-      nodewise = list(intercept = thresholds, beta_std = B,
+      nodewise = list(intercept = b0_std, beta_std = B_std,
                       families = rep("binomial", p),
                       center = std$center, scale = std$scale)
     )

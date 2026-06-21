@@ -20,6 +20,9 @@ centrality <- function(x, ...) {
     labs <- x$labels
   } else {
     g <- as.matrix(x)
+    if (nrow(g) != ncol(g)) {
+      stop("`x` must be a square weighted adjacency matrix.", call. = FALSE)
+    }
     labs <- colnames(g)
     if (is.null(labs)) labs <- paste0("V", seq_len(ncol(g)))
   }

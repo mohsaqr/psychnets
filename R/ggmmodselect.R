@@ -44,13 +44,16 @@
   (Theta + t(Theta)) / 2
 }
 
-# EBIC of an unregularized constrained fit (npar = number of retained edges).
+# EBIC of an unregularized constrained fit. The model dimension is the number of
+# edges in the SUPPORT (free off-diagonal parameters), not the count of nonzero
+# MLE entries: a structurally present edge can estimate to exactly zero on a
+# degenerate S, which would otherwise undercount the penalty.
 #' @noRd
-.support_ebic <- function(Theta, S, n, gamma, p) {
+.support_ebic <- function(Theta, S, n, gamma, p, support) {
   ld <- determinant(Theta, logarithm = TRUE)
   if (ld$sign <= 0) return(Inf)
   loglik <- (n / 2) * (as.numeric(ld$modulus) - sum(diag(S %*% Theta)))
-  npar   <- sum(Theta[upper.tri(Theta)] != 0)
+  npar   <- sum(support[upper.tri(support)])
   -2 * loglik + npar * log(n) + 4 * npar * gamma * log(p)
 }
 
@@ -120,7 +123,7 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
     seen <- c(seen, key)
     theta <- tryCatch(.ggm_fit_support(S, sup), error = function(e) NULL)
     if (is.null(theta)) next
-    eb <- .support_ebic(theta, S, n, gamma, p)
+    eb <- .support_ebic(theta, S, n, gamma, p, sup)
     if (eb < best_ebic) { best_ebic <- eb; best_support <- sup; best_theta <- theta }
   }
   if (is.null(best_support)) stop("Model selection failed.", call. = FALSE)
@@ -137,7 +140,7 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
         cand[i, j] <- cand[j, i] <- !cand[i, j]
         theta <- tryCatch(.ggm_fit_support(S, cand), error = function(e) NULL)
         if (is.null(theta)) next
-        eb <- .support_ebic(theta, S, n, gamma, p)
+        eb <- .support_ebic(theta, S, n, gamma, p, cand)
         if (eb < best_ebic - 1e-10) {
           best_ebic <- eb; best_support <- cand; best_theta <- theta
           improved <- TRUE

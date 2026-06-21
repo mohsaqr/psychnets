@@ -155,6 +155,10 @@
 #' glasso_kkt(fit$precision, S, fit$lambda)
 #' @export
 glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8) {
+  # Positive-definiteness is part of the optimality conditions: the objective is
+  # defined only on Theta > 0, so an indefinite matrix is infeasible, not optimal.
+  if (min(eigen((theta + t(theta)) / 2, symmetric = TRUE,
+                only.values = TRUE)$values) <= 0) return(Inf)
   W <- solve(theta)
   diag_v <- max(abs(diag(W) - diag(cor_matrix)))
   off <- upper.tri(theta)
@@ -189,6 +193,8 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8) {
 #' ggm_support_kkt(fit$precision, S, fit$support)
 #' @export
 ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
+  if (min(eigen((theta + t(theta)) / 2, symmetric = TRUE,
+                only.values = TRUE)$values) <= 0) return(Inf)
   W <- solve(theta)
   diag_v <- max(abs(diag(W) - diag(cor_matrix)))
   off <- upper.tri(theta)

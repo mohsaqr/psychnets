@@ -79,12 +79,25 @@
   mat
 }
 
+# Invert a correlation matrix, projecting to the nearest PD matrix first if it
+# is singular (e.g. a complete-data correlation with n < p).
+#' @noRd
+.pd_solve <- function(S) {
+  out <- tryCatch(solve(S), error = function(e) NULL)
+  if (is.null(out)) out <- solve(.nearest_pd_cor(S))
+  out
+}
+
 # Two-sided p-values for a (partial) correlation matrix. `k` is the number of
 # variables partialled out (0 for marginal correlations, p - 2 for full-order
 # partial correlations); df = n - 2 - k.
 #' @noRd
 .cor_pvalues <- function(r, n, k) {
-  df <- max(n - 2L - k, 1L)
+  df <- n - 2L - k
+  if (df <= 0L) {                       # no residual df: the test is undefined,
+    P <- matrix(1, nrow(r), ncol(r))    # so nothing can be called significant
+    return(P)
+  }
   tstat <- r * sqrt(df / pmax(1 - r^2, 1e-12))
   P <- 2 * stats::pt(-abs(tstat), df)
   diag(P) <- 1
@@ -140,10 +153,11 @@ cor_network <- function(data, method = c("pearson", "spearman", "kendall"),
   if (is.null(labels)) labels <- ci$labels
   g <- S
   diag(g) <- 0
+  r_full <- g                                  # p-values use the true correlations
   g[abs(g) < threshold] <- 0
   extra <- list(cor_matrix = S, n_eff = n, na_method = ci$na_method)
   if (!is.null(alpha)) {
-    P <- .cor_pvalues(g, n, k = 0L)
+    P <- .cor_pvalues(r_full, n, k = 0L)
     g <- .apply_sig(g, P, alpha, adjust)
     extra$p_values <- P
   }
@@ -175,12 +189,13 @@ pcor_network <- function(data, method = c("pearson", "spearman", "kendall"),
   ci <- .cor_input(data, method = method, na_method = na_method)
   S <- ci$S; n <- ci$n
   if (is.null(labels)) labels <- ci$labels
-  wi <- solve(S)
+  wi <- .pd_solve(S)
   g  <- .precision_to_pcor(wi)
+  r_full <- g                                   # p-values use the true partials
   g[abs(g) < threshold] <- 0
   extra <- list(precision = wi, cor_matrix = S, n_eff = n, na_method = ci$na_method)
   if (!is.null(alpha)) {
-    P <- .cor_pvalues(g, n, k = ncol(S) - 2L)   # full-order partials
+    P <- .cor_pvalues(r_full, n, k = ncol(S) - 2L)   # full-order partials
     g <- .apply_sig(g, P, alpha, adjust)
     extra$p_values <- P
   }

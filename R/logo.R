@@ -10,12 +10,16 @@
 #' @noRd
 .logo_precision <- function(S, cliques, separators) {
   p <- ncol(S)
+  # A clique / separator block can be singular on degenerate input (duplicate or
+  # constant columns); fall back to the pseudo-inverse rather than erroring. The
+  # ggm_support_kkt() certificate then flags any block where this was not exact.
+  inv <- function(B) tryCatch(solve(B), error = function(e) MASS_ginv(B))
   Theta <- matrix(0, p, p)
   for (cl in cliques) {
-    Theta[cl, cl] <- Theta[cl, cl] + solve(S[cl, cl, drop = FALSE])
+    Theta[cl, cl] <- Theta[cl, cl] + inv(S[cl, cl, drop = FALSE])
   }
   for (sp in separators) {
-    Theta[sp, sp] <- Theta[sp, sp] - solve(S[sp, sp, drop = FALSE])
+    Theta[sp, sp] <- Theta[sp, sp] - inv(S[sp, sp, drop = FALSE])
   }
   (Theta + t(Theta)) / 2
 }

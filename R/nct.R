@@ -52,6 +52,10 @@ nct <- function(data1, data2, iter = 1000L, gamma = 0.5,
 
   iter <- as.integer(iter)
   n1 <- nrow(data1); n2 <- nrow(data2)
+  if (paired && n1 != n2) {
+    stop("A paired comparison requires the two groups to have equal size.",
+         call. = FALSE)
+  }
   dataall <- rbind(data1, data2)
 
   est <- function(x) {

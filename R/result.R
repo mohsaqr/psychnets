@@ -13,6 +13,12 @@
 #' @noRd
 .new_psychnet <- function(graph, labels, method, directed, n_obs,
                           extra = list()) {
+  if (length(labels) != ncol(graph)) {
+    stop(sprintf(paste0("labels length (%d) does not match the network ",
+                        "dimension (%d); a non-numeric or zero-variance column ",
+                        "may have been dropped from the data."),
+                 length(labels), ncol(graph)), call. = FALSE)
+  }
   g <- graph
   diag(g) <- 0
   n_edges <- if (directed) {
@@ -20,9 +26,9 @@
   } else {
     sum(abs(g[upper.tri(g)]) > 1e-12)
   }
-  dimnames(graph) <- list(labels, labels)
+  dimnames(g) <- list(labels, labels)
   structure(
-    c(list(graph = graph, labels = labels, method = method,
+    c(list(graph = g, labels = labels, method = method,
            directed = directed, n_nodes = length(labels),
            n_edges = n_edges, n_obs = n_obs),
       extra),

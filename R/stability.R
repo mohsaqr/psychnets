@@ -68,7 +68,9 @@ centrality_stability <- function(data, method = "EBICglasso",
   cs <- vapply(measures, function(m) {
     prop_above <- colMeans(corr_storage[[m]] >= threshold, na.rm = TRUE)
     valid <- which(prop_above >= certainty)
-    if (length(valid) == 0L) 0 else drop_prop[max(valid)]
+    # CS = the largest drop PROPORTION that stays stable, robust to the order in
+    # which drop_prop was supplied (not the largest index).
+    if (length(valid) == 0L) 0 else max(drop_prop[valid])
   }, numeric(1))
 
   tab <- do.call(rbind, lapply(measures, function(m) {

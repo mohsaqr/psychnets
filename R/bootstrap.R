@@ -60,7 +60,10 @@ bootstrap_network <- function(data, method = "EBICglasso", n_boot = 1000L,
 
   obs <- estimate_network(mat, method = method, labels = labels, ...)
   p <- obs$n_nodes
-  ut <- upper.tri(obs$graph)
+  # Directed estimators (e.g. relimp) have an asymmetric graph: take every
+  # off-diagonal cell, not just the upper triangle.
+  ut <- if (isTRUE(obs$directed)) row(obs$graph) != col(obs$graph)
+        else upper.tri(obs$graph)
   obs_edges <- obs$graph[ut]
   obs_cent  <- centrality(obs)
   cores <- .resolve_cores(cores)

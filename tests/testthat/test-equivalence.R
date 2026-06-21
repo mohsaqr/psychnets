@@ -74,6 +74,11 @@ test_that("ising_fit matches IsingFit::IsingFit on a binary chain", {
   cmp <- off_compare(pn$graph, isf$weiadj)
   expect_gte(cmp$struct, 0.9)                 # at most one borderline edge differs
   expect_lt(cmp$max_abs, 0.25)                # logit-scale weights, generous tol
+
+  # raw-scale node thresholds agree with IsingFit's (the scale-fix regression):
+  # both are logit intercepts on the 0/1 scale, so they share sign and order.
+  expect_equal(sign(pn$thresholds), sign(isf$thresholds))
+  expect_gt(stats::cor(pn$thresholds, isf$thresholds), 0.95)
 })
 
 test_that("mgm_fit matches mgm::mgm magnitudes on mixed and binary data", {

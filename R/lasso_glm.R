@@ -93,10 +93,11 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
   eta <- b0 + as.numeric(X %*% beta)
   mu  <- if (family == "binomial") 1 / (1 + exp(-eta)) else eta
   grad <- as.numeric(crossprod(X, y - mu)) / n
+  v_0 <- abs(mean(y - mu))                     # unpenalized intercept stationarity
   active <- abs(beta) > active_tol
   v_a <- if (any(active))  max(abs(grad[active] - lambda * sign(beta[active]))) else 0
   v_i <- if (any(!active)) max(pmax(abs(grad[!active]) - lambda, 0)) else 0
-  max(v_a, v_i)
+  max(v_0, v_a, v_i)
 }
 
 # Standardize columns to mean 0, unit population sd. Returns standardized matrix
@@ -118,10 +119,16 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
   Xs <- std$X
 
   # lambda_max: smallest penalty zeroing all coefficients (KKT at beta = 0).
-  mu0 <- if (family == "binomial") mean(y) else mean(y)
+  # The empty-model fitted mean is mu0 = mean(y) on the response scale; the
+  # intercept on the model's linear-predictor scale is the logit of that for a
+  # binomial node, not the probability itself.
+  mu0 <- mean(y)
   lambda_max <- max(abs(crossprod(Xs, y - mu0))) / n
   if (lambda_max < 1e-12) {
-    return(list(beta = numeric(p), b0 = mu0, beta_std = numeric(p),
+    b0_empty <- if (family == "binomial") {
+      stats::qlogis(min(max(mu0, 1e-10), 1 - 1e-10))
+    } else mu0
+    return(list(beta = numeric(p), b0 = b0_empty, beta_std = numeric(p),
                 lambda = 0, kkt = 0))
   }
   lambdas <- exp(seq(log(lambda_max), log(lambda_max * lambda_min_ratio),

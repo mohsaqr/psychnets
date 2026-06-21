@@ -57,13 +57,19 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                    gamma, nlambda, lambda_min_ratio)
   })
 
-  # Asymmetric matrix B: B[i, j] = effect of node j on node i.
+  # Asymmetric matrix B: B[i, j] = effect of node j on node i on the raw 0/1
+  # scale (the Ising interaction), with B_std its standardized counterpart.
   B <- matrix(0, p, p, dimnames = list(labels, labels))
   B_std <- matrix(0, p, p, dimnames = list(labels, labels))
   for (i in seq_len(p)) { B[i, -i] <- fits[[i]]$beta; B_std[i, -i] <- fits[[i]]$beta_std }
-  thresholds <- vapply(fits, function(f) f$b0, numeric(1))
-  worst_kkt  <- max(vapply(fits, function(f) f$kkt, numeric(1)))
   std <- .standardize(mat)
+  b0_std <- vapply(fits, function(f) f$b0, numeric(1))
+  # Node thresholds on the raw scale: the standardized intercept de-centered by
+  # the raw slopes, tau_i = b0_std_i - sum_j beta_raw_ij * center_j, so they are
+  # coherent with the raw-scale edge weights in W.
+  thresholds <- vapply(seq_len(p), function(i)
+    b0_std[i] - sum(fits[[i]]$beta * std$center[-i]), numeric(1))
+  worst_kkt  <- max(vapply(fits, function(f) f$kkt, numeric(1)))
 
   present <- if (rule == "AND") (B != 0) & (t(B) != 0) else (B != 0) | (t(B) != 0)
   W <- (B + t(B)) / 2
@@ -74,7 +80,7 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                 n_obs = nrow(mat),
                 extra = list(thresholds = stats::setNames(thresholds, labels),
                              rule = rule, kkt = worst_kkt,
-                             nodewise = list(intercept = thresholds,
+                             nodewise = list(intercept = b0_std,
                                              beta_std = B_std,
                                              families = rep("binomial", p),
                                              center = std$center,

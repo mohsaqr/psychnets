@@ -98,6 +98,12 @@ relimp_network <- function(data = NULL, cor_matrix = NULL,
     if (is.null(labels)) labels <- ci$labels
   } else {
     S <- as.matrix(cor_matrix)
+    if (nrow(S) != ncol(S) || any(abs(S - t(S)) > 1e-8) ||
+        min(eigen(S, symmetric = TRUE, only.values = TRUE)$values) < -1e-8) {
+      stop("`cor_matrix` must be a symmetric positive-semidefinite matrix; ",
+           "an indefinite matrix yields R-squared shares outside [0, 1].",
+           call. = FALSE)
+    }
     if (is.null(labels)) {
       labels <- colnames(S)
       if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))

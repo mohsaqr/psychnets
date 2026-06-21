@@ -39,7 +39,11 @@ keeping the full sample; \code{"listwise"} drops incomplete rows.}
 }
 \value{
 A \code{psychnet} object whose \verb{$graph} is the symmetric standardized
-weight matrix, with \verb{$types} and \verb{$kkt} (the worst nodewise residual).
+weight matrix, with \verb{$types} and \verb{$kkt} (the worst nodewise residual). A
+binary-binary edge carries the sign of its nodewise-logistic coefficient;
+\code{mgm::mgm()} reports the same edge as a magnitude only (its sign is
+undefined for a categorical-categorical interaction), so compare such edges
+on \code{abs()}. The magnitudes agree with \code{mgm} to solver precision.
 }
 \description{
 Estimates a mixed graphical model by nodewise L1-penalized regression -- a

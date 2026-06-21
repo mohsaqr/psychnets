@@ -10,6 +10,7 @@ bootstrap_network(
   n_boot = 1000L,
   ci = 0.95,
   labels = NULL,
+  cores = NULL,
   ...
 )
 }
@@ -24,22 +25,34 @@ bootstrap_network(
 
 \item{labels}{Optional node labels.}
 
+\item{cores}{Number of CPU cores for the resample loop. \code{NULL} (default) uses
+two thirds of the detected cores; \code{1} forces a serial run. Parallelism uses
+forking (\code{parallel::mclapply}) and falls back to serial on Windows. Because
+every resample index is drawn in the parent process before any fitting, the
+result is identical for any number of cores and reproducible from
+\code{set.seed()}.}
+
 \item{...}{Passed to the estimator.}
 }
 \value{
-An object of class \code{psychnet_bootstrap} with tidy \verb{$edges} and
-\verb{$centrality} data frames and the observed network in \verb{$observed}.
+An object of class \code{psychnet_bootstrap}: tidy \verb{$edges} (with a
+\code{significant} flag) and \verb{$centrality} data frames, the observed network in
+\verb{$observed}, and the raw resample draws in \verb{$edge_boot}, \verb{$str_boot},
+\verb{$ei_boot} (one row per resample) with their labels in \verb{$edge_labels} and
+\verb{$node_labels}.
 }
 \description{
 Resamples observations with replacement, re-estimates the network on each
 resample, and summarizes the sampling distribution of every edge weight and
 node centrality (mean, percentile confidence interval, and edge inclusion
-proportion).
+proportion). An edge is flagged \code{significant} when its percentile interval
+excludes zero. The raw per-resample draws are stored on the returned object
+for use by \code{\link[=difference_test]{difference_test()}}.
 }
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(150 * 5), 150, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-bs <- bootstrap_network(x, n_boot = 50)
-head(bs$edges)
+bs <- bootstrap_network(x, n_boot = 50, cores = 1)
+as.data.frame(bs)
 }

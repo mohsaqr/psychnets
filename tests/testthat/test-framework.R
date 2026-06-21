@@ -23,15 +23,53 @@ test_that("nearest-correlation projection returns a valid correlation matrix", {
 })
 
 test_that("bootstrap_network returns tidy edge and centrality CIs", {
-  bs <- bootstrap_network(mk(3), n_boot = 40)
+  bs <- bootstrap_network(mk(3), n_boot = 40, cores = 1)
   expect_s3_class(bs, "psychnet_bootstrap")
   expect_named(bs$edges,
                c("from", "to", "observed", "mean", "lower", "upper",
-                 "prop_nonzero"))
+                 "prop_nonzero", "significant"))
   expect_true(all(bs$edges$lower <= bs$edges$upper))
   expect_true(all(bs$edges$prop_nonzero >= 0 & bs$edges$prop_nonzero <= 1))
   expect_equal(nrow(bs$edges), 10)              # 5 nodes -> 10 upper-tri edges
   expect_true(all(bs$centrality$strength_lower <= bs$centrality$strength_upper))
+  expect_type(bs$edges$significant, "logical")
+  # significance must agree with the stored interval
+  expect_equal(bs$edges$significant, bs$edges$lower > 0 | bs$edges$upper < 0)
+  # raw draws are retained for difference_test()
+  expect_equal(dim(bs$edge_boot), c(40L, 10L))
+  expect_identical(as.data.frame(bs), bs$edges)
+})
+
+test_that("parallel bootstrap is byte-identical to the serial run", {
+  set.seed(123); bs1 <- bootstrap_network(mk(3), n_boot = 40, cores = 1)
+  set.seed(123); bs2 <- bootstrap_network(mk(3), n_boot = 40, cores = 2)
+  expect_equal(bs1$edge_boot, bs2$edge_boot)
+  expect_equal(bs1$str_boot, bs2$str_boot)
+  expect_equal(bs1$edges, bs2$edges)
+})
+
+test_that("difference_test returns a tidy pairwise table with sound intervals", {
+  bs <- bootstrap_network(mk(3), n_boot = 60, cores = 1)
+  for (ty in c("edge", "strength", "expected_influence")) {
+    dt <- difference_test(bs, type = ty)
+    expect_named(dt, c("item1", "item2", "value1", "value2", "obs_diff",
+                       "lower", "upper", "significant"))
+    expect_true(all(dt$lower <= dt$upper))
+    expect_equal(dt$obs_diff, dt$value1 - dt$value2)
+    expect_equal(dt$significant, dt$lower > 0 | dt$upper < 0)
+  }
+  # 5 edges of centrality -> choose(5,2) = 10 node pairs; 10 edges -> 45 pairs
+  expect_equal(nrow(difference_test(bs, type = "strength")), 10)
+  expect_equal(nrow(difference_test(bs, type = "edge")), 45)
+})
+
+test_that("difference_test edge difference brackets the observed difference", {
+  bs <- bootstrap_network(mk(7), n_boot = 80, cores = 1)
+  dt <- difference_test(bs, type = "strength")
+  # the observed difference lies inside its own bootstrap interval, allowing
+  # for a small percentile margin
+  inside <- dt$obs_diff >= dt$lower - 1e-8 & dt$obs_diff <= dt$upper + 1e-8
+  expect_gt(mean(inside), 0.8)
 })
 
 test_that("centrality_stability returns CS-coefficients in [0,1]", {

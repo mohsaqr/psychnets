@@ -44,7 +44,11 @@
 #'   keeping the full sample; `"listwise"` drops incomplete rows.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$graph` is the symmetric standardized
-#'   weight matrix, with `$types` and `$kkt` (the worst nodewise residual).
+#'   weight matrix, with `$types` and `$kkt` (the worst nodewise residual). A
+#'   binary-binary edge carries the sign of its nodewise-logistic coefficient;
+#'   `mgm::mgm()` reports the same edge as a magnitude only (its sign is
+#'   undefined for a categorical-categorical interaction), so compare such edges
+#'   on `abs()`. The magnitudes agree with `mgm` to solver precision.
 #' @examples
 #' set.seed(1)
 #' f <- stats::rnorm(400)

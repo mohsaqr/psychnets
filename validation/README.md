@@ -27,26 +27,12 @@ closer to the truth, because the true network is unknown. Part C generates data
 from a known sparse precision matrix and reports both the agreement with qgraph
 and the F-measure of each estimator against the true edge set.
 
-## Case study: a published analysis
-
-`case_study_lamethods.R` reproduces the psychological-network analysis in the
-Learning Analytics Methods book (lamethods.org/book1, Chapter 19): a 6-construct
-Gaussian graphical model of a COVID-era university well-being survey, estimated
-with `bootnet::estimateNetwork(default = "EBICglasso", corMethod = "cor_auto",
-tuning = 0.5)`. It compares psychnet against bootnet/qgraph on the network, the
-expected-influence and strength centralities, the node predictability, and the
-centrality-stability coefficient. Unlike the rest of this directory it downloads
-one external file (the survey `.sav` from the labook-data repository), so it
-needs an internet connection on first run; the file is cached in `tempdir()`.
-Output: `results_lamethods.csv`.
-
 ## How to run
 
 From the package root:
 
 ```
-Rscript validation/run_validation.R          # CRAN-package datasets, no download
-Rscript validation/case_study_lamethods.R    # published case study, one download
+Rscript validation/run_validation.R
 ```
 
 It loads `psychnet` with `devtools::load_all()` if available, otherwise the

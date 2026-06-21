@@ -1,2 +1,0 @@
-"case","source","p","n_sample","n_network","edges","mean_weight","max_edge_delta_vs_bootnet","struct_vs_bootnet","centrality_max_diff","mean_R2","cs_strength","cs_expinf"
-"LAMethods Ch.19 (university COVID, Austria)","lamethods.org/book1",6,6071,5878,15,0.1449,1.6e-05,1,0,0.336,0.9,0.9

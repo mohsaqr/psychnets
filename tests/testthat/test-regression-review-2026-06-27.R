@@ -84,9 +84,11 @@ test_that("cor_auto yields a finite, symmetric matrix for a degenerate pair", {
   d   <- data.frame(x = x, ord = ord, y = y)
 
   R <- cor_auto(d)                               # pre-fix: NaN -> eigen() error
+  expect_false(is.null(dimnames(R)))             # must return a named matrix
   expect_true(all(is.finite(R)))
-  expect_equal(R, t(R), tolerance = 1e-12)
-  expect_equal(diag(R), rep(1, 3), tolerance = 1e-12)
-  # the degenerate ord<->y pair carries no estimable association
-  expect_equal(unname(R["ord", "y"]), 0, tolerance = 1e-12)
+  expect_equal(unname(R), unname(t(R)), tolerance = 1e-12)
+  expect_equal(unname(diag(R)), rep(1, 3), tolerance = 1e-12)
+  # the degenerate ord<->y pair carries no estimable association (allow a tiny
+  # nudge from the nearest-PD projection)
+  expect_lt(abs(R["ord", "y"]), 1e-8)
 })

@@ -44,7 +44,7 @@ test_that(".cor_input projects pairwise correlations to positive-definite", {
   X <- rmvn(120, ar1(8, 0.6)); X[matrix(stats::runif(length(X)) < 0.2, nrow(X))] <- NA
   ci <- psychnet:::.cor_input(X, na_method = "pairwise")
   expect_true(all(eigen(ci$S, only.values = TRUE)$values > 0))
-  expect_equal(diag(ci$S), rep(1, 8), tolerance = 1e-8)
+  expect_equal(unname(diag(ci$S)), rep(1, 8), tolerance = 1e-8)
   expect_gt(ci$n, 60)                                        # effective n >> listwise
 })
 

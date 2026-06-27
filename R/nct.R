@@ -8,13 +8,16 @@
 # correlation matrix usable by the glasso.
 #' @noRd
 .nearest_pd_cor <- function(S, eig_tol = 1e-8) {
-  S <- (S + t(S)) / 2
+  dn <- dimnames(S)                      # eigen() drops names; restore them so a
+  S <- (S + t(S)) / 2                    # projected correlation matrix stays named
   e <- eigen(S, symmetric = TRUE)
   vals <- pmax(e$values, eig_tol)
   S2 <- e$vectors %*% (vals * t(e$vectors))
   d <- sqrt(diag(S2)); d[d < 1e-12] <- 1
   S2 <- S2 / outer(d, d)
-  (S2 + t(S2)) / 2
+  S2 <- (S2 + t(S2)) / 2
+  dimnames(S2) <- dn
+  S2
 }
 
 #' Network Comparison Test

@@ -50,7 +50,13 @@ weight matrix, with \verb{$types} and \verb{$kkt} (the worst nodewise residual).
 binary-binary edge carries the sign of its nodewise-logistic coefficient;
 \code{mgm::mgm()} reports the same edge as a magnitude only (its sign is
 undefined for a categorical-categorical interaction), so compare such edges
-on \code{abs()}. The magnitudes agree with \code{mgm} to solver precision.
+on \code{abs()}. Continuous columns are standardized internally, binary
+predictors enter the graph on their 0/1 dummy scale, and binary-response
+logit coefficients are converted to \code{mgm}'s two-class multinomial scale
+before edge aggregation. With these conventions the edge magnitudes match
+\code{mgm::mgm} closely for gaussian-gaussian, gaussian-binary, and binary-binary
+edges alike; weak edges near the EBIC/threshold boundary can still differ in
+support because the penalty is selected on an independent base-R path.
 }
 \description{
 Estimates a mixed graphical model by nodewise L1-penalized regression -- a

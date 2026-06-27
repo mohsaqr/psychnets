@@ -104,10 +104,20 @@
 #' @param family `"gaussian"` or `"binomial"`.
 #' @param weights Optional observation weights (`NULL` = unweighted).
 #' @param active_tol Magnitude above which a coefficient is "active".
-#' @return Maximum absolute stationarity violation (scalar).
+#' @return Maximum absolute stationarity violation (scalar). Near-zero certifies
+#'   the fit is at the penalized-likelihood optimum.
+#' @examples
+#' set.seed(1)
+#' x <- scale(matrix(stats::rnorm(200 * 3), 200, 3))
+#' y <- as.numeric(x %*% c(0.5, 0, -0.3) + stats::rnorm(200))
+#' fit <- stats::lm.fit(cbind(1, x), y)
+#' glm_lasso_kkt(x, y, fit$coefficients[1], fit$coefficients[-1], lambda = 0)
 #' @export
 glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
                           weights = NULL, active_tol = 1e-8) {
+  family <- match.arg(family, c("gaussian", "binomial"))
+  stopifnot(is.matrix(X), length(y) == nrow(X), length(beta) == ncol(X),
+            is.null(weights) || length(weights) == nrow(X))
   n <- nrow(X)
   wobs <- if (is.null(weights)) rep(1, n) else weights
   # Normalize by n (the row count), matching .wls_lasso's objective scaling, so

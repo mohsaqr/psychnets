@@ -33,7 +33,8 @@ glm_lasso_kkt(
 \item{active_tol}{Magnitude above which a coefficient is "active".}
 }
 \value{
-Maximum absolute stationarity violation (scalar).
+Maximum absolute stationarity violation (scalar). Near-zero certifies
+the fit is at the penalized-likelihood optimum.
 }
 \description{
 Dependency-free correctness certificate for a nodewise lasso, analogous to
@@ -43,4 +44,11 @@ subgradient conditions are \eqn{n^{-1} X_j^\top (y - \mu) = \lambda\,
 \mathrm{sign}(\beta_j)} for active coordinates and
 \eqn{|n^{-1} X_j^\top (y - \mu)| \le \lambda} otherwise. Near-zero certifies
 the penalized-likelihood optimum.
+}
+\examples{
+set.seed(1)
+x <- scale(matrix(stats::rnorm(200 * 3), 200, 3))
+y <- as.numeric(x \%*\% c(0.5, 0, -0.3) + stats::rnorm(200))
+fit <- stats::lm.fit(cbind(1, x), y)
+glm_lasso_kkt(x, y, fit$coefficients[1], fit$coefficients[-1], lambda = 0)
 }

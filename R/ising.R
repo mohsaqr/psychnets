@@ -63,11 +63,14 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                       na_method = c("pairwise", "listwise"), labels = NULL) {
   rule <- match.arg(rule)
   na_method <- match.arg(na_method)
+  stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
+            nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
   mat <- .as_binary_matrix(data, na_method)
   weights <- .check_weights(weights, nrow(mat))
   ms <- .apply_min_sum(mat, weights, min_sum)
   mat <- ms$mat; weights <- ms$weights
   p <- ncol(mat)
+  if (!is.null(labels)) stopifnot(length(labels) == p)
   if (is.null(labels)) labels <- colnames(mat)
 
   fits <- lapply(seq_len(p), function(i) {
@@ -80,7 +83,10 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
   B <- matrix(0, p, p, dimnames = list(labels, labels))
   B_std <- matrix(0, p, p, dimnames = list(labels, labels))
   for (i in seq_len(p)) { B[i, -i] <- fits[[i]]$beta; B_std[i, -i] <- fits[[i]]$beta_std }
-  std <- .standardize(mat)
+  # Use the same weighted centers/scales the nodewise fits were standardized on
+  # (lasso_glm.R `.standardize(X, weights)`), so the stored center/scale and the
+  # de-centered thresholds stay coherent under non-uniform `weights`.
+  std <- .standardize(mat, weights)
   b0_std <- vapply(fits, function(f) f$b0, numeric(1))
   # Node thresholds on the raw scale: the standardized intercept de-centered by
   # the raw slopes, tau_i = b0_std_i - sum_j beta_raw_ij * center_j, so they are

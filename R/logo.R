@@ -66,7 +66,7 @@ logo_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
     S <- ci$S; n <- ci$n
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
                          call. = FALSE)
     if (is.null(labels)) {

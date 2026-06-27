@@ -199,6 +199,10 @@
 #' glasso_kkt(fit$precision, S, fit$lambda)
 #' @export
 glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8) {
+  theta <- as.matrix(theta); cor_matrix <- as.matrix(cor_matrix)
+  stopifnot(nrow(theta) == ncol(theta), all(dim(theta) == dim(cor_matrix)),
+            all(is.finite(theta)), all(is.finite(cor_matrix)),
+            is.numeric(rho), length(rho) == 1L)
   # Feasibility is part of the optimality conditions: the objective is defined
   # only on symmetric Theta > 0, so an asymmetric, indefinite, or numerically
   # non-invertible matrix is infeasible, not optimal.
@@ -240,6 +244,10 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8) {
 #' ggm_support_kkt(fit$precision, S, fit$support)
 #' @export
 ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
+  theta <- as.matrix(theta); cor_matrix <- as.matrix(cor_matrix)
+  stopifnot(nrow(theta) == ncol(theta), all(dim(theta) == dim(cor_matrix)),
+            all(dim(support) == dim(theta)), is.logical(support),
+            all(is.finite(theta)), all(is.finite(cor_matrix)))
   if (max(abs(theta - t(theta))) > 1e-8) return(Inf)
   if (min(eigen(theta, symmetric = TRUE, only.values = TRUE)$values) <= 0)
     return(Inf)
@@ -310,9 +318,10 @@ ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
     S <- ci$S; n <- ci$n
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
                          call. = FALSE)
+    stopifnot(is.numeric(n), length(n) == 1L, is.finite(n), n > 0)
     if (is.null(labels)) {
       labels <- colnames(S)
       if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))

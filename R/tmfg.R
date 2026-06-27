@@ -87,6 +87,9 @@
 #' tmfg_certificate(tmfg_network(x))
 #' @export
 tmfg_certificate <- function(x) {
+  if (!inherits(x, "psychnet") || is.null(x$adjacency)) {
+    stop("`x` must be a TMFG network from tmfg_network().", call. = FALSE)
+  }
   adj <- x$adjacency
   p <- ncol(adj)
   n_edges <- sum(adj[upper.tri(adj)])
@@ -137,7 +140,7 @@ tmfg_network <- function(data = NULL, cor_matrix = NULL,
     S <- ci$S; n_obs <- ci$n
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (is.null(labels)) {
       labels <- colnames(S)
       if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))

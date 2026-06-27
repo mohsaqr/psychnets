@@ -19,9 +19,14 @@ centrality <- function(x, ...) {
     g <- x$weights
     labs <- x$nodes$label
   } else {
+    if (!is.matrix(x) && !is.data.frame(x)) {
+      stop("`x` must be a psychnet object or a square weighted matrix.",
+           call. = FALSE)
+    }
     g <- as.matrix(x)
-    if (nrow(g) != ncol(g)) {
-      stop("`x` must be a square weighted adjacency matrix.", call. = FALSE)
+    if (!is.numeric(g) || nrow(g) != ncol(g)) {
+      stop("`x` must be a square numeric weighted adjacency matrix.",
+           call. = FALSE)
     }
     labs <- colnames(g)
     if (is.null(labs)) labs <- paste0("V", seq_len(ncol(g)))

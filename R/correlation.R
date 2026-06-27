@@ -28,6 +28,41 @@
   mat
 }
 
+# Validate and normalize a user-supplied `cor_matrix`: square, at least two
+# variables, finite, symmetric, positive diagonal, and positive semi-definite.
+# A covariance matrix is normalized to unit diagonal (`cov2cor`) so the GGM
+# estimators are scale-invariant on user input -- a proper correlation matrix
+# passes through byte-unchanged (its diagonal is already 1). Malformed input is
+# rejected early with a clear message instead of a cryptic downstream
+# eigen/solve failure, a `max(numeric(0))` warning, or an all-NaN network.
+#' @noRd
+.check_cor_matrix <- function(cor_matrix) {
+  S <- as.matrix(cor_matrix)
+  if (nrow(S) != ncol(S)) {
+    stop("`cor_matrix` must be a square matrix.", call. = FALSE)
+  }
+  if (ncol(S) < 2L) {
+    stop("`cor_matrix` must have at least 2 variables.", call. = FALSE)
+  }
+  if (any(!is.finite(S))) {
+    stop("`cor_matrix` must not contain missing or infinite values.",
+         call. = FALSE)
+  }
+  if (any(abs(S - t(S)) > 1e-8)) {
+    stop("`cor_matrix` must be symmetric.", call. = FALSE)
+  }
+  if (any(diag(S) <= 0)) {
+    stop("`cor_matrix` must have a strictly positive diagonal.", call. = FALSE)
+  }
+  min_eig <- min(eigen(S, symmetric = TRUE, only.values = TRUE)$values)
+  if (min_eig < -1e-8) {
+    stop(sprintf(paste0("`cor_matrix` is not positive semi-definite (min ",
+                        "eigenvalue %.2e); supply a PD matrix or pass raw `data`."),
+                 min_eig), call. = FALSE)
+  }
+  stats::cov2cor(S)   # no-op for a unit-diagonal correlation matrix
+}
+
 # Correlation matrix + effective sample size from possibly-incomplete data.
 # `na_method = "listwise"` drops rows with any NA (the classic default, but it
 # collapses catastrophically when missingness is spread across many columns).
@@ -178,7 +213,7 @@ cor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
     S <- ci$S; n <- ci$n; na_used <- ci$na_method
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (!is.null(alpha) && is.null(n)) {
       stop("`n` is required when `cor_matrix` is supplied and `alpha` is set.",
            call. = FALSE)
@@ -230,7 +265,7 @@ pcor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
     S <- ci$S; n <- ci$n; na_used <- ci$na_method
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (!is.null(alpha) && is.null(n)) {
       stop("`n` is required when `cor_matrix` is supplied and `alpha` is set.",
            call. = FALSE)

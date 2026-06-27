@@ -107,9 +107,10 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
     S <- ci$S; n <- ci$n
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
                          call. = FALSE)
+    stopifnot(is.numeric(n), length(n) == 1L, is.finite(n), n > 0)
     if (is.null(labels)) {
       labels <- colnames(S)
       if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))
@@ -167,7 +168,9 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
     }
   }
 
-  best_theta <- .ggm_fit_support(S, best_support)   # tight final fit
+  # Defensive idempotent refit: guarantees best_theta == fit(best_support) even
+  # if no candidate improved the initial support (same tolerance throughout).
+  best_theta <- .ggm_fit_support(S, best_support)
   dimnames(best_theta) <- dimnames(best_support) <- dimnames(S) <- list(labels, labels)
   pcor <- .precision_to_pcor(best_theta)
   pcor[abs(pcor) < threshold] <- 0

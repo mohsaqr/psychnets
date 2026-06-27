@@ -67,7 +67,13 @@ predictability <- function(x, data = NULL, ...) {
                    predictability = ncc, accuracy = cc,
                    stringsAsFactors = FALSE)
       } else {
-        r2 <- 1 - sum((y - eta)^2) / sum((y - mean(y))^2)
+        # mgm scales the gaussian response, so eta is on the standardized scale;
+        # put y there too (R-squared is scale-invariant, so this is a no-op for
+        # estimators that did not scale the response).
+        ys <- if (!is.null(nw$resp_scale)) {
+          (y - nw$resp_center[i]) / nw$resp_scale[i]
+        } else y
+        r2 <- 1 - sum((ys - eta)^2) / sum((ys - mean(ys))^2)
         data.frame(node = labs[i], type = "gaussian", metric = "R2",
                    predictability = r2, accuracy = NA_real_,
                    stringsAsFactors = FALSE)

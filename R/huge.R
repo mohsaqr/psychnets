@@ -102,9 +102,10 @@ huge_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
     if (is.null(labels)) labels <- colnames(mat)
     nc  <- .npn_cor(mat, npn, na_method); S <- nc$S; n <- nc$n
   } else {
-    S <- as.matrix(cor_matrix)
+    S <- .check_cor_matrix(cor_matrix)
     if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
                          call. = FALSE)
+    stopifnot(is.numeric(n), length(n) == 1L, is.finite(n), n > 0)
     if (is.null(labels)) {
       labels <- colnames(S)
       if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))

@@ -68,11 +68,14 @@ ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
   rule <- match.arg(rule)
   adjust <- match.arg(adjust, stats::p.adjust.methods)
   na_method <- match.arg(na_method)
+  stopifnot(is.null(alpha) ||
+              (is.numeric(alpha) && length(alpha) == 1L && alpha > 0 && alpha < 1))
   mat <- .as_binary_matrix(data, na_method)
   weights <- .check_weights(weights, nrow(mat))
   ms <- .apply_min_sum(mat, weights, min_sum)
   mat <- ms$mat; weights <- ms$weights
   p <- ncol(mat)
+  if (!is.null(labels)) stopifnot(length(labels) == p)
   if (is.null(labels)) labels <- colnames(mat)
 
   std <- .standardize(mat, weights)

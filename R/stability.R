@@ -34,8 +34,10 @@ centrality_stability <- function(data, method = "EBICglasso",
                                  labels = NULL, ...) {
   measures <- match.arg(measures, c("strength", "expected_influence"),
                         several.ok = TRUE)
-  stopifnot(all(drop_prop > 0), all(drop_prop < 1), iter >= 1L,
+  stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
+            is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
             threshold > 0, threshold <= 1, certainty > 0, certainty <= 1)
+  iter <- as.integer(iter)   # a fractional count corrupts the stored %d field
   mat <- .as_numeric_matrix(data)
   n <- nrow(mat)
   if (is.null(labels)) labels <- colnames(mat)

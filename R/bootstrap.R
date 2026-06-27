@@ -53,7 +53,9 @@
 #' @export
 bootstrap_network <- function(data, method = "EBICglasso", n_boot = 1000L,
                               ci = 0.95, labels = NULL, cores = NULL, ...) {
-  stopifnot(n_boot >= 1L, ci > 0, ci < 1)
+  stopifnot(is.numeric(n_boot), length(n_boot) == 1L, is.finite(n_boot),
+            n_boot >= 1, ci > 0, ci < 1)
+  n_boot <- as.integer(n_boot)   # a fractional count corrupts the stored %d field
   mat <- .as_numeric_matrix(data)
   n <- nrow(mat)
   if (is.null(labels)) labels <- colnames(mat)

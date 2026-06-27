@@ -70,6 +70,11 @@
 # ordinal vector (Olsson, Drasgow & Dorans 1982).
 #' @noRd
 .polyserial <- function(cont, ord) {
+  # A pair carrying no estimable association (the ordinal collapsed to one level,
+  # or the continuous partner has zero variance) has correlation 0; without this
+  # guard `sum(dnorm(tau))` is 0 and `rho` becomes NaN, which later breaks the
+  # nearest-PD projection's eigen decomposition.
+  if (length(unique(ord)) < 2L || stats::sd(cont) == 0) return(0)
   n <- length(ord)
   ny <- as.numeric(table(ord))
   tau <- stats::qnorm(cumsum(ny[-length(ny)]) / n)
@@ -101,6 +106,7 @@
          else if (ord[i]) .polyserial(b, a)
          else if (ord[j]) .polyserial(a, b)
          else stats::cor(a, b)
+    if (!is.finite(r)) r <- 0   # zero-variance / single-level pair -> no association
     R[i, j] <- R[j, i] <- max(min(r, 1), -1)
   }
   dimnames(R) <- list(colnames(mat), colnames(mat))

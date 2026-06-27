@@ -1,7 +1,7 @@
 # Mixed graphical model (Haslbeck & Waldorp 2020), clean-room base R. Each node
 # is regressed on all others with the L1-penalized GLM matching its type --
 # gaussian for continuous nodes, logistic for binary nodes -- and the asymmetric
-# standardized estimates are combined by the AND rule and symmetrized. v0.1
+# mgm-scale estimates are combined by the AND rule and symmetrized. v0.1
 # supports gaussian and binary nodes (the dominant mixed case); categorical
 # nodes with more than two levels are not yet implemented and error explicitly.
 
@@ -14,8 +14,8 @@
       "c"
     } else if (length(u) <= 10L && all(u == round(u)) && any(!u %in% c(0, 1))) {
       stop(sprintf(
-        "Column '%s' looks categorical with >2 levels; mgm_fit() v0.1 supports only gaussian and binary nodes. One-hot encode it first.",
-        colnames(mat)[j]), call. = FALSE)
+        "Column '%s' is integer-coded with %d levels not in {0, 1}; mgm_fit() v0.1 supports gaussian and binary (0/1) nodes only. Recode a binary column to 0/1, or one-hot encode a multi-level categorical.",
+        colnames(mat)[j], length(u)), call. = FALSE)
     } else {
       "g"
     }
@@ -51,7 +51,13 @@
 #'   binary-binary edge carries the sign of its nodewise-logistic coefficient;
 #'   `mgm::mgm()` reports the same edge as a magnitude only (its sign is
 #'   undefined for a categorical-categorical interaction), so compare such edges
-#'   on `abs()`. The magnitudes agree with `mgm` to solver precision.
+#'   on `abs()`. Continuous columns are standardized internally, binary
+#'   predictors enter the graph on their 0/1 dummy scale, and binary-response
+#'   logit coefficients are converted to `mgm`'s two-class multinomial scale
+#'   before edge aggregation. With these conventions the edge magnitudes match
+#'   `mgm::mgm` closely for gaussian-gaussian, gaussian-binary, and binary-binary
+#'   edges alike; weak edges near the EBIC/threshold boundary can still differ in
+#'   support because the penalty is selected on an independent base-R path.
 #' @examples
 #' set.seed(1)
 #' f <- stats::rnorm(400)
@@ -68,12 +74,61 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   threshold <- match.arg(threshold)
   rule <- match.arg(rule)
   na_method <- match.arg(na_method)
+  stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
+            nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
+  # A factor/character column would be silently dropped by .as_numeric_matrix,
+  # quietly removing a node; reject it explicitly (consistent with the numeric
+  # multi-level guard in .detect_types).
+  if (is.data.frame(data)) {
+    nonnum <- !vapply(data, is.numeric, logical(1))
+    if (any(nonnum)) {
+      stop(sprintf(
+        "mgm_fit() requires numeric columns; column(s) %s are non-numeric. Recode a binary column to 0/1 or one-hot encode a categorical first.",
+        paste(names(data)[nonnum], collapse = ", ")), call. = FALSE)
+    }
+  }
   mat <- .na_prep_nodewise(.as_numeric_matrix(data, drop_na = FALSE), na_method)
   p <- ncol(mat)
+  if (!is.null(labels)) stopifnot(length(labels) == p)
   if (is.null(labels)) labels <- colnames(mat)
   if (is.null(types))  types  <- .detect_types(mat)
   stopifnot(length(types) == p, all(types %in% c("g", "c")))
+  # A user-declared binary ('c') column must actually be 0/1, else the logistic
+  # nodewise fit diverges silently (auto-detected 'c' columns pass trivially).
+  cbin <- which(types == "c")
+  if (length(cbin)) {
+    bad <- cbin[!vapply(cbin, function(j) all(mat[, j] %in% c(0, 1)), logical(1))]
+    if (length(bad)) {
+      stop(sprintf(
+        "types declares column(s) %s as binary ('c'), but they are not coded 0/1.",
+        paste(labels[bad], collapse = ", ")), call. = FALSE)
+    }
+  }
   weights <- .check_weights(weights, nrow(mat))
+
+  # Scale continuous columns to unit variance up front (mgm::mgm scale = TRUE):
+  # a gaussian response on its raw scale inflates its edge weights by its SD, so
+  # the gaussian-node magnitudes only match mgm once each continuous variable is
+  # standardized. resp_center/resp_scale record this so predictability() can put
+  # the gaussian response on the same scale as the fitted linear predictor.
+  resp_center <- numeric(p); resp_scale <- rep(1, p)
+  gix <- which(types == "g")
+  if (length(gix)) {
+    G <- mat[, gix, drop = FALSE]
+    if (is.null(weights)) {
+      resp_center[gix] <- colMeans(G)
+      resp_scale[gix]  <- pmax(apply(G, 2L, stats::sd), 1e-12)
+    } else {
+      # frequency-weighted center/scale; the (sum(w) - 1) divisor makes uniform
+      # weights reduce exactly to the unweighted sample-sd scaling above.
+      sw <- sum(weights)
+      resp_center[gix] <- colSums(weights * G) / sw
+      Gc <- sweep(G, 2L, resp_center[gix], "-")
+      resp_scale[gix]  <- pmax(sqrt(colSums(weights * Gc^2) / max(sw - 1, 1e-12)), 1e-12)
+    }
+    mat[, gix] <- sweep(sweep(mat[, gix, drop = FALSE], 2L, resp_center[gix], "-"),
+                        2L, resp_scale[gix], "/")
+  }
 
   fits <- lapply(seq_len(p), function(i) {
     fam <- if (types[i] == "c") "binomial" else "gaussian"
@@ -81,9 +136,19 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                    gamma, nlambda, lambda_min_ratio, weights = weights)
   })
 
-  # Standardized asymmetric weights make cross-family edges comparable.
+  # Asymmetric graph weights follow mgm::mgm's reported coefficient convention:
+  # coefficients are on the model-matrix scale (binary predictors are unscaled
+  # 0/1 dummies), and a two-class categorical response reports one class
+  # coefficient, i.e. half of the binary-logit coefficient. The standardized
+  # coefficients are still stored for KKT/predictability reconstruction.
   B <- matrix(0, p, p, dimnames = list(labels, labels))
-  for (i in seq_len(p)) B[i, -i] <- fits[[i]]$beta_std
+  B_std <- matrix(0, p, p, dimnames = list(labels, labels))
+  for (i in seq_len(p)) {
+    beta_graph <- fits[[i]]$beta
+    if (types[i] == "c") beta_graph <- beta_graph / 2
+    B[i, -i] <- beta_graph
+    B_std[i, -i] <- fits[[i]]$beta_std
+  }
   npar <- p - 1L
   tau <- rep(0, p)
   Bt <- B
@@ -98,9 +163,17 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
       Bt[i, abs(Bt[i, ]) < tau[i]] <- 0
     }
   }
+  B_std_t <- B_std
+  B_std_t[Bt == 0] <- 0
   intercepts <- vapply(fits, function(f) f$b0, numeric(1))
   worst_kkt <- max(vapply(fits, function(f) f$kkt, numeric(1)))
-  std <- .standardize(mat)
+  # Weighted centers/scales, matching the nodewise fits' standardization, so the
+  # composite back-transform below is coherent under non-uniform `weights`.
+  std <- .standardize(mat, weights)
+  # Composite raw -> standardized-predictor transform for predictability(), which
+  # receives the user's raw data: raw -> (up-front scaling) -> nodewise standard.
+  comp_center <- resp_center + resp_scale * std$center
+  comp_scale  <- resp_scale * std$scale
   families <- ifelse(types == "c", "binomial", "gaussian")
 
   present <- if (rule == "AND") (Bt != 0) & (t(Bt) != 0)
@@ -115,10 +188,14 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                              kkt = worst_kkt,
                              threshold = threshold,
                              nodewise = list(intercept = intercepts,
-                                             beta_std = B,
-                                             beta_std_thresholded = Bt,
+                                             beta_std = B_std,
+                                             beta_std_thresholded = B_std_t,
+                                             beta_graph = B,
+                                             beta_graph_thresholded = Bt,
                                              tau = stats::setNames(tau, labels),
                                              families = families,
-                                             center = std$center,
-                                             scale = std$scale)))
+                                             center = comp_center,
+                                             scale = comp_scale,
+                                             resp_center = resp_center,
+                                             resp_scale = resp_scale)))
 }

@@ -58,6 +58,9 @@
 #' lmg_certificate(relimp_network(cor_matrix = S))
 #' @export
 lmg_certificate <- function(x) {
+  if (!inherits(x, "psychnet") || !identical(x$method, "relimp")) {
+    stop("`x` must be a relimp network from relimp_network().", call. = FALSE)
+  }
   max(abs(colSums(x$weights) - x$r2))
 }
 

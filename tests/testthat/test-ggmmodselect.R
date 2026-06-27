@@ -28,9 +28,9 @@ test_that("the full graph recovers the exact Gaussian MLE (W = S)", {
   expect_lt(max(abs(theta - solve(S))), 1e-8)
 })
 
-test_that("ggm_modselect dispatches via estimate_network", {
+test_that("ggm_modselect dispatches via psychnet", {
   S <- ar1(5, 0.5)
   X <- matrix(stats::rnorm(300 * 5), 300, 5) %*% chol(S)
-  expect_equal(estimate_network(X, "ggmModSelect")$method, "ggmModSelect")
-  expect_equal(estimate_network(X, "modselect")$method, "ggmModSelect")
+  expect_equal(psychnet(X, "ggmModSelect")$method, "ggmModSelect")
+  expect_equal(psychnet(X, "modselect")$method, "ggmModSelect")
 })

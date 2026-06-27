@@ -11,8 +11,8 @@ test_that("pairwise and listwise are identical on complete data", {
   X <- matrix(stats::rnorm(300 * 6), 300, 6) %*% chol(ar1(6, 0.5))
   colnames(X) <- paste0("V", 1:6)
   for (m in c("cor", "pcor", "EBICglasso", "huge", "TMFG", "LoGo")) {
-    a <- estimate_network(X, m, na_method = "pairwise")$graph
-    b <- estimate_network(X, m, na_method = "listwise")$graph
+    a <- psychnet(X, m, na_method = "pairwise")$graph
+    b <- psychnet(X, m, na_method = "listwise")$graph
     expect_equal(a, b, tolerance = 1e-10, info = m)
   }
 })
@@ -23,8 +23,8 @@ test_that("pairwise recovers structure where listwise collapses (severe MCAR)", 
   X <- rmvn(150, S)
   X[matrix(stats::runif(length(X)) < 0.15, nrow(X))] <- NA
   colnames(X) <- paste0("V", seq_len(p))
-  pw <- estimate_network(X, "EBICglasso", na_method = "pairwise")
-  lw <- estimate_network(X, "EBICglasso", na_method = "listwise")
+  pw <- psychnet(X, "EBICglasso", na_method = "pairwise")
+  lw <- psychnet(X, "EBICglasso", na_method = "listwise")
   expect_lt(lw$n_obs, 60)                                    # listwise gutted the sample
   expect_gt(pw$n_obs, lw$n_obs)                              # pairwise retained far more
   expect_gt(f1(abs(pw$graph[upper.tri(pw$graph)]) > 1e-6, true), 0.7)
@@ -35,7 +35,7 @@ test_that("pairwise is the default when NAs are present", {
   set.seed(3)
   X <- rmvn(200, ar1(6, 0.5)); X[sample(length(X), 200)] <- NA
   colnames(X) <- paste0("V", 1:6)
-  expect_equal(estimate_network(X, "EBICglasso")$na_method, "pairwise")
+  expect_equal(psychnet(X, "EBICglasso")$na_method, "pairwise")
   expect_equal(cor_network(X)$na_method, "pairwise")
 })
 

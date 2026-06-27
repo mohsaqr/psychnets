@@ -2,13 +2,12 @@
 % Please edit documentation in R/psychnet-package.R
 \docType{package}
 \name{psychnet-package}
-\alias{psychnet}
 \alias{psychnet-package}
 \title{psychnet: Clean-Room Base-R Psychometric Network Estimation}
 \description{
 Estimates cross-sectional psychometric network models in pure base R, with
 no compiled dependencies and dependency-free correctness certificates. See
-\code{\link[=estimate_network]{estimate_network()}} for the unified entry point and \code{\link[=ebic_glasso]{ebic_glasso()}},
+\code{\link[=psychnet]{psychnet()}} for the unified entry point and \code{\link[=ebic_glasso]{ebic_glasso()}},
 \code{\link[=cor_network]{cor_network()}}, \code{\link[=pcor_network]{pcor_network()}}, \code{\link[=ising_fit]{ising_fit()}}, and \code{\link[=mgm_fit]{mgm_fit()}} for the
 individual estimators.
 }

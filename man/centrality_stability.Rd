@@ -19,7 +19,7 @@ centrality_stability(
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
-\item{method}{Estimator (see \code{\link[=estimate_network]{estimate_network()}}). Default \code{"EBICglasso"}.}
+\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"EBICglasso"}.}
 
 \item{measures}{Centrality measures to assess. Default both
 \code{c("strength", "expected_influence")}.}

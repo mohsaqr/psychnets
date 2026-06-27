@@ -36,8 +36,8 @@ test_that("OR keeps at least as many edges as AND", {
   expect_gte(or$n_edges, and$n_edges)
 })
 
-test_that("ising_sampler dispatches via estimate_network", {
+test_that("ising_sampler dispatches via psychnet", {
   b <- make_binary(500, 4)
-  expect_equal(estimate_network(b, "IsingSampler")$method, "IsingSampler")
-  expect_equal(estimate_network(b, "isingsampler")$method, "IsingSampler")
+  expect_equal(psychnet(b, "IsingSampler")$method, "IsingSampler")
+  expect_equal(psychnet(b, "isingsampler")$method, "IsingSampler")
 })

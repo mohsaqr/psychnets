@@ -17,7 +17,7 @@ bootstrap_network(
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
-\item{method}{Estimator (see \code{\link[=estimate_network]{estimate_network()}}). Default \code{"EBICglasso"}.}
+\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"EBICglasso"}.}
 
 \item{n_boot}{Number of bootstrap resamples. Default 1000.}
 

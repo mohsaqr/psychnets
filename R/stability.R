@@ -8,7 +8,7 @@
 #' Centrality-stability coefficient (case-dropping subset bootstrap)
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
-#' @param method Estimator (see [estimate_network()]). Default `"EBICglasso"`.
+#' @param method Estimator (see [psychnet()]). Default `"EBICglasso"`.
 #' @param measures Centrality measures to assess. Default both
 #'   `c("strength", "expected_influence")`.
 #' @param drop_prop Proportions of cases to drop. Default `seq(0.1, 0.9, 0.1)`.
@@ -42,7 +42,7 @@ centrality_stability <- function(data, method = "EBICglasso",
   n <- nrow(mat)
   if (is.null(labels)) labels <- colnames(mat)
 
-  full_cent <- centrality(estimate_network(mat, method = method,
+  full_cent <- centrality(psychnet(mat, method = method,
                                            labels = labels, ...))
 
   # corr_storage[[measure]]: iter x length(drop_prop) Spearman correlations.
@@ -55,7 +55,7 @@ centrality_stability <- function(data, method = "EBICglasso",
     for (it in seq_len(iter)) {
       idx <- sample.int(n, keep_n, replace = FALSE)
       fit <- tryCatch(
-        estimate_network(mat[idx, , drop = FALSE], method = method,
+        psychnet(mat[idx, , drop = FALSE], method = method,
                          labels = labels, ...),
         error = function(e) NULL)
       if (is.null(fit)) next

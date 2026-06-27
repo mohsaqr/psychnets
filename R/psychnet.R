@@ -2,8 +2,8 @@
 
 #' Estimate a psychometric network
 #'
-#' Single entry point that routes to the requested estimator and returns a
-#' common [psychnet] object, so callers can swap estimators without rewiring
+#' The package's main entry point: routes to the requested estimator and returns
+#' a common `psychnet` object, so callers can swap estimators without rewiring
 #' downstream code. Mirrors `bootnet::estimateNetwork(data, default = ...)`.
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
@@ -24,10 +24,10 @@
 #' @return A `psychnet` object.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5)
-#' estimate_network(x, method = "EBICglasso")
-#' estimate_network(x, method = "pcor", cor_method = "spearman")
+#' psychnet(x, method = "EBICglasso")
+#' psychnet(x, method = "pcor", cor_method = "spearman")
 #' @export
-estimate_network <- function(data,
+psychnet <- function(data,
                              method = c("EBICglasso", "cor", "pcor",
                                         "ising", "mgm", "huge", "ggmModSelect",
                                         "TMFG", "LoGo", "relimp",

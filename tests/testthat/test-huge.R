@@ -25,9 +25,9 @@ test_that("huge_network graph is a symmetric partial-correlation matrix", {
   expect_true(all(abs(fit$graph) <= 1 + 1e-8))
 })
 
-test_that("huge_network dispatches via estimate_network", {
+test_that("huge_network dispatches via psychnet", {
   set.seed(3)
   X <- exp(matrix(stats::rnorm(300 * 5), 300, 5))
-  expect_equal(estimate_network(X, "huge")$method, "huge")
-  expect_equal(estimate_network(X, "npn")$method, "huge")
+  expect_equal(psychnet(X, "huge")$method, "huge")
+  expect_equal(psychnet(X, "npn")$method, "huge")
 })

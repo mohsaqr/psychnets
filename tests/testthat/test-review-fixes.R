@@ -153,8 +153,8 @@ test_that("cor / pcor accept a precomputed cor_matrix like the other GGMs", {
 test_that("cor_method is the correlation-type argument and reaches the front door", {
   set.seed(9)
   x <- mk(9, n = 300, p = 5)
-  # spearman selected through estimate_network() forwards to the verb
-  viafd  <- estimate_network(x, "pcor", cor_method = "spearman")$graph
+  # spearman selected through psychnet() forwards to the verb
+  viafd  <- psychnet(x, "pcor", cor_method = "spearman")$graph
   direct <- pcor_network(x, cor_method = "spearman")$graph
   expect_equal(viafd, direct)
   # and it actually changes the result vs pearson
@@ -164,12 +164,12 @@ test_that("cor_method is the correlation-type argument and reaches the front doo
   expect_true("cor_method" %in% names(formals(tmfg_network)))
 })
 
-test_that("estimate_network does not override ising/mgm native gamma (0.25)", {
+test_that("psychnet does not override ising/mgm native gamma (0.25)", {
   set.seed(10)
   b <- (mk(10, n = 600, p = 5) > 0) * 1L
   colnames(b) <- paste0("V", 1:5)
-  expect_equal(estimate_network(b, "ising")$graph, ising_fit(b)$graph)        # 0.25
-  expect_equal(estimate_network(b, "ising", gamma = 0.5)$graph,
+  expect_equal(psychnet(b, "ising")$graph, ising_fit(b)$graph)        # 0.25
+  expect_equal(psychnet(b, "ising", gamma = 0.5)$graph,
                ising_fit(b, gamma = 0.5)$graph)                               # override
 })
 

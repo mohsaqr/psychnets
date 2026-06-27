@@ -27,8 +27,8 @@ test_that("relimp refuses too many nodes", {
   expect_error(relimp_network(cor_matrix = S, max_nodes = 21L), "refuses")
 })
 
-test_that("relimp dispatches via estimate_network", {
+test_that("relimp dispatches via psychnet", {
   set.seed(1)
   X <- matrix(stats::rnorm(300 * 5), 300, 5) %*% chol(ar1(5, 0.4))
-  expect_equal(estimate_network(X, "relimp")$method, "relimp")
+  expect_equal(psychnet(X, "relimp")$method, "relimp")
 })

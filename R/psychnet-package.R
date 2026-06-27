@@ -2,7 +2,7 @@
 #'
 #' Estimates cross-sectional psychometric network models in pure base R, with
 #' no compiled dependencies and dependency-free correctness certificates. See
-#' [estimate_network()] for the unified entry point and [ebic_glasso()],
+#' [psychnet()] for the unified entry point and [ebic_glasso()],
 #' [cor_network()], [pcor_network()], [ising_fit()], and [mgm_fit()] for the
 #' individual estimators.
 #'

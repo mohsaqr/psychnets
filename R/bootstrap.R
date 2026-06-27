@@ -28,7 +28,7 @@
 #' for use by [difference_test()].
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
-#' @param method Estimator (see [estimate_network()]). Default `"EBICglasso"`.
+#' @param method Estimator (see [psychnet()]). Default `"EBICglasso"`.
 #' @param n_boot Number of bootstrap resamples. Default 1000.
 #' @param ci Confidence level for percentile intervals. Default 0.95.
 #' @param labels Optional node labels.
@@ -60,7 +60,7 @@ bootstrap_network <- function(data, method = "EBICglasso", n_boot = 1000L,
   n <- nrow(mat)
   if (is.null(labels)) labels <- colnames(mat)
 
-  obs <- estimate_network(mat, method = method, labels = labels, ...)
+  obs <- psychnet(mat, method = method, labels = labels, ...)
   p <- nrow(obs$nodes)
   # Directed estimators (e.g. relimp) have an asymmetric network: take every
   # off-diagonal cell, not just the upper triangle.
@@ -77,7 +77,7 @@ bootstrap_network <- function(data, method = "EBICglasso", n_boot = 1000L,
 
   one <- function(idx) {
     fit <- tryCatch(
-      estimate_network(mat[idx, , drop = FALSE], method = method,
+      psychnet(mat[idx, , drop = FALSE], method = method,
                        labels = labels, ...),
       error = function(e) NULL)
     if (is.null(fit)) return(NULL)

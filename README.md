@@ -46,7 +46,7 @@ excluded), each pure base R and self-certified.
 | `ising_fit()` | Ising model (L1-penalized) | binary |
 | `ising_sampler()` | Ising model (unregularized + Wald pruning) | binary |
 | `mgm_fit()` | mixed graphical model | gaussian + binary |
-| `estimate_network()` | unified front door (à la `bootnet`) | — |
+| `psychnet()` | unified front door (à la `bootnet`) | — |
 | `centrality()` | strength + expected influence | — |
 | `predictability()` | per-node R² / classification accuracy | — |
 | `bootstrap_network()` | edge / centrality accuracy CIs | — |

@@ -75,7 +75,7 @@ for (s in A) {
     X <- to_items(get_data(s[3], s[2]), as.integer(s[5]))
     if (ncol(X) < 4) stop("too few items")
     sc <- shared_cor(X)
-    P <- estimate_network(NULL, "EBICglasso", cor_matrix = sc$S, n = sc$n, gamma = 0.5)$graph
+    P <- psychnet(NULL, "EBICglasso", cor_matrix = sc$S, n = sc$n, gamma = 0.5)$graph
     Q <- suppressWarnings(qgraph::EBICglasso(sc$S, n = sc$n, gamma = 0.5, verbose = FALSE))
     data.frame(dataset = s[1], citation = s[4], p = ncol(X), n = sc$n,
                max_delta = round(max(abs(ute(P) - ute(Q))), 6),
@@ -119,7 +119,7 @@ for (s in B) {
   res <- tryCatch({
     bx <- prep_binary(get_data(s[3], s[2]))
     if (is.null(bx)) stop("no clean binary matrix")
-    P <- estimate_network(bx, "ising", gamma = 0.25, rule = "AND")$graph
+    P <- psychnet(bx, "ising", gamma = 0.25, rule = "AND")$graph
     R <- suppressWarnings(suppressMessages(IsingFit::IsingFit(bx, gamma = 0.25, AND = TRUE,
                           plot = FALSE, progressbar = FALSE)$weiadj))
     data.frame(dataset = s[1], citation = s[4], p = ncol(bx), n = nrow(bx),
@@ -151,7 +151,7 @@ for (cfg in list(list("chain", 10, 400, 0.95), list("chain", 8, 200, 0.85),
   S0 <- if (cfg[[1]] == "chain") chain_prec(cfg[[2]], -0.35) else two_block(cfg[[2]], 0.4)
   true <- if (cfg[[1]] == "chain") ute(abs(outer(1:cfg[[2]], 1:cfg[[2]], "-")) == 1) else ute(abs(S0) > 0.05)
   X <- rmvn(cfg[[3]], S0); S <- stats::cor(X); n <- cfg[[3]]
-  P <- estimate_network(NULL, "EBICglasso", cor_matrix = S, n = n, gamma = 0.5)$graph
+  P <- psychnet(NULL, "EBICglasso", cor_matrix = S, n = n, gamma = 0.5)$graph
   Q <- suppressWarnings(qgraph::EBICglasso(S, n = n, gamma = 0.5, verbose = FALSE))
   rowsC[[length(rowsC) + 1L]] <- data.frame(
     structure = cfg[[1]], p = cfg[[2]], n = cfg[[3]],

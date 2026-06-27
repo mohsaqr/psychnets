@@ -37,9 +37,9 @@ test_that("mgm_fit errors on a >2-level categorical column", {
   expect_error(mgm_fit(d), "categorical")
 })
 
-test_that("estimate_network routes to ising and mgm", {
+test_that("psychnet routes to ising and mgm", {
   b <- (matrix(stats::rnorm(400 * 4), 400, 4) > 0) * 1L
   colnames(b) <- paste0("V", 1:4)
-  expect_equal(estimate_network(b, "ising")$method, "ising")
-  expect_equal(estimate_network(.gen_mixed(4), "mgm")$method, "mgm")
+  expect_equal(psychnet(b, "ising")$method, "ising")
+  expect_equal(psychnet(.gen_mixed(4), "mgm")$method, "mgm")
 })

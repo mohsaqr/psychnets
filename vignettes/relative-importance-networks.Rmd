@@ -1,0 +1,62 @@
+---
+title: "Relative-importance networks"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Relative-importance networks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 6)
+has_cograph <- requireNamespace("cograph", quietly = TRUE)
+```
+
+```{r}
+library(psychnet)
+```
+
+A **relative-importance network** (`method = "relimp"`) is **directed**. For each
+node taken as an outcome, it regresses it on all the others and decomposes that
+regression's R-squared into each predictor's share using the **LMG / Shapley**
+method (averaging the predictor's contribution over every ordering). The edge
+`A -> B` is the share of B's variance explained by A. Unlike a GGM, the weights
+sum meaningfully: a node's incoming edges add up to its full-model R-squared.
+
+The Shapley decomposition enumerates predictor subsets, so it is meant for a
+modest number of nodes. We use the five construct scores in `SRL_GPT`.
+
+```{r}
+ri <- psychnet(SRL_GPT, method = "relimp")
+ri
+```
+
+The incoming shares per node sum to that node's R-squared; the certificate
+confirms this efficiency identity holds to numerical precision:
+
+```{r}
+certificate(ri)
+```
+
+The directed edges -- each predictor's share of an outcome's variance:
+
+```{r}
+as.data.frame(ri)
+```
+
+Per-node explained variance that the incoming edges reconstruct:
+
+```{r}
+net_predict(ri)
+```
+
+## Plotting
+
+`cograph::splot()` draws the directed network with arrows. Because each pair has
+two distinct edges (`A -> B` and `B -> A`), pass `directed = TRUE` so they are
+drawn separately, with `psych_styling = TRUE` (green = positive, red = negative)
+and the predictability ring via `predictability = TRUE`.
+
+```{r relimp-plot, eval = has_cograph}
+cograph::splot(ri, directed = TRUE, psych_styling = TRUE, predictability = TRUE)
+```

@@ -13,6 +13,7 @@ ising_fit(
   min_sum = NULL,
   weights = NULL,
   na_method = c("pairwise", "listwise"),
+  native = TRUE,
   labels = NULL
 )
 }
@@ -36,6 +37,14 @@ row. \code{NULL} (default) is unweighted.}
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
 each column over its observed values (mode for binary), keeping the full
 sample; \code{"listwise"} drops incomplete rows. Identical for complete data.}
+
+\item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
+dependency-free, self-certified L1 logistic path (KKT ~1e-9). \code{FALSE}
+delegates each per-node fit to the \code{glmnet} package with the IsingFit EBIC
+path, so the returned \verb{$weights}/\verb{$thresholds} byte-match
+\code{IsingFit::IsingFit()} (to ~1e-16) at the cost of glmnet's looser
+self-certificate. \code{native = FALSE} needs the optional \code{glmnet} package
+(Suggests); \code{weights}/\code{min_sum} are supported with \code{native = TRUE} only.}
 
 \item{labels}{Optional node labels.}
 }

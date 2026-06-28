@@ -28,7 +28,7 @@
 #' for use by [difference_test()].
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
-#' @param method Estimator (see [psychnet()]). Default `"EBICglasso"`.
+#' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param n_boot Number of bootstrap resamples. Default 1000.
 #' @param ci Confidence level for percentile intervals. Default 0.95.
 #' @param labels Optional node labels.
@@ -51,7 +51,7 @@
 #' bs <- net_boot(x, n_boot = 50, cores = 1)
 #' as.data.frame(bs)
 #' @export
-net_boot <- function(data, method = "EBICglasso", n_boot = 1000L,
+net_boot <- function(data, method = "glasso", n_boot = 1000L,
                               ci = 0.95, labels = NULL, cores = NULL, ...) {
   stopifnot(is.numeric(n_boot), length(n_boot) == 1L, is.finite(n_boot),
             n_boot >= 1, ci > 0, ci < 1)

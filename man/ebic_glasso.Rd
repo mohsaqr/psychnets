@@ -14,7 +14,7 @@ ebic_glasso(
   threshold = 0,
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   na_method = c("pairwise", "listwise"),
-  engine = c("base", "glasso"),
+  native = TRUE,
   labels = NULL
 )
 }
@@ -46,17 +46,17 @@ for ordinal items, the \code{qgraph::cor_auto} / \code{bootnet} default). See
 (default, pairwise-complete correlations + nearest-PD projection) or
 \code{"listwise"} (drop incomplete rows). Identical for complete data.}
 
-\item{engine}{Solver: \code{"base"} (default) is the pure-R, dependency-free,
-self-certified solver; \code{"glasso"} delegates each fixed-penalty solve to the
-\code{glasso} Fortran package (in \code{Suggests}) for speed and byte-identical
-\code{glasso}/\code{qgraph} output, at its looser convergence (the reported \verb{$kkt}
-then shows glasso's tolerance rather than ~1e-11).}
+\item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
+dependency-free, self-certified solver. \code{FALSE} delegates each fixed-penalty
+solve to the established \code{glasso} Fortran package (in \code{Suggests}) for speed
+and byte-identical \code{glasso}/\code{qgraph} output, at its looser convergence (the
+reported \verb{$kkt} then shows glasso's tolerance rather than ~1e-11).}
 
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
-with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix}, \verb{$ebic}, \verb{$engine},
+with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix}, \verb{$ebic}, \verb{$native},
 and \verb{$kkt} (the stationarity residual of the returned network).
 }
 \description{

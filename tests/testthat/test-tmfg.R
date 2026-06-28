@@ -38,7 +38,7 @@ test_that("LoGo reproduces S on the TMFG support and is positive definite", {
 test_that("TMFG / LoGo dispatch and reject too-small inputs", {
   set.seed(3)
   X <- matrix(stats::rnorm(300 * 6), 300, 6)
-  expect_equal(psychnet(X, "TMFG")$method, "TMFG")
-  expect_equal(psychnet(X, "LoGo")$method, "LoGo")
+  expect_equal(psychnet(X, "TMFG")$method, "tmfg")
+  expect_equal(psychnet(X, "LoGo")$method, "logo")
   expect_error(tmfg_network(matrix(stats::rnorm(60), 30, 2)), "at least 4")
 })

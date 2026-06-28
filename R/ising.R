@@ -45,6 +45,13 @@
 #' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
 #'   each column over its observed values (mode for binary), keeping the full
 #'   sample; `"listwise"` drops incomplete rows. Identical for complete data.
+#' @param native Solver switch. `TRUE` (default) uses psychnet's own pure-R,
+#'   dependency-free, self-certified L1 logistic path (KKT ~1e-9). `FALSE`
+#'   delegates each per-node fit to the `glmnet` package with the IsingFit EBIC
+#'   path, so the returned `$weights`/`$thresholds` byte-match
+#'   `IsingFit::IsingFit()` (to ~1e-16) at the cost of glmnet's looser
+#'   self-certificate. `native = FALSE` needs the optional `glmnet` package
+#'   (Suggests); `weights`/`min_sum` are supported with `native = TRUE` only.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the symmetric weight matrix,
 #'   with `$thresholds` (node intercepts) and `$kkt` (the worst nodewise
@@ -60,9 +67,11 @@
 ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                       nlambda = 100L, lambda_min_ratio = 0.01, min_sum = NULL,
                       weights = NULL,
-                      na_method = c("pairwise", "listwise"), labels = NULL) {
+                      na_method = c("pairwise", "listwise"),
+                      native = TRUE, labels = NULL) {
   rule <- match.arg(rule)
   na_method <- match.arg(na_method)
+  engine <- .resolve_native(native, "glmnet")
   stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
             nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
   mat <- .as_binary_matrix(data, na_method)
@@ -72,6 +81,14 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
   p <- ncol(mat)
   if (!is.null(labels)) stopifnot(length(labels) == p)
   if (is.null(labels)) labels <- colnames(mat)
+
+  if (engine == "glmnet") {
+    if (!is.null(weights)) {
+      stop("native = FALSE does not support `weights`; use native = TRUE.",
+           call. = FALSE)
+    }
+    return(.ising_fit_glmnet(mat, gamma, rule, nlambda, labels))
+  }
 
   fits <- lapply(seq_len(p), function(i) {
     .nodewise_ebic(mat[, -i, drop = FALSE], mat[, i], "binomial",
@@ -101,9 +118,9 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
   diag(W) <- 0
 
   .new_psychnet(W, labels, method = "ising", directed = FALSE,
-                n_obs = nrow(mat),
+                n_obs = nrow(mat), data = mat,
                 extra = list(thresholds = stats::setNames(thresholds, labels),
-                             rule = rule, kkt = worst_kkt,
+                             rule = rule, kkt = worst_kkt, native = native,
                              nodewise = list(intercept = b0_std,
                                              beta_std = B_std,
                                              families = rep("binomial", p),

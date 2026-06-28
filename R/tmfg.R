@@ -156,7 +156,7 @@ tmfg_network <- function(data = NULL, cor_matrix = NULL,
   dimnames(g) <- dimnames(built$adj) <- dimnames(S) <- list(labels, labels)
 
   .new_psychnet(
-    graph = g, labels = labels, method = "TMFG",
+    graph = g, labels = labels, method = "tmfg",
     directed = FALSE, n_obs = n_obs,
     extra = list(adjacency = built$adj, cliques = built$cliques,
                  separators = built$separators, cor_matrix = S)

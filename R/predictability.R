@@ -84,6 +84,13 @@ net_predict <- function(x, data = NULL, ...) {
     return(out)
   }
 
+  # --- relative-importance network: per-node R-squared is stored -------------
+  if (identical(x$method, "relimp") && !is.null(x$r2)) {
+    return(data.frame(node = labs, type = "gaussian", metric = "R2",
+                      predictability = as.numeric(x$r2[labs]), accuracy = NA_real_,
+                      row.names = NULL, stringsAsFactors = FALSE))
+  }
+
   # --- Gaussian graphical model: closed form from the precision --------------
   if (is.null(x$precision)) {
     stop(sprintf("net_predict() is not defined for a '%s' network.",
@@ -95,4 +102,43 @@ net_predict <- function(x, data = NULL, ...) {
   data.frame(node = labs, type = "gaussian", metric = "R2",
              predictability = as.numeric(r2), accuracy = NA_real_,
              row.names = NULL, stringsAsFactors = FALSE)
+}
+
+# Compute node predictability once at fit time and store it on the node table,
+# so a plotter (cograph::splot) can self-draw the predictability ring straight
+# from the object -- the caller never assembles a pie vector by hand. The
+# `predictability_default` flag records which networks should show the ring
+# without being asked: glasso (the canonical GGM) only.
+#' @noRd
+.attach_predictability <- function(net, data = NULL) {
+  pred <- tryCatch(net_predict(net, data = data), error = function(e) NULL)
+  if (!is.null(pred)) {
+    v <- pmin(pmax(pred$predictability, 0), 1)
+    net$nodes$predictability <- v[match(net$nodes$label, pred$node)]
+  }
+  if (is.null(net$meta)) net$meta <- list()
+  net$meta$predictability_default <- identical(net$method, "glasso")
+  net
+}
+
+#' Node predictability as a plotting vector
+#'
+#' A thin companion to [net_predict()] that returns predictability as a plain
+#' numeric vector in node order, clamped to `[0, 1]` -- the form
+#' `cograph::splot()` expects for `pie_values` (the predictability ring drawn
+#' around each node). Use [net_predict()] when you want the full tidy table.
+#'
+#' @param x A [psychnet] object.
+#' @param data The data the network was estimated from; required for the
+#'   nodewise models (ising / ising_sampler / mgm), ignored for the GGMs.
+#' @return A named numeric vector, one value per node (node order), each in
+#'   `[0, 1]`.
+#' @examples
+#' S <- 0.4^abs(outer(1:6, 1:6, "-"))
+#' node_predictability(ebic_glasso(cor_matrix = S, n = 250))
+#' @export
+node_predictability <- function(x, data = NULL) {
+  pred <- net_predict(x, data = data)
+  v <- pmin(pmax(pred$predictability, 0), 1)
+  stats::setNames(v, pred$node)
 }

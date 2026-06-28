@@ -175,23 +175,39 @@ test_that("psychnet does not override ising/mgm native gamma (0.25)", {
 
 # ---- lean netobject-compatible output shape --------------------------------
 
-test_that("a fitted network has the lean netobject shape and cograph class", {
+test_that("a fitted network is a genuine cograph_network netobject", {
   fit <- ebic_glasso(cor_matrix = 0.4^abs(outer(1:5, 1:5, "-")), n = 250)
   expect_s3_class(fit, "cograph_network")
-  # canonical (str-visible) fields, netobject-aligned
-  expect_true(all(c("weights", "nodes", "edges", "directed", "method", "n") %in%
-                    names(fit)))
+  # netobject fields + the cograph structural fields that make it splot-able
+  expect_true(all(c("weights", "nodes", "edges", "directed", "method", "n",
+                    "meta", "node_groups", "data") %in% names(fit)))
   expect_true(is.matrix(fit$weights) && all(diag(fit$weights) == 0))
-  expect_named(fit$nodes, c("id", "label", "name"))
+  # cograph_network format: nodes carry x/y layout slots; edges use INTEGER
+  # node indices (so cograph::splot(net) draws the object directly)
+  expect_true(all(c("id", "label", "name", "x", "y") %in% names(fit$nodes)))
   expect_named(fit$edges, c("from", "to", "weight"))
-  expect_identical(as.data.frame(fit), fit$edges)
-  # derivable counts are no longer stored as fields...
+  expect_true(is.integer(fit$edges$from) && is.integer(fit$edges$to))
+  # the tidy accessor returns the label-based edge list
+  ed <- as.data.frame(fit)
+  expect_named(ed, c("from", "to", "weight"))
+  expect_true(is.character(ed$from))
+  expect_equal(nrow(ed), nrow(fit$edges))
+  # derivable counts are not stored; legacy accessors still resolve via the alias
   expect_false(any(c("graph", "n_nodes", "n_edges", "n_obs") %in% names(fit)))
-  # ...but the legacy accessors still resolve via the alias
   expect_identical(fit$graph, fit$weights)
   expect_equal(fit$n_nodes, 5L)
   expect_equal(fit$n_edges, nrow(fit$edges))
   expect_equal(fit$n_obs, fit$n)
+})
+
+test_that("a psychnet object plots directly with cograph::splot(net)", {
+  skip_if_not_installed("cograph")
+  fit <- ebic_glasso(cor_matrix = 0.4^abs(outer(1:5, 1:5, "-")), n = 250)
+  pdf(NULL); on.exit(dev.off())
+  drawn <- cograph::splot(fit)                 # the OBJECT, not net$weights
+  # splot returns the built cograph_network (edges drawn), not the input unchanged
+  expect_false(identical(unclass(drawn), unclass(fit)))
+  expect_gt(nrow(drawn$edges), 0L)
 })
 
 # ---- closed reference gaps -------------------------------------------------

@@ -77,8 +77,9 @@
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default, with the nonparanormal transform applied per column over observed
 #'   values) or `"listwise"`. See [ebic_glasso()].
-#' @param engine Solver for the glasso path: `"base"` (default, pure R) or
-#'   `"glasso"` (the Fortran package, in `Suggests`). See [ebic_glasso()].
+#' @param native Solver switch for the glasso path: `TRUE` (default) uses the
+#'   pure-R solver; `FALSE` delegates to the `glasso` Fortran package (in
+#'   `Suggests`). See [ebic_glasso()].
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix` (the transformed
@@ -93,10 +94,10 @@ huge_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          npn = c("shrinkage", "truncation", "skeptic"),
                          gamma = 0.5, nlambda = 100L, lambda_min_ratio = 0.01,
                          threshold = 0, na_method = c("pairwise", "listwise"),
-                         engine = c("base", "glasso"), labels = NULL) {
+                         native = TRUE, labels = NULL) {
   npn <- match.arg(npn)
   na_method <- match.arg(na_method)
-  engine <- .check_engine(engine)
+  engine <- .resolve_native(native, "glasso")
   if (is.null(cor_matrix)) {
     mat <- .as_numeric_matrix(data, drop_na = FALSE)
     if (is.null(labels)) labels <- colnames(mat)

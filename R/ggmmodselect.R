@@ -86,9 +86,10 @@
 #'   the `qgraph`/`bootnet` default for ordinal items). See [cor_auto()].
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
-#' @param engine Solver used to generate candidate supports: `"base"` (default,
-#'   pure R) or `"glasso"` (the Fortran package, in `Suggests`). The reported
-#'   precision is the unregularized refit either way. See [ebic_glasso()].
+#' @param native Solver switch for generating candidate supports: `TRUE`
+#'   (default) uses the pure-R solver; `FALSE` delegates to the `glasso` Fortran
+#'   package (in `Suggests`). The reported precision is the unregularized refit
+#'   either way. See [ebic_glasso()].
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$support` (the selected graph), `$gamma`, `$ebic`,
@@ -102,10 +103,10 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
                           lambda_min_ratio = 0.01, threshold = 0,
                           cor_method = c("pearson", "spearman", "kendall", "auto"),
                           na_method = c("pairwise", "listwise"),
-                          engine = c("base", "glasso"), labels = NULL) {
+                          native = TRUE, labels = NULL) {
   na_method <- match.arg(na_method)
   cor_method <- match.arg(cor_method)
-  engine <- .check_engine(engine)
+  engine <- .resolve_native(native, "glasso")
   if (is.null(cor_matrix)) {
     ci <- .cor_input(data, method = cor_method, na_method = na_method)
     S <- ci$S; n <- ci$n
@@ -181,7 +182,7 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
   dimnames(pcor) <- list(labels, labels)
 
   .new_psychnet(
-    graph = pcor, labels = labels, method = "ggmModSelect",
+    graph = pcor, labels = labels, method = "ggm",
     directed = FALSE, n_obs = n,
     extra = list(
       precision = best_theta, support = best_support, gamma = gamma,

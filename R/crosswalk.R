@@ -22,7 +22,7 @@
         "-", "-", "-", "-", "-"),
       c("cor_matrix", "n", "gamma", "nlambda", "lambda_min_ratio", "threshold",
         "-", "-", "-", "-", "-", "-", "-",
-        "data", "cor_method", "na_method", "engine", "labels"),
+        "data", "cor_method", "na_method", "native", "labels"),
       c("renamed", "identical", "identical", "identical", "renamed",
         "semantics differ", "reference only", "reference only",
         "reference only", "reference only", "reference only",
@@ -39,7 +39,7 @@
         "EBIC df toggle; psychnet never counts the diagonal",
         "psychnet always stores $kkt, $lambda, ...", "psychnet is silent",
         "estimate straight from raw data", "pearson/spearman/kendall/auto",
-        "pairwise/listwise missing data", "base (pure R) / glasso (Fortran)",
+        "pairwise/listwise missing data", "native solver (TRUE) / glasso Fortran (FALSE)",
         "node labels")),
 
     # ---- qgraph::cor_auto  <->  cor_auto ---------------------------------
@@ -62,7 +62,7 @@
         "-", "-", "-", "-", "-", "-", "-"),
       c("cor_matrix", "n", "gamma", "stepwise", "-", "-", "-", "-", "-", "-",
         "nlambda", "lambda_min_ratio", "threshold", "cor_method", "na_method",
-        "engine", "labels"),
+        "native", "labels"),
       c("renamed", "identical", "identical", "identical",
         "reference only", "reference only", "reference only", "reference only",
         "reference only", "reference only",

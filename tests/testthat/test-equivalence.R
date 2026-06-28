@@ -59,17 +59,17 @@ test_that("EBICglasso matches qgraph::EBICglasso on a clear chain", {
   expect_lt(pn$kkt, 1e-7)
 })
 
-test_that("engine = 'glasso' is byte-identical to the glasso package", {
+test_that("native = FALSE is byte-identical to the glasso package", {
   skip_equiv("glasso")
   set.seed(10)
   p <- 8; n <- 500
   X <- matrix(stats::rnorm(n * p), n, p) %*% chol(ar1(p, 0.5))
   S <- stats::cor(X)
 
-  fast <- ebic_glasso(cor_matrix = S, n = n, engine = "glasso")
+  fast <- ebic_glasso(cor_matrix = S, n = n, native = FALSE)
   g <- glasso::glasso(S, fast$lambda, penalize.diagonal = FALSE)
   expect_equal(fast$precision, (g$wi + t(g$wi)) / 2, ignore_attr = TRUE)
-  expect_identical(fast$engine, "glasso")
+  expect_false(fast$native)
 
   # same edge set as the certified base engine; the certificate reflects the
   # solver: base reaches ~1e-9, the glasso engine sits at its own tolerance.
@@ -79,30 +79,36 @@ test_that("engine = 'glasso' is byte-identical to the glasso package", {
   expect_gt(fast$kkt, base$kkt)
 })
 
-test_that("ising_fit matches IsingFit::IsingFit on a binary chain", {
+test_that("ising_fit(native=FALSE) byte-matches IsingFit::IsingFit", {
   skip_equiv("IsingFit")
+  skip_if_not_installed("glmnet")
   set.seed(2)
   p <- 6; n <- 2000
   f <- matrix(stats::rnorm(n * p), n, p) %*% chol(ar1(p, 0.5))
   X <- (f > 0) * 1L
   colnames(X) <- paste0("V", seq_len(p))
 
-  pn <- ising_fit(X, gamma = 0.25, rule = "AND")
+  pn <- ising_fit(X, gamma = 0.25, rule = "AND", native = FALSE)
   isf <- suppressWarnings(IsingFit::IsingFit(X, gamma = 0.25, AND = TRUE,
                                              plot = FALSE, progressbar = FALSE))
 
+  # The glmnet engine reproduces IsingFit's exact lambda path + EBIC selection,
+  # so the symmetric weights and the raw-scale node thresholds byte-match.
   cmp <- off_compare(pn$graph, isf$weiadj)
-  expect_gte(cmp$struct, 0.9)                 # at most one borderline edge differs
-  expect_lt(cmp$max_abs, 0.25)                # logit-scale weights, generous tol
+  expect_equal(cmp$struct, 1)                 # identical edge set
+  expect_lt(cmp$max_abs, 1e-7)                # byte-match (~0 to solver noise)
+  expect_equal(unname(pn$thresholds), unname(isf$thresholds), tolerance = 1e-7)
 
-  # raw-scale node thresholds agree with IsingFit's (the scale-fix regression):
-  # both are logit intercepts on the 0/1 scale, so they share sign and order.
-  expect_equal(sign(pn$thresholds), sign(isf$thresholds))
-  expect_gt(stats::cor(pn$thresholds, isf$thresholds), 0.95)
+  # the OR rule also byte-matches IsingFit's OR symmetrization
+  pn_or <- ising_fit(X, gamma = 0.25, rule = "OR", native = FALSE)
+  isf_or <- suppressWarnings(IsingFit::IsingFit(X, gamma = 0.25, AND = FALSE,
+                                                plot = FALSE, progressbar = FALSE))
+  expect_lt(off_compare(pn_or$graph, isf_or$weiadj)$max_abs, 1e-7)
 })
 
-test_that("mgm_fit matches mgm::mgm magnitudes on mixed and binary data", {
+test_that("mgm_fit(native=FALSE) byte-matches mgm::mgm magnitudes (mixed/binary)", {
   skip_equiv("mgm")
+  skip_if_not_installed("glmnet")
   set.seed(3)
   n <- 2000
   lat <- matrix(stats::rnorm(n * 5), n, 5) %*% chol(ar1(5, 0.5))
@@ -113,31 +119,28 @@ test_that("mgm_fit matches mgm::mgm magnitudes on mixed and binary data", {
   types <- c("g", "g", "c", "c", "c")
   levels <- c(1, 1, 2, 2, 2)
 
-  pn <- mgm_fit(D, gamma = 0.25)
+  pn <- mgm_fit(D, gamma = 0.25, native = FALSE)
   mg <- mgm::mgm(as.matrix(D), type = types, level = levels,
                  lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND",
                  pbar = FALSE, signInfo = FALSE)
 
+  # edge magnitudes byte-match mgm's wadj, and the support is identical
   cmp <- off_compare(pn$graph, mg$pairwise$wadj)
-  expect_lt(cmp$max_abs, 0.1)                 # magnitudes agree closely
-  # Clear-signal edges (|w| > 0.1) agree on presence exactly; weak ~0.05 edges
-  # can flip at the LW/lambda boundary, which psychnet selects on an independent
-  # base-R path (documented; not a byte-match on borderline edges).
-  s_pn <- abs(pn$graph) > 0.1; s_mg <- abs(mg$pairwise$wadj) > 0.1
-  ut <- upper.tri(s_pn)
-  expect_equal(mean(s_pn[ut] == s_mg[ut]), 1)
+  expect_lt(cmp$max_abs, 1e-6)
+  ut <- upper.tri(pn$graph)
+  expect_equal((abs(pn$graph) > 1e-9)[ut], (abs(mg$pairwise$wadj) > 1e-9)[ut])
 
-  # gaussian-gaussian edge (positions 1,2): psychnet and mgm agree on SIGN too,
-  # because a gaussian-gaussian edge has a defined sign (mgm's wadj carries no
-  # dimnames, so index by position).
+  # gaussian-gaussian edge (positions 1,2) agrees on SIGN too (mgm's wadj
+  # carries no dimnames, so index by position).
   gg_pn <- pn$graph[1, 2]
   gg_mg <- mg$pairwise$wadj[1, 2] * mg$pairwise$signs[1, 2]
   if (abs(gg_pn) > 1e-6 && !is.na(gg_mg) && abs(gg_mg) > 1e-6)
     expect_equal(sign(gg_pn), sign(gg_mg))
 })
 
-test_that("mgm gaussian edges match mgm on NON-unit-variance columns", {
+test_that("mgm(native=FALSE) byte-matches mgm on NON-unit-variance columns", {
   skip_equiv("mgm")
+  skip_if_not_installed("glmnet")
   set.seed(7)
   n <- 2000
   lat <- matrix(stats::rnorm(n * 4), n, 4) %*% chol(ar1(4, 0.5))
@@ -145,18 +148,18 @@ test_that("mgm gaussian edges match mgm on NON-unit-variance columns", {
   # an arbitrary mean: mgm standardizes internally and so must mgm_fit().
   D <- data.frame(g1 = lat[, 1] * 1.8 + 3, g2 = lat[, 2] * 0.6 - 1,
                   b1 = (lat[, 3] > 0) * 1, b2 = (lat[, 4] > 0) * 1)
-  pn <- mgm_fit(D)
+  pn <- mgm_fit(D, native = FALSE)
   mg <- mgm::mgm(as.matrix(D), type = c("g", "g", "c", "c"),
                  level = c(1, 1, 2, 2), lambdaSel = "EBIC", lambdaGam = 0.25,
                  ruleReg = "AND", pbar = FALSE, signInfo = FALSE, scale = TRUE)$pairwise$wadj
-  # the gaussian-gaussian edge now matches to solver precision (the scale fix);
-  # without it psychnet was ~28% too large on this data.
+  # the gaussian-gaussian edge byte-matches to solver precision
   if (abs(pn$graph[1, 2]) > 1e-6 && mg[1, 2] > 1e-6)
-    expect_equal(abs(pn$graph[1, 2]), mg[1, 2], tolerance = 0.02)
+    expect_equal(abs(pn$graph[1, 2]), mg[1, 2], tolerance = 1e-6)
 })
 
-test_that("mgm gaussian-binary edges use mgm's categorical scale", {
+test_that("mgm(native=FALSE) byte-matches mgm gaussian-binary edges", {
   skip_equiv("mgm")
+  skip_if_not_installed("glmnet")
   set.seed(11)
   n <- 3000
   f <- stats::rnorm(n)
@@ -167,12 +170,11 @@ test_that("mgm gaussian-binary edges use mgm's categorical scale", {
     b2 = (stats::rnorm(n) > 0) * 1
   )
 
-  pn <- mgm_fit(D)
+  pn <- mgm_fit(D, native = FALSE)
   mg <- mgm::mgm(as.matrix(D), type = c("g", "c", "g", "c"),
                  level = c(1, 2, 1, 2), lambdaSel = "EBIC",
                  lambdaGam = 0.25, ruleReg = "AND", pbar = FALSE,
                  signInfo = FALSE, scale = TRUE)$pairwise$wadj
 
-  expect_equal(abs(pn$graph[1, 2]), mg[1, 2], tolerance = 0.01)
-  expect_lt(pn$kkt, 1e-6)
+  expect_equal(abs(pn$graph[1, 2]), mg[1, 2], tolerance = 1e-6)
 })

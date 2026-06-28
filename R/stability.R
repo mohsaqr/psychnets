@@ -8,7 +8,7 @@
 #' Centrality-stability coefficient (case-dropping subset bootstrap)
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
-#' @param method Estimator (see [psychnet()]). Default `"EBICglasso"`.
+#' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param measures Centrality measures to assess. Default both
 #'   `c("strength", "expected_influence")`.
 #' @param drop_prop Proportions of cases to drop. Default `seq(0.1, 0.9, 0.1)`.
@@ -27,7 +27,7 @@
 #' cs <- net_stability(x, drop_prop = c(0.3, 0.5, 0.7), iter = 20)
 #' cs$cs
 #' @export
-net_stability <- function(data, method = "EBICglasso",
+net_stability <- function(data, method = "glasso",
                                  measures = c("strength", "expected_influence"),
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
                                  iter = 100L, threshold = 0.7, certainty = 0.95,

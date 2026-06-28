@@ -32,8 +32,8 @@ test_that("psychnet dispatches and aliases resolve", {
   X <- matrix(stats::rnorm(300 * 5), 300, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
   expect_equal(psychnet(X, "cor")$method, "cor")
   expect_equal(psychnet(X, "pcor")$method, "pcor")
-  expect_equal(psychnet(X, "glasso")$method, "EBICglasso")
-  expect_equal(psychnet(X, "EBICglasso")$method, "EBICglasso")
+  expect_equal(psychnet(X, "glasso")$method, "glasso")
+  expect_equal(psychnet(X, "EBICglasso")$method, "glasso")
 })
 
 test_that("significance thresholding zeros non-significant edges", {

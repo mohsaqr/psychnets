@@ -25,11 +25,16 @@ Imports:
     parallel,
     stats
 Suggests:
+    cograph,
     glasso,
+    glmnet,
     IsingFit,
+    knitr,
     mgm,
     mvtnorm,
     psych,
     qgraph,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3

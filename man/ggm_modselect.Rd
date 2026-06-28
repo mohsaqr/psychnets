@@ -15,7 +15,7 @@ ggm_modselect(
   threshold = 0,
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   na_method = c("pairwise", "listwise"),
-  engine = c("base", "glasso"),
+  native = TRUE,
   labels = NULL
 )
 }
@@ -50,9 +50,10 @@ the \code{qgraph}/\code{bootnet} default for ordinal items). See \code{\link[=co
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{engine}{Solver used to generate candidate supports: \code{"base"} (default,
-pure R) or \code{"glasso"} (the Fortran package, in \code{Suggests}). The reported
-precision is the unregularized refit either way. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
+\item{native}{Solver switch for generating candidate supports: \code{TRUE}
+(default) uses the pure-R solver; \code{FALSE} delegates to the \code{glasso} Fortran
+package (in \code{Suggests}). The reported precision is the unregularized refit
+either way. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
 \item{labels}{Optional node labels.}
 }

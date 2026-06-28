@@ -6,8 +6,8 @@
 \usage{
 psychnet(
   data,
-  method = c("EBICglasso", "cor", "pcor", "ising", "mgm", "huge", "ggmModSelect", "TMFG",
-    "LoGo", "relimp", "IsingSampler"),
+  method = c("glasso", "cor", "pcor", "ising", "mgm", "huge", "ggm", "tmfg", "logo",
+    "relimp", "ising_sampler"),
   threshold = 0,
   gamma = NULL,
   labels = NULL,
@@ -17,24 +17,26 @@ psychnet(
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
-\item{method}{Estimator: \code{"EBICglasso"}, \code{"cor"}, \code{"pcor"}, \code{"ising"},
-\code{"mgm"}, \code{"huge"}, \code{"ggmModSelect"}, \code{"TMFG"}, \code{"LoGo"}, \code{"relimp"}, or
-\code{"IsingSampler"}. Common aliases are accepted (e.g. \code{"glasso"} ->
-\code{"EBICglasso"}, \code{"IsingFit"} -> \code{"ising"}).}
+\item{method}{Estimator. One of \code{"glasso"} (default), \code{"ggm"}, \code{"tmfg"},
+\code{"logo"}, \code{"relimp"}, \code{"ising"}, \code{"ising_sampler"}, \code{"huge"}, \code{"mgm"},
+\code{"cor"}, \code{"pcor"}. The \code{qgraph}/\code{bootnet} names are accepted as aliases
+(e.g. \code{"EBICglasso"} -> \code{"glasso"}, \code{"ggmModSelect"} -> \code{"ggm"},
+\code{"LoGo"} -> \code{"logo"}).}
 
 \item{threshold}{Absolute-weight threshold below which edges are zeroed
-(forwarded only to the methods that take it: \code{cor}, \code{pcor}, \code{EBICglasso},
-\code{huge}, \code{ggmModSelect}, \code{LoGo}).}
+(forwarded only to the methods that take it: \code{cor}, \code{pcor}, \code{glasso},
+\code{huge}, \code{ggm}, \code{logo}).}
 
 \item{gamma}{EBIC hyperparameter. \code{NULL} (default) keeps each method's own
-default (0.5 for the Gaussian graphical models, 0.25 for \code{ising}/\code{mgm});
-set it to override. Forwarded only to the regularized methods.}
+default (0.5 for the regularized Gaussian graphical models, 0 for \code{ggm},
+0.25 for \code{ising}/\code{mgm}); set it to override. Forwarded only to the
+regularized methods.}
 
 \item{labels}{Optional node labels.}
 
 \item{...}{Passed to the underlying estimator (e.g. \verb{cor_method=} for the
 correlation-based methods, \verb{npn=} for \code{"huge"}, \verb{rule=} for the Ising
-methods, \verb{alpha=} for the correlation / \code{"IsingSampler"} methods).}
+methods, \verb{alpha=} for the correlation / \code{"ising_sampler"} methods).}
 }
 \value{
 A \code{psychnet} object.
@@ -42,10 +44,19 @@ A \code{psychnet} object.
 \description{
 The package's main entry point: routes to the requested estimator and returns
 a common \code{psychnet} object, so callers can swap estimators without rewiring
-downstream code. Mirrors \code{bootnet::estimateNetwork(data, default = ...)}.
+downstream code.
+}
+\details{
+\code{method} speaks the package's own short vocabulary -- \code{"glasso"}, \code{"ggm"},
+\code{"tmfg"}, \code{"logo"}, \code{"relimp"}, \code{"ising"}, \code{"ising_sampler"}, \code{"huge"},
+\code{"mgm"}, \code{"cor"}, \code{"pcor"}. For interoperability it \strong{also} accepts the
+\code{qgraph}/\code{bootnet} spellings (\code{"EBICglasso"}, \code{"ggmModSelect"}, \code{"TMFG"},
+\code{"LoGo"}, \code{"IsingFit"}, \code{"IsingSampler"}), which resolve to the same
+estimators. Whichever you pass in, the stored \verb{$method} is the short name.
 }
 \examples{
 x <- matrix(stats::rnorm(200 * 5), 200, 5)
-psychnet(x, method = "EBICglasso")
+psychnet(x, method = "glasso")
 psychnet(x, method = "pcor", cor_method = "spearman")
+psychnet(x, method = "EBICglasso")  # qgraph alias, same result
 }

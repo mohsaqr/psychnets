@@ -1,0 +1,72 @@
+---
+title: "Information-filtering networks: TMFG and LoGo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Information-filtering networks: TMFG and LoGo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 5)
+has_cograph <- requireNamespace("cograph", quietly = TRUE)
+```
+
+```{r}
+library(psychnet)
+```
+
+**Information-filtering networks** take a different route to sparsity than the
+graphical lasso. Instead of penalising edges, they keep a fixed, theoretically
+motivated *topology* and let the data fill in the weights.
+
+- **TMFG** (Triangulated Maximally Filtered Graph, `method = "tmfg"`) greedily
+  builds a planar, chordal graph with exactly `3(p - 2)` edges -- the strongest
+  associations that still form a triangulated structure.
+- **LoGo** (Local-Global, `method = "logo"`) takes the TMFG topology and returns
+  the *closed-form* sparse inverse covariance (a partial-correlation network) for
+  that chordal graph -- no iteration, no tuning.
+
+Both are deterministic and dependency-free, and both carry a structural
+certificate.
+
+```{r}
+tmfg <- psychnet(SRL_GPT, method = "tmfg")
+logo <- psychnet(SRL_GPT, method = "logo")
+
+tmfg
+logo
+```
+
+With only five nodes the filter is mild (a 5-node graph has 10 possible edges and
+TMFG keeps `3(5 - 2) = 9`); the method shows its value on larger node sets, where
+it drops the great majority of edges. The TMFG certificate confirms the graph has
+the correct edge count and is chordal and connected:
+
+```{r}
+certificate(tmfg)
+```
+
+The LoGo edges are the partial correlations on the TMFG backbone:
+
+```{r}
+as.data.frame(logo)
+```
+
+## Plotting
+
+LoGo weights the TMFG backbone with partial correlations. Pass the network
+object to `cograph::splot()` with `psych_styling = TRUE` (spring layout,
+green = positive, red = negative); ask for the predictability ring with
+`predictability = TRUE`.
+
+```{r logo-plot, eval = has_cograph}
+cograph::splot(logo, psych_styling = TRUE, predictability = TRUE)
+```
+
+LoGo reproduces the sample correlation exactly on the TMFG support (its defining
+property), so its constrained-MLE certificate is near zero:
+
+```{r}
+certificate(logo)
+```

@@ -116,18 +116,22 @@
   list(wi = wi, lambda = 0, ebic = ebic, ebic_path = ebic)
 }
 
-# Validate the solve engine. "base" is the pure-R FHT-2008 solver (default,
-# dependency-free, self-certified); "glasso" delegates each fixed-penalty solve
-# to the glasso Fortran package (opt-in, Suggests) for speed and byte-identical
-# parity with qgraph/bootnet, at the cost of glasso's looser convergence.
+# Translate the public `native` switch into the internal solver name and check
+# the optional package is present. `native = TRUE` (default) is the pure-R,
+# dependency-free, self-certified solver; `native = FALSE` delegates to the
+# established external package -- `ext` is "glasso" (Fortran) for the GGMs and
+# "glmnet" for the nodewise estimators -- for byte-identical reference parity,
+# at the cost of that solver's looser convergence.
 #' @noRd
-.check_engine <- function(engine) {
-  engine <- match.arg(engine, c("base", "glasso"))
-  if (engine == "glasso" && !requireNamespace("glasso", quietly = TRUE)) {
-    stop("engine = \"glasso\" needs the 'glasso' package; install it or use ",
-         "engine = \"base\".", call. = FALSE)
+.resolve_native <- function(native, ext) {
+  stopifnot(is.logical(native), length(native) == 1L, !is.na(native))
+  if (native) return("base")
+  if (!requireNamespace(ext, quietly = TRUE)) {
+    stop(sprintf(paste0("native = FALSE needs the '%s' package; install it ",
+                        "or keep native = TRUE (the default)."), ext),
+         call. = FALSE)
   }
-  engine
+  ext
 }
 
 # One fixed-penalty graphical-lasso solve, dispatched by engine. Returns
@@ -308,14 +312,14 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default, pairwise-complete correlations + nearest-PD projection) or
 #'   `"listwise"` (drop incomplete rows). Identical for complete data.
-#' @param engine Solver: `"base"` (default) is the pure-R, dependency-free,
-#'   self-certified solver; `"glasso"` delegates each fixed-penalty solve to the
-#'   `glasso` Fortran package (in `Suggests`) for speed and byte-identical
-#'   `glasso`/`qgraph` output, at its looser convergence (the reported `$kkt`
-#'   then shows glasso's tolerance rather than ~1e-11).
+#' @param native Solver switch. `TRUE` (default) uses psychnet's own pure-R,
+#'   dependency-free, self-certified solver. `FALSE` delegates each fixed-penalty
+#'   solve to the established `glasso` Fortran package (in `Suggests`) for speed
+#'   and byte-identical `glasso`/`qgraph` output, at its looser convergence (the
+#'   reported `$kkt` then shows glasso's tolerance rather than ~1e-11).
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
-#'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix`, `$ebic`, `$engine`,
+#'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix`, `$ebic`, `$native`,
 #'   and `$kkt` (the stationarity residual of the returned network).
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
@@ -328,10 +332,10 @@ ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
                         threshold = 0,
                         cor_method = c("pearson", "spearman", "kendall", "auto"),
                         na_method = c("pairwise", "listwise"),
-                        engine = c("base", "glasso"), labels = NULL) {
+                        native = TRUE, labels = NULL) {
   na_method <- match.arg(na_method)
   cor_method <- match.arg(cor_method)
-  engine <- .check_engine(engine)
+  engine <- .resolve_native(native, "glasso")
   if (is.null(cor_matrix)) {
     ci <- .cor_input(data, method = cor_method, na_method = na_method)
     S <- ci$S; n <- ci$n
@@ -362,12 +366,12 @@ ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
   dimnames(pcor) <- list(labels, labels)
 
   .new_psychnet(
-    graph = pcor, labels = labels, method = "EBICglasso",
+    graph = pcor, labels = labels, method = "glasso",
     directed = FALSE, n_obs = n,
     extra = list(
       precision = sel$wi, lambda = sel$lambda, gamma = gamma,
       cor_matrix = S, ebic = sel$ebic, ebic_path = sel$ebic_path,
-      lambda_path = lambda_path, na_method = na_method, engine = engine,
+      lambda_path = lambda_path, na_method = na_method, native = native,
       kkt = glasso_kkt(sel$wi, S, sel$lambda)
     )
   )

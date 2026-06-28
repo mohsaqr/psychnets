@@ -14,6 +14,7 @@ mgm_fit(
   rule = c("AND", "OR"),
   weights = NULL,
   na_method = c("pairwise", "listwise"),
+  native = TRUE,
   labels = NULL
 )
 }
@@ -41,6 +42,15 @@ binary); auto-detected if \code{NULL}.}
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
 each column over its observed values (mean for continuous, mode for binary),
 keeping the full sample; \code{"listwise"} drops incomplete rows.}
+
+\item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
+dependency-free, self-certified L1 path (KKT ~1e-9). \code{FALSE} delegates each
+per-node fit to the \code{glmnet} package with mgm's exact EBIC/LW path (gaussian
+lasso for continuous nodes, 2-class multinomial lasso for binary nodes), so
+the returned edge magnitudes byte-match \code{abs(mgm::mgm()$pairwise$wadj)}
+(to ~1e-6) at the cost of glmnet's looser self-certificate. \code{native = FALSE}
+needs the optional \code{glmnet} package (Suggests); \code{weights} are supported with
+\code{native = TRUE} only.}
 
 \item{labels}{Optional node labels.}
 }

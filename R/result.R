@@ -5,7 +5,8 @@
 # tables, the sample size, the estimator name, and method-specific extras such
 # as the precision matrix, the EBIC penalty, and the KKT certificate).
 
-# Tidy one-row-per-edge table from a weighted adjacency matrix.
+# Tidy one-row-per-edge table from a weighted adjacency matrix, with LABEL
+# from/to (the user-facing form returned by as.data.frame()).
 #' @noRd
 .edges_df <- function(weights, labels, directed, include_zero = FALSE) {
   idx <- if (isTRUE(directed)) which(row(weights) != col(weights), arr.ind = TRUE)
@@ -14,6 +15,18 @@
   keep <- if (include_zero) rep(TRUE, length(w)) else abs(w) > 1e-12
   data.frame(from = labels[idx[keep, 1L]], to = labels[idx[keep, 2L]],
              weight = w[keep], stringsAsFactors = FALSE, row.names = NULL)
+}
+
+# Edge table with INTEGER node-index from/to -- the format cograph's
+# cograph_network requires, so the object plots directly via cograph::splot().
+#' @noRd
+.edges_index_df <- function(weights, directed, include_zero = FALSE) {
+  idx <- if (isTRUE(directed)) which(row(weights) != col(weights), arr.ind = TRUE)
+         else which(upper.tri(weights), arr.ind = TRUE)
+  w <- weights[idx]
+  keep <- if (include_zero) rep(TRUE, length(w)) else abs(w) > 1e-12
+  data.frame(from = as.integer(idx[keep, 1L]), to = as.integer(idx[keep, 2L]),
+             weight = w[keep], row.names = NULL)
 }
 
 #' Construct a psychnet network object
@@ -25,10 +38,13 @@
 #' @param directed Logical; TRUE only for inherently directed estimators.
 #' @param n_obs Sample size used.
 #' @param extra Named list of method-specific fields (e.g. precision, lambda).
+#' @param data Fit data, passed through only so nodewise predictability (ising /
+#'   mgm) can be computed and stored on the node table at fit time. `NULL` for
+#'   the GGM / structural methods, whose predictability is closed-form or stored.
 #' @return An object of class `c("psychnet", "cograph_network")`.
 #' @noRd
 .new_psychnet <- function(graph, labels, method, directed, n_obs,
-                          extra = list()) {
+                          extra = list(), data = NULL) {
   if (length(labels) != ncol(graph)) {
     stop(sprintf(paste0("labels length (%d) does not match the network ",
                         "dimension (%d); a non-numeric or zero-variance column ",
@@ -38,14 +54,21 @@
   weights <- graph
   diag(weights) <- 0
   dimnames(weights) <- list(labels, labels)
+  # Build a genuine cograph_network: nodes carry x/y layout slots, edges use
+  # integer node indices, and meta/data/node_groups are present -- so the object
+  # plots directly with cograph::splot(net) (not splot(net$weights)).
   nodes <- data.frame(id = seq_along(labels), label = labels, name = labels,
-                      stringsAsFactors = FALSE)
-  edges <- .edges_df(weights, labels, directed)
-  structure(
-    c(list(weights = weights, nodes = nodes, edges = edges,
-           directed = directed, method = method, n = n_obs), extra),
+                      x = NA_real_, y = NA_real_, stringsAsFactors = FALSE)
+  edges <- .edges_index_df(weights, directed)
+  net <- structure(
+    c(list(nodes = nodes, edges = edges, directed = directed, weights = weights,
+           data = NULL, meta = list(source = "psychnet"), node_groups = NULL,
+           method = method, n = n_obs), extra),
     class = c("psychnet", "cograph_network")
   )
+  # Store node predictability + the default-draw flag so cograph::splot() can
+  # render the predictability ring straight from the object.
+  .attach_predictability(net, data = data)
 }
 
 #' Back-compatible field access for a psychnet object
@@ -104,10 +127,9 @@ print.psychnet <- function(x, ...) {
 #' @export
 as.data.frame.psychnet <- function(x, row.names = NULL, optional = FALSE, ...,
                                    include_zero = FALSE) {
-  if (include_zero) {
-    return(.edges_df(x$weights, x$nodes$label, x$directed, include_zero = TRUE))
-  }
-  x$edges
+  # The stored $edges uses integer node indices (cograph format); the tidy
+  # accessor returns the label-based edge list from the weight matrix.
+  .edges_df(x$weights, x$nodes$label, x$directed, include_zero = include_zero)
 }
 
 #' Summarize a psychnet network

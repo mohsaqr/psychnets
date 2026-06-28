@@ -87,7 +87,7 @@ logo_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   dimnames(pcor) <- list(labels, labels)
 
   .new_psychnet(
-    graph = pcor, labels = labels, method = "LoGo",
+    graph = pcor, labels = labels, method = "logo",
     directed = FALSE, n_obs = n,
     extra = list(precision = theta, support = support, cor_matrix = S,
                  kkt = ggm_support_kkt(theta, S, support))

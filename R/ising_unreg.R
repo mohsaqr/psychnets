@@ -122,7 +122,8 @@ ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
   diag(W) <- 0
 
   .new_psychnet(
-    W, labels, method = "IsingSampler", directed = FALSE, n_obs = nrow(mat),
+    W, labels, method = "ising_sampler", directed = FALSE, n_obs = nrow(mat),
+    data = mat,
     extra = list(
       thresholds = stats::setNames(thresholds, labels), rule = rule,
       p_values = P, alpha = alpha, kkt = worst_kkt,

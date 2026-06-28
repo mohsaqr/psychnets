@@ -45,6 +45,14 @@
 #' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
 #'   each column over its observed values (mean for continuous, mode for binary),
 #'   keeping the full sample; `"listwise"` drops incomplete rows.
+#' @param native Solver switch. `TRUE` (default) uses psychnet's own pure-R,
+#'   dependency-free, self-certified L1 path (KKT ~1e-9). `FALSE` delegates each
+#'   per-node fit to the `glmnet` package with mgm's exact EBIC/LW path (gaussian
+#'   lasso for continuous nodes, 2-class multinomial lasso for binary nodes), so
+#'   the returned edge magnitudes byte-match `abs(mgm::mgm()$pairwise$wadj)`
+#'   (to ~1e-6) at the cost of glmnet's looser self-certificate. `native = FALSE`
+#'   needs the optional `glmnet` package (Suggests); `weights` are supported with
+#'   `native = TRUE` only.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the symmetric standardized
 #'   weight matrix, with `$types` and `$kkt` (the worst nodewise residual). A
@@ -70,10 +78,12 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                     nlambda = 100L, lambda_min_ratio = 0.01,
                     threshold = c("LW", "HW", "none"), rule = c("AND", "OR"),
                     weights = NULL,
-                    na_method = c("pairwise", "listwise"), labels = NULL) {
+                    na_method = c("pairwise", "listwise"),
+                    native = TRUE, labels = NULL) {
   threshold <- match.arg(threshold)
   rule <- match.arg(rule)
   na_method <- match.arg(na_method)
+  engine <- .resolve_native(native, "glmnet")
   stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
             nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
   # A factor/character column would be silently dropped by .as_numeric_matrix,
@@ -105,6 +115,14 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     }
   }
   weights <- .check_weights(weights, nrow(mat))
+
+  if (engine == "glmnet") {
+    if (!is.null(weights)) {
+      stop("native = FALSE does not support `weights`; use native = TRUE.",
+           call. = FALSE)
+    }
+    return(.mgm_fit_glmnet(mat, types, gamma, threshold, rule, nlambda, labels))
+  }
 
   # Scale continuous columns to unit variance up front (mgm::mgm scale = TRUE):
   # a gaussian response on its raw scale inflates its edge weights by its SD, so
@@ -183,9 +201,9 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   diag(W) <- 0
 
   .new_psychnet(W, labels, method = "mgm", directed = FALSE,
-                n_obs = nrow(mat),
+                n_obs = nrow(mat), data = mat,
                 extra = list(types = stats::setNames(types, labels),
-                             kkt = worst_kkt,
+                             kkt = worst_kkt, native = native,
                              threshold = threshold,
                              nodewise = list(intercept = intercepts,
                                              beta_std = B_std,

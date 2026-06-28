@@ -6,7 +6,7 @@
 \usage{
 net_stability(
   data,
-  method = "EBICglasso",
+  method = "glasso",
   measures = c("strength", "expected_influence"),
   drop_prop = seq(0.1, 0.9, by = 0.1),
   iter = 100L,
@@ -19,7 +19,7 @@ net_stability(
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
-\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"EBICglasso"}.}
+\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
 
 \item{measures}{Centrality measures to assess. Default both
 \code{c("strength", "expected_influence")}.}

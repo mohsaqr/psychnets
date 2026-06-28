@@ -6,7 +6,7 @@
 \usage{
 net_boot(
   data,
-  method = "EBICglasso",
+  method = "glasso",
   n_boot = 1000L,
   ci = 0.95,
   labels = NULL,
@@ -17,7 +17,7 @@ net_boot(
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
-\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"EBICglasso"}.}
+\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
 
 \item{n_boot}{Number of bootstrap resamples. Default 1000.}
 

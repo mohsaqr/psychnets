@@ -38,6 +38,6 @@ test_that("OR keeps at least as many edges as AND", {
 
 test_that("ising_sampler dispatches via psychnet", {
   b <- make_binary(500, 4)
-  expect_equal(psychnet(b, "IsingSampler")$method, "IsingSampler")
-  expect_equal(psychnet(b, "isingsampler")$method, "IsingSampler")
+  expect_equal(psychnet(b, "IsingSampler")$method, "ising_sampler")
+  expect_equal(psychnet(b, "isingsampler")$method, "ising_sampler")
 })

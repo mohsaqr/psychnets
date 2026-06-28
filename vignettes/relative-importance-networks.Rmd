@@ -13,7 +13,7 @@ has_cograph <- requireNamespace("cograph", quietly = TRUE)
 ```
 
 ```{r}
-library(psychnet)
+library(psychnets)
 ```
 
 A **relative-importance network** (`method = "relimp"`) is **directed**. For each

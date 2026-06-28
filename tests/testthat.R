@@ -1,4 +1,4 @@
 library(testthat)
-library(psychnet)
+library(psychnets)
 
-test_check("psychnet")
+test_check("psychnets")

@@ -13,7 +13,7 @@ has_cograph <- requireNamespace("cograph", quietly = TRUE)
 ```
 
 ```{r}
-library(psychnet)
+library(psychnets)
 ```
 
 ## What is a psychological network?
@@ -276,9 +276,9 @@ default $0.5$) governing the strength of the model-space penalty. Setting
 $\gamma = 0$ recovers ordinary BIC; larger $\gamma$ favours sparser graphs. The
 candidate path is logarithmically spaced between the smallest penalty that yields
 the empty graph and a fraction `lambda_min_ratio` of it, with `nlambda` points. In
-`psychnet` the defaults are `nlambda = 100` and `lambda_min_ratio = 0.01`.
+`psychnets` the defaults are `nlambda = 100` and `lambda_min_ratio = 0.01`.
 
-### The psychnet implementation
+### The psychnets implementation
 
 The estimator is a clean-room reimplementation in pure base R. The package imports
 only the base packages `stats` and `parallel`; it does not depend on `glasso`,
@@ -330,7 +330,7 @@ property of the data; the `kind` column records that it is a KKT residual and
 ### The solver engine
 
 The `native` argument selects the inner fixed-penalty solver. The default,
-`native = TRUE`, is psychnet's own pure-R block-coordinate-descent solver
+`native = TRUE`, is psychnets' own pure-R block-coordinate-descent solver
 described above. Setting `native = FALSE` (which requires the optional Fortran
 `glasso` package, listed under `Suggests`) dispatches each fixed-penalty solve to
 that established package instead, producing numerically equivalent graph
@@ -352,7 +352,7 @@ set of arguments for the graphical lasso is:
 | `lambda_min_ratio` | `0.01` | Smallest $\lambda$ as a fraction of the penalty that empties the graph. |
 | `threshold` | `0` | Post-hoc absolute-weight floor; edges below it are set to zero. |
 | `na_method` | `"pairwise"` | Missing data: `"pairwise"` (pairwise-complete correlations with a nearest-positive-definite projection) or `"listwise"` (complete-case deletion). |
-| `native` | `TRUE` | Inner solver: `TRUE` = psychnet's pure-R solver, `FALSE` = the `glasso` Fortran package. |
+| `native` | `TRUE` | Inner solver: `TRUE` = psychnets' pure-R solver, `FALSE` = the `glasso` Fortran package. |
 | `labels` | `NULL` | Node names. |
 
 Researchers migrating from `qgraph::EBICglasso()` can map these names onto the

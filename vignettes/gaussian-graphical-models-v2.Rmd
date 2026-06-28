@@ -10,12 +10,12 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 5)
 has_cograph <- requireNamespace("cograph", quietly = TRUE)
-library(psychnet)
+library(psychnets)
 net <- psychnet(data = SRL_GPT, method = "glasso")
 ```
 
 ```{r}
-library(package = psychnet)
+library(psychnets)
 ```
 
 ## What a psychological network represents
@@ -182,7 +182,7 @@ centrality ordering remains similar when portions of the sample are removed. Thi
 is the logic behind the bootstrap and stability procedures recommended by
 Epskamp, Borsboom, and Fried (2018).
 
-In `psychnet`, `net_boot()` and `net_stability()` provide these analyses. They are
+In `psychnets`, `net_boot()` and `net_stability()` provide these analyses. They are
 not run here because a thorough bootstrap is computationally longer than a
 compact vignette should require, but they should be part of a complete empirical
 analysis when edge accuracy or centrality claims are substantively important.
@@ -208,7 +208,7 @@ while relaxing strict multivariate normality.
 
 ## Native estimation
 
-By default (`native = TRUE`) `psychnet` estimates the graphical lasso with its own
+By default (`native = TRUE`) `psychnets` estimates the graphical lasso with its own
 solver, written entirely in base R. This is a *clean-room* implementation: the
 algorithm is reconstructed from the original description (Friedman, Hastie &
 Tibshirani, 2008) rather than wrapping an existing library, and it reproduces the

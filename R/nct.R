@@ -36,7 +36,8 @@
 #' @param p_adjust Multiple-comparison adjustment for per-edge p-values
 #'   (any [stats::p.adjust] method). Default `"none"`.
 #' @return An object of class `psychnet_nct` with `$nw1`, `$nw2`, and `$M`,
-#'   `$S`, `$E` (each `observed`, `perm`, `p_value`).
+#'   `$S`, `$E` (each `observed`, `perm`, `p_value`); `$E` also carries
+#'   `edge_names`, a `from`/`to` data frame aligned to the per-edge vector.
 #' @examples
 #' set.seed(1)
 #' a <- matrix(stats::rnorm(150 * 5), 150, 5)
@@ -79,6 +80,14 @@ net_compare <- function(data1, data2, iter = 1000L, gamma = 0.5,
 
   nw1 <- est(data1); nw2 <- est(data2)
   ut <- upper.tri(nw1)
+  # Edge labels for the per-edge `E` vector, in the same upper-triangle order as
+  # E$observed (column-major over the TRUE cells of `ut`). Lets a caller map each
+  # E p-value back to its (from, to) node pair without reconstructing the order.
+  labs <- colnames(data1)
+  if (is.null(labs)) labs <- paste0("V", seq_len(ncol(data1)))
+  ij <- which(ut, arr.ind = TRUE)
+  edge_names <- data.frame(from = labs[ij[, 1L]], to = labs[ij[, 2L]],
+                           stringsAsFactors = FALSE, row.names = NULL)
   if (!weighted) { nw1 <- binarize(nw1); nw2 <- binarize(nw2) }
 
   M_obs <- if (abs) base::abs(sum(base::abs(nw1[ut])) - sum(base::abs(nw2[ut])))
@@ -120,7 +129,8 @@ net_compare <- function(data1, data2, iter = 1000L, gamma = 0.5,
     list(nw1 = nw1, nw2 = nw2,
          M = list(observed = M_obs, perm = M_perm, p_value = M_pval),
          S = list(observed = S_obs, perm = S_perm, p_value = S_pval),
-         E = list(observed = E_obs, perm = E_perm, p_value = E_pval),
+         E = list(observed = E_obs, perm = E_perm, p_value = E_pval,
+                  edge_names = edge_names),
          n_iter = iter, paired = paired,
          params = list(gamma = gamma, abs = abs, weighted = weighted,
                        p_adjust = p_adjust)),

@@ -1,4 +1,4 @@
-#' psychnet: Clean-Room Base-R Psychometric Network Estimation
+#' psychnets: Clean-Room Base-R Psychometric Network Estimation
 #'
 #' Estimates cross-sectional psychometric network models in pure base R, with
 #' no compiled dependencies and dependency-free correctness certificates. See

@@ -40,6 +40,10 @@
 #' @param threshold Post-selection coefficient threshold: `"LW"` (default),
 #'   `"HW"`, or `"none"`, matching `mgm::mgm()`.
 #' @param rule Edge-combination rule: `"AND"` (default) or `"OR"`.
+#' @param moderators Optional single column index of a moderator variable. When
+#'   supplied, fits a *moderated* MGM (that variable moderates every pairwise
+#'   edge) and returns a `psychnet_moderated` object to be read with
+#'   [condition()]; glmnet-based, and `weights` are not supported in this mode.
 #' @param weights Optional non-negative observation weights, one per row of the
 #'   (NA-prepared) data. `NULL` (default) is unweighted.
 #' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
@@ -77,7 +81,7 @@
 mgm_fit <- function(data, gamma = 0.25, types = NULL,
                     nlambda = 100L, lambda_min_ratio = 0.01,
                     threshold = c("LW", "HW", "none"), rule = c("AND", "OR"),
-                    weights = NULL,
+                    moderators = NULL, weights = NULL,
                     na_method = c("pairwise", "listwise"),
                     native = TRUE, labels = NULL) {
   threshold <- match.arg(threshold)
@@ -103,6 +107,20 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   if (is.null(labels)) labels <- colnames(mat)
   if (is.null(types))  types  <- .detect_types(mat)
   stopifnot(length(types) == p, all(types %in% c("g", "c")))
+
+  # Moderated MGM: a chosen variable moderates every edge. Dispatched before the
+  # binary 0/1 enforcement because the moderated path treats every categorical as
+  # a factor (multi-level allowed, matching mgm). glmnet-based; weights
+  # unsupported. Returns a psychnet_moderated, read via condition().
+  if (!is.null(moderators)) {
+    if (!is.null(weights)) {
+      stop("moderated MGM does not support `weights`.", call. = FALSE)
+    }
+    thr_mod <- if (threshold == "LW") "LW" else "none"
+    return(.mmg_estimate(mat, types, moderators, gamma = gamma, rule = rule,
+                         threshold = thr_mod, labels = labels))
+  }
+
   # A user-declared binary ('c') column must actually be 0/1, else the logistic
   # nodewise fit diverges silently (auto-detected 'c' columns pass trivially).
   cbin <- which(types == "c")

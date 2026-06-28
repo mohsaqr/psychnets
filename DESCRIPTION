@@ -1,6 +1,6 @@
-Package: psychnet
+Package: psychnets
 Title: Clean-Room Base-R Psychometric Network Estimation
-Version: 0.1.0
+Version: 0.2.1
 Authors@R:
     person("Mohammed", "Saqr", email = "ueflaunit@gmail.com",
            role = c("aut", "cre"))

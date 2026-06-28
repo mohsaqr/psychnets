@@ -178,3 +178,45 @@ test_that("mgm(native=FALSE) byte-matches mgm gaussian-binary edges", {
 
   expect_equal(abs(pn$graph[1, 2]), mg[1, 2], tolerance = 1e-6)
 })
+
+test_that("moderated mgm_fit + condition() matches mgm::mgm(moderators) + condition()", {
+  skip_equiv("mgm")
+  skip_if_not_installed("glmnet")
+  gen <- function(seed, n, p_g, p_c = 0L) {
+    set.seed(seed)
+    Z <- matrix(stats::rnorm(n * p_g), n, p_g)
+    Z <- Z + 0.3 * matrix(rowSums(Z), n, p_g)
+    G <- sample(0:1, n, replace = TRUE)
+    Z[, p_g] <- Z[, p_g] + ifelse(G == 1, 0.6 * Z[, 1], -0.1 * Z[, 1])
+    dat <- as.data.frame(Z)
+    if (p_c > 0L)
+      for (k in seq_len(p_c))
+        dat[[paste0("C", k)]] <- sample(seq_len(sample(2:4, 1)), n, replace = TRUE)
+    dat$G <- G
+    type <- c(rep("g", p_g), rep("c", p_c), "c")
+    level <- c(rep(1L, p_g),
+               if (p_c > 0L)
+                 vapply(dat[, (p_g + 1):(p_g + p_c), drop = FALSE],
+                        function(x) length(unique(x)), integer(1)) else integer(0),
+               2L)
+    colnames(dat) <- paste0("V", seq_len(ncol(dat)))
+    list(dat = dat, type = type, level = level, mod = ncol(dat))
+  }
+  cfgs <- list(c(200, 4, 0), c(250, 3, 1), c(300, 3, 2))
+  for (cf in cfgs) {
+    d <- gen(cf[1] * 7L, cf[1], cf[2], cf[3])
+    fit <- mgm_fit(d$dat, types = d$type, moderators = d$mod, gamma = 0.25,
+                   rule = "AND", threshold = "LW")
+    ref <- suppressWarnings(suppressMessages(mgm::mgm(
+      as.matrix(d$dat), type = d$type, level = d$level, moderators = d$mod,
+      lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND", threshold = "LW",
+      overparameterize = FALSE, scale = TRUE, pbar = FALSE, signInfo = FALSE,
+      warnings = FALSE)))
+    for (v in c(0, 1)) {
+      ours <- unname(condition(fit, v)$weights)
+      rr <- unname(mgm::condition(
+        ref, values = stats::setNames(list(v), as.character(d$mod)))$pairwise$wadj)
+      expect_lt(max(abs(ours - rr)), 1e-10)
+    }
+  }
+})

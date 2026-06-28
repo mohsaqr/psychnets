@@ -33,7 +33,8 @@ net_compare(
 }
 \value{
 An object of class \code{psychnet_nct} with \verb{$nw1}, \verb{$nw2}, and \verb{$M},
-\verb{$S}, \verb{$E} (each \code{observed}, \code{perm}, \code{p_value}).
+\verb{$S}, \verb{$E} (each \code{observed}, \code{perm}, \code{p_value}); \verb{$E} also carries
+\code{edge_names}, a \code{from}/\code{to} data frame aligned to the per-edge vector.
 }
 \description{
 Permutation test for whether two groups' Gaussian graphical models differ,

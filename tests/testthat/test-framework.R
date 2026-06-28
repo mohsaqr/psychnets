@@ -53,8 +53,9 @@ test_that("difference_test returns a tidy pairwise table with sound intervals", 
   for (ty in c("edge", "strength", "expected_influence")) {
     dt <- difference_test(bs, type = ty)
     expect_named(dt, c("item1", "item2", "value1", "value2", "obs_diff",
-                       "lower", "upper", "significant"))
+                       "lower", "upper", "p_value", "significant"))
     expect_true(all(dt$lower <= dt$upper))
+    expect_true(all(dt$p_value >= 0 & dt$p_value <= 1))
     expect_equal(dt$obs_diff, dt$value1 - dt$value2)
     expect_equal(dt$significant, dt$lower > 0 | dt$upper < 0)
   }
@@ -81,4 +82,30 @@ test_that("net_stability returns CS-coefficients in [0,1]", {
   # larger drop proportions never increase stability
   str_tab <- cs$table[cs$table$measure == "strength", ]
   expect_true(str_tab$mean_cor[1] + 1e-9 >= str_tab$mean_cor[nrow(str_tab)])
+})
+
+test_that("net_boot enrichments: extra centralities, predictability, threshold, diff_test", {
+  set.seed(3)
+  x <- matrix(stats::rnorm(200 * 5), 200, 5) %*%
+    chol(0.4^abs(outer(1:5, 1:5, "-")))
+  colnames(x) <- paste0("V", 1:5)
+  bs <- net_boot(x, n_boot = 60, cores = 1,
+                 measures = c("strength", "expected_influence",
+                              "betweenness", "closeness"),
+                 predictability = TRUE, threshold = TRUE,
+                 diff_test = TRUE, p_adjust = "BH")
+  expect_true(all(c("betweenness", "betweenness_lower", "closeness_upper") %in%
+                    names(bs$centrality)))
+  expect_named(bs$centrality_boot,
+               c("strength", "expected_influence", "betweenness", "closeness"))
+  expect_s3_class(bs$predictability, "data.frame")
+  expect_true(all(bs$predictability$value >= 0 & bs$predictability$value <= 1))
+  expect_equal(dim(bs$thresholded), c(5L, 5L))
+  expect_equal(dim(bs$edge_diff_p), c(10L, 10L))
+  expect_named(bs$centrality_diff_p,
+               c("strength", "expected_influence", "betweenness", "closeness"))
+  # difference_test exposes a two-sided p-value and works on any measure
+  dt <- difference_test(bs, type = "betweenness", p_adjust = "holm")
+  expect_true("p_value" %in% names(dt))
+  expect_true(all(dt$p_value >= 0 & dt$p_value <= 1))
 })

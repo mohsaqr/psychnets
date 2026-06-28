@@ -4,17 +4,33 @@
 \alias{net_centralities}
 \title{Node centrality}
 \usage{
-net_centralities(x, ...)
+net_centralities(
+  x,
+  measures = c("strength", "expected_influence"),
+  centrality_fn = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A \link{psychnet} object or a weighted adjacency matrix.}
 
+\item{measures}{Character vector of measures to return. Any of \code{"strength"},
+\code{"expected_influence"} (the defaults, recommended for psychometric
+networks), \code{"betweenness"}, \code{"closeness"}, plus any names supplied via
+\code{centrality_fn}. Betweenness and closeness are computed on the absolute,
+inverted-weight graph and are not generally meaningful on signed networks --
+request them only when a downstream comparison needs them.}
+
+\item{centrality_fn}{Optional function taking the weighted adjacency matrix
+and returning a named list of node-centrality vectors, used to supply any
+\code{measures} not built in.}
+
 \item{...}{Unused.}
 }
 \value{
-A tidy \code{data.frame}, one row per node, with columns \code{node},
-\code{strength} (sum of absolute edge weights) and \code{expected_influence} (sum of
-signed edge weights).
+A tidy \code{data.frame}, one row per node, with a \code{node} column and one
+column per requested measure (\code{strength} = sum of absolute edge weights,
+\code{expected_influence} = sum of signed edge weights, by default).
 }
 \description{
 Node centrality

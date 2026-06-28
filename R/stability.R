@@ -9,8 +9,12 @@
 #'
 #' @param data Numeric data frame or matrix (rows = observations).
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
-#' @param measures Centrality measures to assess. Default both
-#'   `c("strength", "expected_influence")`.
+#' @param measures Centrality measures to assess. Defaults to the two
+#'   recommended for psychometric networks (`c("strength",
+#'   "expected_influence")`); `"betweenness"`/`"closeness"` and custom measures
+#'   (via `centrality_fn`) are also accepted. See [net_centralities()].
+#' @param centrality_fn Optional function supplying any non-built-in `measures`
+#'   (see [net_centralities()]).
 #' @param drop_prop Proportions of cases to drop. Default `seq(0.1, 0.9, 0.1)`.
 #' @param iter Subsets per proportion. Default 100.
 #' @param threshold Minimum acceptable rank correlation. Default 0.7.
@@ -29,11 +33,10 @@
 #' @export
 net_stability <- function(data, method = "glasso",
                                  measures = c("strength", "expected_influence"),
+                                 centrality_fn = NULL,
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
                                  iter = 100L, threshold = 0.7, certainty = 0.95,
                                  labels = NULL, ...) {
-  measures <- match.arg(measures, c("strength", "expected_influence"),
-                        several.ok = TRUE)
   stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
             is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
             threshold > 0, threshold <= 1, certainty > 0, certainty <= 1)
@@ -41,9 +44,10 @@ net_stability <- function(data, method = "glasso",
   mat <- .as_numeric_matrix(data)
   n <- nrow(mat)
   if (is.null(labels)) labels <- colnames(mat)
+  cent_of <- function(fit) net_centralities(fit, measures = measures,
+                                             centrality_fn = centrality_fn)
 
-  full_cent <- net_centralities(psychnet(mat, method = method,
-                                           labels = labels, ...))
+  full_cent <- cent_of(psychnet(mat, method = method, labels = labels, ...))
 
   # corr_storage[[measure]]: iter x length(drop_prop) Spearman correlations.
   corr_storage <- lapply(measures, function(m)
@@ -59,7 +63,7 @@ net_stability <- function(data, method = "glasso",
                          labels = labels, ...),
         error = function(e) NULL)
       if (is.null(fit)) next
-      ct <- net_centralities(fit)
+      ct <- cent_of(fit)
       for (m in measures) {
         corr_storage[[m]][it, pj] <- suppressWarnings(
           stats::cor(full_cent[[m]], ct[[m]], method = "spearman"))

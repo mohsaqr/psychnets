@@ -8,6 +8,7 @@ net_stability(
   data,
   method = "glasso",
   measures = c("strength", "expected_influence"),
+  centrality_fn = NULL,
   drop_prop = seq(0.1, 0.9, by = 0.1),
   iter = 100L,
   threshold = 0.7,
@@ -21,8 +22,12 @@ net_stability(
 
 \item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
 
-\item{measures}{Centrality measures to assess. Default both
-\code{c("strength", "expected_influence")}.}
+\item{measures}{Centrality measures to assess. Defaults to the two
+recommended for psychometric networks (\code{c("strength", "expected_influence")}); \code{"betweenness"}/\code{"closeness"} and custom measures
+(via \code{centrality_fn}) are also accepted. See \code{\link[=net_centralities]{net_centralities()}}.}
+
+\item{centrality_fn}{Optional function supplying any non-built-in \code{measures}
+(see \code{\link[=net_centralities]{net_centralities()}}).}
 
 \item{drop_prop}{Proportions of cases to drop. Default \code{seq(0.1, 0.9, 0.1)}.}
 

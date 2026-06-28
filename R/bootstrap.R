@@ -18,6 +18,41 @@
   min(cores, nc)
 }
 
+# Closed-form GGM node predictability from a precision matrix: R^2 = 1 - 1/Kii,
+# clamped to [0, 1] (Haslbeck & Waldorp 2018). NULL when no precision is stored.
+#' @noRd
+.psn_predictability <- function(fit) {
+  K <- fit$precision
+  if (is.null(K)) return(NULL)
+  pmin(pmax(1 - 1 / diag(as.matrix(K)), 0), 1)
+}
+
+# Pairwise difference p-value matrix from stored draws (columns = items): the
+# two-sided bootstrap p, 2 * min(P(diff > 0), P(diff < 0)), optionally adjusted
+# for multiplicity over the unique pairs. Returns NULL past `max_items`.
+#' @noRd
+.psn_diff_pmat <- function(draws, labels, p_adjust = "none", max_items = 500L) {
+  m <- ncol(draws)
+  if (m > max_items) return(NULL)
+  p_mat <- matrix(1, m, m, dimnames = list(labels, labels))
+  bm <- draws[stats::complete.cases(draws), , drop = FALSE]
+  if (nrow(bm) < 2L) { diag(p_mat) <- 0; return(p_mat) }
+  for (i in seq_len(m - 1L)) {
+    js <- seq.int(i + 1L, m)
+    d <- bm[, i] - bm[, js, drop = FALSE]
+    pv <- 2 * pmin(colMeans(d > 0), colMeans(d < 0))
+    p_mat[i, js] <- pv; p_mat[js, i] <- pv
+  }
+  if (p_adjust != "none") {
+    ut <- upper.tri(p_mat)
+    adj <- stats::p.adjust(p_mat[ut], method = p_adjust)
+    p_mat[ut] <- adj
+    p_mat[lower.tri(p_mat)] <- t(p_mat)[lower.tri(p_mat)]
+  }
+  diag(p_mat) <- 0
+  p_mat
+}
+
 #' Bootstrap a psychometric network
 #'
 #' Resamples observations with replacement, re-estimates the network on each
@@ -31,6 +66,24 @@
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param n_boot Number of bootstrap resamples. Default 1000.
 #' @param ci Confidence level for percentile intervals. Default 0.95.
+#' @param measures Centrality measures to bootstrap. Defaults to the two
+#'   recommended for psychometric networks (`"strength"`,
+#'   `"expected_influence"`); `"betweenness"`/`"closeness"` and custom measures
+#'   (via `centrality_fn`) are also accepted. See [net_centralities()].
+#' @param centrality_fn Optional function supplying any non-built-in `measures`
+#'   (see [net_centralities()]).
+#' @param predictability Logical; if `TRUE` and the estimator returns a
+#'   precision matrix (GGM family), bootstrap node predictability (R^2) and
+#'   report its interval. Default `FALSE`.
+#' @param threshold Logical; if `TRUE`, also return the observed network with
+#'   every edge whose bootstrap interval includes zero set to zero
+#'   (`$thresholded`). Default `FALSE`.
+#' @param diff_test Logical; if `TRUE`, also return two-sided bootstrap
+#'   difference p-value matrices for edges (`$edge_diff_p`, `NULL` past 500
+#'   edges) and for each centrality measure (`$centrality_diff_p`). Default
+#'   `FALSE`.
+#' @param p_adjust Multiple-comparison adjustment applied to the difference
+#'   p-value matrices (any [stats::p.adjust] method). Default `"none"`.
 #' @param labels Optional node labels.
 #' @param cores Number of CPU cores for the resample loop. `NULL` (default) uses
 #'   two thirds of the detected cores; `1` forces a serial run. Parallelism uses
@@ -38,12 +91,17 @@
 #'   every resample index is drawn in the parent process before any fitting, the
 #'   result is identical for any number of cores and reproducible from
 #'   `set.seed()`.
+#' @param engine Optional estimator engine forwarded to each resample fit
+#'   (e.g. `"base"`/`"glasso"` for glasso, `"base"`/`"glmnet"` for ising/mgm).
+#'   `NULL` (default) uses the estimator's own default.
 #' @param ... Passed to the estimator.
 #' @return An object of class `psychnet_bootstrap`: tidy `$edges` (with a
 #'   `significant` flag) and `$centrality` data frames, the observed network in
-#'   `$observed`, and the raw resample draws in `$edge_boot`, `$str_boot`,
-#'   `$ei_boot` (one row per resample) with their labels in `$edge_labels` and
-#'   `$node_labels`.
+#'   `$observed`, raw resample draws in `$edge_boot`, `$str_boot`, `$ei_boot`,
+#'   and the general `$centrality_boot` (named list, one matrix per measure).
+#'   Optional `$predictability`, `$thresholded`, `$edge_diff_p`,
+#'   `$centrality_diff_p`, plus `$lambda_path`/`$lambda_selected` when the
+#'   estimator reports them.
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -52,22 +110,40 @@
 #' as.data.frame(bs)
 #' @export
 net_boot <- function(data, method = "glasso", n_boot = 1000L,
-                              ci = 0.95, labels = NULL, cores = NULL, ...) {
+                     ci = 0.95, measures = c("strength", "expected_influence"),
+                     centrality_fn = NULL, predictability = FALSE,
+                     threshold = FALSE, diff_test = FALSE, p_adjust = "none",
+                     labels = NULL, cores = NULL, engine = NULL, ...) {
   stopifnot(is.numeric(n_boot), length(n_boot) == 1L, is.finite(n_boot),
             n_boot >= 1, ci > 0, ci < 1)
+  p_adjust <- match.arg(p_adjust, stats::p.adjust.methods)
   n_boot <- as.integer(n_boot)   # a fractional count corrupts the stored %d field
   mat <- .as_numeric_matrix(data)
   n <- nrow(mat)
   if (is.null(labels)) labels <- colnames(mat)
 
-  obs <- psychnet(mat, method = method, labels = labels, ...)
+  # Engine is forwarded only when set, so estimators without an engine argument
+  # (cor/pcor) are unaffected unless the caller explicitly asks for one.
+  dots <- list(...)
+  if (!is.null(engine)) dots$engine <- engine
+  fit_net <- function(m)
+    do.call(psychnet, c(list(m, method = method, labels = labels), dots))
+
+  obs <- fit_net(mat)
   p <- nrow(obs$nodes)
+  if (is.null(labels)) labels <- obs$nodes$label
   # Directed estimators (e.g. relimp) have an asymmetric network: take every
   # off-diagonal cell, not just the upper triangle.
   ut <- if (isTRUE(obs$directed)) row(obs$weights) != col(obs$weights)
         else upper.tri(obs$weights)
   obs_edges <- obs$weights[ut]
-  obs_cent  <- net_centralities(obs)
+  obs_cent  <- net_centralities(obs, measures = measures,
+                                centrality_fn = centrality_fn)
+  obs_pred  <- if (predictability) .psn_predictability(obs) else NULL
+  if (predictability && is.null(obs_pred)) {
+    warning("`predictability = TRUE` ignored: estimator '", obs$method,
+            "' returns no precision matrix.", call. = FALSE)
+  }
   cores <- .resolve_cores(cores)
 
   # Draw every resample index in the parent, so the fits are pure functions of
@@ -76,14 +152,13 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
                      function(b) sample.int(n, n, replace = TRUE))
 
   one <- function(idx) {
-    fit <- tryCatch(
-      psychnet(mat[idx, , drop = FALSE], method = method,
-                       labels = labels, ...),
-      error = function(e) NULL)
+    fit <- tryCatch(fit_net(mat[idx, , drop = FALSE]), error = function(e) NULL)
     if (is.null(fit)) return(NULL)
-    ct <- net_centralities(fit)
-    list(edge = fit$weights[ut], strength = ct$strength,
-         ei = ct$expected_influence)
+    ct <- net_centralities(fit, measures = measures,
+                           centrality_fn = centrality_fn)
+    list(edge = fit$weights[ut],
+         cent = ct[measures],
+         pred = if (!is.null(obs_pred)) .psn_predictability(fit) else NULL)
   }
 
   draws <- if (cores > 1L)
@@ -92,14 +167,16 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
 
   alpha <- (1 - ci) / 2
   edge_boot <- matrix(NA_real_, n_boot, length(obs_edges))
-  str_boot  <- matrix(NA_real_, n_boot, p)
-  ei_boot   <- matrix(NA_real_, n_boot, p)
+  cent_boot <- stats::setNames(
+    replicate(length(measures), matrix(NA_real_, n_boot, p), simplify = FALSE),
+    measures)
+  pred_boot <- if (!is.null(obs_pred)) matrix(NA_real_, n_boot, p) else NULL
   for (b in seq_len(n_boot)) {
     d <- draws[[b]]
     if (is.null(d) || !is.list(d)) next   # NULL fit or a crashed worker
     edge_boot[b, ] <- d$edge
-    str_boot[b, ]  <- d$strength
-    ei_boot[b, ]   <- d$ei
+    for (m in measures) cent_boot[[m]][b, ] <- d$cent[[m]]
+    if (!is.null(pred_boot)) pred_boot[b, ] <- d$pred
   }
 
   qci <- function(v) stats::quantile(v, c(alpha, 1 - alpha), na.rm = TRUE,
@@ -115,22 +192,54 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
     significant = edge_ci[, 1L] > 0 | edge_ci[, 2L] < 0,
     stringsAsFactors = FALSE, row.names = NULL)
 
-  str_ci <- t(apply(str_boot, 2L, qci))
-  ei_ci  <- t(apply(ei_boot, 2L, qci))
-  cent <- data.frame(
-    node = labels,
-    strength = obs_cent$strength,
-    strength_lower = str_ci[, 1L], strength_upper = str_ci[, 2L],
-    expected_influence = obs_cent$expected_influence,
-    ei_lower = ei_ci[, 1L], ei_upper = ei_ci[, 2L],
-    stringsAsFactors = FALSE, row.names = NULL)
+  # Centrality table: node + observed/lower/upper per measure, uniform naming.
+  cent <- data.frame(node = labels, stringsAsFactors = FALSE, row.names = NULL)
+  for (m in measures) {
+    mci <- t(apply(cent_boot[[m]], 2L, qci))
+    cent[[m]] <- obs_cent[[m]]
+    cent[[paste0(m, "_lower")]] <- mci[, 1L]
+    cent[[paste0(m, "_upper")]] <- mci[, 2L]
+  }
 
-  structure(list(observed = obs, edges = edges, centrality = cent,
-                 edge_boot = edge_boot, str_boot = str_boot, ei_boot = ei_boot,
-                 edge_labels = paste(edges$from, edges$to, sep = "--"),
-                 node_labels = labels,
-                 n_boot = n_boot, ci = ci, method = obs$method),
-            class = "psychnet_bootstrap")
+  # Backward-compatible raw-draw aliases for the two default measures.
+  str_boot <- if ("strength" %in% measures) cent_boot[["strength"]] else NULL
+  ei_boot  <- if ("expected_influence" %in% measures)
+    cent_boot[["expected_influence"]] else NULL
+
+  out <- list(observed = obs, edges = edges, centrality = cent,
+              edge_boot = edge_boot, str_boot = str_boot, ei_boot = ei_boot,
+              centrality_boot = cent_boot,
+              edge_labels = paste(edges$from, edges$to, sep = "--"),
+              node_labels = labels, measures = measures,
+              n_boot = n_boot, ci = ci, method = obs$method,
+              lambda_path = obs$lambda_path, lambda_selected = obs$lambda)
+
+  if (!is.null(pred_boot)) {
+    pci <- t(apply(pred_boot, 2L, qci))
+    out$predictability <- data.frame(
+      node = labels, value = obs_pred,
+      lower = pci[, 1L], upper = pci[, 2L],
+      stringsAsFactors = FALSE, row.names = NULL)
+    out$predictability_boot <- pred_boot
+  }
+
+  if (threshold) {
+    th <- obs$weights
+    not_sig <- !edges$significant
+    bad <- ij[not_sig, , drop = FALSE]
+    th[bad] <- 0
+    if (!isTRUE(obs$directed)) th[bad[, c(2L, 1L), drop = FALSE]] <- 0
+    out$thresholded <- th
+  }
+
+  if (diff_test) {
+    out$edge_diff_p <- .psn_diff_pmat(edge_boot, out$edge_labels, p_adjust)
+    out$centrality_diff_p <- lapply(measures, function(m)
+      .psn_diff_pmat(cent_boot[[m]], labels, p_adjust))
+    names(out$centrality_diff_p) <- measures
+  }
+
+  structure(out, class = "psychnet_bootstrap")
 }
 
 #' Bootstrapped difference test for edges or centralities
@@ -138,18 +247,23 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
 #' Tests, within a single network, whether two edge weights or two node
 #' centralities differ. For every pair it forms the per-resample difference from
 #' the stored bootstrap draws, takes the percentile interval of that difference,
-#' and flags the pair `significant` when the interval excludes zero (Epskamp,
-#' Borsboom & Fried 2018). This is the within-network counterpart to the edge
-#' accuracy intervals reported by [net_boot()].
+#' and flags the pair `significant` when the interval excludes zero; it also
+#' reports the two-sided bootstrap p-value (Epskamp, Borsboom & Fried 2018).
+#' This is the within-network counterpart to the edge accuracy intervals
+#' reported by [net_boot()].
 #'
 #' @param boot A `psychnet_bootstrap` object from [net_boot()].
-#' @param type Quantity to compare: `"edge"` (default), `"strength"`, or
-#'   `"expected_influence"`.
+#' @param type Quantity to compare: `"edge"` (default), or any centrality
+#'   measure bootstrapped by [net_boot()] (e.g. `"strength"`,
+#'   `"expected_influence"`).
 #' @param ci Confidence level for the difference interval. Defaults to the level
 #'   used by the bootstrap object.
+#' @param p_adjust Multiple-comparison adjustment for the pairwise p-values (any
+#'   [stats::p.adjust] method). Default `"none"`.
 #' @return A tidy data frame, one row per pair, with `item1`, `item2`, the two
 #'   observed values, their observed difference, the percentile interval of the
-#'   bootstrap difference (`lower`, `upper`), and a logical `significant`.
+#'   bootstrap difference (`lower`, `upper`), the two-sided `p_value`, and a
+#'   logical `significant`.
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -157,18 +271,17 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
 #' bs <- net_boot(x, n_boot = 100)
 #' difference_test(bs, type = "strength")
 #' @export
-difference_test <- function(boot, type = c("edge", "strength",
-                                           "expected_influence"), ci = NULL) {
+difference_test <- function(boot, type = "edge", ci = NULL,
+                            p_adjust = "none") {
   stopifnot(inherits(boot, "psychnet_bootstrap"))
-  type <- match.arg(type)
-  draws <- switch(type, edge = boot$edge_boot, strength = boot$str_boot,
-                  expected_influence = boot$ei_boot)
-  if (is.null(draws))
-    stop("This bootstrap object has no stored draws; re-run net_boot().")
+  p_adjust <- match.arg(p_adjust, stats::p.adjust.methods)
+  draws <- if (type == "edge") boot$edge_boot else boot$centrality_boot[[type]]
+  if (is.null(draws)) {
+    stop("No stored draws for type = '", type, "'. Available: edge, ",
+         paste(boot$measures, collapse = ", "), ".", call. = FALSE)
+  }
   labs <- if (type == "edge") boot$edge_labels else boot$node_labels
-  obs <- switch(type, edge = boot$edges$observed,
-                strength = boot$centrality$strength,
-                expected_influence = boot$centrality$expected_influence)
+  obs <- if (type == "edge") boot$edges$observed else boot$centrality[[type]]
   if (is.null(ci)) ci <- boot$ci
   stopifnot(ci > 0, ci < 1)
   alpha <- (1 - ci) / 2
@@ -177,17 +290,21 @@ difference_test <- function(boot, type = c("edge", "strength",
   if (m < 2L) stop("Need at least two items to compare.")
   pairs <- which(upper.tri(matrix(0, m, m)), arr.ind = TRUE)
   i <- pairs[, 1L]; j <- pairs[, 2L]
-  diff_ci <- t(vapply(seq_len(nrow(pairs)), function(k) {
+  stats_k <- t(vapply(seq_len(nrow(pairs)), function(k) {
     d <- draws[, i[k]] - draws[, j[k]]
-    stats::quantile(d, c(alpha, 1 - alpha), na.rm = TRUE, names = FALSE)
-  }, numeric(2L)))
+    c(stats::quantile(d, c(alpha, 1 - alpha), na.rm = TRUE, names = FALSE),
+      2 * min(mean(d > 0, na.rm = TRUE), mean(d < 0, na.rm = TRUE)))
+  }, numeric(3L)))
+  pval <- stats_k[, 3L]
+  if (p_adjust != "none") pval <- stats::p.adjust(pval, method = p_adjust)
 
   data.frame(
     item1 = labs[i], item2 = labs[j],
     value1 = obs[i], value2 = obs[j],
     obs_diff = obs[i] - obs[j],
-    lower = diff_ci[, 1L], upper = diff_ci[, 2L],
-    significant = diff_ci[, 1L] > 0 | diff_ci[, 2L] < 0,
+    lower = stats_k[, 1L], upper = stats_k[, 2L],
+    p_value = pval,
+    significant = stats_k[, 1L] > 0 | stats_k[, 2L] < 0,
     stringsAsFactors = FALSE, row.names = NULL)
 }
 
@@ -209,8 +326,8 @@ as.data.frame.psychnet_bootstrap <- function(x, ...) x$edges
 print.psychnet_bootstrap <- function(x, ...) {
   cat(sprintf("<psychnet_bootstrap> %s, %d resamples, %.0f%% CI\n",
               x$method, x$n_boot, 100 * x$ci))
-  cat(sprintf("  %d edges (%d significant), %d nodes\n",
+  cat(sprintf("  %d edges (%d significant), %d nodes, measures: %s\n",
               nrow(x$edges), sum(x$edges$significant, na.rm = TRUE),
-              nrow(x$centrality)))
+              nrow(x$centrality), paste(x$measures, collapse = ", ")))
   invisible(x)
 }

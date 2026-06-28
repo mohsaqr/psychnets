@@ -4,33 +4,35 @@
 \alias{difference_test}
 \title{Bootstrapped difference test for edges or centralities}
 \usage{
-difference_test(
-  boot,
-  type = c("edge", "strength", "expected_influence"),
-  ci = NULL
-)
+difference_test(boot, type = "edge", ci = NULL, p_adjust = "none")
 }
 \arguments{
 \item{boot}{A \code{psychnet_bootstrap} object from \code{\link[=net_boot]{net_boot()}}.}
 
-\item{type}{Quantity to compare: \code{"edge"} (default), \code{"strength"}, or
-\code{"expected_influence"}.}
+\item{type}{Quantity to compare: \code{"edge"} (default), or any centrality
+measure bootstrapped by \code{\link[=net_boot]{net_boot()}} (e.g. \code{"strength"},
+\code{"expected_influence"}).}
 
 \item{ci}{Confidence level for the difference interval. Defaults to the level
 used by the bootstrap object.}
+
+\item{p_adjust}{Multiple-comparison adjustment for the pairwise p-values (any
+\link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
 }
 \value{
 A tidy data frame, one row per pair, with \code{item1}, \code{item2}, the two
 observed values, their observed difference, the percentile interval of the
-bootstrap difference (\code{lower}, \code{upper}), and a logical \code{significant}.
+bootstrap difference (\code{lower}, \code{upper}), the two-sided \code{p_value}, and a
+logical \code{significant}.
 }
 \description{
 Tests, within a single network, whether two edge weights or two node
 centralities differ. For every pair it forms the per-resample difference from
 the stored bootstrap draws, takes the percentile interval of that difference,
-and flags the pair \code{significant} when the interval excludes zero (Epskamp,
-Borsboom & Fried 2018). This is the within-network counterpart to the edge
-accuracy intervals reported by \code{\link[=net_boot]{net_boot()}}.
+and flags the pair \code{significant} when the interval excludes zero; it also
+reports the two-sided bootstrap p-value (Epskamp, Borsboom & Fried 2018).
+This is the within-network counterpart to the edge accuracy intervals
+reported by \code{\link[=net_boot]{net_boot()}}.
 }
 \examples{
 set.seed(1)

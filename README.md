@@ -3,7 +3,7 @@
 Clean-room, base-R psychometric network estimation. The R counterpart to the
 `psychaj` TypeScript library.
 
-`psychnet` estimates the cross-sectional network models used in psychometrics —
+`psychnets` estimates the cross-sectional network models used in psychometrics —
 correlation, partial correlation, EBIC-regularized Gaussian graphical models
 (graphical lasso), the Ising model for binary data, and mixed graphical
 models — **reimplemented from first principles in base R, with no compiled
@@ -12,7 +12,7 @@ dependencies**.
 ## Why "clean room"
 
 Each regularized estimator ships a **dependency-free correctness certificate**.
-Rather than trusting a result because it matches an external solver, `psychnet`
+Rather than trusting a result because it matches an external solver, `psychnets`
 grades it against its own convex objective:
 
 - For the Gaussian graphical model, `glasso_kkt()` returns the **stationarity
@@ -25,7 +25,7 @@ grades it against its own convex objective:
 Every fitted network carries its certificate in `$kkt`. External packages
 (`qgraph`, `IsingFit`, `mgm`, `bootnet`) are used only as *cross-checks at
 independent-solver precision*, never as the definition of correct. In practice
-`psychnet`'s graphical lasso is **provably no further from the optimum** than
+`psychnets`' graphical lasso is **provably no further from the optimum** than
 `qgraph::EBICglasso()`, which stops at glasso's default `thr = 1e-4`.
 
 ## Estimators (v0.1)
@@ -56,7 +56,7 @@ excluded), each pure base R and self-certified.
 ## Example
 
 ```r
-library(psychnet)
+library(psychnets)
 
 # Continuous data -> EBIC graphical lasso, self-certified
 S   <- 0.4^abs(outer(1:8, 1:8, "-"))      # an AR(1) correlation matrix

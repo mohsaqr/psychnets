@@ -12,6 +12,7 @@ mgm_fit(
   lambda_min_ratio = 0.01,
   threshold = c("LW", "HW", "none"),
   rule = c("AND", "OR"),
+  moderators = NULL,
   weights = NULL,
   na_method = c("pairwise", "listwise"),
   native = TRUE,
@@ -35,6 +36,11 @@ binary); auto-detected if \code{NULL}.}
 \code{"HW"}, or \code{"none"}, matching \code{mgm::mgm()}.}
 
 \item{rule}{Edge-combination rule: \code{"AND"} (default) or \code{"OR"}.}
+
+\item{moderators}{Optional single column index of a moderator variable. When
+supplied, fits a \emph{moderated} MGM (that variable moderates every pairwise
+edge) and returns a \code{psychnet_moderated} object to be read with
+\code{\link[=condition]{condition()}}; glmnet-based, and \code{weights} are not supported in this mode.}
 
 \item{weights}{Optional non-negative observation weights, one per row of the
 (NA-prepared) data. \code{NULL} (default) is unweighted.}

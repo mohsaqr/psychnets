@@ -9,8 +9,15 @@ net_boot(
   method = "glasso",
   n_boot = 1000L,
   ci = 0.95,
+  measures = c("strength", "expected_influence"),
+  centrality_fn = NULL,
+  predictability = FALSE,
+  threshold = FALSE,
+  diff_test = FALSE,
+  p_adjust = "none",
   labels = NULL,
   cores = NULL,
+  engine = NULL,
   ...
 )
 }
@@ -23,6 +30,30 @@ net_boot(
 
 \item{ci}{Confidence level for percentile intervals. Default 0.95.}
 
+\item{measures}{Centrality measures to bootstrap. Defaults to the two
+recommended for psychometric networks (\code{"strength"},
+\code{"expected_influence"}); \code{"betweenness"}/\code{"closeness"} and custom measures
+(via \code{centrality_fn}) are also accepted. See \code{\link[=net_centralities]{net_centralities()}}.}
+
+\item{centrality_fn}{Optional function supplying any non-built-in \code{measures}
+(see \code{\link[=net_centralities]{net_centralities()}}).}
+
+\item{predictability}{Logical; if \code{TRUE} and the estimator returns a
+precision matrix (GGM family), bootstrap node predictability (R^2) and
+report its interval. Default \code{FALSE}.}
+
+\item{threshold}{Logical; if \code{TRUE}, also return the observed network with
+every edge whose bootstrap interval includes zero set to zero
+(\verb{$thresholded}). Default \code{FALSE}.}
+
+\item{diff_test}{Logical; if \code{TRUE}, also return two-sided bootstrap
+difference p-value matrices for edges (\verb{$edge_diff_p}, \code{NULL} past 500
+edges) and for each centrality measure (\verb{$centrality_diff_p}). Default
+\code{FALSE}.}
+
+\item{p_adjust}{Multiple-comparison adjustment applied to the difference
+p-value matrices (any \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+
 \item{labels}{Optional node labels.}
 
 \item{cores}{Number of CPU cores for the resample loop. \code{NULL} (default) uses
@@ -32,14 +63,20 @@ every resample index is drawn in the parent process before any fitting, the
 result is identical for any number of cores and reproducible from
 \code{set.seed()}.}
 
+\item{engine}{Optional estimator engine forwarded to each resample fit
+(e.g. \code{"base"}/\code{"glasso"} for glasso, \code{"base"}/\code{"glmnet"} for ising/mgm).
+\code{NULL} (default) uses the estimator's own default.}
+
 \item{...}{Passed to the estimator.}
 }
 \value{
 An object of class \code{psychnet_bootstrap}: tidy \verb{$edges} (with a
 \code{significant} flag) and \verb{$centrality} data frames, the observed network in
-\verb{$observed}, and the raw resample draws in \verb{$edge_boot}, \verb{$str_boot},
-\verb{$ei_boot} (one row per resample) with their labels in \verb{$edge_labels} and
-\verb{$node_labels}.
+\verb{$observed}, raw resample draws in \verb{$edge_boot}, \verb{$str_boot}, \verb{$ei_boot},
+and the general \verb{$centrality_boot} (named list, one matrix per measure).
+Optional \verb{$predictability}, \verb{$thresholded}, \verb{$edge_diff_p},
+\verb{$centrality_diff_p}, plus \verb{$lambda_path}/\verb{$lambda_selected} when the
+estimator reports them.
 }
 \description{
 Resamples observations with replacement, re-estimates the network on each

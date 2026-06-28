@@ -13,12 +13,12 @@ has_cograph <- requireNamespace("cograph", quietly = TRUE)
 ```
 
 ```{r}
-library(psychnet)
+library(psychnets)
 ```
 
 The **Ising model** is the binary analogue of the Gaussian graphical model: a
 network for **0/1 data**, where each edge is a conditional association between two
-binary variables. `psychnet` fits it by nodewise L1-penalised logistic regression
+binary variables. `psychnets` fits it by nodewise L1-penalised logistic regression
 with EBIC selection (`method = "ising"`, equivalent to `IsingFit::IsingFit()`),
 or unregularised with Wald-based pruning (`method = "ising_sampler"`). Both
 self-certify via the nodewise GLM stationarity residual.

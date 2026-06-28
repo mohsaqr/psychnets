@@ -43,3 +43,23 @@ test_that("psychnet routes to ising and mgm", {
   expect_equal(psychnet(b, "ising")$method, "ising")
   expect_equal(psychnet(.gen_mixed(4), "mgm")$method, "mgm")
 })
+
+test_that("moderated MGM fits and conditions, recovering a moderated edge", {
+  skip_if_not_installed("glmnet")
+  set.seed(1)
+  n <- 400
+  x1 <- stats::rnorm(n); x2 <- stats::rnorm(n)
+  mod <- rep(0:1, each = n / 2)
+  y <- x1 * (mod == 1) + stats::rnorm(n) * 0.5      # x1-y edge only when mod == 1
+  d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
+  fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
+  expect_s3_class(fit, "psychnet_moderated")
+  net0 <- condition(fit, 0)
+  net1 <- condition(fit, 1)
+  expect_s3_class(net1, "psychnet")
+  expect_true(inherits(net1, "cograph_network"))
+  # the x1-y edge (nodes 1,3) is present at mod = 1 and (near) absent at mod = 0
+  expect_gt(abs(net1$weights[1, 3]), abs(net0$weights[1, 3]))
+  # the moderator node carries no edges
+  expect_equal(unname(net1$weights[4, ]), rep(0, 4))
+})

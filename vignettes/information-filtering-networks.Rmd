@@ -13,7 +13,7 @@ has_cograph <- requireNamespace("cograph", quietly = TRUE)
 ```
 
 ```{r}
-library(psychnet)
+library(psychnets)
 ```
 
 **Information-filtering networks** take a different route to sparsity than the

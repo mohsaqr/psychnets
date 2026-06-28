@@ -16,17 +16,33 @@
 .soft <- function(z, g) sign(z) * pmax(abs(z) - g, 0)
 
 # --- single-column lasso (coordinate descent) --------------------------------
-.glasso_lasso_column <- function(W11, s12, beta, rho, max_inner, tol_inner) {
-  pp <- length(s12)
+# Pathwise coordinate descent with covariance/residual updates (Friedman,
+# Hastie & Tibshirani 2010): keep a running r = W11 %*% beta so each coordinate
+# reads r[k] in O(1), and apply an O(p) rank-1 update to r only when a
+# coordinate actually moves -- in a sparse network most stay zero, so the inner
+# sweeps are far cheaper than recomputing a full dot product per coordinate. The
+# update is algebraically identical to the naive sweep, so it converges to the
+# same unique optimum of the strictly convex objective.
+.glasso_lasso_column <- function(W11, s12, beta, rho, max_inner, tol_inner, dgg) {
+  pp  <- length(s12)
+  r   <- as.numeric(W11 %*% beta)           # running W11 %*% beta
   for (inner in seq_len(max_inner)) {
     max_diff <- 0
     for (k in seq_len(pp)) {
-      partial <- s12[k] - (sum(W11[k, ] * beta) - W11[k, k] * beta[k])
-      wkk <- W11[k, k]
-      new_k <- if (wkk < 1e-12) 0 else .soft(partial, rho) / wkk
-      d <- abs(new_k - beta[k])
-      if (d > max_diff) max_diff <- d
-      beta[k] <- new_k
+      wkk <- dgg[k]
+      if (wkk < 1e-12) {
+        new_k <- 0
+      } else {
+        partial <- s12[k] - (r[k] - wkk * beta[k])
+        thr <- abs(partial) - rho           # soft-threshold, inlined (scalar)
+        new_k <- if (thr > 0) (if (partial > 0) thr else -thr) / wkk else 0
+      }
+      delta <- new_k - beta[k]
+      if (delta != 0) {
+        r <- r + W11[, k] * delta           # rank-1 residual update
+        beta[k] <- new_k
+        ad <- abs(delta); if (ad > max_diff) max_diff <- ad
+      }
     }
     if (max_diff < tol_inner) break
   }
@@ -40,9 +56,12 @@
                         w_init = NULL, beta_init = NULL) {
   p <- ncol(S)
   W <- if (is.null(w_init)) S else w_init
-  diag(W) <- diag(S)                                   # penalize.diagonal = FALSE
+  dS <- diag(S)
+  diag(W) <- dS                                        # penalize.diagonal = FALSE
   Beta <- if (is.null(beta_init)) matrix(0, p, p) else beta_init
 
+  # diag(W) is held fixed at diag(S) (only off-diagonals update), so each
+  # column's W11[k, k] is just dS[idx] -- precompute it instead of diag(W11).
   for (outer in seq_len(max_outer)) {
     max_diff <- 0
     for (j in seq_len(p)) {
@@ -50,7 +69,7 @@
       W11  <- W[idx, idx, drop = FALSE]
       s12  <- S[idx, j]
       beta <- .glasso_lasso_column(W11, s12, Beta[j, idx], rho,
-                                   max_inner, tol_inner)
+                                   max_inner, tol_inner, dS[idx])
       w12  <- as.numeric(W11 %*% beta)
       d <- max(abs(w12 - W[idx, j]))
       if (d > max_diff) max_diff <- d

@@ -18,3 +18,4 @@
 ^validation$
 ^AGENT-NOTE.*
 ^data-raw$
+^cran-comments\.md$

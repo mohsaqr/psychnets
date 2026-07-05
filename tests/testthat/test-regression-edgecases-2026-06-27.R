@@ -40,7 +40,7 @@ test_that("a covariance cor_matrix is normalized to unit scale (not raw weights)
   w <- cor_network(cor_matrix = Cov)$weights
   expect_lte(max(abs(w)), 1 + 1e-8)                  # was ~160 before the fix
   # and a proper correlation matrix passes through unchanged
-  expect_equal(unname(psychnet:::.check_cor_matrix(S)), unname(S))
+  expect_equal(unname(psychnets:::.check_cor_matrix(S)), unname(S))
 })
 
 test_that("an indefinite cor_matrix is rejected, not silently NaN", {

@@ -23,7 +23,7 @@ test_that("the selected support is a symmetric edge set", {
 test_that("the full graph recovers the exact Gaussian MLE (W = S)", {
   S <- ar1(5, 0.5)
   full <- matrix(TRUE, 5, 5); diag(full) <- FALSE
-  theta <- psychnet:::.ggm_fit_support(S, full)
+  theta <- psychnets:::.ggm_fit_support(S, full)
   expect_lt(max(abs(solve(theta) - S)), 1e-8)        # saturated model = S^{-1}
   expect_lt(max(abs(theta - solve(S))), 1e-8)
 })

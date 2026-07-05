@@ -1,0 +1,144 @@
+---
+title: "Group networks from event logs"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Group networks from event logs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
+                      fig.height = 4.4)
+has_cograph <- requireNamespace("cograph", quietly = TRUE)
+library(psychnets)
+```
+
+```{r simulate, include = FALSE}
+# A small simulated learning-process log: students from two cohorts each emit a
+# sequence of self-regulation actions. Both cohorts have a tightly co-occurring
+# cluster of three states -- but a DIFFERENT cluster: in "focused" it is
+# plan/monitor/reflect, in "scattered" it is reflect/help/offtask. The two
+# networks therefore carry a similar amount of structure in different places. The
+# log is the kind of trace a learning-management system produces, one row per
+# action.
+set.seed(1)
+states <- c("plan", "monitor", "reflect", "help", "offtask")
+make_cohort <- function(name, cluster, n_students) {
+  f <- stats::rnorm(n_students)                       # latent regulation tendency
+  lambda <- rep(0.1, 5)                               # weak by default ...
+  lambda[cluster] <- 1.0                              # ... strong inside the cluster
+  mu <- outer(f, lambda) + matrix(stats::rnorm(n_students * 5, 0, .4),
+                                  n_students, 5)
+  counts <- matrix(pmax(0, round(6 + 3 * mu)),        # non-negative action counts
+                   n_students, 5)                     # (pmax drops the dims)
+  per_student <- lapply(seq_len(n_students), function(i) {
+    act <- rep(states, counts[i, ])
+    if (!length(act)) act <- sample(states, 1)
+    data.frame(student = sprintf("%s%03d", name, i), cohort = name,
+               action = act, stringsAsFactors = FALSE)
+  })
+  do.call(rbind, per_student)
+}
+events <- rbind(make_cohort("focused",   1:3, 100),
+                make_cohort("scattered", 3:5, 100))
+events <- events[sample(nrow(events)), ]              # shuffle into log order
+rownames(events) <- NULL
+```
+
+Much psychological and learning-process data arrives as an **event log** — one
+row per action taken by a person over time — rather than as a tidy
+person-by-variable table. `psychnet()` reads such a log directly: name the
+`actor` and `action` columns and it builds each person's profile internally,
+with no manual reshaping. Adding `group` estimates a **separate network for each
+group** and returns a collection you can plot, bootstrap, and compare with the
+same verbs you would use on a single network.
+
+## An event log
+
+The example is a simulated trace of `r length(unique(events$student))` students
+from two cohorts, each emitting one of five self-regulation actions per row.
+
+```{r}
+head(events)
+```
+
+## One network per group
+
+Name the actor and action columns and pass `group`. `psychnet()` reduces each
+student to their action profile, splits by cohort, and estimates a graphical
+lasso network per group. The result is a `psychnet_group`: a named collection of
+networks. The grouping column is never itself a node.
+
+```{r}
+nets <- psychnet(events, actor = "student", action = "action", group = "cohort")
+nets
+```
+
+It plots as a grid, one panel per group, with a shared node layout so the same
+state sits in the same place in both panels.
+
+```{r grid, eval = has_cograph, fig.width = 8, fig.height = 4.2}
+cograph::splot(nets, psych_styling = TRUE)
+```
+
+## Centrality, side by side
+
+Every framework verb detects the group object and returns one result per group;
+there is no per-group looping for the analyst to write. `as.data.frame()` stacks
+the per-group tables under a `group` column.
+
+```{r}
+net_centralities(nets) |> as.data.frame()
+```
+
+## Predictability
+
+```{r}
+net_predict(nets) |> as.data.frame()
+```
+
+## Bootstrapped edge stability
+
+`net_boot()` resamples students within each group, re-estimates, and returns a
+percentile confidence interval and a `significant` flag (interval excludes zero)
+for every edge. Ask for the significant edges with an argument rather than
+subsetting the result by hand.
+
+```{r}
+boot <- net_boot(nets, n_boot = 150)
+as.data.frame(boot, significant = TRUE)
+```
+
+## Comparing the two networks
+
+`net_compare()` runs a permutation network-comparison test between two groups:
+global strength (M), overall structure (S), and per-edge differences (E).
+
+```{r}
+net_compare(nets, c("focused", "scattered"), iter = 250)
+```
+
+The two cohorts were built to carry a **similar amount** of regulation structure
+in **different places** (a strong plan/monitor/reflect cluster versus a strong
+reflect/help/offtask one). That is what the test recovers: global strength (M) is
+comparable, while the network structure (S) differs.
+
+## How it works
+
+An event log has no person-by-variable matrix to estimate a network on, so
+`psychnet()` builds one. Each occasion (here, each student) becomes a row, each
+distinct action a column, and the cell holds that action's count — the same
+"frequency" representation `event_frequencies()` returns. The network is the
+graphical lasso of that matrix.
+
+`group` simply splits the log before this reduction and estimates one network per
+level. Because each group is reduced to an ordinary numeric design matrix, the
+group object resamples and compares exactly like cross-sectional data — which is
+why `net_boot()` and `net_compare()` work on it with no special handling.
+
+A `time` column, if present, is used only to split each actor into sessions from
+gaps between events (`compute_sessions`); there is no temporal or lagged model
+here. When a student contributes several occasions, the actor clustering is
+removed by person-centering (`standardize = TRUE`, the default), or — with
+`standardize = FALSE` — decomposed into within- and between-actor networks.

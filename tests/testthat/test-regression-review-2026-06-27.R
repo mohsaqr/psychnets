@@ -70,8 +70,8 @@ test_that("weights = NULL is byte-identical to uniform weights (equivalence held
 
 test_that(".polyserial returns 0 for a single-level ordinal or constant partner", {
   set.seed(201)
-  expect_equal(psychnet:::.polyserial(stats::rnorm(20), rep(2L, 20)), 0)  # 1 level
-  expect_equal(psychnet:::.polyserial(rep(1, 20), sample(1:4, 20, TRUE)), 0)  # const cont
+  expect_equal(psychnets:::.polyserial(stats::rnorm(20), rep(2L, 20)), 0)  # 1 level
+  expect_equal(psychnets:::.polyserial(rep(1, 20), sample(1:4, 20, TRUE)), 0)  # const cont
 })
 
 test_that("cor_auto yields a finite, symmetric matrix for a degenerate pair", {

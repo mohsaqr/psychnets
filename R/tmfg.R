@@ -116,6 +116,9 @@ tmfg_certificate <- function(x) {
 #' @param data Numeric data frame or matrix (rows = observations). Optional if
 #'   `cor_matrix` is supplied.
 #' @param cor_matrix Optional correlation matrix.
+#' @param n Accepted and ignored. TMFG is a structural filter and needs no
+#'   sample size; the argument exists only so a uniform `(cor_matrix=, n=)` call
+#'   shared with the other estimators does not partial-match `na_method`.
 #' @param cor_method Correlation when `data` is supplied: `"pearson"` (default),
 #'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see [cor_auto()]).
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
@@ -130,7 +133,7 @@ tmfg_certificate <- function(x) {
 #' x <- matrix(stats::rnorm(200 * 6), 200, 6)
 #' tmfg_network(x)
 #' @export
-tmfg_network <- function(data = NULL, cor_matrix = NULL,
+tmfg_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          cor_method = c("pearson", "spearman", "kendall", "auto"),
                          na_method = c("pairwise", "listwise"), labels = NULL) {
   cor_method <- match.arg(cor_method)

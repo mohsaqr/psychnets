@@ -220,3 +220,86 @@ test_that("moderated mgm_fit + condition() matches mgm::mgm(moderators) + condit
     }
   }
 })
+
+# ---- batch: graph metrics ported from networktools / qgraph / cocor ----------
+
+test_that("net_bridge matches networktools::bridge (undirected)", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("networktools")
+  set.seed(7); p <- 8
+  S <- cov2cor(crossprod(matrix(stats::rnorm(p * p), p)) + diag(p))
+  fit <- ebic_glasso(cor_matrix = S, n = 500); W <- fit$weights
+  comm <- c(1, 1, 1, 2, 2, 2, 3, 3)
+  ob <- net_bridge(fit, communities = comm)
+  rb <- networktools::bridge(W, communities = comm)
+  expect_lt(max(abs(ob$bridge_strength    - rb[["Bridge Strength"]])), 1e-8)
+  expect_lt(max(abs(ob$bridge_betweenness - rb[["Bridge Betweenness"]])), 1e-8)
+  expect_lt(max(abs(ob$bridge_closeness   - rb[["Bridge Closeness"]])), 1e-8)
+  expect_lt(max(abs(ob$bridge_ei1 - rb[["Bridge Expected Influence (1-step)"]])), 1e-8)
+  expect_lt(max(abs(ob$bridge_ei2 - rb[["Bridge Expected Influence (2-step)"]])), 1e-8)
+})
+
+test_that("2-step expected influence matches networktools::expectedInf", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("networktools")
+  set.seed(7); p <- 8
+  S <- cov2cor(crossprod(matrix(stats::rnorm(p * p), p)) + diag(p))
+  fit <- ebic_glasso(cor_matrix = S, n = 500)
+  ours <- net_centralities(fit, measures = "expected_influence_2step")$expected_influence_2step
+  ref  <- as.numeric(networktools::expectedInf(fit$weights, step = 2)$step2)
+  expect_lt(max(abs(ours - ref)), 1e-8)
+})
+
+test_that("net_clustering matches qgraph::clustcoef_auto", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("qgraph")
+  set.seed(7); p <- 8
+  S <- cov2cor(crossprod(matrix(stats::rnorm(p * p), p)) + diag(p))
+  fit <- ebic_glasso(cor_matrix = S, n = 500)
+  oc <- net_clustering(fit); rc <- qgraph::clustcoef_auto(fit$weights)
+  for (col in intersect(names(oc), names(rc)))
+    expect_lt(max(abs(oc[[col]] - rc[[col]]), na.rm = TRUE), 1e-8)
+})
+
+test_that("Hittner2003 test matches cocor; redundancy matches goldbricker", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("cocor")
+  skip_if_not_installed("networktools")
+  set.seed(3)
+  for (. in 1:5) {
+    r <- stats::runif(3, -0.7, 0.7); n <- sample(80:400, 1)
+    ours <- .psn_hittner2003(r[1], r[2], r[3], n)
+    ref  <- suppressWarnings(cocor::cocor.dep.groups.overlap(
+      r[1], r[2], r[3], n, test = "hittner2003")@hittner2003$p.value)
+    expect_lt(abs(ours - ref), 1e-10)
+  }
+  og <- redundancy(SRL_Claude, cor_method = "auto")
+  rg <- suppressWarnings(networktools::goldbricker(SRL_Claude, progressbar = FALSE))
+  expect_lt(max(abs(attr(og, "proportion_matrix") - rg$proportion_matrix),
+                na.rm = TRUE), 1e-10)
+})
+
+test_that("net_aggregate PCA composite matches networktools::net_reduce", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("networktools")
+  set.seed(1)
+  d <- as.data.frame(matrix(stats::rnorm(200 * 4), 200, 4)); names(d) <- paste0("V", 1:4)
+  ours <- net_aggregate(d, c(1, 1, 2, 2), method = "pca")[["1"]]
+  red  <- networktools::net_reduce(d, badpairs = list(c("V1", "V2")), method = "PCA")
+  expect_equal(abs(stats::cor(ours, red[["PCA.V1.V2"]])), 1, tolerance = 1e-8)
+})
+
+test_that("net_edge_betweenness matches igraph on an unweighted graph", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("igraph")
+  set.seed(2); A <- matrix(0, 7, 7); on <- sample(which(upper.tri(A)), 9)
+  A[on] <- 1; A <- A + t(A); colnames(A) <- rownames(A) <- paste0("n", 1:7)
+  ours <- net_edge_betweenness(A)
+  g <- igraph::graph_from_adjacency_matrix(A, mode = "undirected")
+  el <- igraph::as_edgelist(g)
+  key <- function(a, b) paste(pmin(a, b), pmax(a, b))
+  refm  <- stats::setNames(igraph::edge_betweenness(g), key(el[, 1], el[, 2]))
+  oursm <- stats::setNames(ours$edge_betweenness, key(ours$from, ours$to))
+  common <- intersect(names(refm), names(oursm))
+  expect_lt(max(abs(oursm[common] - refm[common])), 1e-8)
+})

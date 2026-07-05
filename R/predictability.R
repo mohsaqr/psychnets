@@ -32,6 +32,16 @@
 #' net_predict(ebic_glasso(cor_matrix = S, n = 250))
 #' @export
 net_predict <- function(x, data = NULL, ...) {
+  if (inherits(x, "psychnet_group")) {
+    .reject_multilevel_group(x, "net_predict")
+    subs <- attr(x, "subsets")
+    res  <- lapply(names(x), function(lv)
+      net_predict(x[[lv]], data = if (is.null(data)) subs[[lv]] else data, ...))
+    names(res) <- names(x)
+    attr(res, "group_col") <- attr(x, "group_col")
+    class(res) <- c("psychnet_predict_group", "psychnet_result_group")
+    return(res)
+  }
   stopifnot(inherits(x, "psychnet"))
   labs <- x$nodes$label
   p <- nrow(x$nodes)

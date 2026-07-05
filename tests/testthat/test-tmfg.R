@@ -19,9 +19,9 @@ test_that("the chordality test rejects a 4-cycle", {
   c4 <- matrix(FALSE, 4, 4)
   e <- rbind(c(1, 2), c(2, 3), c(3, 4), c(4, 1))
   for (k in seq_len(nrow(e))) c4[e[k, 1], e[k, 2]] <- c4[e[k, 2], e[k, 1]] <- TRUE
-  expect_false(psychnet:::.is_chordal(c4))
+  expect_false(psychnets:::.is_chordal(c4))
   c4[1, 3] <- c4[3, 1] <- TRUE                        # add a chord
-  expect_true(psychnet:::.is_chordal(c4))
+  expect_true(psychnets:::.is_chordal(c4))
 })
 
 test_that("LoGo reproduces S on the TMFG support and is positive definite", {

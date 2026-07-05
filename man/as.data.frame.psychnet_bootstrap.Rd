@@ -4,12 +4,17 @@
 \alias{as.data.frame.psychnet_bootstrap}
 \title{Tidy a network bootstrap}
 \usage{
-\method{as.data.frame}{psychnet_bootstrap}(x, ...)
+\method{as.data.frame}{psychnet_bootstrap}(x, row.names = NULL, optional = FALSE, ..., significant = FALSE)
 }
 \arguments{
 \item{x}{A \code{psychnet_bootstrap} object.}
 
+\item{row.names, optional}{Ignored (S3 consistency).}
+
 \item{...}{Unused.}
+
+\item{significant}{If \code{TRUE}, return only the edges whose confidence interval
+excludes zero. Default \code{FALSE} (all edges).}
 }
 \value{
 The tidy \verb{$edges} data frame (one row per edge, with its percentile

@@ -1,0 +1,140 @@
+---
+title: "Visualizing bootstrap, centrality and difference results (base R)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Visualizing bootstrap, centrality and difference results (base R)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 7, fig.height = 5, dpi = 100)
+library(psychnets)
+```
+
+`psychnets` ships **native base-R plot methods** for every diagnostic verb, so
+you can inspect a model's stability and structure with no additional packages
+(`graphics` and `grDevices` ship with R). This vignette walks through them on the
+bundled `SRL_Claude` self-regulated-learning data (300 respondents, five MSLQ
+subscales). A companion vignette,
+*"Visualizing networks with cograph"*, shows the richer cograph renderings of the
+same results.
+
+Every plot is an S3 `plot()` method on a result object — call `plot()` on what a
+verb returns; there is no bracket-subsetting to assemble.
+
+# Estimate a network
+
+```{r fit}
+X   <- as.matrix(SRL_Claude)
+fit <- ebic_glasso(X)
+fit
+```
+
+# Centralities
+
+`net_centralities()` returns a tidy table; `plot()` draws it.
+
+```{r centralities}
+ct <- net_centralities(fit, measures = c("strength", "expected_influence", "betweenness"))
+ct
+```
+
+`type = "bar"` (the default) gives one sorted lollipop panel per measure:
+
+```{r cent-bar, fig.width = 9, fig.height = 4.5}
+plot(ct)
+```
+
+`type = "line"` gives the qgraph-style faceted centrality plot — one panel per
+measure, nodes sharing a single vertical order, each panel on its own (raw)
+axis:
+
+```{r cent-line, fig.width = 8, fig.height = 4.5}
+plot(ct, type = "line")
+```
+
+Use `scale = "z"` or `scale = "relative"` if you prefer a standardised or a
+0--1 axis instead of raw values.
+
+# Bootstrap accuracy
+
+`net_boot()` resamples and re-estimates; `plot()` defaults to the edge-weight
+confidence intervals, sorted by the observed weight (edges whose interval
+excludes zero are emphasised).
+
+```{r boot}
+set.seed(1)
+bs <- net_boot(X, method = "glasso", n_boot = 250, cores = 1)
+plot(bs)
+```
+
+Bootstrapped centrality intervals, one panel per measure:
+
+```{r boot-cent, fig.width = 8, fig.height = 5}
+plot(bs, type = "centrality")
+```
+
+The bootstrapped difference "significance box" matrices — which edges, or which
+node strengths, differ from one another:
+
+```{r boot-diff, fig.width = 6.5, fig.height = 6.5}
+plot(bs, type = "edge_diff")
+plot(bs, type = "centrality_diff", measure = "strength")
+```
+
+# Difference test
+
+`difference_test()` is the tidy table of pairwise differences. Its `plot()` has
+two styles: the significance-box matrix (`"box"`, the default) for *which* pairs
+differ, and a forest plot (`"forest"`) for *how big* each difference is with its
+confidence interval.
+
+```{r difftest, fig.width = 6.5, fig.height = 6.5}
+dt <- difference_test(bs, type = "strength")
+plot(dt)                       # box matrix
+```
+
+```{r difftest-forest, fig.width = 7, fig.height = 5}
+plot(dt, style = "forest")     # forest plot
+```
+
+# Case-dropping stability
+
+`net_stability()` drops increasing fractions of cases and correlates the
+subset centralities with the full-sample ones; `plot()` shows the curves, a
+±1 SD band, the acceptance threshold, and the CS-coefficient per measure.
+
+```{r stability, fig.width = 7, fig.height = 5}
+st <- net_stability(X, method = "glasso",
+                    drop_prop = seq(0.1, 0.8, 0.1), iter = 25)
+plot(st)
+```
+
+# Network comparison test
+
+`net_compare()` permutation-tests two networks. Plot the global-strength (M)
+and structure (S) permutation nulls, or the per-edge differences.
+
+```{r nct}
+cmp <- net_compare(X, as.matrix(SRL_GPT), iter = 250)
+plot(cmp)                      # global strength (M)
+```
+
+```{r nct-edges, fig.width = 7, fig.height = 5}
+plot(cmp, type = "edges")      # per-edge differences
+```
+
+# Summary
+
+| Result object (verb) | `plot()` options |
+|---|---|
+| `net_centralities()` | `type = "bar"` / `"line"`; `scale = "raw"`/`"z"`/`"relative"` |
+| `net_boot()` | `type = "edges"`/`"centrality"`/`"edge_diff"`/`"centrality_diff"`/`"predictability"` |
+| `difference_test()` | `style = "box"`/`"forest"` |
+| `net_stability()` | — |
+| `net_compare()` | `type = "strength"`/`"structure"`/`"edges"` |
+
+All of the above use only base R. For the estimated network itself, `plot(fit)`
+delegates to `cograph::splot()` — see the companion cograph vignette.

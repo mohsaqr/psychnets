@@ -56,6 +56,74 @@
   stats::setNames(btw, rownames(W))
 }
 
+# Edge betweenness: for each present edge a->b, the fraction of shortest paths
+# (over all source/target pairs) that traverse it. Geodesics use inverse
+# absolute weights (strong edges = short distance), matching the node measures.
+.psn_edge_betweenness <- function(W, invert = TRUE) {
+  n <- nrow(W)
+  EB <- matrix(0, n, n, dimnames = dimnames(W))
+  if (n < 2L) return(EB)
+  sp <- .psn_floyd_warshall(W, invert)
+  D <- sp$D; sg <- sp$sigma
+  pos <- W > 0
+  len <- matrix(Inf, n, n); len[pos] <- if (invert) 1 / W[pos] else W[pos]
+  edges <- which(pos, arr.ind = TRUE)
+  vals <- vapply(seq_len(nrow(edges)), function(e) {
+    a <- edges[e, 1L]; b <- edges[e, 2L]
+    # A shortest s->t path uses edge a->b iff d(s,a) + len(a,b) + d(b,t) = d(s,t);
+    # such paths number sigma(s,a)*sigma(b,t), as a fraction of sigma(s,t).
+    through <- outer(D[, a], D[b, ], "+") + len[a, b]
+    on_path <- is.finite(D) & sg > 0L & abs(through - D) < 1e-9
+    diag(on_path) <- FALSE
+    sum((outer(sg[, a], sg[b, ]) / sg)[on_path])
+  }, numeric(1))
+  EB[edges] <- vals
+  EB
+}
+
+#' Edge betweenness centrality
+#'
+#' For each edge, the share of weighted shortest paths (across all node pairs)
+#' that pass through it - a high value marks an edge that bridges otherwise
+#' distant parts of the network. Geodesics are computed on inverse absolute
+#' weights, so strong edges count as short, matching [net_centralities()]'s node
+#' betweenness/closeness.
+#'
+#' @param x A `psychnet` object or a square weighted adjacency matrix.
+#' @param invert If `TRUE` (default) edge weights are inverted to distances
+#'   (strong association = short path). Set `FALSE` to treat weights as distances.
+#' @param labels Optional node labels (used when `x` is a bare matrix).
+#' @return A tidy `data.frame`, one row per edge: `from`, `to`,
+#'   `edge_betweenness`. Undirected networks give one row per unordered edge.
+#' @examples
+#' S <- 0.4^abs(outer(1:6, 1:6, "-"))
+#' net_edge_betweenness(ebic_glasso(cor_matrix = S, n = 400))
+#' @export
+net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
+  if (inherits(x, "psychnet")) {
+    g <- x$weights; labs <- x$nodes$label; directed <- isTRUE(x$directed)
+  } else {
+    if (!is.matrix(x) && !is.data.frame(x))
+      stop("`x` must be a psychnet object or a square weighted matrix.",
+           call. = FALSE)
+    g <- as.matrix(x)
+    if (!is.numeric(g) || nrow(g) != ncol(g))
+      stop("`x` must be a square numeric weighted adjacency matrix.",
+           call. = FALSE)
+    labs <- if (!is.null(labels)) labels else colnames(g)
+    if (is.null(labs)) labs <- paste0("V", seq_len(ncol(g)))
+    directed <- FALSE
+  }
+  W <- abs(g); diag(W) <- 0
+  rownames(W) <- colnames(W) <- labs
+  EB <- .psn_edge_betweenness(W, invert = invert)
+  mask <- if (directed) (W > 0) else (W > 0 & upper.tri(W))
+  ij <- which(mask, arr.ind = TRUE)
+  data.frame(from = labs[ij[, 1L]], to = labs[ij[, 2L]],
+             edge_betweenness = EB[ij],
+             stringsAsFactors = FALSE, row.names = NULL)
+}
+
 # Undirected weighted closeness on the absolute-weight graph: (#reachable) /
 # sum(distances). Isolated nodes score 0.
 #' @noRd
@@ -92,6 +160,12 @@
 #' @export
 net_centralities <- function(x, measures = c("strength", "expected_influence"),
                              centrality_fn = NULL, ...) {
+  if (inherits(x, "psychnet_group")) {
+    .reject_multilevel_group(x, "net_centralities")
+    return(.group_obj_apply(x, net_centralities, "psychnet_centrality_group",
+                            measures = measures, centrality_fn = centrality_fn,
+                            ...))
+  }
   if (inherits(x, "psychnet")) {
     g <- x$weights
     labs <- x$nodes$label
@@ -111,7 +185,8 @@ net_centralities <- function(x, measures = c("strength", "expected_influence"),
   diag(g) <- 0
   rownames(g) <- colnames(g) <- labs
 
-  builtin <- c("strength", "expected_influence", "betweenness", "closeness")
+  builtin <- c("strength", "expected_influence", "expected_influence_2step",
+               "betweenness", "closeness")
   external <- setdiff(measures, builtin)
   if (length(external) && is.null(centrality_fn)) {
     stop("`centrality_fn` is required for measures: ",
@@ -128,6 +203,9 @@ net_centralities <- function(x, measures = c("strength", "expected_influence"),
     switch(m,
       strength            = rowSums(abs(g)),
       expected_influence  = rowSums(g),
+      # 2-step EI (Robinaugh et al. 2016): a node's own 1-step EI plus the
+      # 1-step EI it transmits through its neighbours, ei2 = ei1 + g %*% ei1.
+      expected_influence_2step = { ei1 <- rowSums(g); ei1 + as.vector(g %*% ei1) },
       betweenness         = .psn_betweenness(g),
       closeness           = .psn_closeness(g),
       {
@@ -139,6 +217,10 @@ net_centralities <- function(x, measures = c("strength", "expected_influence"),
   }
   cols <- lapply(measures, one)
   names(cols) <- measures
-  data.frame(node = labs, cols, row.names = NULL, stringsAsFactors = FALSE,
-             check.names = FALSE)
+  out <- data.frame(node = labs, cols, row.names = NULL,
+                    stringsAsFactors = FALSE, check.names = FALSE)
+  # A lightweight subclass over `data.frame` so `plot()` finds a method while
+  # every data-frame operation (printing, `[`, `$`, `as.data.frame`) is unchanged.
+  class(out) <- c("psychnet_centrality", "data.frame")
+  out
 }

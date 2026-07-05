@@ -78,7 +78,7 @@ test_that("net_stability returns CS-coefficients in [0,1]", {
   expect_s3_class(cs, "psychnet_stability")
   expect_true(all(cs$cs >= 0 & cs$cs <= 1))
   expect_named(cs$table,
-               c("measure", "drop_prop", "mean_cor", "prop_above"))
+               c("measure", "drop_prop", "mean_cor", "sd_cor", "prop_above"))
   # larger drop proportions never increase stability
   str_tab <- cs$table[cs$table$measure == "strength", ]
   expect_true(str_tab$mean_cor[1] + 1e-9 >= str_tab$mean_cor[nrow(str_tab)])

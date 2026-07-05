@@ -10,13 +10,13 @@ mk <- function(seed, n = 200, p = 5) {
 test_that(".new_psychnet stores a zero-diagonal graph", {
   # a correlation-like matrix with unit diagonal must not leak the diagonal
   g <- matrix(0.5, 4, 4); diag(g) <- 1
-  obj <- psychnet:::.new_psychnet(g, paste0("V", 1:4), "test", FALSE, 10)
+  obj <- psychnets:::.new_psychnet(g, paste0("V", 1:4), "test", FALSE, 10)
   expect_true(all(diag(obj$graph) == 0))
   expect_equal(net_centralities(obj)$strength, rep(1.5, 4))   # 3 * 0.5, no diagonal
 })
 
 test_that(".new_psychnet rejects a label/dimension mismatch", {
-  expect_error(psychnet:::.new_psychnet(matrix(0, 3, 3), c("a", "b"), "t", FALSE, 5),
+  expect_error(psychnets:::.new_psychnet(matrix(0, 3, 3), c("a", "b"), "t", FALSE, 5),
                "labels length")
 })
 

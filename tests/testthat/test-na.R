@@ -42,7 +42,7 @@ test_that("pairwise is the default when NAs are present", {
 test_that(".cor_input projects pairwise correlations to positive-definite", {
   set.seed(4)
   X <- rmvn(120, ar1(8, 0.6)); X[matrix(stats::runif(length(X)) < 0.2, nrow(X))] <- NA
-  ci <- psychnet:::.cor_input(X, na_method = "pairwise")
+  ci <- psychnets:::.cor_input(X, na_method = "pairwise")
   expect_true(all(eigen(ci$S, only.values = TRUE)$values > 0))
   expect_equal(unname(diag(ci$S)), rep(1, 8), tolerance = 1e-8)
   expect_gt(ci$n, 60)                                        # effective n >> listwise
@@ -73,7 +73,7 @@ test_that("mgm and the imputation helper handle mixed NA data", {
   expect_s3_class(fit, "psychnet")
   expect_equal(fit$n_obs, 500L)                             # full sample retained
   # mode/mean imputation: binary cols mode-imputed to 0/1, gaussian mean-imputed
-  imp <- psychnet:::.na_prep_nodewise(as.matrix(d), "pairwise")
+  imp <- psychnets:::.na_prep_nodewise(as.matrix(d), "pairwise")
   expect_false(anyNA(imp))
   expect_true(all(imp[, "b1"] %in% c(0, 1)))
 })

@@ -7,6 +7,7 @@
 tmfg_network(
   data = NULL,
   cor_matrix = NULL,
+  n = NULL,
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   na_method = c("pairwise", "listwise"),
   labels = NULL
@@ -17,6 +18,10 @@ tmfg_network(
 \code{cor_matrix} is supplied.}
 
 \item{cor_matrix}{Optional correlation matrix.}
+
+\item{n}{Accepted and ignored. TMFG is a structural filter and needs no
+sample size; the argument exists only so a uniform \verb{(cor_matrix=, n=)} call
+shared with the other estimators does not partial-match \code{na_method}.}
 
 \item{cor_method}{Correlation when \code{data} is supplied: \code{"pearson"} (default),
 \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial; see \code{\link[=cor_auto]{cor_auto()}}).}

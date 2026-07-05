@@ -6,7 +6,7 @@
 \usage{
 net_compare(
   data1,
-  data2,
+  data2 = NULL,
   iter = 1000L,
   gamma = 0.5,
   paired = FALSE,

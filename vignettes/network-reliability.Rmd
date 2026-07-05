@@ -1,0 +1,88 @@
+---
+title: "Edge-weight stability and split-half reliability"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Edge-weight stability and split-half reliability}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 7, fig.height = 5.5, dpi = 100)
+library(psychnets)
+```
+
+`net_stability()` tells you whether centrality *rankings* survive case-dropping.
+This vignette covers the two complementary robustness checks for the *edge
+structure* itself, both estimator-agnostic and base-R only:
+
+- **`casedrop_reliability()`** — the edge-weight CS-coefficient: how many cases
+  can be dropped before the whole edge-weight vector stops correlating with the
+  full-sample one.
+- **`network_reliability()`** — split-half reliability: split the sample, estimate
+  a network on each half, and measure how alike the two edge structures are.
+
+Each verb takes raw `data` and **returns a tidy `data.frame` you print
+directly** — one call, no table assembly, no accessors.
+
+We use the bundled `SRL_Claude` self-regulated-learning data (300 respondents,
+five MSLQ subscales).
+
+# Edge-weight case-dropping stability
+
+One line in, a tidy table out — one row per metric per drop proportion, with the
+CS-coefficient on the header line. No arguments needed:
+
+```{r casedrop}
+cd <- casedrop_reliability(SRL_Claude)
+cd
+```
+
+`plot()` shows all four metrics against the drop proportion, with ±1 SD bands;
+the correlation panel marks the acceptance threshold and the CS-coefficient.
+
+```{r casedrop-plot, fig.width = 8, fig.height = 6.5}
+plot(cd)
+```
+
+A CS-coefficient of 0.5 or higher is the usual rule of thumb for an edge
+structure that can be interpreted with confidence.
+
+# Split-half reliability
+
+Again, one line in, a tidy per-metric table out:
+
+```{r reliability}
+rel <- network_reliability(SRL_Claude)
+rel
+```
+
+`plot()` shows the distribution of each between-halves metric across the
+split-half iterations, with the observed mean marked.
+
+```{r reliability-plot, fig.width = 8, fig.height = 6.5}
+plot(rel)
+```
+
+# Any estimator, any grouping
+
+Both verbs route every refit through `psychnet(method = )`, so they work for any
+estimator — swap in partial correlations, for instance:
+
+```{r pcor}
+casedrop_reliability(SRL_Claude, method = "pcor")
+```
+
+And both accept a `psychnet_group` (built with `psychnet(..., group = )`),
+returning one result per level.
+
+# Summary
+
+| Verb | Question | Returns | Plot |
+|---|---|---|---|
+| `casedrop_reliability()` | How robust is the edge structure to dropping cases? | tidy df (metric × drop_prop) | four-metric curves + CS |
+| `network_reliability()` | How reproducible is the edge structure across split-halves? | tidy df (one row per metric) | per-metric histograms |
+
+Together with `net_stability()` (centrality rankings) and `net_boot()` (edge
+accuracy intervals), these complete the bootnet robustness toolkit in base R.

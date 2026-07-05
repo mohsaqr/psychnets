@@ -1,8 +1,8 @@
 # cor_auto: polychoric / polyserial automatic correlation (qgraph parity).
 
 test_that("the bivariate-normal CDF satisfies its boundary identities", {
-  gl <- psychnet:::.gauss_legendre(60L)
-  pb <- function(h, k, rho) psychnet:::.pbivnorm(h, k, rho, gl)
+  gl <- psychnets:::.gauss_legendre(60L)
+  pb <- function(h, k, rho) psychnets:::.pbivnorm(h, k, rho, gl)
   # rho = 0 factorises; +/-Inf margins collapse to the univariate normal
   expect_equal(pb(0.4, -0.7, 0), stats::pnorm(0.4) * stats::pnorm(-0.7))
   expect_equal(pb(Inf, 1.1, 0.6), stats::pnorm(1.1))

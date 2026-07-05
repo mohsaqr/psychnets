@@ -23,7 +23,9 @@
 #' @param labels Optional node labels.
 #' @param ... Passed to the estimator.
 #' @return An object of class `psychnet_stability` with `$cs` (CS-coefficient
-#'   per measure) and a tidy `$table` of mean correlations by drop proportion.
+#'   per measure) and a tidy `$table` (columns `measure`, `drop_prop`,
+#'   `mean_cor`, `sd_cor`, `prop_above`) of the case-dropping correlations by
+#'   drop proportion. Visualise it with [plot.psychnet_stability()].
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -37,6 +39,14 @@ net_stability <- function(data, method = "glasso",
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
                                  iter = 100L, threshold = 0.7, certainty = 0.95,
                                  labels = NULL, ...) {
+  # Group object -> case-drop each level from its stored cross-sectional data.
+  if (inherits(data, "psychnet_group")) {
+    return(.group_data_apply(data, net_stability, "net_stability",
+      "psychnet_stability_group",
+      list(measures = measures, centrality_fn = centrality_fn,
+           drop_prop = drop_prop, iter = iter, threshold = threshold,
+           certainty = certainty)))
+  }
   stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
             is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
             threshold > 0, threshold <= 1, certainty > 0, certainty <= 1)
@@ -83,6 +93,7 @@ net_stability <- function(data, method = "glasso",
     cm <- corr_storage[[m]]
     data.frame(measure = m, drop_prop = drop_prop,
                mean_cor = colMeans(cm, na.rm = TRUE),
+               sd_cor = apply(cm, 2L, stats::sd, na.rm = TRUE),
                prop_above = colMeans(cm >= threshold, na.rm = TRUE),
                stringsAsFactors = FALSE)
   }))

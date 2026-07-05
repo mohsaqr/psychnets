@@ -44,7 +44,9 @@ Default 0.95.}
 }
 \value{
 An object of class \code{psychnet_stability} with \verb{$cs} (CS-coefficient
-per measure) and a tidy \verb{$table} of mean correlations by drop proportion.
+per measure) and a tidy \verb{$table} (columns \code{measure}, \code{drop_prop},
+\code{mean_cor}, \code{sd_cor}, \code{prop_above}) of the case-dropping correlations by
+drop proportion. Visualise it with \code{\link[=plot.psychnet_stability]{plot.psychnet_stability()}}.
 }
 \description{
 Centrality-stability coefficient (case-dropping subset bootstrap)

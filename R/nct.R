@@ -46,10 +46,42 @@
 #' fit <- net_compare(a, b, iter = 50)
 #' fit
 #' @export
-net_compare <- function(data1, data2, iter = 1000L, gamma = 0.5,
+net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
                 paired = FALSE, abs = TRUE, weighted = TRUE, p_adjust = "none") {
-  data1 <- as.matrix(data1)
-  data2 <- as.matrix(data2)
+  # Group object -> compare two of its levels' cross-sectional data. `data2`
+  # names the two levels (defaulting to the two levels when there are exactly 2).
+  if (inherits(data1, "psychnet_group")) {
+    if (!identical(attr(data1, "source"), "data"))
+      stop("net_compare() supports group mode for cross-sectional data only.",
+           call. = FALSE)
+    subs <- attr(data1, "subsets")
+    pair <- if (is.null(data2)) names(subs) else as.character(data2)
+    if (length(pair) != 2L)
+      stop("Specify two group levels to compare, e.g. data2 = c(\"A\", \"B\").",
+           call. = FALSE)
+    miss <- setdiff(pair, names(subs))
+    if (length(miss))
+      stop("Group level(s) not found: ", paste(miss, collapse = ", "),
+           call. = FALSE)
+    cl <- attr(data1, "call")
+    return(net_compare(subs[[pair[1L]]], subs[[pair[2L]]], iter = iter,
+                       gamma = if (!is.null(cl$gamma)) cl$gamma else gamma,
+                       paired = paired, abs = abs, weighted = weighted,
+                       p_adjust = p_adjust))
+  }
+  if (is.null(data2))
+    stop("`data2` is required (a second data set, or two group levels when ",
+         "`data1` is a psychnet_group).", call. = FALSE)
+  # Keep only numeric columns (a stored group subset may carry a stray
+  # character/id column); est() runs stats::cor() directly, which would error on
+  # a non-numeric matrix. Zero-variance numeric columns are retained -- est()
+  # already neutralises their NA correlations.
+  .numeric_only <- function(d) {
+    d <- as.data.frame(d, stringsAsFactors = FALSE)
+    as.matrix(d[, vapply(d, is.numeric, logical(1)), drop = FALSE])
+  }
+  data1 <- .numeric_only(data1)
+  data2 <- .numeric_only(data2)
   stopifnot(ncol(data1) == ncol(data2), iter >= 1L,
             is.logical(paired), is.logical(abs), is.logical(weighted))
   if (!is.null(colnames(data1)) && !is.null(colnames(data2)) &&
@@ -68,7 +100,7 @@ net_compare <- function(data1, data2, iter = 1000L, gamma = 0.5,
   dataall <- rbind(data1, data2)
 
   est <- function(x) {
-    cx <- stats::cor(x)
+    cx <- suppressWarnings(stats::cor(x))
     # a column that is constant in this (sub)sample has undefined correlations;
     # treat it as unassociated rather than letting NA reach the eigen solver
     cx[is.na(cx)] <- 0

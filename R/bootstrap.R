@@ -114,6 +114,16 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
                      centrality_fn = NULL, predictability = FALSE,
                      threshold = FALSE, diff_test = FALSE, p_adjust = "none",
                      labels = NULL, cores = NULL, engine = NULL, ...) {
+  # Group object -> bootstrap each level from its stored cross-sectional data,
+  # reproducing the group's estimator configuration (incl. labels).
+  if (inherits(data, "psychnet_group")) {
+    return(.group_data_apply(data, net_boot, "net_boot",
+      "psychnet_bootstrap_group",
+      list(n_boot = n_boot, ci = ci, measures = measures,
+           centrality_fn = centrality_fn, predictability = predictability,
+           threshold = threshold, diff_test = diff_test, p_adjust = p_adjust,
+           cores = cores, engine = engine)))
+  }
   stopifnot(is.numeric(n_boot), length(n_boot) == 1L, is.finite(n_boot),
             n_boot >= 1, ci > 0, ci < 1)
   p_adjust <- match.arg(p_adjust, stats::p.adjust.methods)
@@ -298,7 +308,7 @@ difference_test <- function(boot, type = "edge", ci = NULL,
   pval <- stats_k[, 3L]
   if (p_adjust != "none") pval <- stats::p.adjust(pval, method = p_adjust)
 
-  data.frame(
+  out <- data.frame(
     item1 = labs[i], item2 = labs[j],
     value1 = obs[i], value2 = obs[j],
     obs_diff = obs[i] - obs[j],
@@ -306,16 +316,31 @@ difference_test <- function(boot, type = "edge", ci = NULL,
     p_value = pval,
     significant = stats_k[, 1L] > 0 | stats_k[, 2L] < 0,
     stringsAsFactors = FALSE, row.names = NULL)
+  # `type` (and the observed per-item values) let plot.psychnet_difference draw
+  # the bootnet-style significance-box matrix without re-deriving anything.
+  attr(out, "diff_type") <- type
+  attr(out, "observed") <- stats::setNames(obs, labs)
+  class(out) <- c("psychnet_difference", "data.frame")
+  out
 }
 
 #' Tidy a network bootstrap
 #'
 #' @param x A `psychnet_bootstrap` object.
+#' @param row.names,optional Ignored (S3 consistency).
 #' @param ... Unused.
+#' @param significant If `TRUE`, return only the edges whose confidence interval
+#'   excludes zero. Default `FALSE` (all edges).
 #' @return The tidy `$edges` data frame (one row per edge, with its percentile
 #'   interval, inclusion proportion, and `significant` flag).
 #' @export
-as.data.frame.psychnet_bootstrap <- function(x, ...) x$edges
+as.data.frame.psychnet_bootstrap <- function(x, row.names = NULL,
+                                             optional = FALSE, ...,
+                                             significant = FALSE) {
+  ed <- x$edges
+  if (isTRUE(significant)) ed <- ed[ed$significant %in% TRUE, , drop = FALSE]
+  ed
+}
 
 #' Print a network bootstrap
 #'

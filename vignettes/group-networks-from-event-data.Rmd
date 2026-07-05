@@ -1,144 +1,182 @@
 ---
-title: "Group networks from event logs"
+title: "Regulation networks from event data"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Group networks from event logs}
+  %\VignetteIndexEntry{Regulation networks from event data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
-                      fig.height = 4.4)
+has_tna     <- requireNamespace("tna", quietly = TRUE)
 has_cograph <- requireNamespace("cograph", quietly = TRUE)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+                      fig.height = 5.5, warning = FALSE, message = FALSE,
+                      eval = has_tna)
 library(psychnets)
-```
-
-```{r simulate, include = FALSE}
-# A small simulated learning-process log: students from two cohorts each emit a
-# sequence of self-regulation actions. Both cohorts have a tightly co-occurring
-# cluster of three states -- but a DIFFERENT cluster: in "focused" it is
-# plan/monitor/reflect, in "scattered" it is reflect/help/offtask. The two
-# networks therefore carry a similar amount of structure in different places. The
-# log is the kind of trace a learning-management system produces, one row per
-# action.
-set.seed(1)
-states <- c("plan", "monitor", "reflect", "help", "offtask")
-make_cohort <- function(name, cluster, n_students) {
-  f <- stats::rnorm(n_students)                       # latent regulation tendency
-  lambda <- rep(0.1, 5)                               # weak by default ...
-  lambda[cluster] <- 1.0                              # ... strong inside the cluster
-  mu <- outer(f, lambda) + matrix(stats::rnorm(n_students * 5, 0, .4),
-                                  n_students, 5)
-  counts <- matrix(pmax(0, round(6 + 3 * mu)),        # non-negative action counts
-                   n_students, 5)                     # (pmax drops the dims)
-  per_student <- lapply(seq_len(n_students), function(i) {
-    act <- rep(states, counts[i, ])
-    if (!length(act)) act <- sample(states, 1)
-    data.frame(student = sprintf("%s%03d", name, i), cohort = name,
-               action = act, stringsAsFactors = FALSE)
-  })
-  do.call(rbind, per_student)
+if (has_tna) {
+  data("group_regulation_long", package = "tna")
+  gr <- as.data.frame(group_regulation_long)
 }
-events <- rbind(make_cohort("focused",   1:3, 100),
-                make_cohort("scattered", 3:5, 100))
-events <- events[sample(nrow(events)), ]              # shuffle into log order
-rownames(events) <- NULL
 ```
 
-Much psychological and learning-process data arrives as an **event log** — one
-row per action taken by a person over time — rather than as a tidy
-person-by-variable table. `psychnet()` reads such a log directly: name the
-`actor` and `action` columns and it builds each person's profile internally,
-with no manual reshaping. Adding `group` estimates a **separate network for each
-group** and returns a collection you can plot, bootstrap, and compare with the
-same verbs you would use on a single network.
+## About psychnets
 
-## An event log
+`psychnets` is the psychometric-network engine of **Dynalytics**, a family of
+tools for analysing the *process* and *event* data that learning environments and
+log files produce. It builds a psychometric network **directly from an event
+log** — you do not have to reshape the log into a wide person-by-item table
+first. It handles two things for you:
 
-The example is a simulated trace of `r length(unique(events$student))` students
-from two cohorts, each emitting one of five self-regulation actions per row.
+- **It counts the actions (computes frequencies).** Each unit of observation
+  becomes one row, and each action becomes a column holding how many times that
+  action occurred. Those counts are the variables the network relates.
+- **It respects nesting.** When the same person is observed more than once, their
+  repeated observations are *nested* inside them. `psychnets` keeps the two kinds
+  of variation apart — how states move together *within* a person versus how
+  people *differ* on average — instead of mixing them into one misleading number.
 
-```{r}
-head(events)
+### The three words you need
+
+- **Action** — the thing that happened (here, a regulation state such as *plan*
+  or *monitor*). Actions become the **nodes** of the network.
+- **Actor** — *who* did it. Here the actor is the **student** (`Actor`).
+- **Occasion** — one row of counts. By default an actor gives **one** occasion
+  (all their actions summed). If you split each actor into **sessions**, one actor
+  gives **several** occasions — and that is when de-clustering matters (below).
+
+This vignette uses the `group_regulation_long` event log from the **tna**
+package.
+
+```{r no-tna, eval = !has_tna, echo = FALSE, results = "asis"}
+cat("> The **tna** package is not installed, so the chunks below are not",
+    "evaluated. Install it with `install.packages(\"tna\")` to run this",
+    "vignette.\n")
 ```
 
-## One network per group
+## The data: a regulation event log
 
-Name the actor and action columns and pass `group`. `psychnet()` reduces each
-student to their action profile, splits by cohort, and estimates a graphical
-lasso network per group. The result is a `psychnet_group`: a named collection of
-networks. The grouping column is never itself a node.
+Each row is a single **action** by a **student** (`Actor`), at a **time**
+(`Time`), in a collaboration **group** (`Group`), with the student's achievement
+level (`Achiever`). This is the raw shape a learning platform records.
 
-```{r}
-nets <- psychnet(events, actor = "student", action = "action", group = "cohort")
-nets
+```{r data}
+head(gr)
 ```
 
-It plots as a grid, one panel per group, with a shared node layout so the same
-state sits in the same place in both panels.
+## Part 1 — one network from students' regulation profiles
 
-```{r grid, eval = has_cograph, fig.width = 8, fig.height = 4.2}
-cograph::splot(nets, psych_styling = TRUE)
+Give `psychnet()` the actor column and it does the rest: it counts each
+**student's** nine regulation actions into one profile, then estimates the
+network of how those states co-occur across students. The result carries its own
+correctness certificate — the tiny KKT residual — so you can trust it is the
+optimal network for this data.
+
+```{r plain}
+net <- psychnet(gr, actor = "Actor")
+net
 ```
 
-## Centrality, side by side
-
-Every framework verb detects the group object and returns one result per group;
-there is no per-group looping for the analyst to write. `as.data.frame()` stacks
-the per-group tables under a `group` column.
-
-```{r}
-net_centralities(nets) |> as.data.frame()
+```{r plain-plot, eval = has_tna && has_cograph}
+cograph::splot(net, psych_styling = TRUE)
 ```
 
-## Predictability
+*In plain terms:* every student is summarised by how often they did each of the
+nine actions, and the network shows which actions tend to rise and fall together
+across students.
 
-```{r}
-net_predict(nets) |> as.data.frame()
+## Part 2 — one network per group
+
+Add `group = "Achiever"` and `psychnet()` estimates a **separate network for each
+level** — here, high- versus low-achieving students — and returns them as one
+object that plots as a grid and is understood by every analysis verb.
+
+```{r group}
+byach <- psychnet(gr, actor = "Actor", group = "Achiever")
+byach
 ```
 
-## Bootstrapped edge stability
-
-`net_boot()` resamples students within each group, re-estimates, and returns a
-percentile confidence interval and a `significant` flag (interval excludes zero)
-for every edge. Ask for the significant edges with an argument rather than
-subsetting the result by hand.
-
-```{r}
-boot <- net_boot(nets, n_boot = 150)
-as.data.frame(boot, significant = TRUE)
+```{r group-grid, eval = has_tna && has_cograph, fig.width = 11, fig.height = 5.5}
+cograph::splot(byach, psych_styling = TRUE)
 ```
 
-## Comparing the two networks
+The framework verbs notice the group object and return one result per group —
+you never loop over the groups yourself.
 
-`net_compare()` runs a permutation network-comparison test between two groups:
-global strength (M), overall structure (S), and per-edge differences (E).
-
-```{r}
-net_compare(nets, c("focused", "scattered"), iter = 250)
+```{r group-cent}
+net_centralities(byach)
 ```
 
-The two cohorts were built to carry a **similar amount** of regulation structure
-in **different places** (a strong plan/monitor/reflect cluster versus a strong
-reflect/help/offtask one). That is what the test recovers: global strength (M) is
-comparable, while the network structure (S) differs.
+## Part 3 — sessions, and why nesting needs de-clustering
 
-## How it works
+So far each student gave **one** occasion. But a student's log is really several
+short **working sessions**. If we treat a pause longer than five minutes as the
+start of a new session (`time_threshold = 300` seconds), each student now
+contributes **several** occasions — and those occasions are **nested** inside the
+student. (With this data the sessions only appear at a short gap like this: each
+student's raw log is one continuous episode, so the default 15-minute gap never
+splits it.)
 
-An event log has no person-by-variable matrix to estimate a network on, so
-`psychnet()` builds one. Each occasion (here, each student) becomes a row, each
-distinct action a column, and the cell holds that action's count — the same
-"frequency" representation `event_frequencies()` returns. The network is the
-graphical lasso of that matrix.
+Why does that matter? Because two different questions get tangled together:
 
-`group` simply splits the log before this reduction and estimates one network per
-level. Because each group is reduced to an ordinary numeric design matrix, the
-group object resamples and compares exactly like cross-sectional data — which is
-why `net_boot()` and `net_compare()` work on it with no special handling.
+- **Within a student:** across *their own* sessions, which actions move together?
+- **Between students:** do some students simply do more of everything than others?
 
-A `time` column, if present, is used only to split each actor into sessions from
-gaps between events (`compute_sessions`); there is no temporal or lagged model
-here. When a student contributes several occasions, the actor clustering is
-removed by person-centering (`standardize = TRUE`, the default), or — with
-`standardize = FALSE` — decomposed into within- and between-actor networks.
+If you ignore the nesting, these mix and the network can be misleading.
+`psychnets` separates them.
+
+### The de-clustered network (default)
+
+By default (`standardize = TRUE`) `psychnet()` **removes the between-student
+differences** — it centres each student's sessions on that student's own average
+— and returns the single *within-student* network: how regulation states move
+together inside a person's work, with overall student differences taken out.
+
+```{r declustered}
+net_within <- psychnet(gr, actor = "Actor", time = "Time", time_threshold = 300)
+net_within
+```
+
+```{r declustered-plot, eval = has_tna && has_cograph}
+cograph::splot(net_within, psych_styling = TRUE)
+```
+
+### Keeping both levels
+
+Set `standardize = FALSE` to keep **both** networks: the **within-student**
+network (co-movement across a person's sessions) and the **between-student**
+network (how students' average profiles differ).
+
+```{r within-between}
+wb <- psychnet(gr, actor = "Actor", time = "Time", time_threshold = 300,
+               standardize = FALSE)
+wb
+```
+
+```{r wb-plots, eval = has_tna && has_cograph, fig.width = 11, fig.height = 5.5}
+cograph::splot(wb$within,  psych_styling = TRUE)
+cograph::splot(wb$between, psych_styling = TRUE)
+```
+
+Their centralities, each a single tidy call:
+
+```{r wb-cent}
+net_centralities(wb$within)
+net_centralities(wb$between)
+```
+
+*In plain terms:* the **within** network answers "when this student is working,
+which regulation states go hand in hand?"; the **between** network answers "how
+do students differ from one another overall?". De-clustering is simply not
+letting those two answers contaminate each other.
+
+## Recap
+
+- **Actor** = the student; **action** = the regulation state; **occasion** = one
+  row of counts.
+- With no sessions, one student = one occasion → **Part 1**, a single network;
+  `group = "Achiever"` splits it into one network per group → **Part 2**.
+- Split a student into **sessions** and they give many occasions nested inside
+  them → **Part 3**, where de-clustering separates *within*-student co-movement
+  from *between*-student differences (`standardize = TRUE` keeps only within;
+  `FALSE` keeps both).

@@ -1,0 +1,227 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd; edit that file, then knit. -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  fig.path = "man/figures/README-", out.width = "100%", dpi = 140
+)
+```
+
+# psychnets
+
+> **Clean-room, self-certifying estimation of cross-sectional psychometric
+> network models in base R.**
+>
+> — by [**Mohammed Saqr**](https://saqr.me)
+
+`psychnets` estimates the cross-sectional models of psychometric network analysis
+— correlation and partial-correlation networks, the EBIC-regularized Gaussian
+graphical model (the graphical lasso) together with its nonparanormal and
+unregularized stepwise variants, the information-filtering graphs (the
+Triangulated Maximally Filtered Graph and the Local–Global inverse covariance),
+relative-importance networks, the Ising model for binary data, and the mixed
+graphical model — reimplemented from first principles in base R. These models are
+conventionally fitted through packages that wrap compiled numerical kernels:
+`qgraph` and `bootnet` route the graphical lasso to the Fortran package `glasso`,
+while `IsingFit` and `mgm` route their nodewise regressions to `glmnet`.
+`psychnets` calls none of these packages and none of the compiled solvers beneath
+them; its only imports are base R's own `stats`, `parallel`, `graphics`, and
+`grDevices`.
+
+Every regularized fit returns a **correctness certificate**: the stationarity
+(KKT) residual of the convex objective the estimator solves — a quantity that is
+near zero at the optimum and is computed with no reference to any external
+solver.
+
+## Design properties
+
+`psychnets` is constructed so that a fitted network is:
+
+- **Transparent** — the estimator, including the numerical solve, is written in
+  the language of the analysis; no step is delegated to a Fortran or C kernel that
+  is illegible from R.
+- **Reproducible** — a result does not depend on a compiled binary's convergence
+  tolerance fixed at build time, a setting the analyst does not control.
+- **Dependency-light** — no `glasso`, `glmnet`, `qgraph`, or `Matrix`, and none
+  of the recursive `Rcpp` / `RcppArmadillo` tree those pull in.
+- **Auditable** — the certificate reports how far a fit lies from the optimum of
+  its own objective, so correctness is verifiable from the fit itself rather than
+  by re-estimation in a second package.
+
+Because `psychnets` solves each objective to its optimum and applies the textbook
+extended Bayesian information criterion, it does not reproduce the spurious edges
+that a loosely converged reference solver can select.
+
+## Installation
+
+```r
+# from CRAN (once released)
+install.packages("psychnets")
+
+# development version
+# install.packages("pak")
+pak::pak("mohsaqr/psychnets")
+```
+
+## A worked example
+
+`psychnets` estimates an EBIC-regularized Gaussian graphical model from data or a
+correlation matrix and reports its certificate on printing. The example uses
+`SRL_GPT`, one of the self-regulated-learning datasets shipped with the package
+(five MSLQ constructs).
+
+```{r fit}
+library(psychnets)
+
+net <- ebic_glasso(SRL_GPT)   # EBIC graphical lasso of the five MSLQ constructs
+net                           # edges, lambda, gamma, and the KKT residual
+
+net_centralities(net)         # strength and expected influence, tidy
+```
+
+The network is drawn through `cograph::splot()`:
+
+```{r network, fig.width = 7, fig.height = 5.2, fig.alt = "SRL_GPT regulation network"}
+cograph::splot(net, layout = "spring", edge_labels = FALSE, legend = TRUE)
+```
+
+The certificate is available directly, so the distance of the fit from the unique
+optimum of its objective can be read without an external reference:
+
+```{r certificate}
+glasso_kkt(net$precision, net$cor_matrix, net$lambda)
+```
+
+## Models and methods
+
+The estimators, each fitted in base R and — where regularized — self-certified:
+
+| Verb | Model | Data |
+|---|---|---|
+| `cor_network()` | correlation network (with significance thresholding) | continuous |
+| `pcor_network()` | partial-correlation network | continuous |
+| `ebic_glasso()` | EBIC-regularized Gaussian graphical model (graphical lasso) | continuous |
+| `huge_network()` | nonparanormal Gaussian graphical model | continuous |
+| `ggm_modselect()` | unregularized stepwise Gaussian graphical model | continuous |
+| `tmfg_network()` | Triangulated Maximally Filtered Graph | continuous |
+| `logo_network()` | Local–Global sparse inverse covariance | continuous |
+| `relimp_network()` | relative-importance network (LMG / Shapley) | continuous |
+| `ising_fit()` | Ising model, L1-penalized | binary |
+| `ising_sampler()` | Ising model, unregularized | binary |
+| `mgm_fit()` | mixed graphical model | Gaussian + binary |
+| `psychnet()` | unified front door routing all of the above | — |
+
+The framework verbs operate on any fitted network, and on event logs and grouped
+data through `psychnet()`:
+
+| Verb | Purpose |
+|---|---|
+| `net_centralities()`, `net_bridge()`, `net_edge_betweenness()` | node, bridge, and edge centrality |
+| `net_clustering()`, `net_smallworld()` | weighted clustering coefficients and the small-world index |
+| `net_predict()` | node predictability (variance explained; classification accuracy) |
+| `net_boot()`, `difference_test()` | bootstrapped accuracy and within-network difference tests |
+| `net_stability()`, `casedrop_reliability()`, `network_reliability()` | case-dropping stability and split-half reliability |
+| `net_compare()` | the permutation Network Comparison Test |
+| `redundancy()`, `net_aggregate()` | redundant-node detection and community aggregation |
+
+`psychnet()` additionally constructs networks directly from **event logs** — one
+row per action — computing action frequencies and separating within- from
+between-actor variation, and estimates a **separate network per group** on
+request. Every fitted network inherits the `cograph` plotting classes, and each
+result object carries a base-`graphics` `plot()` method.
+
+Node centrality plots directly from its result object:
+
+```{r centrality, fig.width = 7, fig.height = 3.4, fig.alt = "node centrality"}
+plot(net_centralities(net))
+```
+
+`net_boot()` resamples the data, re-estimates, and returns bootstrapped
+edge-weight confidence intervals; edges whose interval excludes zero are drawn in
+the accent colour:
+
+```{r bootstrap, fig.width = 7, fig.height = 4, fig.alt = "bootstrapped edge weights"}
+set.seed(1)
+plot(net_boot(SRL_GPT, method = "glasso", n_boot = 500), type = "edges")
+```
+
+## Self-certification
+
+`psychnets` treats correctness as a measured quantity rather than as agreement
+with a second implementation. For a Gaussian graphical model, `glasso_kkt()`
+returns the stationarity residual of the graphical-lasso objective; because that
+objective is strictly convex its minimizer is unique, so a near-zero residual
+certifies the global optimum with no reference solver involved. The nodewise
+Ising and mixed graphical models are certified analogously through the
+penalized-likelihood score residual. External packages (`qgraph`, `IsingFit`,
+`mgm`, `bootnet`) serve as cross-checks at independent-solver precision, never as
+the definition of correct.
+
+## Validation
+
+`psychnets` is checked against the established reference packages in two ways,
+both reproducible from a fixed set of package versions.
+
+### Estimator equivalence versus the reference packages
+
+Each model is fitted by `psychnets` and by the package that implements it on the
+same data; equivalence is understood as *the same model, each solved to its own
+optimum* — the edge set is identical and the residual difference is at solver
+precision, while the `psychnets` KKT residual certifies its own optimality.
+
+| `psychnets` estimator | Reference package | Data | Observed difference |
+|---|---|---|---|
+| `ebic_glasso()` | `qgraph::EBICglasso` 1.9.8 | AR(1) chain, *n* = 1000, *p* = 8 | edge set identical; max \|Δ\| = 2.2e-06; KKT = 1.5e-10 |
+| `ising_fit()` | `IsingFit::IsingFit` 0.4 | AR(1) latent, *n* = 2000, *p* = 6, binarized | edge set identical; max \|Δ\| = 4.6e-03; threshold *r* = 1.000 |
+| `mgm_fit()` | `mgm::mgm` 1.2.15 | mixed Gaussian + binary, *n* = 3000, *p* = 4 | edge set identical; max \|Δ\| = 1.6e-03; KKT = 1.1e-09 |
+| `cor_auto()` | `psych::polychoric` / `qgraph::cor_auto` | four-level Likert, *n* = 1000, *p* = 4 | max \|Δ\| = 2.0e-05 (psych), 1.7e-07 (qgraph) |
+| `.pbivnorm()` (bivariate normal CDF) | `mvtnorm::pmvnorm` 1.2 | five (*h*, *k*, *ρ*) points | max \|Δ\| = 5.6e-17 |
+
+### Validation databases (published instruments)
+
+On real questionnaire and ability data the `psychnets` EBIC graphical lasso
+reproduces the `qgraph` edge set exactly — structure agreement equals 1 on every
+instrument, with a largest edge-weight difference of 0.008 — and the Ising model
+matches `IsingFit` on binary batteries. The instruments, all loaded from installed
+CRAN packages so the comparison downloads nothing:
+
+| Instrument | Source | Items | *n* | Reference | max \|Δ\| |
+|---|---|---|---|---|---|
+| `qgraph::big5` | Dolan, Oort, Stoel & Wicherts (2009) | 240 | 500 | qgraph | 3.6e-05 |
+| `psych::bfi` | Revelle, Wilt & Rosenthal (2010) | 25 | 2760 | qgraph | 3e-06 |
+| `psych::sat.act` | Revelle (psych) | 6 | 700 | qgraph | 2e-06 |
+| `psychTools::msq` | Revelle & Anderson (1998) | 50 | 3876 | qgraph | 1.2e-05 |
+| `psychTools::epi.bfi` | Eysenck & Eysenck (1964) | 13 | 231 | qgraph | 8.0e-03 |
+| `psychTools::epi` | Eysenck Personality Inventory | 50 | 3476 | qgraph | 6e-06 |
+| `psychTools::sai` | Spielberger State Anxiety | 22 | 5282 | qgraph | 3.5e-05 |
+| `psychTools::tai` | Spielberger Trait Anxiety | 21 | 3016 | qgraph | 7e-06 |
+| `psychTools::spi` | Condon (2018), SAPA Inventory | 50 | 4000 | qgraph | 1.6e-05 |
+| `psychTools::blot` | Bond's Logical Operations Test | 35 | 150 | qgraph | 0 |
+| `mgm::Fried2015` | Fried et al. (2015) | 11 | 515 | qgraph | 8e-06 |
+| `mgm::PTSD_data` | McNally et al. (2015) | 6 | 344 | qgraph | 1.9e-05 |
+| `mgm::B5MS` | Haslbeck & Waldorp (mgm) | 5 | 500 | qgraph | 0 |
+| `mgm::symptom_data` | Haslbeck & Waldorp (mgm) | 48 | 1476 | qgraph | 1.5e-05 |
+| `NetworkToolbox::neoOpen` | Christensen, Cotter & Silvia (2019) | 48 | 802 | qgraph | 4e-06 |
+| `networktools::depression` | Jones (networktools) | 9 | 1000 | qgraph | 6.5e-05 |
+| `networktools::social` | Jones (networktools) | 16 | 350 | qgraph | 7e-06 |
+| `EGAnet::optimism` | Golino & Christensen (EGAnet) | 10 | 272 | qgraph | 6e-06 |
+| `EGAnet::intelligenceBattery` | Golino & Christensen (EGAnet) | 50 | 1152 | qgraph | 2.2e-05 |
+| `psychTools::ability` | Revelle; ICAR ability items | 16 | 1248 | IsingFit | 5.9e-02 |
+| `psychTools::iqitems` | Condon & Revelle; ICAR | 11 | 1523 | IsingFit | 1.2e-02 |
+
+Where the truth is known — data drawn from a known sparse precision matrix — the
+`psychnets` and `qgraph` estimators recover the generating structure at the same
+F-measure. The full derivation, the worked graphical-lasso case, and the complete
+tables are given in the package's technical report.
+
+## Learn more
+
+- **Articles** — worked tutorials for the Gaussian graphical, information-filtering,
+  Ising, mixed, and relative-importance models, network reliability, and building
+  networks from event data.
+- **Website** — <https://pak.dynasite.org/psychnets>
+- **Source** — <https://github.com/mohsaqr/psychnets>

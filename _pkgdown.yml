@@ -1,0 +1,11 @@
+url: https://pak.dynasite.org/psychnets
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#1a5276"
+
+navbar:
+  structure:
+    left:  [intro, reference, articles]
+    right: [search, github]

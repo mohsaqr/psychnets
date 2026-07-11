@@ -23,8 +23,9 @@ optimum. Every \code{\link[=ebic_glasso]{ebic_glasso()}} result carries this val
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/mohsaqr/psychnet}
-  \item Report bugs at \url{https://github.com/mohsaqr/psychnet/issues}
+  \item \url{https://pak.dynasite.org/psychnets}
+  \item \url{https://github.com/mohsaqr/psychnets}
+  \item Report bugs at \url{https://github.com/mohsaqr/psychnets/issues}
 }
 
 }

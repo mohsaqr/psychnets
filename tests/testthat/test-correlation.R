@@ -25,6 +25,7 @@ test_that("as.data.frame returns a tidy edge list", {
   expect_named(ed, c("from", "to", "weight"))
   expect_true(all(abs(ed$weight) >= 0.05))
   expect_equal(nrow(ed), net$n_edges)
+  expect_named(summary(net), c("from", "to", "weight"))
 })
 
 test_that("psychnet dispatches and aliases resolve", {

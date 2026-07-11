@@ -140,10 +140,11 @@ as.data.frame.psychnet <- function(x, row.names = NULL, optional = FALSE, ...,
 #' @export
 summary.psychnet <- function(object, ...) {
   print(object)
-  ew <- object$edges$weight
+  edges <- as.data.frame(object)
+  ew <- edges$weight
   if (length(ew)) {
     cat(sprintf("  edge weight: range [%.3f, %.3f], mean %.3f\n",
                 min(ew), max(ew), mean(ew)))
   }
-  invisible(object$edges)
+  invisible(edges)
 }

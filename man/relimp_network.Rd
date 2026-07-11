@@ -9,6 +9,7 @@ relimp_network(
   cor_matrix = NULL,
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   max_nodes = 21L,
+  normalized = FALSE,
   na_method = c("pairwise", "listwise"),
   labels = NULL
 )
@@ -25,6 +26,10 @@ relimp_network(
 \item{max_nodes}{Refuse to run above this many nodes (the cost grows as
 \code{2^(p-1)} per node). Default 21.}
 
+\item{normalized}{If \code{TRUE}, rescale each outcome's incoming importance
+shares to sum to 1, matching \code{bootnet}/\code{relaimpo}'s normalized reporting.
+The default \code{FALSE} keeps raw LMG shares that sum to the outcome R-squared.}
+
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
@@ -34,7 +39,11 @@ relimp_network(
 A \code{psychnet} object whose \verb{$weights} is the directed importance matrix
 (\code{weights[k, j]} = importance of \code{k} for outcome \code{j}), with \verb{$r2} (per-node
 full-model R-squared), \verb{$cor_matrix}, and \verb{$kkt} (the decomposition
-residual).
+residual). With \code{normalized = FALSE} (default) each outcome's incoming
+shares sum to its R-squared (\verb{colSums($weights) == $r2}); with
+\code{normalized = TRUE} they are rescaled to sum to 1, \verb{$raw_importance} holds
+the unscaled shares, and \verb{$kkt} (like \code{\link[=lmg_certificate]{lmg_certificate()}}) is computed from
+those raw shares.
 }
 \description{
 Builds a directed network in which the edge predictor -> outcome is the

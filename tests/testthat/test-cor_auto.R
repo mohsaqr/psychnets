@@ -56,7 +56,12 @@ test_that("cor_auto matches psych::polychoric and qgraph::cor_auto", {
   expect_lt(max(abs(ours - ref)[upper.tri(ours)]), 1e-3)
 
   if (requireNamespace("qgraph", quietly = TRUE)) {
-    qg <- suppressWarnings(suppressMessages(qgraph::cor_auto(X, verbose = FALSE)))
+    qg <- tryCatch(
+      suppressWarnings(suppressMessages(qgraph::cor_auto(X, verbose = FALSE))),
+      error = function(e) {
+        skip(paste("qgraph::cor_auto unavailable with the installed lavaan:",
+                   conditionMessage(e)))
+      })
     expect_lt(max(abs(ours - qg)[upper.tri(ours)]), 1e-3)
   }
 })

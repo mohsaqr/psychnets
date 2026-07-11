@@ -274,7 +274,12 @@ test_that("Hittner2003 test matches cocor; redundancy matches goldbricker", {
     expect_lt(abs(ours - ref), 1e-10)
   }
   og <- redundancy(SRL_Claude, cor_method = "auto")
-  rg <- suppressWarnings(networktools::goldbricker(SRL_Claude, progressbar = FALSE))
+  rg <- tryCatch(
+    suppressWarnings(networktools::goldbricker(SRL_Claude, progressbar = FALSE)),
+    error = function(e) {
+      skip(paste("networktools::goldbricker unavailable with the installed lavaan:",
+                 conditionMessage(e)))
+    })
   expect_lt(max(abs(attr(og, "proportion_matrix") - rg$proportion_matrix),
                 na.rm = TRUE), 1e-10)
 })

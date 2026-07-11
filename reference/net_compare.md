@@ -69,6 +69,6 @@ colnames(a) <- colnames(b) <- paste0("V", 1:5)
 fit <- net_compare(a, b, iter = 50)
 fit
 #> Network Comparison Test (50 permutations)
-#>   Global strength (M): observed 0.000, p = 1.000
-#>   Network structure (S): observed 0.000, p = 1.000
+#>   Global strength (M): observed 0.000, p = 0.471
+#>   Network structure (S): observed 0.000, p = 0.490
 ```

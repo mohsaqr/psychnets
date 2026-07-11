@@ -27,9 +27,11 @@ result carries this value in `$kkt`.
 
 Useful links:
 
-- <https://github.com/mohsaqr/psychnet>
+- <https://pak.dynasite.org/psychnets>
 
-- Report bugs at <https://github.com/mohsaqr/psychnet/issues>
+- <https://github.com/mohsaqr/psychnets>
+
+- Report bugs at <https://github.com/mohsaqr/psychnets/issues>
 
 ## Author
 

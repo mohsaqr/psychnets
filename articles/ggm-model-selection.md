@@ -22,10 +22,10 @@ ms <- psychnet(SRL_GPT, method = "ggm")
 ms
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 6.66e-16
+#>   optimality (KKT residual): 1.22e-15
 certificate(ms)
 #>   method  certificate kind certified
-#> 1    ggm 6.661338e-16  kkt      TRUE
+#> 1    ggm 1.221245e-15  kkt      TRUE
 ```
 
 ## Regularized vs unregularized

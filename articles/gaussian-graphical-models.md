@@ -271,7 +271,7 @@ certifies against the same optimality conditions:
 
 certificate(psychnet(SRL_GPT, method = "huge"))
 #>   method  certificate kind certified
-#> 1   huge 2.471392e-10  kkt      TRUE
+#> 1   huge 2.471425e-10  kkt      TRUE
 ```
 
 ------------------------------------------------------------------------
@@ -403,7 +403,7 @@ tidy one-row data frame:
 
 certificate(net)
 #>   method  certificate kind certified
-#> 1 glasso 2.213387e-10  kkt      TRUE
+#> 1 glasso 2.213401e-10  kkt      TRUE
 ```
 
 The residual is at the order of machine precision. Because the minimizer

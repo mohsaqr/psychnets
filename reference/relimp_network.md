@@ -15,6 +15,7 @@ relimp_network(
   cor_matrix = NULL,
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   max_nodes = 21L,
+  normalized = FALSE,
   na_method = c("pairwise", "listwise"),
   labels = NULL
 )
@@ -42,6 +43,12 @@ relimp_network(
   Refuse to run above this many nodes (the cost grows as `2^(p-1)` per
   node). Default 21.
 
+- normalized:
+
+  If `TRUE`, rescale each outcome's incoming importance shares to sum to
+  1, matching `bootnet`/`relaimpo`'s normalized reporting. The default
+  `FALSE` keeps raw LMG shares that sum to the outcome R-squared.
+
 - na_method:
 
   Missing-data handling when `data` is supplied: `"pairwise"` (default)
@@ -57,7 +64,13 @@ relimp_network(
 A `psychnet` object whose `$weights` is the directed importance matrix
 (`weights[k, j]` = importance of `k` for outcome `j`), with `$r2`
 (per-node full-model R-squared), `$cor_matrix`, and `$kkt` (the
-decomposition residual).
+decomposition residual). With `normalized = FALSE` (default) each
+outcome's incoming shares sum to its R-squared
+(`colSums($weights) == $r2`); with `normalized = TRUE` they are rescaled
+to sum to 1, `$raw_importance` holds the unscaled shares, and `$kkt`
+(like
+[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md))
+is computed from those raw shares.
 
 ## Examples
 

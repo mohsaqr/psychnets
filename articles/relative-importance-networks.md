@@ -23,7 +23,7 @@ ri <- psychnet(SRL_GPT, method = "relimp")
 ri
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 1.11e-16
+#>   optimality (KKT residual): 2.22e-16
 ```
 
 The incoming shares per node sum to that node’s R-squared; the
@@ -34,7 +34,7 @@ precision:
 
 certificate(ri)
 #>   method  certificate       kind certified
-#> 1 relimp 1.110223e-16 structural      TRUE
+#> 1 relimp 2.220446e-16 structural      TRUE
 ```
 
 The directed edges – each predictor’s share of an outcome’s variance:

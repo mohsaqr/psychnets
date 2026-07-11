@@ -69,6 +69,7 @@ nodewise / <code>bootnet</code>'s <code>"relimp"</code> default, pure base R and
 <span>  cor_matrix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cor_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pearson"</span>, <span class="st">"spearman"</span>, <span class="st">"kendall"</span>, <span class="st">"auto"</span><span class="op">)</span>,</span>
 <span>  max_nodes <span class="op">=</span> <span class="fl">21L</span>,</span>
+<span>  normalized <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  na_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pairwise"</span>, <span class="st">"listwise"</span><span class="op">)</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -97,6 +98,12 @@ nodewise / <code>bootnet</code>'s <code>"relimp"</code> default, pure base R and
 <code>2^(p-1)</code> per node). Default 21.</p></dd>
 
 
+<dt id="arg-normalized">normalized<a class="anchor" aria-label="anchor" href="#arg-normalized"></a></dt>
+<dd><p>If <code>TRUE</code>, rescale each outcome's incoming importance
+shares to sum to 1, matching <code>bootnet</code>/<code>relaimpo</code>'s normalized reporting.
+The default <code>FALSE</code> keeps raw LMG shares that sum to the outcome R-squared.</p></dd>
+
+
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
 <dd><p>Missing-data handling when <code>data</code> is supplied: <code>"pairwise"</code>
 (default) or <code>"listwise"</code>. See <code><a href="ebic_glasso.html">ebic_glasso()</a></code>.</p></dd>
@@ -111,7 +118,11 @@ nodewise / <code>bootnet</code>'s <code>"relimp"</code> default, pure base R and
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the directed importance matrix
 (<code>weights[k, j]</code> = importance of <code>k</code> for outcome <code>j</code>), with <code>$r2</code> (per-node
 full-model R-squared), <code>$cor_matrix</code>, and <code>$kkt</code> (the decomposition
-residual).</p>
+residual). With <code>normalized = FALSE</code> (default) each outcome's incoming
+shares sum to its R-squared (<code>colSums($weights) == $r2</code>); with
+<code>normalized = TRUE</code> they are rescaled to sum to 1, <code>$raw_importance</code> holds
+the unscaled shares, and <code>$kkt</code> (like <code><a href="lmg_certificate.html">lmg_certificate()</a></code>) is computed from
+those raw shares.</p>
     </div>
 
     <div class="section level2">
@@ -132,7 +143,7 @@ residual).</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -93,14 +93,14 @@ meant for a modest number of nodes. We use the five construct scores in
 <span><span class="va">ri</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span></code></pre></div>
 <p>The incoming shares per node sum to that node’s R-squared; the
 certificate confirms this efficiency identity holds to numerical
 precision:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">ri</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate       kind certified</span></span>
-<span><span class="co">#&gt; 1 relimp 1.110223e-16 structural      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 relimp 2.220446e-16 structural      TRUE</span></span></code></pre></div>
 <p>The directed edges – each predictor’s share of an outcome’s
 variance:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -158,7 +158,7 @@ positive, red = negative) and the predictability ring via
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

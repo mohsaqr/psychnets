@@ -51,19 +51,89 @@
   mod_value
 }
 
-# Fit the moderated MGM (glmnet nodewise lasso + EBIC + LW threshold + AND/OR
+# Apply the Loh-Wainwright threshold to a coefficient vector.
+#' @noRd
+.mmg_lw <- function(b, npar, n) {
+  tau <- sqrt(2L) * sqrt(sum(b^2)) * sqrt(log(npar) / n)
+  b[abs(b) < tau] <- 0
+  b
+}
+
+# One nodewise moderated fit on the BASE kernel (penalized IRLS + coordinate
+# descent, R/lasso_glm.R) -- no glmnet, no compiled code.
+#
+# The design matrix X and the aggregation downstream are identical to the glmnet
+# path; only the solver differs. Two equivalences make this a drop-in rather than
+# an approximation:
+#
+#  * EBIC. The glmnet path minimises -2*LL + df*log(n) + 2*gamma*df*log(npar).
+#    For a gaussian node -2*LL_lambda collapses to RSS - 2*LL_sat with LL_sat
+#    constant along the path, and for a categorical node -2*LL IS the deviance,
+#    so the argmin equals .nodewise_ebic()'s dev + df*log(n) + 2*gamma*df*log(p).
+#    The two criteria select on the same objective.
+#
+#  * The 2-class multinomial convention. glmnet fits a binary categorical node
+#    with family = "multinomial", whose two class coefficient vectors are
+#    symmetric (-a, +a); the ordinary binary logit coefficient is b = 2a. The
+#    aggregation helpers average |coef| over the class list, so returning
+#    beta_list = list(-b/2, +b/2) reproduces mgm's directed parameter exactly.
+#    The LW threshold is unaffected by the halving: thresholding a = b/2 at
+#    tau(a) is identical to thresholding b at tau(b), because tau scales with the
+#    vector's own norm.
+#' @noRd
+.mmg_fit_node_base <- function(X, y, is_cat, gamma, threshold, nlambda,
+                               lambda_min_ratio) {
+  npar <- ncol(X)
+  n <- nrow(X)
+  if (is_cat) {
+    fit <- .nodewise_ebic(X, y - 1, "binomial", gamma, nlambda,
+                          lambda_min_ratio)
+    b <- fit$beta
+    if (threshold == "LW") b <- .mmg_lw(b, npar, n)
+    # Split the logit coefficient into glmnet's symmetric 2-class convention.
+    return(list(beta = NULL, beta_list = list(-b / 2, b / 2),
+                col_names = colnames(X), multinomial = TRUE,
+                lambda = fit$lambda, kkt = fit$kkt))
+  }
+  fit <- .nodewise_ebic(X, y, "gaussian", gamma, nlambda, lambda_min_ratio)
+  b <- fit$beta
+  if (threshold == "LW") b <- .mmg_lw(b, npar, n)
+  list(beta = b, col_names = colnames(X), multinomial = FALSE,
+       lambda = fit$lambda, kkt = fit$kkt)
+}
+
+# Fit the moderated MGM (nodewise lasso + EBIC + LW threshold + AND/OR
 # 2-side main / 3-side interaction aliveness). Returns a psychnet_moderated.
+#
+# engine = "base"   -- psychnets' own penalized-IRLS kernel (default). Gaussian
+#                      and binary nodes; every nodewise fit is KKT-certified.
+# engine = "glmnet" -- the reference path (native = FALSE). Additionally supports
+#                      multi-level categorical nodes via multinomial glmnet.
 #' @noRd
 .mmg_estimate <- function(mat, types, moderator, gamma, rule, threshold,
-                          labels, level = NULL) {
-  # The moderated MGM is the one estimator with no base-R kernel: it needs the
-  # glmnet nodewise solver. Fail with an install hint, not a bare stopifnot.
-  if (!requireNamespace("glmnet", quietly = TRUE)) {
-    stop("Moderated networks (`moderators=`) need the 'glmnet' package. ",
-         "Install it, or fit an unmoderated network by omitting `moderators`.",
+                          labels, level = NULL, engine = "base",
+                          nlambda = 100L, lambda_min_ratio = 0.01) {
+  if (engine == "glmnet" && !requireNamespace("glmnet", quietly = TRUE)) {
+    stop("native = FALSE needs the 'glmnet' package; install it, or keep ",
+         "native = TRUE (the default, which uses the base-R kernel).",
          call. = FALSE)
   }
   stopifnot(length(moderator) == 1L, moderator >= 1, moderator <= ncol(mat))
+  # The base kernel is a binomial solver: it covers gaussian + binary nodes, the
+  # documented mgm_fit() scope. A multi-level categorical needs the multinomial
+  # solver, which only the glmnet engine has.
+  if (engine == "base") {
+    n_lev <- vapply(which(types == "c"),
+                    function(j) length(unique(mat[, j])), integer(1))
+    if (length(n_lev) && any(n_lev > 2L)) {
+      bad <- which(types == "c")[n_lev > 2L]
+      stop(sprintf(paste0(
+        "Column(s) %s are categorical with more than 2 levels; the base kernel ",
+        "supports gaussian and binary (0/1) nodes only. One-hot encode them, or ",
+        "pass native = FALSE to use the multinomial glmnet engine."),
+        paste(colnames(mat)[bad], collapse = ", ")), call. = FALSE)
+    }
+  }
   data <- as.data.frame(mat)
   p <- ncol(data)
   scale_on <- any(types == "g")
@@ -107,6 +177,12 @@
 
     npar <- ncol(X)
     y <- as.numeric(data[[v]])
+
+    if (engine == "base") {
+      return(.mmg_fit_node_base(X, y, is_cat = types[v] == "c", gamma = gamma,
+                                threshold = threshold, nlambda = nlambda,
+                                lambda_min_ratio = lambda_min_ratio))
+    }
 
     if (types[v] == "c") {
       fit <- glmnet::glmnet(X, y, family = "multinomial", alpha = 1,
@@ -174,9 +250,15 @@
     int_alive[non_mod, non_mod] <- TRUE
   }
 
+  # Worst nodewise KKT residual: the base kernel certifies every nodewise fit
+  # against its own convex objective. The glmnet path carries no such residual.
+  kkt <- if (engine == "base")
+    max(vapply(fits, function(f) f$kkt %||% NA_real_, numeric(1))) else NA_real_
+
   structure(list(fits = fits, moderator = moderator, p = p, types = types,
                  level = level, labels = labels, n = n, data = mat,
-                 pw_alive = pw_alive, int_alive = int_alive,
+                 pw_alive = pw_alive, int_alive = int_alive, kkt = kkt,
+                 engine = engine,
                  params = list(gamma = gamma, rule = rule, threshold = threshold)),
             class = "psychnet_moderated")
 }
@@ -261,11 +343,9 @@
 #' mod <- rep(0:1, each = 200)
 #' y <- x1 * (mod == 1) + stats::rnorm(400)   # x1-y edge only when mod == 1
 #' d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
-#' # `moderators=` is the one estimator that needs glmnet (a Suggested package).
-#' if (requireNamespace("glmnet", quietly = TRUE)) {
-#'   fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
-#'   condition(fit, value = 1)
-#' }
+#' fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
+#' condition(fit, value = 0)   # no x1-y edge
+#' condition(fit, value = 1)   # the x1-y edge appears
 #' @export
 condition <- function(object, value, rule = NULL) {
   stopifnot(inherits(object, "psychnet_moderated"))

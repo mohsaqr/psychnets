@@ -43,7 +43,10 @@
 #' @param moderators Optional single column index of a moderator variable. When
 #'   supplied, fits a *moderated* MGM (that variable moderates every pairwise
 #'   edge) and returns a `psychnet_moderated` object to be read with
-#'   [condition()]; glmnet-based, and `weights` are not supported in this mode.
+#'   [condition()]. Honours `native` like the unmoderated path: the default base
+#'   kernel is pure R and KKT-certified, and covers gaussian and binary nodes;
+#'   `native = FALSE` uses `glmnet` and additionally allows multi-level
+#'   categorical nodes. `weights` are not supported in this mode.
 #' @param weights Optional non-negative observation weights, one per row of the
 #'   (NA-prepared) data. `NULL` (default) is unweighted.
 #' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
@@ -110,15 +113,19 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
 
   # Moderated MGM: a chosen variable moderates every edge. Dispatched before the
   # binary 0/1 enforcement because the moderated path treats every categorical as
-  # a factor (multi-level allowed, matching mgm). glmnet-based; weights
-  # unsupported. Returns a psychnet_moderated, read via condition().
+  # a factor; the glmnet engine additionally allows multi-level ones (matching
+  # mgm). Honours `native` like every other path: the default base kernel is
+  # pure R and KKT-certified. Weights unsupported. Returns a psychnet_moderated,
+  # read via condition().
   if (!is.null(moderators)) {
     if (!is.null(weights)) {
       stop("moderated MGM does not support `weights`.", call. = FALSE)
     }
     thr_mod <- if (threshold == "LW") "LW" else "none"
     return(.mmg_estimate(mat, types, moderators, gamma = gamma, rule = rule,
-                         threshold = thr_mod, labels = labels))
+                         threshold = thr_mod, labels = labels,
+                         engine = engine, nlambda = nlambda,
+                         lambda_min_ratio = lambda_min_ratio))
   }
 
   # A user-declared binary ('c') column must actually be 0/1, else the logistic

@@ -40,7 +40,10 @@ binary); auto-detected if \code{NULL}.}
 \item{moderators}{Optional single column index of a moderator variable. When
 supplied, fits a \emph{moderated} MGM (that variable moderates every pairwise
 edge) and returns a \code{psychnet_moderated} object to be read with
-\code{\link[=condition]{condition()}}; glmnet-based, and \code{weights} are not supported in this mode.}
+\code{\link[=condition]{condition()}}. Honours \code{native} like the unmoderated path: the default base
+kernel is pure R and KKT-certified, and covers gaussian and binary nodes;
+\code{native = FALSE} uses \code{glmnet} and additionally allows multi-level
+categorical nodes. \code{weights} are not supported in this mode.}
 
 \item{weights}{Optional non-negative observation weights, one per row of the
 (NA-prepared) data. \code{NULL} (default) is unweighted.}

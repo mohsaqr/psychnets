@@ -29,9 +29,7 @@ x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
 mod <- rep(0:1, each = 200)
 y <- x1 * (mod == 1) + stats::rnorm(400)   # x1-y edge only when mod == 1
 d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
-# `moderators=` is the one estimator that needs glmnet (a Suggested package).
-if (requireNamespace("glmnet", quietly = TRUE)) {
-  fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
-  condition(fit, value = 1)
-}
+fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
+condition(fit, value = 0)   # no x1-y edge
+condition(fit, value = 1)   # the x1-y edge appears
 }

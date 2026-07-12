@@ -3,36 +3,52 @@
 ## What a Gaussian graphical model is
 
 A Gaussian graphical model represents the conditional dependence
-structure of a set of continuous variables. Each node is a measured
-variable. Each edge is a partial correlation between two variables after
-conditioning on every other variable in the model. The graph is
-undirected because the partial correlation between variables $`i`$ and
-$`j`$ has no direction.
+structure of a set of continuous variables. Each node corresponds to an
+observed variable, and each edge represents the partial correlation
+between two variables after conditioning on every other variable in the
+network. The graph is undirected because partial correlations are
+symmetric; the association between variables (i) and (j) is identical to
+that between (j) and (i).
 
-The practical question is whether two variables remain related above and
-beyond what the other variables can explain. Consider a network
-containing motivation, academic achievement, prior achievement, study
-effort, self-efficacy, and test anxiety. An edge between motivation and
-academic achievement means that their association remains after
-accounting for the other four variables. The edge is the part of their
-relationship that cannot be explained by prior achievement, study
-effort, self-efficacy, or test anxiety within the fitted model.
+The objective of a Gaussian graphical model is to determine whether two
+variables remain associated after the influence of all other measured
+variables has been removed. Consider a network containing motivation,
+academic achievement, prior achievement, study effort, self-efficacy,
+and test anxiety. An edge between motivation and academic achievement
+indicates that these variables remain conditionally associated after
+accounting for prior achievement, study effort, self-efficacy, and test
+anxiety. The edge therefore represents the component of their
+relationship that cannot be explained by the remaining variables
+included in the model.
 
-If the motivation-achievement edge is absent, the model did not retain a
-unique association between them after accounting for those other
-variables. Their ordinary correlation may still be positive. That
-correlation might be explained by motivated students studying more,
-having greater self-efficacy, or differing in prior achievement. The
-network helps separate this shared association from the relation that
-remains after the other measured variables are considered.
+Conversely, the absence of an edge indicates that the model does not
+retain a unique conditional association between the two variables after
+adjustment for the remaining variables. Their marginal correlation may
+nevertheless be substantial. For example, the observed association
+between motivation and academic achievement may be explained through
+their relationships with study effort, self-efficacy, or prior
+achievement. Gaussian graphical models distinguish these indirect
+pathways from associations that remain after statistical adjustment for
+all other variables.
 
-The estimation procedure also filters negligible connections that may
-reflect sampling noise. A missing edge therefore has a practical
-reading: the data and the selected model did not provide enough unique
-association to retain that connection. It does not mean that the
-variables are unrelated in every context. Edges describe adjusted
-associations and do not by themselves show that one variable causes
-another.
+During estimation, weak conditional associations that are consistent
+with sampling variability are removed, producing a sparse representation
+of the conditional dependence structure. Consequently, a missing edge
+should not be interpreted as evidence that two variables are universally
+unrelated, but rather that the observed data do not provide sufficient
+evidence for a direct conditional association under the fitted model.
+Likewise, the presence of an edge indicates statistical dependence
+conditional on the measured variables and should not be interpreted as
+evidence of a causal relationship.
+
+In *psychnets*, Gaussian graphical models are implemented as a
+clean-room reimplementation in base R. Both the statistical estimator
+and the numerical optimization algorithm are implemented directly in R
+from first principles, without invoking compiled Fortran or C/C++
+optimization libraries or external estimation packages. This
+implementation provides complete transparency of the estimation
+procedure while reproducing the established Gaussian graphical model
+methodology.
 
 ## The data
 

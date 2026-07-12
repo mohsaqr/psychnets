@@ -2,8 +2,6 @@
 
 ### All vignettes
 
-- [Gaussian graphical models: an extended
-  tutorial](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models-v2.md):
 - [Gaussian graphical models: estimation and
   interpretation](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.md):
 - [Stepwise Gaussian graphical model

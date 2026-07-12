@@ -2,32 +2,46 @@
 
 ## What stepwise model selection does
 
-A Gaussian graphical model describes which variables remain associated
-after the other variables in the network have been taken into account.
-Each edge is a partial correlation. Its practical interpretation is an
-association above and beyond what the remaining measured variables can
-explain.
+A stepwise Gaussian graphical model estimates the conditional dependence
+structure among a set of continuous variables by combining model
+selection with maximum-likelihood estimation. As in all Gaussian
+graphical models, each edge represents a partial correlation between two
+variables after conditioning on all remaining variables in the network.
+An edge therefore indicates a conditional association that cannot be
+explained by the other measured variables, whereas the absence of an
+edge implies that the observed association is adequately accounted for
+by the remaining variables under the fitted model.
 
-Consider a network containing motivation, academic achievement, prior
-achievement, study effort, self-efficacy, and test anxiety. An edge
-between motivation and achievement means that these two variables remain
-associated after accounting for the other four. If that edge is absent,
-their ordinary correlation may be explained sufficiently by the
-variables already included in the model. For example, motivated students
-may study more, and study effort may account for much of the observed
-motivation-achievement association.
+The network structure is determined through an iterative stepwise search
+in which candidate graphs are compared using an information criterion,
+typically the Extended Bayesian Information Criterion (EBIC). Edges are
+sequentially added or removed until no further improvement in the
+selection criterion is obtained. Unlike penalized estimators such as the
+graphical lasso, sparsity is achieved through explicit model selection
+rather than shrinkage of the precision matrix.
 
-Stepwise model selection decides which of these adjusted associations to
-retain. It compares candidate networks and selects the structure that
-provides the best balance between fit and complexity. The retained
-network focuses interpretation on relations that contribute enough
-unique information to justify an edge.
+Following model selection, the precision matrix is re-estimated by
+maximum likelihood on the selected graph without regularization.
+Consequently, the retained edge weights are not biased toward zero by a
+penalty term and may be preferred when the objective is parameter
+estimation and interpretation of partial correlations within the
+selected network. This approach is particularly appropriate when sample
+size is sufficiently large relative to the number of variables, allowing
+reliable estimation without regularization.
 
-The method then estimates the retained edge weights without shrinkage.
-This feature is useful when the research goal is to obtain partial
-correlations for a selected graph. The structure is chosen through model
-comparison, and the final weights are maximum-likelihood estimates under
-that structure.
+When the sample size is moderate to large and the underlying network is
+not excessively dense, stepwise Gaussian graphical models often recover
+graph structures similar to those obtained using the EBIC graphical
+lasso, particularly when both methods employ the same information
+criterion for model selection. However, because the graphical lasso
+performs simultaneous estimation and regularization, whereas the
+stepwise approach separates model selection from parameter estimation,
+the two methods may differ in finite samples. The graphical lasso
+generally exhibits greater numerical stability in high-dimensional
+settings ((p n)) or when estimation is ill-conditioned, while the
+stepwise estimator avoids the shrinkage bias inherent to penalized
+estimation by refitting the selected model using unpenalized maximum
+likelihood.
 
 ## The data
 

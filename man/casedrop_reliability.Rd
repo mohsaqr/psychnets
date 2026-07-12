@@ -54,9 +54,10 @@ correlation stays \verb{>= threshold} with probability \verb{>= certainty} (Epsk
 Borsboom & Fried 2018).
 }
 \examples{
-\donttest{
-casedrop_reliability(SRL_Claude)
-}
+# `iter` and `drop_prop` are kept small here so the example runs quickly;
+# the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
+# reliability assessment should use.
+casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
 }
 \references{
 Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating

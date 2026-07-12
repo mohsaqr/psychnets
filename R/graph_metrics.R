@@ -141,7 +141,16 @@ net_smallworld <- function(x, n_rand = 100L, seed = NULL) {
            call. = FALSE)
     W <- as.matrix(x)
   }
-  if (!is.null(seed)) set.seed(seed)
+  # Seed the rewiring draws without leaving the caller's RNG stream disturbed.
+  if (!is.null(seed)) {
+    if (exists(".Random.seed", envir = globalenv())) {
+      old_seed <- get(".Random.seed", envir = globalenv())
+      on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
+    } else {
+      on.exit(rm(".Random.seed", envir = globalenv()), add = TRUE)
+    }
+    set.seed(seed)
+  }
   A <- (abs(W) > 0) * 1; diag(A) <- 0
   m <- sum(A) / 2
   C <- .psn_transitivity(A)

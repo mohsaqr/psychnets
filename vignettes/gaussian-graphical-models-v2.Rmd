@@ -1,5 +1,6 @@
 ---
 title: "Gaussian graphical models: an extended tutorial"
+author: "[Mohammed Saqr](https://saqr.me)"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Gaussian graphical models: an extended tutorial}
@@ -9,280 +10,278 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 5)
+library(psychnets)
 has_cograph <- requireNamespace("cograph", quietly = TRUE)
-library(psychnets)
-net <- psychnet(data = SRL_GPT, method = "glasso")
-```
-
-```{r}
-library(psychnets)
+has_glasso <- requireNamespace("glasso", quietly = TRUE)
 ```
 
 ## What a psychological network represents
 
 A psychological network is a statistical representation of relations among
-measured variables. In a Gaussian graphical model (GGM), the nodes are variables:
+measured variables. In a Gaussian graphical model the nodes are variables:
 symptoms, questionnaire items, scale scores, behaviours, or other measured
-constructs. The edges are partial correlations. An edge therefore does not mean
-that two variables are merely correlated in the ordinary bivariate sense. It means
-that they remain associated after conditioning on all other variables included in
-the network.
+constructs. The edges are partial correlations. An edge states that two variables
+remain associated after conditioning on all other variables in the network, a
+conditional dependence. The absence of an edge states that two variables are
+conditionally independent given the rest, so any observed bivariate relation
+between them is accounted for through other variables in the model.
 
-This distinction is central to the interpretation of psychological networks
-(Epskamp & Fried, 2018; Borsboom et al., 2021; Saqr, Beck & López-Pernas, 2024).
-Suppose that cognitive strategy use and self-regulation are connected in a
-network that also contains intrinsic value, self-efficacy, and test anxiety. The
-edge asks a ceteris paribus question: are cognitive strategy use and
-self-regulation still associated among respondents who are comparable on the
-other constructs in the model? If so, the edge represents a conditional
-dependence. If not, the pair is conditionally independent in the fitted graph.
-
-The absence of an edge is consequently informative. It says that, given the other
-variables in the network, the data do not support a direct conditional association
-between the two nodes under the fitted model. This does not prove that the
-constructs are unrelated in every substantive sense. It means that any observed
-zero-order relation between them can be accounted for through other variables in
-the network, sampling variation, or both. Interpreting both present and absent
-edges is what makes a GGM more than a visual display of ordinary correlations.
-
-## Why and how we regularize
-
-An unregularized partial-correlation network is usually dense. When the sample
-correlation matrix is inverted directly, almost every pair of variables receives a
-non-zero partial correlation. Some of those partial correlations may reflect
-stable conditional associations, but many small estimates will arise because
-sample correlations fluctuate. The problem becomes more serious as the number of
-variables grows relative to the number of observations, because each edge is
-estimated while adjusting for many other variables.
-
-Regularization addresses this by shrinking weak edges. The graphical lasso
-(Friedman, Hastie & Tibshirani, 2008) estimates a sparse precision matrix by
-penalizing the absolute size of off-diagonal entries. In the partial-correlation
-network, this has the practical consequence that some weak conditional
-associations are set exactly to zero. The result is a graph that is easier to
-read and less dominated by small sample-specific estimates.
-
-Regularization is not a guarantee of truth. It changes the error tradeoff. A
-sparser graph typically reduces false-positive edges, but it may also remove weak
-associations that are real in the population. The substantive question is
-therefore not simply whether an edge appears, but how strong and stable the edge
-is, how plausible the model assumptions are, and how the result changes under
-reasonable analytic choices.
-
-The extended Bayesian information criterion (EBIC; Foygel & Drton, 2010) is
-commonly used to choose the amount of regularization. Its hyperparameter, usually
-called gamma, controls an additional penalty for model complexity. A larger gamma
-favours sparser networks; a smaller gamma is more permissive. Choosing gamma is
-therefore a modelling decision about conservatism. In psychological-network
-applications, gamma equal to 0.5 is often used as a default because it gives a
-relatively cautious graph, but researchers should still treat weak and borderline
-edges as uncertain until accuracy and stability have been examined.
-
-## A worked analysis with SRL_GPT
-
-The `SRL_GPT` data set contains 300 observations of five Motivated Strategies for
-Learning Questionnaire construct scores: cognitive strategy use (`CSU`),
-intrinsic value (`IV`), self-efficacy (`SE`), self-regulation (`SR`), and test
-anxiety (`TA`). Each variable is a mean score on a 1-7 response scale.
+This extended tutorial assumes the reader has met the model in the companion
+vignette. It concentrates on interpretation and on the questions a careful
+analysis must answer past the point estimate: how accurate the edge weights are,
+how stable the centrality ordering is, and how the choice of estimation engine
+affects the result. The `SRL_GPT` data set runs through the whole tutorial. It
+contains 300 observations of five Motivated Strategies for Learning Questionnaire
+construct scores: cognitive strategy use (`CSU`), intrinsic value (`IV`),
+self-efficacy (`SE`), self-regulation (`SR`), and test anxiety (`TA`), each a
+mean score on a 1 to 7 scale.
 
 ```{r}
-head(x = SRL_GPT)
+head(SRL_GPT)
 ```
 
-The network is estimated with `psychnet()`. Here `method = "glasso"` requests the
-EBIC-regularized graphical lasso. The method name `"EBICglasso"` is accepted as
-an alias, but this vignette uses the shorter spelling.
+## Fitting and reading the network
+
+`psychnet()` takes a numeric table and a `method` name and returns a fitted
+`psychnet` object. Here `method = "glasso"` requests the
+EBIC-regularized graphical lasso, which selects an L1 penalty by the extended
+Bayesian information criterion and refits it to the certified optimum.
 
 ```{r}
-psychnet(data = SRL_GPT, method = "glasso")
+net <- psychnet(SRL_GPT, method = "glasso")
+net
 ```
 
-The edge list is the most useful first output because it states the fitted
-partial correlations directly.
+The network has five nodes and ten edges at a selected penalty of `lambda` =
+0.0086 and the default EBIC hyperparameter `gamma` = 0.5. The edge table is read
+with `summary()`, which also reports the range and mean of the weights.
 
 ```{r}
-as.data.frame(x = net)
+summary(net)
 ```
 
-Each row is a conditional association between two constructs. Positive weights
-mean that respondents who are higher on one construct tend also to be higher on
-the other, after conditioning on the remaining constructs. Negative weights mean
-that respondents who are higher on one construct tend to be lower on the other,
-again conditionally on the rest of the network.
+Each row is a conditional association between two constructs. A positive weight
+means that respondents higher on one construct tend to be higher on the other
+after conditioning on the remaining constructs; a negative weight means the
+opposite conditional relation. The learning and motivation constructs form a
+positive cluster: `CSU` connects to `IV` (0.41), `SE` (0.38), and `SR` (0.35),
+and `IV`, `SE`, and `SR` are positively linked among themselves. The one
+substantial negative association is between `SR` and `TA` (-0.35), which reads as
+lower test anxiety among respondents with higher self-regulation, holding the
+other constructs constant. The three positive edges involving `TA` are small
+(0.05 to 0.11), so their substantive interpretation is cautious. These weights are
+conditional relations among construct scores and carry no causal claim.
 
-In this example, the learning-strategy and motivation constructs form a positive
-cluster. `CSU` is positively connected to `IV`, `SE`, and `SR`; `IV`, `SE`, and
-`SR` are also positively linked. These edges should be read as conditional
-relations among construct scores, not as evidence that one construct causes
-another. The strongest negative association is between `SR` and `TA`, suggesting
-that test anxiety is lower among respondents with higher self-regulation when
-cognitive strategy use, intrinsic value, and self-efficacy are held constant.
-Several positive edges involving `TA` are small; their substantive interpretation
-should be correspondingly cautious.
-
-Centrality summaries describe how a node is positioned in the fitted network.
+`net_centralities()` summarizes how each node is positioned in the network,
+returning a tidy data frame with one row per node and a column per measure. Node strength is the sum of the absolute edge weights at a node.
+Expected influence is the signed sum, so positive and negative edges offset one
+another.
 
 ```{r}
-net_centralities(x = net)
+net_centralities(net)
 ```
 
-Node strength is the sum of the absolute edge weights incident on a node. It is
-usually the most interpretable and comparatively stable centrality index in
-psychological networks. Expected influence is the signed analogue: positive and
-negative edges can offset one another. In this data set, `SR` has high strength
-because it is connected to several learning constructs and also has a sizeable
-negative edge with `TA`. Its expected influence is lower than its strength because
-the negative edge offsets its positive connections.
+`SR` has high strength (1.23) because it connects to several learning constructs
+and carries the negative edge with `TA`. Its expected influence (0.53) is lower
+than its strength because the negative edge offsets its positive connections.
+Strength is usually the most interpretable and comparatively stable centrality
+index in psychological networks. Betweenness and closeness are often unstable in
+these networks and are available on request but are read with more caution.
 
-Other centrality indices, especially betweenness and closeness, are often
-unstable in psychological networks and should not be overinterpreted without
-dedicated stability evidence (Bringmann et al., 2019). For this reason, this
-vignette emphasizes strength and expected influence rather than treating every
-available graph-theoretic index as equally meaningful.
-
-Predictability provides an absolute complement to centrality. Instead of asking
-how connected a node is, it asks how much of the variance in each node can be
-accounted for by its neighbours in the network (Haslbeck & Waldorp, 2018).
+`net_predict()` reports how well each node is predicted by its neighbours,
+returning a tidy data frame with columns `node`, `type`,
+`metric`, `predictability`, and `accuracy`. For a Gaussian graphical model the
+value is the closed-form proportion of variance of each node explained by the rest
+of the network, computed from the precision matrix.
 
 ```{r}
-net_predict(x = net)
+net_predict(net)
 ```
 
-Predictability is useful because two nodes can have similar centrality but differ
-in how well the rest of the network explains them. Here the learning-related
-constructs are highly predictable from their neighbours, whereas `TA` is much
-less predictable. That pattern fits the edge list: test anxiety has one
-substantial negative edge with self-regulation and several smaller positive
-edges.
-
-The same fitted object can be plotted with `cograph`. The chunk is guarded so the
-vignette can still render on systems where the optional plotting package is not
-available.
+Predictability is an absolute complement to centrality: two nodes can have similar
+centrality yet differ in how well the network explains them. The learning
+constructs are highly predictable (`CSU` 0.82, `SR` 0.78, `IV` 0.77, `SE` 0.71),
+whereas `TA` is much less predictable (0.14). That pattern fits the edge table:
+test anxiety has one substantial edge and three weak ones.
 
 ```{r ggm-plot, eval = has_cograph}
-cograph::splot(x = net, psych_styling = TRUE)
+cograph::splot(net, psych_styling = TRUE)
 ```
 
-The graph is a visual summary of the edge list. It is useful for orientation, but
-the numerical edge table remains the primary object for interpretation. Layout
-algorithms place nodes to make the graph readable; distances on the page should
-not be interpreted as direct measurements unless the plotting method explicitly
-defines them that way.
+The graph is a visual summary of the edge table and is useful for orientation. The
+numerical edge table remains the primary object for interpretation.
 
-## Assessing accuracy and replicability
+## Assessing accuracy of edge weights
 
-Point estimates are not enough. A reported edge weight is one estimate from one
-sample, and centrality indices are functions of many estimated edges. Researchers
-should therefore assess how much those estimates vary under resampling.
+A reported edge weight is one estimate from one sample. Before an edge is read as
+substantive, its sampling variability is assessed. `net_boot()` resamples the
+observations with replacement, re-estimates the network on each resample, and
+summarizes the sampling distribution of every edge weight and
+centrality. It returns an object of class `psychnet_bootstrap` whose edge table
+carries the observed weight, the bootstrap mean, the lower and upper percentile
+confidence limits, the inclusion proportion, and a `significant` flag set when the
+percentile interval excludes zero. The following run uses 200 resamples for a
+compact vignette; a full analysis uses more.
 
-For edge weights, nonparametric bootstrapping can be used to obtain uncertainty
-intervals and to examine whether differences between edges are large relative to
-sampling variability. For centrality, case-dropping procedures ask whether the
-centrality ordering remains similar when portions of the sample are removed. This
-is the logic behind the bootstrap and stability procedures recommended by
-Epskamp, Borsboom, and Fried (2018).
+```{r}
+set.seed(1)
+bs <- net_boot(SRL_GPT, method = "glasso", n_boot = 200, cores = 1)
+bs
+```
 
-In `psychnets`, `net_boot()` and `net_stability()` provide these analyses. They are
-not run here because a thorough bootstrap is computationally longer than a
-compact vignette should require, but they should be part of a complete empirical
-analysis when edge accuracy or centrality claims are substantively important.
+The printed summary reports that seven of the ten edges are significant at the
+95% level. The full edge table gives the intervals.
+
+```{r}
+summary(bs)
+```
+
+A percentile confidence interval is the range of edge values consistent with the
+data at the stated level. An interval that excludes zero indicates a non-zero
+edge. The strong edges of the positive cluster have narrow intervals well away
+from zero: `CSU`-`IV` runs from 0.32 to 0.49, and the negative `SR`-`TA` edge runs
+from -0.43 to -0.24. The three weak positive `TA` edges have intervals whose lower
+limit is zero, so they are not significant, and their inclusion proportions are
+below one (`CSU`-`TA` at 0.72, `SE`-`TA` at 0.96, `IV`-`TA` at 0.97), meaning the
+edge was set to zero in a share of the resamples. The bootstrap therefore gives
+the same reading as the point estimate but with the added evidence that the weak
+`TA` edges are uncertain.
+
+## Assessing stability of centrality
+
+Centrality indices are functions of many estimated edges, so their ordering also
+needs a stability check. `net_stability()` drops random subsets of cases,
+re-estimates the network on each subset, and correlates the subset centralities
+with the full-sample centralities. It returns an object of
+class `psychnet_stability` carrying the correlation-stability (CS) coefficient per
+measure and a tidy table of the mean correlation at each drop proportion. The CS
+coefficient is the largest proportion of cases that can be dropped while the rank
+correlation with the full sample stays at or above a threshold (default 0.7) with
+a stated certainty (default 0.95).
+
+```{r}
+set.seed(1)
+cs <- net_stability(SRL_GPT, method = "glasso",
+                    drop_prop = c(0.3, 0.5, 0.7), iter = 50)
+cs
+```
+
+The CS coefficient is 0.50 for strength and 0.70 for expected influence. The
+strength ordering stays correlated at 0.7 or above with the full-sample ordering,
+with 95% certainty, when up to 50% of the cases are dropped; the expected-influence
+ordering holds up to 70%. A common guideline treats a CS coefficient of at least
+0.5 as adequate and 0.25 as a minimum, so both measures are stable enough to
+interpret here. The supporting table shows how the mean correlation declines as
+more cases are dropped.
+
+```{r}
+cs$table
+```
+
+For strength the mean correlation falls from 0.97 at a 30% drop to 0.89 at a 70%
+drop; for expected influence it falls from 0.998 to 0.96 over the same range. The
+higher correlations for expected influence match its larger CS coefficient.
+
+## Native and external estimation engines
+
+By default (`native = TRUE`) the graphical lasso is estimated with the package's
+own solver, written entirely in base R. This is a clean-room implementation: the
+algorithm is reconstructed from first principles and reproduces the estimate
+without wrapping an external library. It depends only on base R, so it installs
+and runs anywhere with no compilation; it is readable R code that can be inspected
+end to end; and each fit is graded against the convex objective it optimizes, so
+its correctness is read from the certificate.
+
+Setting `native = FALSE` delegates each penalized solve to the compiled `glasso`
+Fortran routine, the same code underlying `qgraph::EBICglasso()`, which is faster
+on large problems. The optional `glasso` package supplies it.
+
+```{r fortran-fit, eval = has_glasso}
+net_fortran <- psychnet(SRL_GPT, method = "glasso", native = FALSE)
+summary(net_fortran)
+```
+
+The two solvers estimate the same model and return the same network: the edge
+weights agree with the native fit to about five decimal places (`CSU`-`IV` is
+0.4117 under both). The certificate reads the difference between them.
+
+```{r fortran-certificate, eval = has_glasso}
+certificate(net_fortran)
+```
+
+The residual here is 8.2e-05, above the default tolerance of 1e-6, so `certified`
+is `FALSE`. The Fortran routine converges to its own looser tolerance (near
+1e-4), and the certificate reports that looser tolerance; the base-R refit reaches
+a tighter one. The native fit certifies at 2.2e-10, so both solvers recover the same
+network while the base-R solver returns it to a tighter numerical optimum. A study
+can use the native solver and read the external one as an independent check.
 
 ## Non-normal and ordinal data
 
-GGMs are Gaussian models, yet psychological data are often skewed, bounded, and
-measured on ordinal response scales. Scale means, such as the five `SRL_GPT`
-construct scores, are often treated as approximately continuous, but this is a
-modelling approximation rather than a property guaranteed by the questionnaire.
+Gaussian graphical models are Gaussian, yet psychological data are often skewed,
+bounded, and measured on ordinal response scales. Scale means such as the five
+`SRL_GPT` construct scores are commonly treated as approximately continuous, which
+is an approximation of the questionnaire response format.
 
-For ordinal item-level data, `cor_method = "auto"` can be used so that the
-correlation input is based on polychoric or polyserial associations when
-appropriate. This choice is most relevant when variables are individual Likert
-items or mixed ordinal-continuous measures rather than scale means.
+For ordinal item-level data, `cor_method = "auto"` bases the correlation input on
+polychoric or polyserial associations when appropriate. This choice is most
+relevant when the variables are individual Likert items or mixed
+ordinal-continuous measures.
 
 For continuous variables with pronounced monotone departures from normality,
 `method = "huge"` estimates a nonparanormal graphical model. The nonparanormal
-approach assumes that variables become jointly Gaussian after unknown monotone
-transformations of their marginal distributions (Liu, Lafferty & Wasserman,
-2009). It is a way to retain a GGM-style conditional-dependence interpretation
-while relaxing strict multivariate normality.
-
-## Native estimation
-
-By default (`native = TRUE`) `psychnets` estimates the graphical lasso with its own
-solver, written entirely in base R. This is a *clean-room* implementation: the
-algorithm is reconstructed from the original description (Friedman, Hastie &
-Tibshirani, 2008) rather than wrapping an existing library, and it reproduces the
-estimate from first principles. Its advantages are:
-
-- it depends only on base R, so it installs and runs anywhere with no compilation
-  or external library;
-- the estimator is plain, readable R code that can be inspected and audited end
-  to end, not a compiled black box;
-- each fit is graded against the convex objective it optimizes, so its
-  correctness is established internally rather than by agreement with another
-  program;
-- the results are reproducible across platforms.
-
-## The Fortran glasso estimator
-
-The native solver is not the only option. Setting `native = FALSE` delegates
-each penalized solve to the compiled `glasso` Fortran routine — the same code
-underlying `qgraph::EBICglasso()` — which is faster on large problems and returns
-numerically equivalent estimates:
+assumes the variables become jointly Gaussian after unknown monotone
+transformations of their marginal distributions, then applies the identical EBIC
+graphical lasso to the transformed correlation matrix. It retains the
+conditional-dependence interpretation of the Gaussian graphical model while
+relaxing strict multivariate normality.
 
 ```{r}
-psychnet(data = SRL_GPT, method = "glasso", native = FALSE)
+huge_net <- psychnet(SRL_GPT, method = "huge")
+certificate(huge_net)
 ```
 
-The native (`native = TRUE`) and Fortran (`native = FALSE`) solvers estimate the
-same model; they differ only in the implementation that performs the computation,
-so a study can use the convenient native solver and confirm it against the
-established external one.
+The nonparanormal fit certifies at 2.5e-10, at the order of machine precision, so
+it reached the optimum of its convex objective on the transformed correlation.
 
 ## Mathematical foundations
 
-This final section gives the statistical definitions behind the tutorial. It is
-included for readers who want the mathematical form of the model and estimator,
-and can be skipped without losing the worked example above.
+This section gives the statistical definitions behind the tutorial. It can be
+skipped without losing the worked example.
 
 ### Precision matrix and the pairwise Markov property
 
 Let $\mathbf{X} = (X_1, \ldots, X_p)$ follow a multivariate normal distribution
 with covariance matrix $\boldsymbol{\Sigma}$ and precision matrix
-$\mathbf{K} = \boldsymbol{\Sigma}^{-1}$. A Gaussian graphical model represents
-conditional independences among the variables by zeros in the precision matrix.
-For $i \neq j$, the pairwise Markov property states that
+$\mathbf{K} = \boldsymbol{\Sigma}^{-1}$. The model represents conditional
+independences by zeros in the precision matrix. For $i \neq j$,
 
 $$
 K_{ij} = 0
 \quad \Longleftrightarrow \quad
-X_i \perp\!\!\!\perp X_j \mid \mathbf{X}_{-(i,j)} .
+X_i \perp\!\!\!\perp X_j \mid \mathbf{X}_{-(i,j)} ,
 $$
 
-Thus an absent edge corresponds to conditional independence given all remaining
-variables in the model (Lauritzen, 1996).
+so an absent edge is a conditional independence given all remaining variables.
 
 ### Partial-correlation identity
 
-The edge weights in a GGM are usually reported as partial correlations rather
-than raw precision-matrix entries. The partial correlation between variables
-$i$ and $j$, conditional on all other variables, is
+The edge weights are reported as partial correlations. The partial correlation
+between variables $i$ and $j$, conditional on all other variables, is
 
 $$
 \rho_{ij \cdot \mathrm{rest}}
-= -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}}.
+= -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}} ,
 $$
 
-This transformation puts the conditional association on the familiar correlation
-scale. A positive value indicates a positive conditional association, a negative
-value indicates a negative conditional association, and zero corresponds to no
-edge in the graph.
+which puts the conditional association on the correlation scale: a positive value
+is a positive conditional association, a negative value a negative one, and zero
+is no edge.
 
-### The L1-penalized Gaussian log-likelihood objective
+### The L1-penalized Gaussian log-likelihood
 
-Let $\mathbf{S}$ be the sample covariance or correlation matrix. The graphical
-lasso estimates the precision matrix by maximizing the penalized Gaussian
-log-likelihood
+Let $\mathbf{S}$ be the sample correlation matrix. The graphical lasso estimates
+the precision matrix by maximizing the penalized Gaussian log-likelihood,
 
 $$
 \hat{\mathbf{K}}
@@ -291,70 +290,39 @@ $$
 \log\det(\mathbf{K})
 - \operatorname{tr}(\mathbf{S}\mathbf{K})
 - \lambda \sum_{i \neq j} |K_{ij}|
-\right].
+\right] .
 $$
 
-The penalty parameter $\lambda \geq 0$ controls sparsity. Larger values shrink
-more off-diagonal precision entries to zero, producing fewer edges; smaller
-values retain more edges. This is the statistical source of the sparse network
-estimated by the graphical lasso (Friedman, Hastie & Tibshirani, 2008).
+The penalty $\lambda \geq 0$ controls sparsity: larger values shrink more
+off-diagonal entries to zero and yield fewer edges. The objective is strictly
+concave in $\mathbf{K}$, so its maximizer is unique.
 
 ### EBIC with gamma
 
-The EBIC selects among candidate sparse graphs by balancing model fit against
-model complexity. For a graph with $E$ non-zero edges estimated from $n$
-observations and $p$ variables, a common form is
+The extended Bayesian information criterion selects among candidate sparse graphs
+by balancing fit against complexity. For a graph with $E$ non-zero edges from $n$
+observations and $p$ variables,
 
 $$
 \mathrm{EBIC}_{\gamma}
 = -2\ell(\hat{\mathbf{K}})
 + E \log(n)
-+ 4 E \gamma \log(p),
++ 4 E \gamma \log(p) ,
 $$
 
 where $\ell(\hat{\mathbf{K}})$ is the maximized Gaussian log-likelihood and
-$\gamma$ controls the additional penalty for the size of the graph space (Foygel
-& Drton, 2010). When $\gamma = 0$, EBIC reduces to the ordinary BIC penalty for
-the number of edges. Larger values of $\gamma$ favour sparser networks.
+$\gamma$ controls the additional penalty for the size of the graph space. When
+$\gamma = 0$ the criterion reduces to ordinary BIC; larger $\gamma$ favours
+sparser networks.
 
-## References
+### Bootstrap and case-dropping stability
 
-Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E. I., McNally,
-R. J., Robinaugh, D. J., Perugini, M., Dalege, J., Costantini, G., Isvoranu, A.-M.,
-Wysocki, A. C., van Borkulo, C. D., van Bork, R., & Waldorp, L. J. (2021).
-Network analysis of multivariate data in psychological science. *Nature Reviews
-Methods Primers*, 1, Article 58.
-
-Bringmann, L. F., Elmer, T., Epskamp, S., Krause, R. W., Schoch, D., Wichers, M.,
-Wigman, J. T. W., & Snippe, E. (2019). What do centrality measures measure in
-psychological networks? *Journal of Abnormal Psychology*, 128(8), 892-903.
-
-Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating psychological
-networks and their accuracy: A tutorial paper. *Behavior Research Methods*,
-50(1), 195-212.
-
-Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation
-networks. *Psychological Methods*, 23(4), 617-634.
-
-Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
-Gaussian graphical models. In *Advances in Neural Information Processing Systems*
-(Vol. 23, pp. 604-612).
-
-Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance
-estimation with the graphical lasso. *Biostatistics*, 9(3), 432-441.
-
-Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models predict
-observations? On the importance of predictability in network models. *Behavior
-Research Methods*, 50(2), 853-861.
-
-Lauritzen, S. L. (1996). *Graphical Models*. Oxford University Press.
-
-Liu, H., Lafferty, J., & Wasserman, L. (2009). The nonparanormal: Semiparametric
-estimation of high dimensional undirected graphs. *Journal of Machine Learning
-Research*, 10, 2295-2328.
-
-Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A modern
-approach to the analysis of learning and complex learning processes. In M. Saqr
-& S. López-Pernas (Eds.), *Learning Analytics Methods and Tutorials: A Practical
-Guide Using R* (Chapter 19). Springer.
-<https://lamethods.org/book1/chapters/ch19-psychological-networks/ch19-psych.html>
+The nonparametric bootstrap draws resamples of the observations with replacement,
+re-estimates the network on each, and forms the percentile confidence interval of
+each edge weight and centrality from the resampling distribution. The
+case-dropping procedure removes random fractions of the cases, re-estimates on
+each subset, and correlates the subset centralities with the full-sample
+centralities. The correlation-stability coefficient is the largest drop proportion
+at which that correlation stays at or above a threshold with a stated certainty.
+Both procedures re-estimate through the same `psychnet()` path, so they apply to
+any estimator with no method-specific code.

@@ -1,5 +1,6 @@
 ---
 title: "Visualizing bootstrap, centrality and difference results (base R)"
+author: "[Mohammed Saqr](https://saqr.me)"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Visualizing bootstrap, centrality and difference results (base R)}
@@ -13,128 +14,237 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
 library(psychnets)
 ```
 
-`psychnets` ships **native base-R plot methods** for every diagnostic verb, so
-you can inspect a model's stability and structure with no additional packages
-(`graphics` and `grDevices` ship with R). This vignette walks through them on the
-bundled `SRL_Claude` self-regulated-learning data (300 respondents, five MSLQ
-subscales). A companion vignette,
-*"Visualizing networks with cograph"*, shows the richer cograph renderings of the
-same results.
+## Reading a network diagnostic as a picture
 
-Every plot is an S3 `plot()` method on a result object — call `plot()` on what a
-verb returns; there is no bracket-subsetting to assemble.
+A psychometric network is estimated from a finite sample, so every edge weight
+and every centrality value carries sampling uncertainty. The diagnostic verbs in
+`psychnets` quantify that uncertainty by resampling, case-dropping, and
+permutation. Each verb returns a tidy result object, and each result object
+carries a base-`graphics` `plot()` method that turns the numbers into a figure.
+The plots are drawn with the `graphics` and `grDevices` engines that ship with
+R, so reading a diagnostic needs no additional package.
 
-# Estimate a network
+Every figure in this vignette is the `plot()` method for one result class. The
+pattern is uniform: fit a network, call a diagnostic verb, then call `plot()` on
+what the verb returns. The sections below cover the centrality plot, the
+bootstrap plots and their difference-box matrices, the pairwise difference test,
+the case-dropping stability curves, and the network comparison test.
+
+## The data
+
+The bundled `SRL_GPT` data hold responses from 300 learners on five
+self-regulated-learning constructs (CSU, IV, SE, SR, TA), each a continuous
+subscale score.
+
+```{r data}
+head(SRL_GPT)
+```
+
+## Estimate a network
+
+`ebic_glasso()` estimates a Gaussian graphical model whose edges are
+partial correlations selected by the extended Bayesian information criterion. The
+fitted object is the input to every diagnostic below.
 
 ```{r fit}
-X   <- as.matrix(SRL_Claude)
-fit <- ebic_glasso(X)
+fit <- ebic_glasso(SRL_GPT)
 fit
 ```
 
-# Centralities
+## Centralities
 
-`net_centralities()` returns a tidy table; `plot()` draws it.
+`net_centralities()` computes node centrality measures from the fitted
+network and returns a tidy table with one row per node and one column per
+measure. Strength is the sum of absolute edge weights at a node, expected
+influence is the sum of signed edge weights, and betweenness counts the weighted
+shortest paths that pass through a node.
 
 ```{r centralities}
 ct <- net_centralities(fit, measures = c("strength", "expected_influence", "betweenness"))
 ct
 ```
 
-`type = "bar"` (the default) gives one sorted lollipop panel per measure:
+`plot()` for a `psychnet_centrality` table draws one panel per measure.
+Under the default `type = "bar"`, each panel is a horizontal lollipop chart whose
+nodes are sorted by their value, so the most central node sits at the top of the
+panel and the length of each segment reads directly as the centrality value.
 
 ```{r cent-bar, fig.width = 9, fig.height = 4.5}
 plot(ct)
 ```
 
-`type = "line"` gives the qgraph-style faceted centrality plot — one panel per
-measure, nodes sharing a single vertical order, each panel on its own (raw)
-axis:
+Under `type = "line"`, `plot()` draws the faceted centrality profile.
+The nodes share a single vertical order across all panels, set by their mean
+standardized centrality, and each panel keeps its own horizontal axis. A node
+that sits high in every panel is central on every measure; a node whose position
+shifts between panels is central on one measure and peripheral on another.
 
 ```{r cent-line, fig.width = 8, fig.height = 4.5}
 plot(ct, type = "line")
 ```
 
-Use `scale = "z"` or `scale = "relative"` if you prefer a standardised or a
-0--1 axis instead of raw values.
+The `scale` argument controls the per-panel transform in the line view. The
+default `"raw"` keeps each panel on its own axis of centrality values, `"z"`
+centres each measure at its mean and scales it to unit standard deviation, and
+`"relative"` maps each measure to the interval from zero to one.
 
-# Bootstrap accuracy
+```{r cent-line-z, fig.width = 8, fig.height = 4.5}
+plot(ct, type = "line", scale = "z")
+```
 
-`net_boot()` resamples and re-estimates; `plot()` defaults to the edge-weight
-confidence intervals, sorted by the observed weight (edges whose interval
-excludes zero are emphasised).
+## Bootstrap accuracy
+
+`net_boot()` resamples the rows of the data with replacement, refits the
+network on each resample, and records the distribution of every edge weight and
+every centrality value across resamples. The percentile confidence interval of
+each quantity is the reported measure of its sampling accuracy.
 
 ```{r boot}
 set.seed(1)
-bs <- net_boot(X, method = "glasso", n_boot = 250, cores = 1)
+bs <- net_boot(SRL_GPT, method = "glasso", n_boot = 250, cores = 1)
+```
+
+`plot()` for a `psychnet_bootstrap` object defaults to `type = "edges"`,
+the edge-accuracy plot. Each row is an edge, sorted by its observed weight; the
+point is the observed weight and the segment is its bootstrap confidence
+interval. An edge whose interval excludes zero is drawn in the emphasis colour,
+which reports that the edge is present across resamples; an edge whose interval
+crosses zero is muted.
+
+```{r boot-edges}
 plot(bs)
 ```
 
-Bootstrapped centrality intervals, one panel per measure:
+Under `type = "centrality"`, `plot()` draws the bootstrapped centrality
+intervals, one sorted panel per measure. A node whose interval is wide relative
+to the spread across nodes is estimated with low precision, so its rank among the
+nodes is uncertain.
 
 ```{r boot-cent, fig.width = 8, fig.height = 5}
 plot(bs, type = "centrality")
 ```
 
-The bootstrapped difference "significance box" matrices — which edges, or which
-node strengths, differ from one another:
+Under `type = "edge_diff"` and `type = "centrality_diff"`, `plot()`
+draws the difference "significance box" matrix. The items sit on both axes,
+ordered by their observed value from high to low. The diagonal carries the
+observed value, shaded by its magnitude. An off-diagonal cell is filled when that
+pair of items differs across the bootstrap, coloured red when the row item is
+larger than the column item and blue when it is smaller, and it is left faint
+when the pair does not differ. The stars report the difference p-value.
 
 ```{r boot-diff, fig.width = 6.5, fig.height = 6.5}
 plot(bs, type = "edge_diff")
+```
+
+```{r boot-cent-diff, fig.width = 6.5, fig.height = 6.5}
 plot(bs, type = "centrality_diff", measure = "strength")
 ```
 
-# Difference test
+## Difference test
 
-`difference_test()` is the tidy table of pairwise differences. Its `plot()` has
-two styles: the significance-box matrix (`"box"`, the default) for *which* pairs
-differ, and a forest plot (`"forest"`) for *how big* each difference is with its
-confidence interval.
+`difference_test()` reads the retained bootstrap draws and returns a
+tidy table of pairwise differences, with columns `item1`, `item2`, the two
+observed values, the observed difference `obs_diff`, its interval `lower` and
+`upper`, the `p_value`, and a `significant` flag set when the interval excludes
+zero.
 
-```{r difftest, fig.width = 6.5, fig.height = 6.5}
+```{r difftest-tab}
 dt <- difference_test(bs, type = "strength")
-plot(dt)                       # box matrix
+head(dt)
 ```
+
+`plot()` for a `psychnet_difference` table has two styles. The default
+`style = "box"` draws the same significance-box matrix as above, which reads
+*which* pairs differ.
+
+```{r difftest-box, fig.width = 6.5, fig.height = 6.5}
+plot(dt)
+```
+
+Under `style = "forest"`, `plot()` draws a forest plot with one row per
+pair. The point is the observed difference, the segment is its confidence
+interval, the dashed line marks zero, and a pair whose interval excludes zero is
+emphasised. This view reads *how large* each difference is together with its
+uncertainty.
 
 ```{r difftest-forest, fig.width = 7, fig.height = 5}
-plot(dt, style = "forest")     # forest plot
+plot(dt, style = "forest")
 ```
 
-# Case-dropping stability
+## Case-dropping stability
 
-`net_stability()` drops increasing fractions of cases and correlates the
-subset centralities with the full-sample ones; `plot()` shows the curves, a
-±1 SD band, the acceptance threshold, and the CS-coefficient per measure.
+`net_stability()` drops an increasing fraction of the cases, refits the
+network on each subset, and correlates the subset centralities with the
+full-sample centralities. The case-dropping (CS) coefficient is the largest drop
+proportion at which the correlation stays above the acceptance threshold with the
+stated certainty.
+
+```{r stability-fit}
+st <- net_stability(SRL_GPT, method = "glasso",
+                    drop_prop = seq(0.1, 0.8, 0.1), iter = 25)
+```
+
+`plot()` for a `psychnet_stability` object draws the stability curves.
+The horizontal axis is the proportion of cases dropped and the vertical axis is
+the mean correlation with the full sample. Each measure is a line with a band of
+plus or minus one standard deviation, the dashed line is the acceptance
+threshold, and the legend reports the CS-coefficient for each measure. A curve
+that stays above the threshold as more cases are dropped indicates a stable
+centrality ordering.
 
 ```{r stability, fig.width = 7, fig.height = 5}
-st <- net_stability(X, method = "glasso",
-                    drop_prop = seq(0.1, 0.8, 0.1), iter = 25)
 plot(st)
 ```
 
-# Network comparison test
+## Network comparison test
 
-`net_compare()` permutation-tests two networks. Plot the global-strength (M)
-and structure (S) permutation nulls, or the per-edge differences.
+`net_compare()` compares two networks by permutation. It repeatedly
+reassigns the pooled cases to two groups at random, recomputes the test statistic
+on each permutation, and builds the distribution of that statistic expected when
+the two networks do not differ. The global strength statistic (M) is the
+difference in summed absolute edge weights, and the structure statistic (S) is
+the maximum absolute edge difference.
 
-```{r nct}
-cmp <- net_compare(X, as.matrix(SRL_GPT), iter = 250)
-plot(cmp)                      # global strength (M)
+```{r nct-fit}
+cmp <- net_compare(SRL_GPT, SRL_Claude, iter = 250)
 ```
+
+`plot()` for a `psychnet_nct` object defaults to `type = "strength"`,
+the permutation null for M. The histogram is the null distribution, the red line
+marks the observed value, and the title reports the permutation p-value. An
+observed value in the tail of the null provides evidence that the two networks
+differ in global strength.
+
+```{r nct, fig.width = 7, fig.height = 5}
+plot(cmp)
+```
+
+Under `type = "structure"`, `plot()` draws the same null for the maximum
+edge-difference statistic S.
+
+```{r nct-structure, fig.width = 7, fig.height = 5}
+plot(cmp, type = "structure")
+```
+
+Under `type = "edges"`, `plot()` draws the observed absolute difference
+of each edge as a horizontal bar, coloured by whether that edge differs
+significantly at the level set by `alpha`. The title reports how many edges reach
+significance.
 
 ```{r nct-edges, fig.width = 7, fig.height = 5}
-plot(cmp, type = "edges")      # per-edge differences
+plot(cmp, type = "edges")
 ```
 
-# Summary
+## The plot methods at a glance
 
 | Result object (verb) | `plot()` options |
 |---|---|
-| `net_centralities()` | `type = "bar"` / `"line"`; `scale = "raw"`/`"z"`/`"relative"` |
-| `net_boot()` | `type = "edges"`/`"centrality"`/`"edge_diff"`/`"centrality_diff"`/`"predictability"` |
-| `difference_test()` | `style = "box"`/`"forest"` |
-| `net_stability()` | — |
-| `net_compare()` | `type = "strength"`/`"structure"`/`"edges"` |
+| `net_centralities()` | `type = "bar"` / `"line"`; `scale = "raw"` / `"z"` / `"relative"` |
+| `net_boot()` | `type = "edges"` / `"centrality"` / `"edge_diff"` / `"centrality_diff"` / `"predictability"` |
+| `difference_test()` | `style = "box"` / `"forest"` |
+| `net_stability()` | one figure |
+| `net_compare()` | `type = "strength"` / `"structure"` / `"edges"` |
 
-All of the above use only base R. For the estimated network itself, `plot(fit)`
-delegates to `cograph::splot()` — see the companion cograph vignette.
+Each figure above is drawn with base R alone. For the estimated network itself,
+`plot(fit)` delegates to `cograph::splot()`, covered in the companion vignette
+*Visualizing networks with cograph*.

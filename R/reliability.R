@@ -76,9 +76,10 @@
 #'   psychological networks and their accuracy. *Behavior Research Methods*,
 #'   50(1), 195-212.
 #' @examples
-#' \donttest{
-#' casedrop_reliability(SRL_Claude)
-#' }
+#' # `iter` and `drop_prop` are kept small here so the example runs quickly;
+#' # the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
+#' # reliability assessment should use.
+#' casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
 #' @export
 casedrop_reliability <- function(data, method = "glasso",
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
@@ -173,9 +174,9 @@ print.psychnet_casedrop <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' \donttest{
-#' plot(casedrop_reliability(SRL_Claude))
-#' }
+#' # Small `iter` / `drop_prop` for a fast example; see [casedrop_reliability()]
+#' # for the defaults a real assessment should use.
+#' plot(casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
 #' @export
 plot.psychnet_casedrop <- function(x, ...) {
   panels <- c("correlation", "mean_abs_dev", "median_abs_dev", "max_abs_dev")
@@ -227,9 +228,9 @@ plot.psychnet_casedrop <- function(x, ...) {
 #'   with columns `metric`, `mean`, `sd`, `lower`, `upper`. The per-split draws
 #'   are carried in `attr(x, "iterations")` for [plot.psychnet_reliability()].
 #' @examples
-#' \donttest{
-#' network_reliability(SRL_Claude)
-#' }
+#' # `iter` is kept small here so the example runs quickly; the default
+#' # (iter = 100) is what a real reliability assessment should use.
+#' network_reliability(SRL_Claude, iter = 10)
 #' @export
 network_reliability <- function(data, method = "glasso", iter = 100L,
                                 split = 0.5,
@@ -303,9 +304,9 @@ print.psychnet_reliability <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' \donttest{
-#' plot(network_reliability(SRL_Claude))
-#' }
+#' # Small `iter` for a fast example; see [network_reliability()] for the
+#' # default a real assessment should use.
+#' plot(network_reliability(SRL_Claude, iter = 10))
 #' @export
 plot.psychnet_reliability <- function(x, ...) {
   it <- attr(x, "iterations")

@@ -43,7 +43,7 @@ correlation between halves plus the mean/median/maximum absolute edge
 deviation - a psychometric reliability view of the estimated structure.
 }
 \examples{
-\donttest{
-network_reliability(SRL_Claude)
-}
+# `iter` is kept small here so the example runs quickly; the default
+# (iter = 100) is what a real reliability assessment should use.
+network_reliability(SRL_Claude, iter = 10)
 }

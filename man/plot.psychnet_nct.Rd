@@ -31,7 +31,7 @@ significantly.
 set.seed(1)
 mk <- function(s) { set.seed(s)
   matrix(stats::rnorm(120 * 4), 120, 4) \%*\% chol(0.3^abs(outer(1:4, 1:4, "-"))) }
-cmp <- net_compare(mk(1), mk(2), iter = 50)
+cmp <- net_compare(mk(1), mk(2), iter = 25)
 plot(cmp)                  # global strength permutation null
 plot(cmp, type = "edges")  # per-edge differences
 }

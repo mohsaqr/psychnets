@@ -21,8 +21,9 @@ For the bootstrap / centrality / difference / stability diagnostics use the
 dedicated \code{plot()} methods for those result objects instead.
 }
 \examples{
-\dontrun{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
-plot(ebic_glasso(cor_matrix = S, n = 300))
+fit <- ebic_glasso(cor_matrix = S, n = 300)
+if (requireNamespace("cograph", quietly = TRUE)) {
+  plot(fit)
 }
 }

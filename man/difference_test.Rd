@@ -38,6 +38,6 @@ reported by \code{\link[=net_boot]{net_boot()}}.
 set.seed(1)
 x <- matrix(stats::rnorm(150 * 5), 150, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-bs <- net_boot(x, n_boot = 100)
+bs <- net_boot(x, n_boot = 50, cores = 1)   # n_boot >= 1000 for real use
 difference_test(bs, type = "strength")
 }

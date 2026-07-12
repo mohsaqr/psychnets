@@ -56,8 +56,14 @@
 #' @noRd
 .mmg_estimate <- function(mat, types, moderator, gamma, rule, threshold,
                           labels, level = NULL) {
-  stopifnot(requireNamespace("glmnet", quietly = TRUE),
-            length(moderator) == 1L, moderator >= 1, moderator <= ncol(mat))
+  # The moderated MGM is the one estimator with no base-R kernel: it needs the
+  # glmnet nodewise solver. Fail with an install hint, not a bare stopifnot.
+  if (!requireNamespace("glmnet", quietly = TRUE)) {
+    stop("Moderated networks (`moderators=`) need the 'glmnet' package. ",
+         "Install it, or fit an unmoderated network by omitting `moderators`.",
+         call. = FALSE)
+  }
+  stopifnot(length(moderator) == 1L, moderator >= 1, moderator <= ncol(mat))
   data <- as.data.frame(mat)
   p <- ncol(data)
   scale_on <- any(types == "g")
@@ -255,8 +261,11 @@
 #' mod <- rep(0:1, each = 200)
 #' y <- x1 * (mod == 1) + stats::rnorm(400)   # x1-y edge only when mod == 1
 #' d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
-#' fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
-#' condition(fit, value = 1)
+#' # `moderators=` is the one estimator that needs glmnet (a Suggested package).
+#' if (requireNamespace("glmnet", quietly = TRUE)) {
+#'   fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
+#'   condition(fit, value = 1)
+#' }
 #' @export
 condition <- function(object, value, rule = NULL) {
   stopifnot(inherits(object, "psychnet_moderated"))

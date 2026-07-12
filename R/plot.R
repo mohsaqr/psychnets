@@ -240,7 +240,7 @@ plot.psychnet_centrality <- function(x, type = c("bar", "line"),
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 #' colnames(x) <- paste0("V", 1:5)
-#' bs <- net_boot(x, n_boot = 100, cores = 1)
+#' bs <- net_boot(x, n_boot = 50, cores = 1)   # n_boot >= 1000 for real use
 #' plot(bs)                       # edge-weight CIs
 #' plot(bs, type = "centrality")  # centrality CIs
 #' @export
@@ -323,7 +323,7 @@ plot.psychnet_bootstrap <- function(x, type = c("edges", "centrality",
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 #' colnames(x) <- paste0("V", 1:5)
-#' bs <- net_boot(x, n_boot = 100, cores = 1)
+#' bs <- net_boot(x, n_boot = 50, cores = 1)   # n_boot >= 1000 for real use
 #' plot(difference_test(bs, type = "strength"))                   # box matrix
 #' plot(difference_test(bs, type = "strength"), style = "forest") # forest plot
 #' @export
@@ -363,7 +363,7 @@ plot.psychnet_difference <- function(x, style = c("box", "forest"), ...) {
 #' @examples
 #' set.seed(1)
 #' d <- matrix(stats::rnorm(200 * 5), 200, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
-#' s <- net_stability(d, drop_prop = c(0.3, 0.5, 0.7), iter = 20)
+#' s <- net_stability(d, drop_prop = c(0.3, 0.6), iter = 10)
 #' plot(s)
 #' @export
 plot.psychnet_stability <- function(x, ...) {
@@ -416,7 +416,7 @@ plot.psychnet_stability <- function(x, ...) {
 #' set.seed(1)
 #' mk <- function(s) { set.seed(s)
 #'   matrix(stats::rnorm(120 * 4), 120, 4) %*% chol(0.3^abs(outer(1:4, 1:4, "-"))) }
-#' cmp <- net_compare(mk(1), mk(2), iter = 50)
+#' cmp <- net_compare(mk(1), mk(2), iter = 25)
 #' plot(cmp)                  # global strength permutation null
 #' plot(cmp, type = "edges")  # per-edge differences
 #' @export
@@ -467,9 +467,10 @@ plot.psychnet_nct <- function(x, type = c("strength", "structure", "edges"),
 #' @param ... Passed to [cograph::splot()].
 #' @return The value of [cograph::splot()], invisibly.
 #' @examples
-#' \dontrun{
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
-#' plot(ebic_glasso(cor_matrix = S, n = 300))
+#' fit <- ebic_glasso(cor_matrix = S, n = 300)
+#' if (requireNamespace("cograph", quietly = TRUE)) {
+#'   plot(fit)
 #' }
 #' @export
 plot.psychnet <- function(x, ...) {

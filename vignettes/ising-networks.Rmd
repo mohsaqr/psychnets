@@ -16,24 +16,12 @@ binary_data <- dichotomize(data = SRL_GPT, method = "rank")
 
 ## What an Ising network is
 
-An Ising network describes associations among binary variables. A node can
-represent whether a symptom is present, whether a student passed an assessment,
-or whether a respondent endorsed an item. Each variable must have two states,
-which `psychnets` represents as 0 and 1.
+An Ising network models the conditional dependence structure among binary variables. Each node represents a variable with two possible states, conventionally coded as 0 and 1, such as the absence or presence of a symptom, failure or success on an assessment, or non-endorsement and endorsement of a questionnaire item. The model estimates the conditional association between every pair of variables while accounting for all remaining variables in the network.
 
-An edge asks whether two binary variables remain associated above and beyond the
-other variables in the network. Consider a network of study behaviours. A
-positive edge between planning and completing assignments means that students
-who plan are more likely to complete assignments after their other recorded
-behaviours have been taken into account. A negative edge means that endorsement
-of one variable is associated with lower conditional odds of endorsing the
-other.
+The edge parameters of an Ising model are expressed on the log-odds scale and quantify conditional dependence between binary variables. A positive edge indicates that endorsement of one variable is associated with an increased conditional probability of endorsing the other after adjustment for the remaining variables, whereas a negative edge indicates a reduced conditional probability. For example, in a network of study behaviours, a positive edge between planning and completing assignments indicates that students who report planning are more likely to complete assignments after accounting for their other recorded behaviours. The absence of an edge indicates that the conditional association between two variables is adequately explained by the remaining variables included in the model.
 
-The model filters negligible conditional associations that may reflect sampling
-noise. A missing edge means that the fitted model did not retain unique
-information between that pair after considering the other nodes. It does not
-mean that their ordinary association must be zero, and an edge does not identify
-a causal effect.
+Ising models are particularly appropriate for psychometric and behavioural data that are intrinsically binary, including symptom checklists, diagnostic criteria, pass–fail outcomes, and dichotomously scored questionnaire items. Because the model estimates conditional rather than marginal associations, the resulting network distinguishes direct statistical dependencies from relationships that arise indirectly through other variables. As with Gaussian graphical models, the estimated edges represent conditional statistical dependence and should not be interpreted as evidence of causal relationships.
+
 
 ## The data
 

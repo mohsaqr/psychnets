@@ -18,43 +18,15 @@ knitr::opts_chunk$set(
 >
 > — by [**Mohammed Saqr**](https://saqr.me)
 
-`psychnets` estimates the cross-sectional models of psychometric network analysis
-— correlation and partial-correlation networks, the EBIC-regularized Gaussian
-graphical model (the graphical lasso) together with its nonparanormal and
-unregularized stepwise variants, the information-filtering graphs (the
-Triangulated Maximally Filtered Graph and the Local–Global inverse covariance),
-relative-importance networks, the Ising model for binary data, and the mixed
-graphical model — reimplemented from first principles in base R. These models are
-conventionally fitted through packages that wrap compiled numerical kernels:
-`qgraph` and `bootnet` route the graphical lasso to the Fortran package `glasso`,
-while `IsingFit` and `mgm` route their nodewise regressions to `glmnet`.
-`psychnets` calls none of these packages and none of the compiled solvers beneath
-them; its only imports are base R's own `stats`, `parallel`, `graphics`, and
-`grDevices`.
+*psychnets* implements the principal cross-sectional estimators used in psychometric network analysis entirely in base R. The package provides correlation and partial-correlation networks, the EBIC-regularized Gaussian graphical model (graphical lasso), together with its nonparanormal and unregularized stepwise variants, information-filtering networks including the Triangulated Maximally Filtered Graph (TMFG) and Local–Global inverse covariance estimation, relative-importance networks, the Ising model for binary variables, and the mixed graphical model. Whereas these estimators are conventionally accessed through high-level R packages that delegate numerical optimization to compiled Fortran or C/C++ libraries, *psychnets* reimplements the complete estimation procedures directly in R. In particular, graphical lasso estimation is commonly performed through *qgraph* and *bootnet*, which invoke the Fortran implementation provided by *glasso*, while Ising and mixed graphical models are typically estimated through *IsingFit* and *mgm*, both of which rely on the compiled optimization routines of *glmnet*. *psychnets* invokes none of these packages or their underlying compiled numerical libraries. Its only package dependencies are the standard R distributions *stats*, *parallel*, *graphics*, and *grDevices*.
 
-Every regularized fit returns a **correctness certificate**: the stationarity
-(KKT) residual of the convex objective the estimator solves — a quantity that is
-near zero at the optimum and is computed with no reference to any external
-solver.
+For every regularized estimator, *psychnets* reports a numerical certificate of optimality in the form of the Karush–Kuhn–Tucker (KKT) residual associated with the convex optimization problem defining the estimator. The KKT residual quantifies the degree to which the necessary first-order optimality conditions are satisfied and therefore provides a direct measure of convergence. Residual values approaching zero indicate that the numerical solution is effectively stationary with respect to the objective function. Because this diagnostic is computed directly from the fitted solution, its evaluation is independent of external optimization software and does not require comparison with reference implementations.
 
-## Design properties
+The implementation philosophy of *psychnets* is based on four complementary design principles. First, the estimation procedure is fully transparent, as both the statistical methodology and the numerical optimization algorithms are implemented explicitly in R, allowing every computational step to be inspected and reproduced without reference to opaque compiled libraries. Second, estimation is reproducible because convergence behaviour is determined by user-accessible numerical criteria rather than by implementation-specific tolerances embedded within precompiled binaries. Third, the package maintains a minimal dependency structure by avoiding external numerical libraries such as *glasso*, *glmnet*, *qgraph*, and *Matrix*, together with their associated compiled dependency chains, including *Rcpp* and *RcppArmadillo*. Finally, estimation is directly auditable because every regularized solution is accompanied by an optimality certificate that quantifies its numerical accuracy with respect to the objective function being minimized. Consequently, the correctness of an estimated network can be assessed directly from the fitted model itself rather than inferred through agreement with an independent software implementation.
 
-`psychnets` is constructed so that a fitted network is:
+Because each optimization problem is solved to numerical stationarity and model selection is performed using the standard formulation of the Extended Bayesian Information Criterion (EBIC), network recovery reflects the theoretical properties of the estimator rather than artefacts of incomplete optimization. As a consequence, edge selection is not influenced by premature termination of the numerical algorithm, thereby avoiding the inclusion of edges that may arise solely from insufficient convergence of the underlying optimization procedure.
 
-- **Transparent** — the estimator, including the numerical solve, is written in
-  the language of the analysis; no step is delegated to a Fortran or C kernel that
-  is illegible from R.
-- **Reproducible** — a result does not depend on a compiled binary's convergence
-  tolerance fixed at build time, a setting the analyst does not control.
-- **Dependency-light** — no `glasso`, `glmnet`, `qgraph`, or `Matrix`, and none
-  of the recursive `Rcpp` / `RcppArmadillo` tree those pull in.
-- **Auditable** — the certificate reports how far a fit lies from the optimum of
-  its own objective, so correctness is verifiable from the fit itself rather than
-  by re-estimation in a second package.
-
-Because `psychnets` solves each objective to its optimum and applies the textbook
-extended Bayesian information criterion, it does not reproduce the spurious edges
-that a loosely converged reference solver can select.
+Validation was performed using both simulated data with known generating models and published psychometric datasets to verify the correctness of every implemented estimator. Across all methods, psychnets reproduces the established reference implementations to the numerical precision attainable by those packages, with remaining differences attributable to floating-point arithmetic and solver convergence tolerances. For the EBIC graphical lasso, this practical limit is determined by the convergence criterion of the underlying glasso implementation used by qgraph, which is approximately (10^{-4}). psychnets instead solves each optimization problem to substantially tighter tolerances and reports the Karush–Kuhn–Tucker residual for every regularized fit, providing an independent numerical certificate that the returned solution satisfies the optimality conditions of the estimator.
 
 ## Installation
 

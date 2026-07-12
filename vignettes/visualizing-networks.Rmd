@@ -14,21 +14,16 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
 library(psychnets)
 ```
 
-## Reading a network diagnostic as a picture
+## Network diagnostics
 
-A psychometric network is estimated from a finite sample, so every edge weight
-and every centrality value carries sampling uncertainty. The diagnostic verbs in
-`psychnets` quantify that uncertainty by resampling, case-dropping, and
-permutation. Each verb returns a tidy result object, and each result object
-carries a base-`graphics` `plot()` method that turns the numbers into a figure.
-The plots are drawn with the `graphics` and `grDevices` engines that ship with
-R, so reading a diagnostic needs no additional package.
+## Plotting networks and diagnostic results
 
-Every figure in this vignette is the `plot()` method for one result class. The
-pattern is uniform: fit a network, call a diagnostic verb, then call `plot()` on
-what the verb returns. The sections below cover the centrality plot, the
-bootstrap plots and their difference-box matrices, the pairwise difference test,
-the case-dropping stability curves, and the network comparison test.
+*psychnets* provides a comprehensive set of visualization methods for estimated psychometric networks and their associated diagnostic analyses, facilitating both interpretation and statistical assessment. In addition to graphical displays, all estimation and diagnostic functions return tidy result objects that can be inspected programmatically, summarized numerically, or incorporated into downstream analytical workflows.
+
+Psychometric networks are estimated from finite samples, and consequently every estimated edge weight, centrality measure, and derived statistic is subject to sampling variability. The diagnostic procedures implemented in *psychnets* quantify this uncertainty using non-parametric bootstrap resampling, case-dropping resampling, and permutation-based hypothesis testing. Each diagnostic returns a structured result object containing both the numerical results and the information required for graphical representation.
+
+All graphical output is generated through dedicated `plot()` methods implemented for the corresponding result classes. These methods rely exclusively on the base R **graphics** and **grDevices** systems and therefore require no external visualization libraries. Throughout this tutorial, each figure is produced by fitting a network, applying a diagnostic procedure, and calling `plot()` on the returned object. The following sections describe the interpretation of the principal visualizations, including network plots, centrality measures, bootstrap confidence intervals, difference matrices, pairwise difference tests, case-dropping stability curves, and network comparison tests.
+
 
 ## The data
 

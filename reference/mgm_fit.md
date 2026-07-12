@@ -67,8 +67,11 @@ mgm_fit(
   Optional single column index of a moderator variable. When supplied,
   fits a *moderated* MGM (that variable moderates every pairwise edge)
   and returns a `psychnet_moderated` object to be read with
-  [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md);
-  glmnet-based, and `weights` are not supported in this mode.
+  [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md).
+  Honours `native` like the unmoderated path: the default base kernel is
+  pure R and KKT-certified, and covers gaussian and binary nodes;
+  `native = FALSE` uses `glmnet` and additionally allows multi-level
+  categorical nodes. `weights` are not supported in this mode.
 
 - weights:
 

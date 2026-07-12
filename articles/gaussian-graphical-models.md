@@ -1,77 +1,47 @@
-# Gaussian graphical models
+# Gaussian graphical models: estimation and interpretation
 
-``` r
+## What a Gaussian graphical model is
 
-library(psychnets)
-```
+A Gaussian graphical model represents the conditional dependence
+structure of a set of continuous variables. Each node is a measured
+variable. Each edge is a partial correlation between two variables after
+conditioning on every other variable in the model. The graph is
+undirected because the partial correlation between variables $`i`$ and
+$`j`$ has no direction.
 
-## What is a psychological network?
+The practical question is whether two variables remain related above and
+beyond what the other variables can explain. Consider a network
+containing motivation, academic achievement, prior achievement, study
+effort, self-efficacy, and test anxiety. An edge between motivation and
+academic achievement means that their association remains after
+accounting for the other four variables. The edge is the part of their
+relationship that cannot be explained by prior achievement, study
+effort, self-efficacy, or test anxiety within the fitted model.
 
-Network analysis lets researchers chart relations, map connections, and
-discover clusters among interacting components, and it has become a
-central method for understanding complex systems. Its early successes
-were with social networks — people linked by who talks to whom. To go
-beyond who-interacts-with-whom and reason about variables and their
-associations, we need a different, *probabilistic* kind of network.
+If the motivation-achievement edge is absent, the model did not retain a
+unique association between them after accounting for those other
+variables. Their ordinary correlation may still be positive. That
+correlation might be explained by motivated students studying more,
+having greater self-efficacy, or differing in prior achievement. The
+network helps separate this shared association from the relation that
+remains after the other measured variables are considered.
 
-In a probabilistic, or **psychological**, network the **nodes** are
-variables — constructs, behaviours, attitudes, or scale scores — and the
-**edges** are the probabilistic associations between them (Saqr, Beck &
-López-Pernas, 2024; Borsboom et al., 2021). This vignette focuses on the
-most widely used such model, the **Gaussian graphical model (GGM)**, a
-network whose edges are *partial correlations*.
+The estimation procedure also filters negligible connections that may
+reflect sampling noise. A missing edge therefore has a practical
+reading: the data and the selected model did not provide enough unique
+association to retain that connection. It does not mean that the
+variables are unrelated in every context. Edges describe adjusted
+associations and do not by themselves show that one variable causes
+another.
 
-A partial correlation measures the association between two variables
-*after controlling for every other variable in the network* — their
-conditional dependence, *ceteris paribus*. Suppose we study five
-learning constructs: motivation, achievement, engagement,
-self-regulation, and well-being. An edge between well-being and
-achievement then means the two are associated *beyond* what their shared
-relations with motivation, engagement, and self-regulation already
-explain. Equally informative is what is *missing*: when there is no edge
-between two variables, they are conditionally independent given the
-rest. So both the presence **and** the absence of an edge are
-interpretable and meaningful — a property that sets these networks apart
-from a plain table of correlations (Epskamp & Fried, 2018; Epskamp,
-Waldorp, Mõttus & Borsboom, 2018).
+## The data
 
-In practice many of the small partial correlations in a network are just
-noise. Regularization removes those negligible edges — shrinking them to
-exactly zero — leaving a sparse network that is easier to read and more
-likely to replicate. Beyond estimating the edges, psychological-network
-methods also supply tools to judge how *trustworthy* a network is:
-bootstrapping the accuracy of edge weights and centralities, and gauging
-how well a network is expected to replicate (Epskamp, Borsboom & Fried,
-2018).
-
-## Why regularize?
-
-If we simply invert the sample correlation matrix, every pair of
-variables gets a non-zero partial correlation: the resulting network is
-fully connected, and many of those edges are non-zero only by sampling
-chance. Such a dense graph is hard to interpret and unstable, especially
-when the number of variables is large relative to the sample size — the
-usual situation in psychological data.
-
-The **graphical lasso** fixes this. It applies a penalty that shrinks
-small partial correlations all the way to zero, so that only the edges
-with real support in the data survive. How hard to shrink is itself
-chosen from the data, by the extended Bayesian information criterion
-(**EBIC**), which trades off model fit against the number of edges. The
-result is a sparse, interpretable network. (The exact penalty and
-selection criterion are given in *Mathematical foundations* at the end
-of this vignette.)
-
-## A worked example
-
-The illustrations use `SRL_GPT`, one of five data sets that ship with
-the package. Each is a sample of 300 cases of Motivated Strategies for
-Learning Questionnaire (MSLQ) construct scores, generated by a large
-language model in a study of self-regulated learning simulated through
-LLM-generated survey responses. The five constructs are cognitive
-strategy use (`CSU`), intrinsic value (`IV`), self-efficacy (`SE`),
-self-regulation (`SR`), and test anxiety (`TA`); each score is the mean
-of that construct’s Likert items on the 1–7 scale.
+The worked example uses `SRL_GPT`, a data frame supplied with
+`psychnets`. It contains 300 observations on five construct scores from
+a self-regulated learning questionnaire. Cognitive strategy use (`CSU`),
+intrinsic value (`IV`), self-efficacy (`SE`), self-regulation (`SR`),
+and test anxiety (`TA`) are means of item responses recorded on a 1 to 7
+scale.
 
 ``` r
 
@@ -85,21 +55,31 @@ head(SRL_GPT)
 #> 6 4.846154 5.444444 5.666667 5.111111 3.50
 ```
 
-### Estimating the network
+Rows are observations and columns are network nodes. The analysis treats
+the five scale scores as continuous variables. This treatment is most
+defensible when each score aggregates several items and has enough
+distinct values to approximate a continuous distribution. Item-level
+ordinal data may require an ordinal correlation estimator, discussed
+under sensitivity analysis.
+
+Before fitting a network, a scientific analysis should also examine
+missingness, univariate distributions, unusual observations, and the
+effective sample size. The current data are complete. The default
+estimator therefore uses the same 300 observations for every pairwise
+correlation.
+
+## Fitting the network with `psychnet()`
 
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-is deliberately simple to use: in the common case you supply only two
-arguments — the `data` and the `method`. Here `method = "glasso"` fits
-the EBIC-regularized graphical lasso. Everything else has a sensible
-default, so a complete analysis is a single readable call; the remaining
-arguments (covered under *A note on options* and *Mathematical
-foundations*) are there only when you want fine-grained control. (Coming
-from `qgraph`/`bootnet`? The spelling `"EBICglasso"` is accepted as an
-alias for `"glasso"`.)
+estimates a network from a numeric table and returns a fitted `psychnet`
+object. The argument `method = "glasso"` requests an EBIC-regularized
+Gaussian graphical model. The default settings use Pearson correlations,
+pairwise-complete handling of missing values, $`\gamma = 0.5`$, and the
+package’s native graphical-lasso solver.
 
 ``` r
 
-net <- psychnet(SRL_GPT, method = "glasso")
+net <- psychnet(data = SRL_GPT, method = "glasso")
 net
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 10   (undirected)
@@ -107,40 +87,77 @@ net
 #>   optimality (KKT residual): 2.21e-10
 ```
 
-The fitted partial-correlation network is the tidy edge list returned by
-[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html):
+The printed object reports 5 nodes and 10 retained edges. The selected
+penalty is $`\lambda = 0.00861`$ at $`\gamma = 0.5`$. All possible pairs
+are retained in this small example, although several estimated edges are
+weak. The selected penalty and the observed data determine the degree of
+sparsity in each fitted network.
+
+## Inspecting edges with `summary()`
+
+[`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
+model and returns its edge table invisibly. The table contains the
+columns `from`, `to`, and `weight`. Each row identifies a retained pair
+of nodes and its estimated partial correlation.
 
 ``` r
 
-as.data.frame(net)
-#>    from to      weight
-#> 1   CSU IV  0.41166866
-#> 2   CSU SE  0.38290223
-#> 3    IV SE  0.15992605
-#> 4   CSU SR  0.35481359
-#> 5    IV SR  0.31909443
-#> 6    SE SR  0.20767208
-#> 7   CSU TA  0.04906668
-#> 8    IV TA  0.11058735
-#> 9    SE TA  0.09871818
-#> 10   SR TA -0.34985157
+summary(net)
+#> <psychnet> glasso network
+#>   nodes: 5   edges: 10   (undirected)
+#>   lambda: 0.00861   gamma: 0.5
+#>   optimality (KKT residual): 2.21e-10
+#>   edge weight: range [-0.350, 0.412], mean 0.174
 ```
 
-Each weight is the estimated partial correlation between two constructs,
-after conditioning on the other three. The structure is readable: `CSU`,
-`IV`, `SE`, and `SR` form a positively connected cluster, while test
-anxiety (`TA`) is negatively tied to self-regulation (`SR`) — more
-anxiety goes with less self-regulation, over and above everything else
-in the network.
+The edge weights range from -0.350 to 0.412, with a mean of 0.174 across
+the 10 retained edges. The positive `CSU`-`IV` edge is the largest
+positive conditional association ($`r = 0.412`$). Cognitive strategy use
+and intrinsic value remain positively associated after adjustment for
+self-efficacy, self-regulation, and test anxiety.
 
-### Centrality
+The `SR`-`TA` edge is negative ($`r = -0.350`$). Higher self-regulation
+is associated with lower test anxiety among observations with comparable
+values on the other three constructs. The edges from `TA` to `CSU`
+($`r = 0.049`$), `SE` ($`r = 0.099`$), and `IV` ($`r = 0.111`$) are
+small. Their magnitudes support only cautious substantive
+interpretation. None of these conditional associations identifies a
+causal effect.
 
-Centrality summarizes how important each node is. **Node strength** is
-the sum of the absolute edge weights at a node — how strongly it is
-connected overall. **Expected influence** is the *signed* sum, which
-keeps the direction of the edges, so a node with strong negative
-connections can have low or negative influence even when its strength is
-high.
+## Checking numerical optimality with `certificate()`
+
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+reports how closely a fitted estimator satisfies the defining conditions
+of its optimization problem. For a graphical-lasso fit, the returned
+data frame has the columns `method`, `certificate`, `kind`, and
+`certified`. The `certificate` value is the maximum violation of the
+Karush-Kuhn-Tucker (KKT) stationarity conditions. The `kind` value is
+`"kkt"`, and `certified` records whether the residual is at or below the
+requested tolerance of $`10^{-6}`$ by default.
+
+``` r
+
+certificate(net)
+#>   method  certificate kind certified
+#> 1 glasso 2.213387e-10  kkt      TRUE
+```
+
+The KKT residual is $`2.21 \times 10^{-10}`$ and `certified` is `TRUE`.
+This residual is close to machine precision. It indicates that the
+estimated precision matrix satisfies the first-order conditions of the
+selected convex objective to numerical precision. The certificate
+assesses numerical optimization. It does not assess the Gaussian
+assumption, the substantive validity of the variables, sampling
+uncertainty, or causal identification.
+
+## Describing node position with `net_centralities()`
+
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
+computes node-level summaries from the fitted weighted graph. Its
+default return is a tidy data frame with the columns `node`, `strength`,
+and `expected_influence`. Strength is the sum of the absolute edge
+weights incident on a node. Expected influence is the sum of the signed
+edge weights, so negative and positive relations can offset one another.
 
 ``` r
 
@@ -153,15 +170,31 @@ net_centralities(net)
 #> 5   TA 0.6082238        -0.09147935
 ```
 
-`SR` and `CSU` are the most strongly connected constructs; `TA`, with
-its single strong negative edge, has the lowest expected influence.
+Self-regulation has the largest strength (1.231), followed by cognitive
+strategy use (1.198). Self-regulation combines several positive
+connections with the negative connection to test anxiety. Its expected
+influence is therefore 0.532, which is lower than its strength.
+Cognitive strategy use has only positive estimated edges, so its
+strength and expected influence are both 1.198.
 
-### Predictability
+Test anxiety has strength 0.608 and expected influence -0.091. Its
+negative edge with self-regulation offsets its three small positive
+edges. This example shows why the two indices answer different
+questions. Strength quantifies total absolute connection, whereas
+expected influence retains the direction of each relation. Centrality is
+a descriptive property of the estimated graph. A high value does not
+identify a variable as a cause or an intervention target.
 
-Predictability asks a complementary question: how much of each node’s
-variance is explained by its neighbours in the network (Haslbeck &
-Waldorp, 2018)? It tells us whether the connections around a node are
-actually informative about it.
+## Quantifying node predictability with `net_predict()`
+
+[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
+reports how well every node is predicted by the other nodes in a fitted
+network. For a Gaussian graphical model, it computes the proportion of
+variance explained, $`R^2`$, directly from the precision and covariance
+matrices. The returned data frame has the columns `node`, `type`,
+`metric`, `predictability`, and `accuracy`. The Gaussian rows use
+`type = "gaussian"`, `metric = "R2"`, and `accuracy = NA` because
+classification accuracy does not apply to continuous nodes.
 
 ``` r
 
@@ -174,356 +207,318 @@ net_predict(net)
 #> 5   TA gaussian     R2      0.1421163       NA
 ```
 
-Most constructs are highly predictable from their neighbours (variance
-explained above 0.7), whereas test anxiety (`TA`) is comparatively
-isolated (about 0.14), consistent with its single strong edge.
+Cognitive strategy use has the largest predictability, with
+$`R^2 = 0.822`$. Self-regulation ($`R^2 = 0.779`$), intrinsic value
+($`R^2 = 0.769`$), and self-efficacy ($`R^2 = 0.714`$) are also strongly
+explained by their remaining nodes in this fitted model. Test anxiety
+has $`R^2 = 0.142`$, so the other four constructs account for a much
+smaller proportion of its variance.
 
-### Plotting
+Predictability complements centrality. Centrality summarizes how a node
+is connected, while predictability quantifies how much of its variance
+is accounted for by the other nodes. Predictability remains an in-sample
+model quantity in this analysis. It should not be read as out-of-sample
+predictive performance without a separate validation design.
 
-Passing the fitted object to
+## Visualizing the fitted network with `cograph::splot()`
+
 [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-with `psych_styling = TRUE` draws the network with a spring layout,
-labelled nodes, and the conventional colour coding (green for positive
-edges, red for negative). For a graphical-lasso network the object
-already carries each node’s predictability, and the plot draws it
-automatically as a ring around the node — the visual analogue of the
-[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
-table above.
+draws the fitted object as a network when the optional `cograph` package
+is available. The argument `psych_styling = TRUE` uses green edges for
+positive weights, red edges for negative weights, and node rings for the
+stored predictability values.
 
 ``` r
 
 cograph::splot(net, psych_styling = TRUE)
 ```
 
-![](gaussian-graphical-models_files/figure-html/ggm-plot-1.png)
+![](gaussian-graphical-models_files/figure-html/plot-network-1.png)
 
-### A note on options
+The figure is a compact representation of the edge table. Edge colour
+encodes sign and edge width encodes magnitude. Node position is
+determined by a layout algorithm and has no direct statistical scale.
+Visual distance between two nodes must therefore not be interpreted as
+an estimated association. Numerical interpretation should return to the
+edge table and node-level summaries.
 
-The defaults above (Pearson correlations, pairwise-complete handling of
-missing data) match the common bootnet workflow, but several options are
-worth knowing. For Likert data, `cor_method = "auto"` switches to the
-polychoric/polyserial correlation used by `qgraph` and `bootnet`. For
-speed, `native = FALSE` dispatches the inner solve to the optional
-Fortran `glasso` package. The full list of arguments and their defaults
-is tabulated in *Mathematical foundations*, below.
+## Sensitivity to the correlation estimator
 
-### A second example: how the options change the network
-
-The two-argument call above uses every default. Because the substantive
-choices are just arguments, we can change one and watch its effect. Here
-we re-estimate the network from rank-based (Spearman) correlations and a
-lighter EBIC penalty (`gamma = 0.25` rather than `0.5`):
+Analytic choices can affect weak edges. A sensitivity analysis changes
+one choice at a time and compares the resulting model with the primary
+fit.
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+accepts `cor_method = "spearman"` for a rank-based analysis. Spearman
+correlations reduce sensitivity to monotone transformations and extreme
+values, although they answer a rank-association version of the research
+question.
 
 ``` r
 
-net2 <- psychnet(SRL_GPT, method = "glasso", cor_method = "spearman", gamma = 0.25)
-as.data.frame(net2)
-#>   from to      weight
-#> 1  CSU IV  0.41037571
-#> 2  CSU SE  0.42434529
-#> 3   IV SE  0.12821527
-#> 4  CSU SR  0.32164519
-#> 5   IV SR  0.34602908
-#> 6   SE SR  0.18400655
-#> 7   IV TA  0.07280225
-#> 8   SE TA  0.07509761
-#> 9   SR TA -0.23654039
+spearman_net <- psychnet(data = SRL_GPT, method = "glasso", cor_method = "spearman")
+spearman_net
+#> <psychnet> glasso network
+#>   nodes: 5   edges: 9   (undirected)
+#>   lambda: 0.01882   gamma: 0.5
+#>   optimality (KKT residual): 2.67e-10
 ```
 
-Comparing this with the default Pearson fit shows the difference
-concretely: the default keeps all ten edges, including the very weak
-`CSU`–`TA` link (about 0.05), whereas this fit drops it and returns
-nine. The strong `CSU`/`IV`/`SE`/`SR` cluster and the negative `SR`–`TA`
-edge survive either way; what changes is which *borderline* edges are
-retained. The correlation type and the penalty therefore decide the fate
-of weak edges, even when the backbone is stable.
-
-A second, more direct control is `threshold`, a post-hoc absolute-weight
-floor that simply removes any edge smaller than a chosen size. With
-`threshold = 0.1` the three weak `TA` edges fall away and only the eight
-strongest remain:
-
 ``` r
 
-as.data.frame(psychnet(SRL_GPT, method = "glasso", threshold = 0.1))
-#>   from to     weight
-#> 1  CSU IV  0.4116687
-#> 2  CSU SE  0.3829022
-#> 3   IV SE  0.1599260
-#> 4  CSU SR  0.3548136
-#> 5   IV SR  0.3190944
-#> 6   SE SR  0.2076721
-#> 7   IV TA  0.1105874
-#> 8   SR TA -0.3498516
+summary(spearman_net)
+#> <psychnet> glasso network
+#>   nodes: 5   edges: 9   (undirected)
+#>   lambda: 0.01882   gamma: 0.5
+#>   optimality (KKT residual): 2.67e-10
+#>   edge weight: range [-0.237, 0.424], mean 0.192
 ```
 
-## Non-normal data
+The Spearman analysis retains 9 edges and selects $`\lambda = 0.01882`$.
+The main pattern remains: the four learning constructs are positively
+connected and the `SR`-`TA` edge is negative. The weak `CSU`-`TA` edge
+is absent, and the `SR`-`TA` estimate changes from -0.350 to -0.237. The
+persistence of the main pattern provides evidence that its qualitative
+interpretation is not specific to Pearson correlations. The changes in
+weaker edges indicate sensitivity in that part of the graph.
 
-Construct scores are continuous but usually skewed and bounded rather
-than exactly Gaussian. When joint normality is doubtful, the
-**nonparanormal** model relaxes it: it assumes the variables are jointly
-Gaussian only after unknown monotone transformations of each variable,
-estimates those transformations from the ranks, and then applies the
-identical EBIC graphical lasso. This is `method = "huge"`, and it
-certifies against the same optimality conditions:
+For item-level ordinal variables, `cor_method = "auto"` can estimate
+polychoric or polyserial associations where appropriate. The measurement
+scale should determine this choice before the network results are
+examined.
+
+## Applying a substantive edge threshold
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+can apply an absolute post-estimation threshold through its `threshold`
+argument. A threshold is a reporting or sparsification choice. It does
+not change the penalty selected by EBIC, and it should be justified
+before examining the final graph.
 
 ``` r
 
-certificate(psychnet(SRL_GPT, method = "huge"))
+threshold_net <- psychnet(data = SRL_GPT, method = "glasso", threshold = 0.1)
+threshold_net
+#> <psychnet> glasso network
+#>   nodes: 5   edges: 8   (undirected)
+#>   lambda: 0.00861   gamma: 0.5
+#>   optimality (KKT residual): 2.21e-10
+```
+
+``` r
+
+summary(threshold_net)
+#> <psychnet> glasso network
+#>   nodes: 5   edges: 8   (undirected)
+#>   lambda: 0.00861   gamma: 0.5
+#>   optimality (KKT residual): 2.21e-10
+#>   edge weight: range [-0.350, 0.412], mean 0.200
+```
+
+At a threshold of 0.10, the graph contains 8 edges. The `CSU`-`TA`
+estimate (0.049) and the `SE`-`TA` estimate (0.099) are removed. The
+selected penalty and KKT residual are unchanged because thresholding
+occurs after estimation. A threshold can make a graph easier to read,
+but it must not be presented as a model-selection result from EBIC.
+
+## A nonparanormal sensitivity model
+
+The Gaussian graphical model assumes joint normality for its exact
+probabilistic interpretation.
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+fits a rank-based nonparanormal model with `method = "huge"`. This
+method estimates monotone marginal transformations and then applies the
+same EBIC graphical-lasso procedure to the transformed correlation
+matrix. Its purpose is to relax strict marginal normality while
+retaining a Gaussian conditional-dependence model on the transformed
+scale.
+
+``` r
+
+npn_net <- psychnet(data = SRL_GPT, method = "huge")
+npn_net
+#> <psychnet> huge network
+#>   nodes: 5   edges: 10   (undirected)
+#>   lambda: 0.008559   gamma: 0.5
+#>   optimality (KKT residual): 2.47e-10
+```
+
+``` r
+
+summary(npn_net)
+#> <psychnet> huge network
+#>   nodes: 5   edges: 10   (undirected)
+#>   lambda: 0.008559   gamma: 0.5
+#>   optimality (KKT residual): 2.47e-10
+#>   edge weight: range [-0.343, 0.426], mean 0.172
+```
+
+The nonparanormal model retains all 10 edges. Its weights range from
+-0.343 to 0.426. The positive cluster among the four learning constructs
+and the negative `SR`-`TA` edge remain. The weakest `CSU`-`TA` edge
+decreases from 0.049 to 0.024, which again marks this edge as sensitive
+to the correlation model.
+
+``` r
+
+certificate(npn_net)
 #>   method  certificate kind certified
-#> 1   huge 2.471425e-10  kkt      TRUE
+#> 1   huge 2.471392e-10  kkt      TRUE
 ```
 
-------------------------------------------------------------------------
+The KKT residual is $`2.47 \times 10^{-10}`$ and `certified` is `TRUE`.
+The optimization therefore satisfies its first-order conditions to
+numerical precision on the transformed correlation matrix. This result
+checks the solver, while the scientific adequacy of the nonparanormal
+model remains a modeling judgment.
+
+## Reporting the analysis
+
+A complete report should identify the variables and their measurement
+scale, the sample size, the correlation estimator, the missing-data
+procedure, the network estimator, the EBIC value of $`\gamma`$, and any
+post-estimation threshold. It should report the edge weights numerically
+and distinguish conditional association from causation. Centrality and
+predictability should be defined before their values are interpreted.
+
+The present analysis used Pearson correlations and an EBIC graphical
+lasso with $`\gamma = 0.5`$ on 300 complete observations. The selected
+model had 5 nodes, 10 edges, and $`\lambda = 0.00861`$. Its KKT residual
+was $`2.21 \times 10^{-10}`$. The largest positive edge joined cognitive
+strategy use and intrinsic value ($`r = 0.412`$), and the largest
+negative edge joined self-regulation and test anxiety ($`r = -0.350`$).
+Rank-based and nonparanormal sensitivity models preserved the main
+qualitative pattern but changed some weak edges.
+
+## Why the model removes weak connections
+
+The graphical lasso filters small connections so that the fitted network
+focuses on associations with enough unique information to be retained.
+This filtering is useful because a sample can contain many negligible
+correlations produced by ordinary sampling variation. Keeping every one
+of them would make the network harder to read and could give weak, noisy
+connections more attention than their magnitudes justify.
+
+The amount of filtering is selected from the data. `psychnets` fits
+networks across a sequence of penalty values and uses the extended
+Bayesian information criterion (EBIC) to balance fit with the number of
+retained edges. The hyperparameter $`\gamma`$ controls how strongly EBIC
+favours a simpler network. Larger values generally retain fewer edges.
+
+This procedure explains how the graph was simplified. It does not make
+the retained edges causal, and it does not show that every removed edge
+is exactly zero in the population. Weak edges may change across samples
+or analytic choices, which is why the Spearman and nonparanormal
+examples above are useful.
 
 ## Mathematical foundations
 
-This section is a technical reference. It states the model, the
-estimator, the selection criterion, the implementation, and the
-optimality certificate precisely, for readers who want the definitions
-and equations behind the tutorial above. It can be skipped on a first
-reading.
+This section states the model, estimator, selection criterion, and
+numerical diagnostic precisely. The worked example can be understood
+without these derivations.
 
-### The Gaussian graphical model
+### Precision matrix and conditional independence
 
-Let $`\mathbf{X} = (X_1, \dots, X_p)`$ follow a multivariate normal
-distribution $`\mathcal{N}(\boldsymbol\mu, \boldsymbol\Sigma)`$ with
-covariance matrix $`\boldsymbol\Sigma`$ and precision (concentration)
-matrix $`\mathbf{K} = \boldsymbol\Sigma^{-1}`$. The GGM encodes the
-conditional independence structure of $`\mathbf{X}`$ in an undirected
-graph on the $`p`$ variables. Its defining property is the pairwise
-Markov property: a zero in the precision matrix is exactly a conditional
-independence,
+Let $`\mathbf{X} = (X_1, \ldots, X_p)^\mathsf{T}`$ follow a multivariate
+normal distribution with mean vector $`\boldsymbol{\mu}`$ and
+positive-definite covariance matrix $`\boldsymbol{\Sigma}`$. The
+precision matrix is $`\mathbf{K} = \boldsymbol{\Sigma}^{-1}`$. For
+distinct nodes $`i`$ and $`j`$,
 
 ``` math
-K_{ij} = 0 \;\Longleftrightarrow\; X_i \perp\!\!\!\perp X_j \mid \mathbf{X}_{\setminus\{i,j\}},
+K_{ij} = 0
+\quad \Longleftrightarrow \quad
+X_i \perp\!\!\!\perp X_j \mid
+\mathbf{X}_{\setminus\{i,j\}}.
 ```
 
-that is, $`X_i`$ and $`X_j`$ are independent given all remaining
-variables (Lauritzen, 1996). The off-diagonal entries of $`\mathbf{K}`$
-are in one-to-one correspondence with the partial correlations,
+Zeros in the precision matrix therefore define the missing edges of the
+population graph. The partial correlation associated with a retained
+edge is
 
 ``` math
-\rho_{ij \cdot \text{rest}} \;=\; \frac{-K_{ij}}{\sqrt{K_{ii} K_{jj}}},
+\rho_{ij \cdot \mathrm{rest}}
+= -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}}.
 ```
 
-so an edge in a GGM is a non-zero partial correlation between two
-variables after conditioning on every other variable in the system. In
-the psychometric network literature this object is the central model:
-nodes are measured variables and edges are conditional
-(partial-correlation) associations (Epskamp & Fried, 2018).
+This standardization places conditional associations on the correlation
+scale, from -1 to 1.
 
-### The graphical lasso objective
+### Penalized likelihood
 
-The maximum-likelihood estimate of $`\mathbf{K}`$ from a sample
-covariance matrix $`\mathbf{S}`$ inverts $`\mathbf{S}`$ directly and is
-therefore dense. The graphical lasso (Yuan & Lin, 2007; Banerjee, El
-Ghaoui & d’Aspremont, 2008; Friedman, Hastie & Tibshirani, 2008) instead
-maximizes an $`\ell_1`$-penalized Gaussian log-likelihood,
+Let $`\mathbf{S}`$ be the sample covariance or correlation matrix. The
+graphical lasso estimates a positive-definite precision matrix by
+minimizing
 
 ``` math
-\hat{\mathbf{K}}
- \;=\; \arg\max_{\mathbf{K} \succ 0}
-       \Bigl[ \log\det \mathbf{K} - \operatorname{tr}(\mathbf{S}\mathbf{K})
-              - \lambda \lVert \mathbf{K} \rVert_1 \Bigr],
+\widehat{\mathbf{K}}
+= \underset{\mathbf{K} \succ 0}{\operatorname{argmin}}
+\left\{
+-\log\det(\mathbf{K})
++ \operatorname{tr}(\mathbf{S}\mathbf{K})
++ \lambda \sum_{i \ne j}|K_{ij}|
+\right\}.
 ```
 
-where $`\lVert \mathbf{K} \rVert_1 = \sum_{i \neq j} |K_{ij}|`$
-penalizes the off-diagonal entries and $`\lambda \geq 0`$ is a tuning
-parameter. The penalty shrinks small partial correlations exactly to
-zero, producing a sparse graph and controlling sampling variability when
-$`p`$ is large relative to $`n`$. The objective is strictly concave in
-$`\mathbf{K}`$, so its maximizer is unique.
+The tuning parameter $`\lambda \geq 0`$ controls the amount of
+regularization. Larger values impose more shrinkage on off-diagonal
+precision entries and usually produce fewer edges. The objective is
+strictly convex over the cone of positive-definite matrices, so its
+minimizer is unique.
 
-### Tuning by the extended BIC
+### EBIC model selection
 
-The penalty $`\lambda`$ is selected over a path of candidate values by
-minimizing the extended Bayesian information criterion (EBIC; Foygel &
-Drton, 2010), which augments the ordinary BIC with a term that penalizes
-the size of the model space:
+For each candidate value of $`\lambda`$, the fitted graph has a Gaussian
+log-likelihood $`\ell(\widehat{\mathbf{K}})`$ and $`E`$ retained edges.
+The EBIC is
 
 ``` math
-\mathrm{EBIC}_\gamma
- \;=\; -2\,\ell(\hat{\mathbf{K}}) + E \log n + 4\,E\,\gamma \log p,
+\operatorname{EBIC}_{\gamma}
+= -2\ell(\widehat{\mathbf{K}})
++ E\log(n)
++ 4E\gamma\log(p),
 ```
 
-where $`\ell`$ is the maximized Gaussian log-likelihood, $`E`$ is the
-number of non-zero edges, and $`\gamma \in [0, 1]`$ is a hyperparameter
-(the `gamma` argument, default $`0.5`$) governing the strength of the
-model-space penalty. Setting $`\gamma = 0`$ recovers ordinary BIC;
-larger $`\gamma`$ favours sparser graphs. The candidate path is
-logarithmically spaced between the smallest penalty that yields the
-empty graph and a fraction `lambda_min_ratio` of it, with `nlambda`
-points. In `psychnets` the defaults are `nlambda = 100` and
-`lambda_min_ratio = 0.01`.
+where $`n`$ is the sample size, $`p`$ is the number of nodes, and
+$`\gamma`$ controls the additional graph-complexity penalty. `psychnets`
+evaluates a logarithmically spaced path of candidate penalties and
+selects the value with the smallest EBIC. The selected penalty is then
+refitted at a tighter numerical tolerance.
 
-### The psychnets implementation
+### KKT optimality conditions
 
-The estimator is a clean-room reimplementation in pure base R. The
-package imports only the base packages `stats` and `parallel`; it does
-not depend on `glasso`, `qgraph`, `glmnet`, or `Matrix`, and contains no
-compiled code. The solver is the covariance block-coordinate-descent
-algorithm of Friedman, Hastie & Tibshirani (2008). Writing
-$`\mathbf{W} = \mathbf{K}^{-1}`$ for the model covariance, the algorithm
-cycles over the columns of $`\mathbf{W}`$; for each column the
-off-diagonal block is updated by solving an ordinary lasso regression
-via coordinate descent (with the diagonal held fixed at the diagonal of
-$`\mathbf{S}`$, since the penalty is off-diagonal only), and the
-precision matrix is reconstructed from the converged $`\mathbf{W}`$ and
-the lasso coefficients.
-
-Selection of $`\lambda`$ proceeds in two tiers. The EBIC criterion only
-needs to identify which edges are active at each candidate $`\lambda`$,
-and the lasso zeros inactive edges exactly, so the path is first scanned
-at a loose convergence tolerance (`scan_tol = 1e-4`). The single
-$`\lambda`$ that minimizes EBIC is then refit at a tight tolerance
-(`refit_tol = 1e-8`), so the returned estimate is the converged optimum
-of the convex objective rather than a coarse path point.
-
-### The KKT optimality certificate
-
-Because the graphical-lasso objective is strictly convex, its optimum is
-unique and is characterized exactly by the first-order
-(Karush–Kuhn–Tucker) stationarity conditions. Writing
-$`\mathbf{W} = \hat{\mathbf{K}}^{-1}`$, the optimal estimate satisfies
+Write $`\mathbf{W} = \widehat{\mathbf{K}}^{-1}`$. At the optimum, the
+diagonal conditions satisfy $`W_{ii} = S_{ii}`$. For off-diagonal
+entries,
 
 ``` math
-W_{ii} = S_{ii}, \qquad
-W_{ij} - S_{ij} = \lambda\,\operatorname{sign}(K_{ij})
- \;\text{ where } K_{ij} \neq 0, \qquad
-|W_{ij} - S_{ij}| \leq \lambda \;\text{ otherwise.}
+W_{ij} - S_{ij}
+= \lambda\,\operatorname{sign}(\widehat{K}_{ij})
+\quad \text{when } \widehat{K}_{ij} \ne 0,
 ```
 
-The
+and
+
+``` math
+|W_{ij} - S_{ij}| \leq \lambda
+\quad \text{when } \widehat{K}_{ij} = 0.
+```
+
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
-verb returns the maximum absolute violation of these conditions as a
-tidy one-row data frame:
+returns the maximum violation of these conditions. A residual near zero
+indicates that the numerical solution satisfies the defining first-order
+conditions to numerical precision.
 
-``` r
+### Predictability from the precision matrix
 
-certificate(net)
-#>   method  certificate kind certified
-#> 1 glasso 2.213401e-10  kkt      TRUE
-```
-
-The residual is at the order of machine precision. Because the minimizer
-is unique, a residual this small confirms that the reported precision
-matrix satisfies the first-order optimality conditions of the penalized
-objective to numerical precision. This is a reproducibility and
-verification diagnostic — a numerical-analysis check that the solver
-converged — rather than a substantive property of the data; the `kind`
-column records that it is a KKT residual and `certified` flags whether
-it falls below the tolerance `tol` (default $`10^{-6}`$).
-
-### The solver engine
-
-The `native` argument selects the inner fixed-penalty solver. The
-default, `native = TRUE`, is psychnets’ own pure-R
-block-coordinate-descent solver described above. Setting
-`native = FALSE` (which requires the optional Fortran `glasso` package,
-listed under `Suggests`) dispatches each fixed-penalty solve to that
-established package instead, producing numerically equivalent graph
-structure at Fortran speed; the optimality residual then reflects the
-`glasso` package’s own convergence tolerance rather than the tighter
-base-R refit.
-
-### Argument reference
-
-Only `data` and `method` are required; everything else has a default.
-The full set of arguments for the graphical lasso is:
-
-| Argument | Default | Meaning |
-|----|----|----|
-| `data` | — | Numeric $`n \times p`$ matrix or data frame (rows are observations). |
-| `cor_matrix`, `n` | `NULL` | A precomputed $`p \times p`$ correlation matrix and its sample size, used in place of `data`. |
-| `cor_method` | `"pearson"` | Correlation estimator: `"pearson"`, `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial [`cor_auto()`](https://pak.dynasite.org/psychnets/reference/cor_auto.md), for ordinal data). |
-| `gamma` | `0.5` | EBIC hyperparameter $`\gamma`$; larger values give sparser graphs, $`0`$ is ordinary BIC. |
-| `nlambda` | `100` | Number of penalties on the $`\lambda`$ path. |
-| `lambda_min_ratio` | `0.01` | Smallest $`\lambda`$ as a fraction of the penalty that empties the graph. |
-| `threshold` | `0` | Post-hoc absolute-weight floor; edges below it are set to zero. |
-| `na_method` | `"pairwise"` | Missing data: `"pairwise"` (pairwise-complete correlations with a nearest-positive-definite projection) or `"listwise"` (complete-case deletion). |
-| `native` | `TRUE` | Inner solver: `TRUE` = psychnets’ pure-R solver, `FALSE` = the `glasso` Fortran package. |
-| `labels` | `NULL` | Node names. |
-
-Researchers migrating from
-[`qgraph::EBICglasso()`](https://rdrr.io/pkg/qgraph/man/EBICglasso.html)
-can map these names onto the `qgraph` arguments with the package’s
-[`net_crosswalk()`](https://pak.dynasite.org/psychnets/reference/net_crosswalk.md)
-helper.
-
-### Predictability in closed form
-
-For a Gaussian graphical model, node predictability is available in
-closed form from the precision matrix (Haslbeck & Waldorp, 2018): the
-proportion of variance of node $`j`$ explained by the remaining nodes is
+For node $`j`$, the conditional residual variance is $`1/K_{jj}`$. If
+$`S_{jj}`$ is the marginal variance, the proportion of variance
+explained by the remaining nodes is
 
 ``` math
-R^2_j \;=\; 1 - \frac{1}{K_{jj}\, S_{jj}},
+R_j^2 = 1 - \frac{1}{K_{jj}S_{jj}}.
 ```
 
-where $`K_{jj}`$ is the diagonal of the precision matrix and $`S_{jj}`$
-the corresponding variance.
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
-reports these per-node values, requiring no access to the raw data.
-
-### The nonparanormal extension
-
-The nonparanormal (Liu, Lafferty & Wasserman, 2009) assumes that the
-variables are jointly Gaussian after unknown monotone marginal
-transformations. Estimating those transformations by a rank-based
-Gaussianization and applying the identical EBIC graphical lasso to the
-transformed correlation matrix yields a GGM that is robust to monotone
-departures from normality. This is `method = "huge"`, which certifies
-against the same KKT conditions as the Gaussian case.
-
-## References
-
-Banerjee, O., El Ghaoui, L., & d’Aspremont, A. (2008). Model selection
-through sparse maximum likelihood estimation for multivariate Gaussian
-or binary data. *Journal of Machine Learning Research*, 9, 485–516.
-
-Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E. I.,
-McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J., Costantini,
-G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van Bork, R., &
-Waldorp, L. J. (2021). Network analysis of multivariate data in
-psychological science. *Nature Reviews Methods Primers*, 1, 1–18.
-
-Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
-psychological networks and their accuracy: A tutorial paper. *Behavior
-Research Methods*, 50(1), 195–212.
-
-Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
-correlation networks. *Psychological Methods*, 23(4), 617–634.
-
-Epskamp, S., Waldorp, L. J., Mõttus, R., & Borsboom, D. (2018). The
-Gaussian graphical model in cross-sectional and time-series data.
-*Multivariate Behavioral Research*, 53(4), 453–480.
-
-Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
-for Gaussian graphical models. In *Advances in Neural Information
-Processing Systems* (Vol. 23, pp. 604–612).
-
-Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
-covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
-432–441.
-
-Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models
-predict observations? On the importance of predictability in network
-models. *Behavior Research Methods*, 50(2), 853–861.
-
-Lauritzen, S. L. (1996). *Graphical Models*. Oxford: Oxford University
-Press.
-
-Liu, H., Lafferty, J., & Wasserman, L. (2009). The nonparanormal:
-Semiparametric estimation of high dimensional undirected graphs.
-*Journal of Machine Learning Research*, 10, 2295–2328.
-
-Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A
-modern approach to the analysis of learning and complex learning
-processes. In M. Saqr & S. López-Pernas (Eds.), *Learning Analytics
-Methods and Tutorials: A Practical Guide Using R* (Chapter 19).
-Springer.
-<https://lamethods.org/book1/chapters/ch19-psychological-networks/ch19-psych.html>
-
-Yuan, M., & Lin, Y. (2007). Model selection and estimation in the
-Gaussian graphical model. *Biometrika*, 94(1), 19–35.
+evaluates this identity for each node. The calculation requires the
+fitted precision and covariance matrices, so raw observations are not
+needed after a Gaussian graphical model has been fitted.

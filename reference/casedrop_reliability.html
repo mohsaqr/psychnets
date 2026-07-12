@@ -29,10 +29,10 @@ Borsboom &amp;amp; Fried 2018)."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -140,47 +140,20 @@ psychological networks and their accuracy. <em>Behavior Research Methods</em>,
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu">casedrop_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> # edge-weight stability: glasso | CS = 0.90 (spearman cor &gt;= 0.70 at 95%)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            metric drop_prop       mean          sd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    mean_abs_dev       0.1 0.01210425 0.006842117</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    mean_abs_dev       0.2 0.01890183 0.009083151</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    mean_abs_dev       0.3 0.02149010 0.011285685</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    mean_abs_dev       0.4 0.02698512 0.011699679</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5    mean_abs_dev       0.5 0.03276844 0.015423245</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6    mean_abs_dev       0.6 0.04346120 0.019907911</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7    mean_abs_dev       0.7 0.05458419 0.019680164</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8    mean_abs_dev       0.8 0.07213005 0.028998661</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9    mean_abs_dev       0.9 0.11435088 0.041262261</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 median_abs_dev       0.1 0.01087812 0.007526945</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11 median_abs_dev       0.2 0.01662288 0.009894813</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12 median_abs_dev       0.3 0.01908751 0.012849561</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13 median_abs_dev       0.4 0.02328488 0.012107749</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14 median_abs_dev       0.5 0.02834539 0.016470417</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15 median_abs_dev       0.6 0.03893692 0.021357956</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16 median_abs_dev       0.7 0.04928713 0.022370871</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17 median_abs_dev       0.8 0.06351304 0.032443227</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18 median_abs_dev       0.9 0.10422689 0.046986840</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19    correlation       0.1 0.97948093 0.018021434</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 20    correlation       0.2 0.97726341 0.017660241</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21    correlation       0.3 0.97759688 0.018398626</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 22    correlation       0.4 0.97386763 0.017045752</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23    correlation       0.5 0.96892625 0.019271040</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 24    correlation       0.6 0.96668355 0.019234762</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25    correlation       0.7 0.95693658 0.020374142</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 26    correlation       0.8 0.95491323 0.024149980</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27    correlation       0.9 0.91966867 0.047363394</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 28    max_abs_dev       0.1 0.02782703 0.013178779</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29    max_abs_dev       0.2 0.04431631 0.019171457</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30    max_abs_dev       0.3 0.05063819 0.022210782</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31    max_abs_dev       0.4 0.06527754 0.027760050</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32    max_abs_dev       0.5 0.07769319 0.031758263</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33    max_abs_dev       0.6 0.09759017 0.038810847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34    max_abs_dev       0.7 0.12589880 0.043891748</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35    max_abs_dev       0.8 0.16921224 0.061437261</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 36    max_abs_dev       0.9 0.26500688 0.104004806</span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># `iter` and `drop_prop` are kept small here so the example runs quickly;</span></span></span>
+<span class="r-in"><span><span class="co"># the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real</span></span></span>
+<span class="r-in"><span><span class="co"># reliability assessment should use.</span></span></span>
+<span class="r-in"><span><span class="fu">casedrop_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span>, iter <span class="op">=</span> <span class="fl">5</span>, drop_prop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # edge-weight stability: glasso | CS = 0.50 (spearman cor &gt;= 0.70 at 95%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           metric drop_prop       mean          sd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev      0.25 0.01887120 0.009120429</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   mean_abs_dev      0.50 0.02206496 0.005387005</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 median_abs_dev      0.25 0.01604977 0.008175395</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 median_abs_dev      0.50 0.01955155 0.006003321</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5    correlation      0.25 0.97513583 0.008683012</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6    correlation      0.50 0.97512845 0.012960209</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7    max_abs_dev      0.25 0.04745924 0.024045972</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8    max_abs_dev      0.50 0.05437319 0.015481959</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

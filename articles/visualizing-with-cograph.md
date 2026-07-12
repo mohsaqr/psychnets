@@ -1,38 +1,51 @@
 # Visualizing networks with cograph
 
-`psychnets` belongs to the Dynalytics ecosystem: a framework for the
-rigorous analytics of dynamical systems. Dynalytics treats estimation,
-confirmatory testing, analysis, and software as parts of one scientific
-contract: every analytical claim should be matched by evidence
-appropriate to the structure and complexity of that claim. Within that
-contract, `psychnets` covers psychological networks with clean-room,
-base-R estimators, correctness certificates, tidy network objects, and
-framework verbs for centrality, predictability, bootstrapping,
-stability, and group comparison.
+## Drawing a fitted network
 
-`cograph` is the visualization layer for this ecosystem. It is built for
-fast, customizable network graphics across dynamical, social,
-psychological, heterogeneous, and multilayer networks. A fitted
-`psychnets` object can therefore move directly into `cograph` without
-conversion: the same model can be rendered with different layouts,
-themes, node shapes, centrality-scaled sizes, signed-edge colors,
-thresholds, edge labels, group panels, and export settings. This
-vignette shows that plotting workflow from the default graph to
-publication-oriented figures.
+A fitted `psychnets` network is a weighted graph of nodes and signed
+edges. The picture of that graph is where its structure becomes
+readable: which nodes connect, how strongly, and with what sign. Every
+estimator in `psychnets` returns an object of class
+`c("psychnet", "cograph_network")`, so a fitted network moves into the
+`cograph` drawing engine with no conversion. The same model is then
+rendered with different layouts, node aesthetics, edge styling,
+thresholds, themes, and export settings, all from one object.
 
-## Fit Once
+This vignette shows the plotting workflow from the default graph to a
+figure ready for a paper.
+[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
+is the drawing verb throughout. The chunks that call it are guarded, so
+they run only when `cograph` is installed.
+
+## The data and the fit
+
+The bundled `SRL_GPT` data hold 300 learners scored on five
+self-regulated -learning constructs (CSU, IV, SE, SR, TA).
+[`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
+estimates a Gaussian graphical model whose edges are partial
+correlations selected by the extended Bayesian information criterion.
 
 ``` r
 
-fit <- ebic_glasso(SRL_Claude)
+fit <- ebic_glasso(SRL_GPT)
 fit
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 10   (undirected)
-#>   lambda: 0.009013   gamma: 0.5
-#>   optimality (KKT residual): 3.92e-10
+#>   lambda: 0.00861   gamma: 0.5
+#>   optimality (KKT residual): 2.21e-10
 ```
 
-## Default cograph Plot
+## The default graph
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) on a `psychnet`
+object delegates to
+[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html),
+so a bare `plot(fit)` draws the network. Each node is a construct and
+each edge is a partial correlation between two constructs given the
+other three. The colour of an edge encodes the sign of that partial
+correlation and the width encodes its magnitude, so a wide edge of one
+colour is a strong positive association and a wide edge of the other
+colour is a strong negative one.
 
 ``` r
 
@@ -41,8 +54,10 @@ plot(fit)
 
 ![](visualizing-with-cograph_files/figure-html/default-1.png)
 
-The explicit `splot()` call is useful when you want to set plotting
-parameters:
+Calling
+[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
+directly draws the same graph and opens its full argument surface for
+the customization below.
 
 ``` r
 
@@ -53,8 +68,11 @@ cograph::splot(fit)
 
 ## Layouts
 
-The same network can be drawn with different layouts. Fixed seeds make
-stochastic layouts reproducible.
+The `layout` argument sets the algorithm that places the nodes. A
+circular layout fixes the nodes on a ring, which keeps positions
+comparable between figures; a spring layout places connected nodes near
+one another, which makes clusters visible. The `seed` argument fixes the
+random start of a stochastic layout so the figure is reproducible.
 
 ``` r
 
@@ -70,11 +88,13 @@ cograph::splot(fit, layout = "spring", seed = 11, title = "spring")
 par(op)
 ```
 
-## Nodes and Labels
+## Nodes and labels
 
-Node aesthetics can be set directly: fill, border, label size, and
-shape. Scaling node size by a centrality measure makes the structural
-role of each node visible.
+The node arguments set fill, border, label size, and shape. The
+`scale_nodes_by` argument sizes each node by a centrality measure and
+`node_size_range` sets the smallest and largest radius, so node area
+reads as structural importance. Sizing the nodes by strength makes the
+most connected construct the largest on the page.
 
 ``` r
 
@@ -95,9 +115,13 @@ cograph::splot(
 
 ## Edges
 
-For signed psychometric networks, edge color and width usually matter
-more than decorative node styling. Thresholding and edge labels help
-when the complete network is too dense.
+For a signed psychometric network, the edge encoding carries the
+substantive result. The `edge_positive_color` and `edge_negative_color`
+arguments set the two sign colours and `edge_width_range` sets the
+mapping from magnitude to width. The `threshold` argument hides edges
+below an absolute weight, which thins a dense graph down to its
+strongest associations, and `edge_labels` prints the weight on each
+retained edge.
 
 ``` r
 
@@ -117,7 +141,10 @@ cograph::splot(
 
 ![](visualizing-with-cograph_files/figure-html/edges-1.png)
 
-The edge-weight distribution can be inspected separately:
+[`cograph::plot_edge_weights()`](https://sonsoles.me/cograph/reference/plot_edge_weights.html)
+draws the distribution of the edge weights on its own, which reads the
+spread of associations and the location of the strong edges without the
+graph layout.
 
 ``` r
 
@@ -126,22 +153,28 @@ cograph::plot_edge_weights(fit)
 
 ![](visualizing-with-cograph_files/figure-html/edge-weights-1.png)
 
-## Bootstrap and Edge Differences
+## Bootstrap diagnostics
 
-Bootstrap diagnostics are estimated by `psychnets`. The default plot
-shows edge-weight confidence intervals.
+The bootstrap diagnostics are computed in `psychnets` and drawn by their
+own base-R plot methods, covered fully in the companion vignette.
+[`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
+resamples the data and refits the network on each resample, and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) on its result
+defaults to the edge-weight confidence intervals.
 
 ``` r
 
 set.seed(1)
-bs <- net_boot(SRL_Claude, method = "glasso", n_boot = 250, cores = 1)
+bs <- net_boot(SRL_GPT, method = "glasso", n_boot = 250, cores = 1)
 plot(bs)
 ```
 
 ![](visualizing-with-cograph_files/figure-html/bootstrap-1.png)
 
-The same bootstrap object also contains the retained draws used for
-pairwise edge-difference tests.
+The same bootstrap object holds the retained draws for the pairwise
+edge-difference test. Under `type = "edge_diff"`,
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+significance-box matrix of which edges differ from one another.
 
 ``` r
 
@@ -150,8 +183,11 @@ plot(bs, type = "edge_diff")
 
 ![](visualizing-with-cograph_files/figure-html/edge-diff-box-1.png)
 
-Use the forest style when the effect sizes and confidence intervals
-matter more than the significance-box display.
+[`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md)
+returns the pairwise differences as a tidy table, and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) under
+`style = "forest"` draws each difference as a point with its confidence
+interval when the effect sizes matter more than the box display.
 
 ``` r
 
@@ -162,7 +198,9 @@ plot(difference_test(bs, type = "edge"), style = "forest")
 
 ## Themes
 
-Themes apply coordinated defaults without changing the fitted model.
+The `theme` argument applies a coordinated set of colour and styling
+defaults without changing the fitted model, so the same network is
+redrawn in a house style or a colourblind-safe palette from one call.
 
 ``` r
 
@@ -178,11 +216,15 @@ cograph::splot(fit, theme = "colorblind", title = "colorblind")
 par(op)
 ```
 
-## Group Networks
+## Group networks
 
-`psychnet(..., group = )` returns a collection of fitted networks.
-`cograph` plots the collection as a shared-layout grid, so node
-positions are comparable across groups.
+Passing `group =` to
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+fits one network per level of a grouping column and returns the
+collection.
+[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
+draws the collection as a grid that shares one layout, so a node sits in
+the same position in every panel and the panels are read side by side.
 
 ``` r
 
@@ -194,8 +236,8 @@ cograph::splot(group_fit, layout = "circle", psych_styling = TRUE)
 
 ## Export
 
-Use `filename`, `width`, `height`, and `res` when a figure is ready to
-save:
+The `filename`, `width`, `height`, and `res` arguments write the figure
+to a file at a chosen size and resolution when it is ready to save.
 
 ``` r
 
@@ -203,7 +245,7 @@ cograph::splot(fit, layout = "circle", filename = "network.png",
                width = 8, height = 8, res = 300)
 ```
 
-## Useful `splot()` Options
+## The splot arguments at a glance
 
 | Task | Arguments |
 |----|----|

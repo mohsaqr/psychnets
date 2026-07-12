@@ -34,6 +34,6 @@ plot(x, ...)
 ``` r
 set.seed(1)
 d <- matrix(stats::rnorm(200 * 5), 200, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
-s <- net_stability(d, drop_prop = c(0.3, 0.5, 0.7), iter = 20)
+s <- net_stability(d, drop_prop = c(0.3, 0.6), iter = 10)
 plot(s)
 ```

@@ -25,10 +25,10 @@ deviation - a psychometric reliability view of the estimated structure."></head>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -115,15 +115,15 @@ are carried in <code>attr(x, "iterations")</code> for <code><a href="plot.psychn
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu">network_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> # split-half reliability: glasso | 100 iterations (50/50 split)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           metric       mean         sd      lower     upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev 0.06693026 0.02270286 0.03359414 0.1253135</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 median_abs_dev 0.05931370 0.02360581 0.02751320 0.1156776</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    correlation 0.98010564 0.01314679 0.94539317 0.9944821</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    max_abs_dev 0.15698277 0.04968053 0.07990015 0.2594862</span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># `iter` is kept small here so the example runs quickly; the default</span></span></span>
+<span class="r-in"><span><span class="co"># (iter = 100) is what a real reliability assessment should use.</span></span></span>
+<span class="r-in"><span><span class="fu">network_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span>, iter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # split-half reliability: glasso | 10 iterations (50/50 split)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           metric       mean         sd      lower      upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev 0.06505893 0.02720464 0.02471090 0.10065454</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 median_abs_dev 0.05980563 0.02943647 0.01557087 0.09904948</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    correlation 0.98131883 0.01347642 0.95790513 0.99665236</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    max_abs_dev 0.15438705 0.06804919 0.06582753 0.26122348</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

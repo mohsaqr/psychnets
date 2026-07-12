@@ -150,7 +150,7 @@ colnames(x) <- c("joy", "fear", "calm", "anger", "trust")
 psychnet(x, method = "glasso")
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 0   (undirected)
-#>   lambda: 0.1688   gamma: 0.5
+#>   lambda: 0.1506   gamma: 0.5
 #>   optimality (KKT residual): 0.00e+00
 psychnet(x, method = "pcor", vars = joy:anger)     # name range
 #> <psychnet> pcor network
@@ -158,12 +158,12 @@ psychnet(x, method = "pcor", vars = joy:anger)     # name range
 psychnet(x, method = "glasso", vars = 1:3)         # index range
 #> <psychnet> glasso network
 #>   nodes: 3   edges: 0   (undirected)
-#>   lambda: 0.06016   gamma: 0.5
+#>   lambda: 0.06534   gamma: 0.5
 #>   optimality (KKT residual): 0.00e+00
 psychnet(x, method = "EBICglasso")                 # qgraph alias, same result
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 0   (undirected)
-#>   lambda: 0.1688   gamma: 0.5
+#>   lambda: 0.1506   gamma: 0.5
 #>   optimality (KKT residual): 0.00e+00
 
 ev <- data.frame(
@@ -172,8 +172,8 @@ ev <- data.frame(
 psychnet(ev, actor = "Actor", action = "Action")   # event data, auto-detected
 #> <psychnet> glasso network
 #>   nodes: 4   edges: 6   (undirected)
-#>   lambda: 0.005028   gamma: 0.5
-#>   optimality (KKT residual): 8.00e-10
+#>   lambda: 0.004916   gamma: 0.5
+#>   optimality (KKT residual): 6.61e-10
 
 d <- data.frame(g = rep(c("A", "B"), each = 100),
                 matrix(stats::rnorm(200 * 4), 200, 4,

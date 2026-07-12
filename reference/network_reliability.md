@@ -64,13 +64,13 @@ draws are carried in `attr(x, "iterations")` for
 ## Examples
 
 ``` r
-# \donttest{
-network_reliability(SRL_Claude)
-#> # split-half reliability: glasso | 100 iterations (50/50 split)
-#>           metric       mean         sd      lower     upper
-#> 1   mean_abs_dev 0.06693026 0.02270286 0.03359414 0.1253135
-#> 2 median_abs_dev 0.05931370 0.02360581 0.02751320 0.1156776
-#> 3    correlation 0.98010564 0.01314679 0.94539317 0.9944821
-#> 4    max_abs_dev 0.15698277 0.04968053 0.07990015 0.2594862
-# }
+# `iter` is kept small here so the example runs quickly; the default
+# (iter = 100) is what a real reliability assessment should use.
+network_reliability(SRL_Claude, iter = 10)
+#> # split-half reliability: glasso | 10 iterations (50/50 split)
+#>           metric       mean         sd      lower      upper
+#> 1   mean_abs_dev 0.06505893 0.02720464 0.02471090 0.10065454
+#> 2 median_abs_dev 0.05980563 0.02943647 0.01557087 0.09904948
+#> 3    correlation 0.98131883 0.01347642 0.95790513 0.99665236
+#> 4    max_abs_dev 0.15438705 0.06804919 0.06582753 0.26122348
 ```

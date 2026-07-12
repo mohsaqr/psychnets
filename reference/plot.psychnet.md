@@ -35,8 +35,9 @@ invisibly.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
-plot(ebic_glasso(cor_matrix = S, n = 300))
-} # }
+fit <- ebic_glasso(cor_matrix = S, n = 300)
+if (requireNamespace("cograph", quietly = TRUE)) {
+  plot(fit)
+}
 ```

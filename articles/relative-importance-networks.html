@@ -34,10 +34,10 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -74,81 +74,328 @@
 
     
     
+<div class="section level2">
+<h2 id="what-a-relative-importance-network-is">What a relative-importance network is<a class="anchor" aria-label="anchor" href="#what-a-relative-importance-network-is"></a>
+</h2>
+<p>A relative-importance network describes how much each variable
+contributes to explaining every other variable. It fits a multiple
+regression for each node, uses the remaining nodes as predictors, and
+divides the model’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+among those predictors. The resulting contribution shares become
+directed edges.</p>
+<p>Direction has a practical meaning. An edge from motivation to
+achievement is the share of achievement’s explained variance attributed
+to motivation after the other predictors have been considered. The
+reverse edge is the share of motivation’s explained variance attributed
+to achievement. These values can differ because each direction uses a
+different outcome model.</p>
+<p>The decomposition handles correlated predictors by averaging each
+predictor’s increase in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+across all possible entry orders. A predictor therefore receives a share
+of both its unique contribution and the explanatory information it
+shares with other predictors. Incoming edges sum to the outcome node’s
+full
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
+creating an interpretable variance budget.</p>
+<p>Relative-importance edges describe predictive attribution within
+linear regressions. They do not identify causal effects, temporal
+direction, or the change expected from an intervention.</p>
+</div>
+<div class="section level2">
+<h2 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
+</h2>
+<p>The worked example uses <code>SRL_GPT</code>, which contains 300
+observations on cognitive strategy use (<code>CSU</code>), intrinsic
+value (<code>IV</code>), self-efficacy (<code>SE</code>),
+self-regulation (<code>SR</code>), and test anxiety (<code>TA</code>).
+Each variable is a continuous composite score on a 1 to 7 scale.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
-<p>A <strong>relative-importance network</strong>
-(<code>method = "relimp"</code>) is <strong>directed</strong>. For each
-node taken as an outcome, it regresses it on all the others and
-decomposes that regression’s R-squared into each predictor’s share using
-the <strong>LMG / Shapley</strong> method (averaging the predictor’s
-contribution over every ordering). The edge <code>A -&gt; B</code> is
-the share of B’s variance explained by A. Unlike a GGM, the weights sum
-meaningfully: a node’s incoming edges add up to its full-model
-R-squared.</p>
-<p>The Shapley decomposition enumerates predictor subsets, so it is
-meant for a modest number of nodes. We use the five construct scores in
-<code>SRL_GPT</code>.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        CSU       IV       SE       SR   TA</span></span>
+<span><span class="co">#&gt; 1 5.307692 5.666667 5.777778 5.333333 4.00</span></span>
+<span><span class="co">#&gt; 2 5.846154 6.444444 6.000000 5.777778 4.00</span></span>
+<span><span class="co">#&gt; 3 6.615385 6.666667 6.222222 6.333333 3.25</span></span>
+<span><span class="co">#&gt; 4 5.692308 6.555556 6.333333 5.555556 4.50</span></span>
+<span><span class="co">#&gt; 5 4.384615 5.555556 4.888889 4.777778 4.00</span></span>
+<span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
+<p>The data are complete, so every correlation uses all 300
+observations. The workflow assumes that linear regression is suitable
+for the variables. A full analysis should inspect missingness,
+distributions, unusual observations, linearity, and measurement
+quality.</p>
+</div>
+<div class="section level2">
+<h2 id="fitting-the-network-with-psychnet">Fitting the network with <code>psychnet()</code><a class="anchor" aria-label="anchor" href="#fitting-the-network-with-psychnet"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> estimates a relative-importance network when
+<code>method = "relimp"</code>. It returns a directed
+<code>psychnet</code> object containing the LMG importance shares and
+the full-model
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+for every node.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ri</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"relimp"</span><span class="op">)</span></span>
-<span><span class="va">ri</span></span>
+<code class="sourceCode R"><span><span class="va">importance_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"relimp"</span><span class="op">)</span></span>
+<span><span class="va">importance_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span></code></pre></div>
-<p>The incoming shares per node sum to that node’s R-squared; the
-certificate confirms this efficiency identity holds to numerical
-precision:</p>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span></code></pre></div>
+<p>The network contains 5 nodes and 20 directed edges, one for every
+ordered pair of distinct nodes. Relative importance allocates a
+contribution to every predictor, so the raw network is complete unless a
+contribution is exactly zero.</p>
+</div>
+<div class="section level2">
+<h2 id="inspecting-directed-contributions-with-summary">Inspecting directed contributions with <code>summary()</code><a class="anchor" aria-label="anchor" href="#inspecting-directed-contributions-with-summary"></a>
+</h2>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the fitted network and returns an edge
+table with <code>from</code>, <code>to</code>, and <code>weight</code>.
+The <code>from</code> node is the predictor, the <code>to</code> node is
+the outcome, and <code>weight</code> is the predictor’s share of the
+outcome’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">ri</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   method  certificate       kind certified</span></span>
-<span><span class="co">#&gt; 1 relimp 2.220446e-16 structural      TRUE</span></span></code></pre></div>
-<p>The directed edges – each predictor’s share of an outcome’s
-variance:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span>
+<span><span class="co">#&gt;   edge weight: range [0.006, 0.299], mean 0.165</span></span></code></pre></div>
+<p>The weights range from 0.006 to 0.299. The largest edge runs from
+<code>CSU</code> to <code>IV</code> (0.299), meaning that cognitive
+strategy use receives 0.299 of the variance explained in intrinsic
+value. The reverse <code>IV</code> to <code>CSU</code> edge is 0.289.
+The two directions are similar here, but they are separate regression
+contributions.</p>
+<p>Self-regulation contributes 0.128 to the explained variance of test
+anxiety. This is the largest incoming contribution to <code>TA</code>.
+The other incoming shares are small: 0.014 from <code>CSU</code>, 0.015
+from <code>IV</code>, and 0.012 from <code>SE</code>. These four shares
+sum to the full
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+for test anxiety.</p>
+<p>Edges pointing from test anxiety to the learning constructs are also
+small, ranging from 0.006 to 0.052. Test anxiety therefore contributes
+little to explaining those outcomes in the fitted regressions.</p>
+</div>
+<div class="section level2">
+<h2 id="checking-the-decomposition-with-certificate">Checking the decomposition with <code>certificate()</code><a class="anchor" aria-label="anchor" href="#checking-the-decomposition-with-certificate"></a>
+</h2>
+<p><code><a href="../reference/certificate.html">certificate()</a></code> evaluates the efficiency identity of the
+relative-importance decomposition. It returns <code>method</code>,
+<code>certificate</code>, <code>kind</code>, and <code>certified</code>.
+The residual is the largest difference between a node’s incoming edge
+sum and its full-model
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">ri</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    from  to      weight</span></span>
-<span><span class="co">#&gt; 1    IV CSU 0.288505266</span></span>
-<span><span class="co">#&gt; 2    SE CSU 0.263574096</span></span>
-<span><span class="co">#&gt; 3    SR CSU 0.274082666</span></span>
-<span><span class="co">#&gt; 4    TA CSU 0.007326148</span></span>
-<span><span class="co">#&gt; 5   CSU  IV 0.299473895</span></span>
-<span><span class="co">#&gt; 6    SE  IV 0.216286692</span></span>
-<span><span class="co">#&gt; 7    SR  IV 0.258608009</span></span>
-<span><span class="co">#&gt; 8    TA  IV 0.007032583</span></span>
-<span><span class="co">#&gt; 9   CSU  SE 0.280588934</span></span>
-<span><span class="co">#&gt; 10   IV  SE 0.219009605</span></span>
-<span><span class="co">#&gt; 11   SR  SE 0.220573037</span></span>
-<span><span class="co">#&gt; 12   TA  SE 0.006045547</span></span>
-<span><span class="co">#&gt; 13  CSU  SR 0.277393999</span></span>
-<span><span class="co">#&gt; 14   IV  SR 0.253052645</span></span>
-<span><span class="co">#&gt; 15   SE  SR 0.212824511</span></span>
-<span><span class="co">#&gt; 16   TA  SR 0.052422918</span></span>
-<span><span class="co">#&gt; 17  CSU  TA 0.014154964</span></span>
-<span><span class="co">#&gt; 18   IV  TA 0.015416846</span></span>
-<span><span class="co">#&gt; 19   SE  TA 0.012055817</span></span>
-<span><span class="co">#&gt; 20   SR  TA 0.127772080</span></span></code></pre></div>
-<p>Per-node explained variance that the incoming edges reconstruct:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   method  certificate       kind certified</span></span>
+<span><span class="co">#&gt; 1 relimp 1.110223e-16 structural      TRUE</span></span></code></pre></div>
+<p>The residual is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.33 \times 10^{-16}</annotation></semantics></math>
+and <code>certified</code> is <code>TRUE</code>. This value is at the
+order of machine precision. It indicates that the incoming importance
+shares reconstruct every node’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+to numerical precision. The certificate checks the arithmetic identity,
+not the adequacy or stability of the regression models.</p>
+</div>
+<div class="section level2">
+<h2 id="reading-incoming-explanation-with-net_predict">Reading incoming explanation with <code>net_predict()</code><a class="anchor" aria-label="anchor" href="#reading-incoming-explanation-with-net_predict"></a>
+</h2>
+<p><code><a href="../reference/net_predict.html">net_predict()</a></code> reports each node’s full-model
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.
+The returned table contains <code>node</code>, <code>type</code>,
+<code>metric</code>, <code>predictability</code>, and
+<code>accuracy</code>. Gaussian nodes use <code>metric = "R2"</code>,
+and classification accuracy does not apply.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">ri</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node     type metric predictability accuracy</span></span>
 <span><span class="co">#&gt; 1  CSU gaussian     R2      0.8334882       NA</span></span>
 <span><span class="co">#&gt; 2   IV gaussian     R2      0.7814012       NA</span></span>
 <span><span class="co">#&gt; 3   SE gaussian     R2      0.7262171       NA</span></span>
 <span><span class="co">#&gt; 4   SR gaussian     R2      0.7956941       NA</span></span>
 <span><span class="co">#&gt; 5   TA gaussian     R2      0.1693997       NA</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a>
-</h2>
-<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the directed network with arrows.
-Because each pair has two distinct edges (<code>A -&gt; B</code> and
-<code>B -&gt; A</code>), pass <code>directed = TRUE</code> so they are
-drawn separately, with <code>psych_styling = TRUE</code> (green =
-positive, red = negative) and the predictability ring via
-<code>predictability = TRUE</code>.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">ri</span>, directed <span class="op">=</span> <span class="cn">TRUE</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="relative-importance-networks_files/figure-html/relimp-plot-1.png" class="r-plt" alt="" width="672"></p>
+<p>Cognitive strategy use has
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.833</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.833</annotation></semantics></math>,
+self-regulation has 0.796, intrinsic value has 0.781, and self-efficacy
+has 0.726. The other four constructs account for a large proportion of
+each learning construct’s variance.</p>
+<p>Test anxiety has
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.169</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.169</annotation></semantics></math>.
+Its four incoming importance shares therefore form a much smaller
+variance budget. Most variation in test anxiety remains outside this
+five-variable linear model.</p>
 </div>
-  </main>
+<div class="section level2">
+<h2 id="reading-outgoing-contribution-with-net_centralities">Reading outgoing contribution with
+<code>net_centralities()</code><a class="anchor" aria-label="anchor" href="#reading-outgoing-contribution-with-net_centralities"></a>
+</h2>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> sums outgoing edges for a directed
+relative-importance network. Its default table contains
+<code>node</code>, <code>strength</code>, and
+<code>expected_influence</code>. All LMG shares are non-negative, so
+strength and expected influence are equal.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   node  strength expected_influence</span></span>
+<span><span class="co">#&gt; 1  CSU 0.8716118          0.8716118</span></span>
+<span><span class="co">#&gt; 2   IV 0.7759844          0.7759844</span></span>
+<span><span class="co">#&gt; 3   SE 0.7047411          0.7047411</span></span>
+<span><span class="co">#&gt; 4   SR 0.8810358          0.8810358</span></span>
+<span><span class="co">#&gt; 5   TA 0.0728272          0.0728272</span></span></code></pre></div>
+<p>Self-regulation has the largest outgoing total (0.881), followed by
+cognitive strategy use (0.872). Across the four regressions where it is
+a predictor, self-regulation receives the greatest total attributed
+contribution. Test anxiety has the smallest outgoing total (0.073).</p>
+<p>The two node tables answer different questions.
+<code><a href="../reference/net_predict.html">net_predict()</a></code> summarizes incoming explanation, which is how
+well a node is explained by the others. <code><a href="../reference/net_centralities.html">net_centralities()</a></code>
+summarizes outgoing contribution, which is how much a node contributes
+to explaining the other outcomes.</p>
+</div>
+<div class="section level2">
+<h2 id="visualizing-direction-with-cographsplot">Visualizing direction with <code>cograph::splot()</code><a class="anchor" aria-label="anchor" href="#visualizing-direction-with-cographsplot"></a>
+</h2>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the fitted network when the
+optional <code>cograph</code> package is available. The argument
+<code>directed = TRUE</code> displays arrowheads, and
+<code>edge_labels = TRUE</code> prints the importance shares on the
+edges.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">importance_net</span>, directed <span class="op">=</span> <span class="cn">TRUE</span>, edge_labels <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="relative-importance-networks_files/figure-html/plot-network-1.png" class="r-plt" alt="" width="672"></p>
+<p>The plot is dense because all ordered pairs have a contribution. Edge
+direction and width aid orientation, but the edge table is the primary
+result for exact interpretation. Node distances from the layout have no
+statistical scale.</p>
+</div>
+<div class="section level2">
+<h2 id="sensitivity-to-rank-correlations">Sensitivity to rank correlations<a class="anchor" aria-label="anchor" href="#sensitivity-to-rank-correlations"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> accepts <code>cor_method = "spearman"</code>
+for a rank-based sensitivity analysis. This analysis evaluates whether
+the attribution pattern persists when the regression decomposition is
+based on monotonic rank associations.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">importance_spearman</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"relimp"</span>, cor_method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span></span>
+<span><span class="va">importance_spearman</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">importance_spearman</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span>
+<span><span class="co">#&gt;   edge weight: range [0.004, 0.299], mean 0.160</span></span></code></pre></div>
+<p>The largest rank-based edge remains <code>CSU</code> to
+<code>IV</code> at 0.299. The learning constructs retain substantial
+contributions to one another. The contribution from self-regulation to
+test anxiety decreases from 0.128 to 0.086, and the other test-anxiety
+contributions remain small.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">importance_spearman</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   node     type metric predictability accuracy</span></span>
+<span><span class="co">#&gt; 1  CSU gaussian     R2      0.8276988       NA</span></span>
+<span><span class="co">#&gt; 2   IV gaussian     R2      0.7714652       NA</span></span>
+<span><span class="co">#&gt; 3   SE gaussian     R2      0.7123679       NA</span></span>
+<span><span class="co">#&gt; 4   SR gaussian     R2      0.7723157       NA</span></span>
+<span><span class="co">#&gt; 5   TA gaussian     R2      0.1156386       NA</span></span></code></pre></div>
+<p>The rank-based
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+for test anxiety is 0.116, compared with 0.169 in the Pearson analysis.
+The four learning constructs retain
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+values from 0.712 to 0.828. The main learning-construct pattern
+persists, while the explanation of test anxiety is sensitive to the
+correlation estimator.</p>
+</div>
+<div class="section level2">
+<h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
+</h2>
+<p>A report should state the variables, sample size, correlation
+estimator, missing-data procedure, whether raw or normalized shares were
+used, and the LMG decomposition. Each edge must identify its predictor
+and outcome direction. Incoming
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+and outgoing contribution should be reported as distinct node
+summaries.</p>
+<p>The present analysis used raw LMG shares based on Pearson
+correlations from 300 complete observations. The network contained 20
+directed edges. The largest edge ran from cognitive strategy use to
+intrinsic value (0.299). The incoming shares reconstructed every node’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+with a maximum residual of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.33 \times 10^{-16}</annotation></semantics></math>.
+A Spearman sensitivity analysis preserved the main learning-construct
+pattern but reduced the variance explained in test anxiety.</p>
+</div>
+<div class="section level2">
+<h2 id="how-relative-importance-is-computed">How relative importance is computed<a class="anchor" aria-label="anchor" href="#how-relative-importance-is-computed"></a>
+</h2>
+<p>For each outcome, the method considers every subset of the remaining
+predictors. It measures how much the model’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+increases when a predictor is added to each subset and averages those
+increases with weights that represent all possible predictor orders.
+This average is the predictor’s LMG share.</p>
+<p>The shares are non-negative and sum to the full-model
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.
+Raw shares retain that variance scale. Setting
+<code>normalized = TRUE</code> rescales the incoming shares of each
+outcome to sum to 1, which expresses relative proportions within the
+outcome’s explained variance. Normalization changes the reporting scale
+and does not change the underlying full-model
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.</p>
+<p>The method evaluates
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>p</mi><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">2^{p-1}</annotation></semantics></math>
+predictor subsets for each outcome, so computation grows rapidly with
+the number of nodes. <code><a href="../reference/relimp_network.html">relimp_network()</a></code> uses a default limit
+of 21 nodes.</p>
+</div>
+<div class="section level2">
+<h2 id="mathematical-foundations">Mathematical foundations<a class="anchor" aria-label="anchor" href="#mathematical-foundations"></a>
+</h2>
+<p>For outcome
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+and predictor set
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>,
+the LMG share of predictor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
+is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mrow><mi>S</mi><mo>⊆</mo><mi>P</mi><mo>\</mo><mo stretchy="false" form="prefix">{</mo><mi>k</mi><mo stretchy="false" form="postfix">}</mo></mrow></munder><mfrac><mrow><mo stretchy="false" form="prefix">|</mo><mi>S</mi><mo stretchy="false" form="prefix">|</mo><mi>!</mi><mo stretchy="false" form="prefix">(</mo><mo stretchy="false" form="prefix">|</mo><mi>P</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mo stretchy="false" form="prefix">|</mo><mi>S</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>!</mi></mrow><mrow><mo stretchy="false" form="prefix">|</mo><mi>P</mi><mo stretchy="false" form="prefix">|</mo><mi>!</mi></mrow></mfrac><mrow><mo stretchy="true" form="prefix">[</mo><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>S</mi><mo>∪</mo><mo stretchy="false" form="prefix">{</mo><mi>k</mi><mo stretchy="false" form="postfix">}</mo><mo stretchy="false" form="postfix">)</mo><mo>−</mo><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>S</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\varphi_{kj}
+=\sum_{S\subseteq P\setminus\{k\}}
+\frac{|S|!(|P|-|S|-1)!}{|P|!}
+\left[R^2(S\cup\{k\})-R^2(S)\right].
+</annotation></semantics></math></p>
+<p>For a subset
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>,
+its regression
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+is computed from correlation matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐒</mi><annotation encoding="application/x-tex">\mathbf{S}</annotation></semantics></math>
+as</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>A</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>𝐒</mi><mrow><mi>j</mi><mi>A</mi></mrow></msub><msubsup><mi>𝐒</mi><mrow><mi>A</mi><mi>A</mi></mrow><mrow><mi>−</mi><mn>1</mn></mrow></msubsup><msub><mi>𝐒</mi><mrow><mi>A</mi><mi>j</mi></mrow></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
+R^2(A)=\mathbf{S}_{jA}\mathbf{S}_{AA}^{-1}\mathbf{S}_{Aj}.
+</annotation></semantics></math></p>
+<p>The efficiency identity is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>∑</mo><mi>k</mi></munder><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><msubsup><mi>R</mi><mi>j</mi><mn>2</mn></msubsup><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\sum_k\varphi_{kj}=R_j^2.
+</annotation></semantics></math></p>
+<p>The directed weight matrix has
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">W_{kj}=\varphi_{kj}</annotation></semantics></math>.
+Column sums are incoming
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+values reported by <code><a href="../reference/net_predict.html">net_predict()</a></code>. Row sums are outgoing
+contributions reported by <code><a href="../reference/net_centralities.html">net_centralities()</a></code>.
+<code><a href="../reference/certificate.html">certificate()</a></code> returns the maximum absolute deviation from
+the efficiency identity across nodes.</p>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

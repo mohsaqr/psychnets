@@ -31,10 +31,10 @@ reported by net_boot()."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -110,29 +110,29 @@ logical <code>significant</code>.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span> <span class="op">*</span> <span class="fl">5</span><span class="op">)</span>, <span class="fl">150</span>, <span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/chol.html" class="external-link">chol</a></span><span class="op">(</span><span class="fl">0.4</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="st">"-"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu"><a href="net_boot.html">net_boot</a></span><span class="op">(</span><span class="va">x</span>, n_boot <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu"><a href="net_boot.html">net_boot</a></span><span class="op">(</span><span class="va">x</span>, n_boot <span class="op">=</span> <span class="fl">50</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># n_boot &gt;= 1000 for real use</span></span></span>
 <span class="r-in"><span><span class="fu">difference_test</span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"strength"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    item1 item2    value1    value2     obs_diff       lower       upper p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     V1    V2 0.2647959 0.5762835 -0.311487595 -0.41317357 -0.05972764    0.02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     V1    V3 0.2647959 0.6051193 -0.340323382 -0.56020707  0.03436308    0.06</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     V2    V3 0.5762835 0.6051193 -0.028835788 -0.27130909  0.24372879    0.92</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4     V1    V4 0.2647959 0.5744056 -0.309609637 -0.46080253 -0.07327107    0.04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5     V2    V4 0.5762835 0.5744056  0.001877958 -0.32302967  0.23716978    0.92</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6     V3    V4 0.6051193 0.5744056  0.030713745 -0.29444015  0.25212538    0.98</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7     V1    V5 0.2647959 0.2807738 -0.015977936 -0.30937799  0.26101233    0.90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8     V2    V5 0.5762835 0.2807738  0.295509659 -0.13797478  0.52488790    0.20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9     V3    V5 0.6051193 0.2807738  0.324345447 -0.06206998  0.46596541    0.10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10    V4    V5 0.5744056 0.2807738  0.293631701  0.00744765  0.51300860    0.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     V1    V2 0.2647959 0.5762835 -0.311487595 -0.39115437 -0.10270856    0.04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     V1    V3 0.2647959 0.6051193 -0.340323382 -0.58191788 -0.06545031    0.04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     V2    V3 0.5762835 0.6051193 -0.028835788 -0.28366276  0.18863071    0.60</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     V1    V4 0.2647959 0.5744056 -0.309609637 -0.46072124 -0.07140963    0.04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     V2    V4 0.5762835 0.5744056  0.001877958 -0.30046842  0.23289349    0.72</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6     V3    V4 0.6051193 0.5744056  0.030713745 -0.28055334  0.27012035    0.96</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7     V1    V5 0.2647959 0.2807738 -0.015977936 -0.31186376  0.27056245    0.84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8     V2    V5 0.5762835 0.2807738  0.295509659 -0.10794019  0.47896542    0.16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9     V3    V5 0.6051193 0.2807738  0.324345447  0.05518897  0.49586776    0.04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10    V4    V5 0.5744056 0.2807738  0.293631701  0.03449230  0.55549046    0.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    significant</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1         TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2        FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3        FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4         TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5        FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6        FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7        FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 8        FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9        FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9         TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 10        TRUE</span>
 </code></pre></div>
     </div>

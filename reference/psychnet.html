@@ -23,10 +23,10 @@ picks the right one automatically (source = &quot;auto&quot;):"></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -197,7 +197,7 @@ estimators. Whichever you pass in, the stored <code>$method</code> is the short 
 <span class="r-in"><span><span class="fu">psychnet</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"glasso"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; glasso network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 5   edges: 0   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.1688   gamma: 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.1506   gamma: 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 0.00e+00</span>
 <span class="r-in"><span><span class="fu">psychnet</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, vars <span class="op">=</span> <span class="va">joy</span><span class="op">:</span><span class="va">anger</span><span class="op">)</span>     <span class="co"># name range</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; pcor network</span>
@@ -205,12 +205,12 @@ estimators. Whichever you pass in, the stored <code>$method</code> is the short 
 <span class="r-in"><span><span class="fu">psychnet</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, vars <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>         <span class="co"># index range</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; glasso network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 3   edges: 0   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.06016   gamma: 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.06534   gamma: 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 0.00e+00</span>
 <span class="r-in"><span><span class="fu">psychnet</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"EBICglasso"</span><span class="op">)</span>                 <span class="co"># qgraph alias, same result</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; glasso network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 5   edges: 0   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.1688   gamma: 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.1506   gamma: 0.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 0.00e+00</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">ev</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
@@ -219,8 +219,8 @@ estimators. Whichever you pass in, the stored <code>$method</code> is the short 
 <span class="r-in"><span><span class="fu">psychnet</span><span class="op">(</span><span class="va">ev</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, action <span class="op">=</span> <span class="st">"Action"</span><span class="op">)</span>   <span class="co"># event data, auto-detected</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; glasso network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 4   edges: 6   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.005028   gamma: 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 8.00e-10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.004916   gamma: 0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 6.61e-10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span> <span class="op">*</span> <span class="fl">4</span><span class="op">)</span>, <span class="fl">200</span>, <span class="fl">4</span>,</span></span>

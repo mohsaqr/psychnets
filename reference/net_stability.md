@@ -82,7 +82,7 @@ drop proportion. Visualise it with
 set.seed(1)
 x <- matrix(stats::rnorm(200 * 5), 200, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-cs <- net_stability(x, drop_prop = c(0.3, 0.5, 0.7), iter = 20)
+cs <- net_stability(x, drop_prop = c(0.3, 0.6), iter = 10)
 cs$cs
 #>           strength expected_influence 
 #>                0.3                0.3 

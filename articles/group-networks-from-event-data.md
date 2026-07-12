@@ -1,47 +1,77 @@
-# Regulation networks from event data
+# Regulation networks from Dynalytics event data
 
-## About psychnets
+## Using the Dynalytics event-data grammar
 
-`psychnets` is the psychometric-network engine of **Dynalytics**, a
-family of tools for analysing the *process* and *event* data that
-learning environments and log files produce. It builds a psychometric
-network **directly from an event log** — you do not have to reshape the
-log into a wide person-by-item table first. It handles two things for
-you:
+`psychnets` is the network-estimation component of the Dynalytics
+ecosystem. It accepts the shared event-data grammar used by packages
+such as `tna` and `Nestimate`: an actor identifies who performed an
+event, an action identifies what occurred, and an optional time or
+session identifies when the event occurred. A data set already organized
+for another Dynalytics package can therefore be passed directly to
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md).
 
-- **It counts the actions (computes frequencies).** Each unit of
-  observation becomes one row, and each action becomes a column holding
-  how many times that action occurred. Those counts are the variables
-  the network relates.
-- **It respects nesting.** When the same person is observed more than
-  once, their repeated observations are *nested* inside them.
-  `psychnets` keeps the two kinds of variation apart — how states move
-  together *within* a person versus how people *differ* on average —
-  instead of mixing them into one misleading number.
+Specifying `actor = "Actor"` instructs
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+to interpret the input as an event log. By default, the function expects
+the action variable to be named `"Action"`, eliminating the need for an
+explicit data transformation when this convention is followed. During
+preprocessing,
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+aggregates the event log by counting the frequency with which each actor
+performs each recorded action. These aggregated frequencies are
+assembled into an analysis matrix that is subsequently supplied to the
+selected network estimation procedure. Consequently, the analytical
+workflow consists of providing an event log and invoking a single
+estimation function, with all required aggregation performed internally.
 
-### The three words you need
+## What a network from event data represents
 
-- **Action** — the thing that happened (here, a regulation state such as
-  *plan* or *monitor*). Actions become the **nodes** of the network.
-- **Actor** — *who* did it. Here the actor is the **student** (`Actor`).
-- **Occasion** — one row of counts. By default an actor gives **one**
-  occasion (all their actions summed). If you split each actor into
-  **sessions**, one actor gives **several** occasions — and that is when
-  de-clustering matters (below).
+A network estimated from event data represents statistical relationships
+among action frequencies rather than relationships among individual
+events. Network estimation requires a data matrix in which each
+observation has one value for every node. In `psychnets`, this
+representation is obtained by converting the event log into an
+actor-by-action frequency matrix, where actions constitute the network
+nodes and the corresponding action counts form the variables. Edges in
+the resulting network represent conditional associations between action
+frequencies after controlling for the frequencies of all remaining
+actions in the model.
 
-This vignette uses the `group_regulation_long` event log from the
-**tna** package.
+For example, consider the actions *planning* and *monitoring*. A
+positive edge between these nodes indicates that actors who engage more
+frequently in planning also tend to engage more frequently in monitoring
+than would be expected after accounting for variation in all other
+recorded actions. Conversely, the absence of an edge indicates that the
+estimation procedure did not identify a unique conditional association
+between the frequencies of these actions once the remaining action
+frequencies were considered. Importantly, these edges quantify
+conditional statistical dependencies among action frequencies and should
+not be interpreted as evidence of causal relationships between actions.
 
-## The data: a regulation event log
+The definition of the observational unit is a critical methodological
+consideration because it determines the interpretation of the estimated
+network. When each actor’s complete event history is treated as a single
+observation, the resulting network characterizes between-person
+differences in action frequencies. Alternatively, dividing each actor’s
+event history into multiple sessions produces repeated observations
+within individuals. In this case, person-centered session frequencies
+can be used to estimate within-person networks that capture the extent
+to which actions co-vary relative to each individual’s typical pattern
+of activity. These alternative aggregation strategies address distinct
+research questions and should therefore be selected according to the
+substantive aims of the analysis.
 
-Each row is a single **action** by a **student** (`Actor`), at a
-**time** (`Time`), in a collaboration **group** (`Group`), with the
-student’s achievement level (`Achiever`). This is the raw shape a
-learning platform records.
+## The event log
+
+The `group_regulation_long` data from the optional `tna` package contain
+27,533 events from 2,000 students. Each row records `Actor`, achievement
+level (`Achiever`), group, course, time, and `Action`. The nine action
+categories are `adapt`, `cohesion`, `consensus`, `coregulate`,
+`discuss`, `emotion`, `monitor`, `plan`, and `synthesis`.
 
 ``` r
 
-head(gr)
+head(event_log)
 #>   Actor Achiever Group Course                Time    Action
 #> 1     1     High     1      A 2025-01-01 08:27:07  cohesion
 #> 2     1     High     1      A 2025-01-01 08:35:20 consensus
@@ -51,68 +81,140 @@ head(gr)
 #> 6     1     High     1      A 2025-01-01 08:57:31 consensus
 ```
 
-## Part 1 — one network from students’ regulation profiles
+The event log is already in the Dynalytics long format. Repeated rows
+for the same actor represent different actions in that actor’s activity
+history.
 
-Give
+## Estimating one actor-level network with `psychnet()`
+
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-the actor column and it does the rest: it counts each **student’s** nine
-regulation actions into one profile, then estimates the network of how
-those states co-occur across students. The result carries its own
-correctness certificate — the tiny KKT residual — so you can trust it is
-the optimal network for this data.
+recognizes the event log when the `actor` argument is supplied. It uses
+the shared actor-action grammar, performs the required conversion
+internally, and fits a Gaussian graphical model. The default method is
+the EBIC graphical lasso.
 
 ``` r
 
-net <- psychnet(gr, actor = "Actor")
-net
+actor_net <- psychnet(data = event_log, actor = "Actor")
+actor_net
 #> <psychnet> glasso network
 #>   nodes: 9   edges: 28   (undirected)
 #>   lambda: 0.008001   gamma: 0.5
 #>   optimality (KKT residual): 3.19e-11
 ```
 
+The fitted network contains 9 action nodes and 28 edges. The selected
+penalty is $`\lambda = 0.008001`$ at $`\gamma = 0.5`$.
+
+## Inspecting actor-level edges with `summary()`
+
+[`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
+model and returns an edge table with `from`, `to`, and `weight`. Each
+weight is a partial correlation between two action counts after the
+other seven action counts are considered.
+
 ``` r
 
-cograph::splot(net, psych_styling = TRUE)
+summary(actor_net)
+#> <psychnet> glasso network
+#>   nodes: 9   edges: 28   (undirected)
+#>   lambda: 0.008001   gamma: 0.5
+#>   optimality (KKT residual): 3.19e-11
+#>   edge weight: range [-0.154, 0.434], mean 0.104
 ```
 
-![](group-networks-from-event-data_files/figure-html/plain-plot-1.png)
+The largest positive edge joins `consensus` and `plan` ($`r = 0.434`$).
+Students who plan more also tend to produce more consensus events above
+and beyond their other action frequencies. The `cohesion`-`emotion` edge
+is also positive ($`r = 0.348`$).
 
-*In plain terms:* every student is summarised by how often they did each
-of the nine actions, and the network shows which actions tend to rise
-and fall together across students.
+The largest negative edge joins `discuss` and `plan` ($`r = -0.154`$).
+Higher discussion frequency is associated with lower planning frequency
+after the other action counts are taken into account. Several retained
+edges are very small, including `coregulate`-`plan` (-0.007) and
+`coregulate`-`synthesis` (0.008), so their substantive interpretation
+should be cautious.
 
-## Part 2 — one network per group
+## Checking numerical optimality with `certificate()`
 
-Add `group = "Achiever"` and
-[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-estimates a **separate network for each level** — here, high- versus
-low-achieving students — and returns them as one object that plots as a
-grid and is understood by every analysis verb.
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+returns `method`, `certificate`, `kind`, and `certified`. For the
+graphical lasso, the certificate is the largest KKT stationarity
+residual.
 
 ``` r
 
-byach <- psychnet(gr, actor = "Actor", group = "Achiever")
-byach
+certificate(actor_net)
+#>   method  certificate kind certified
+#> 1 glasso 3.188688e-11  kkt      TRUE
+```
+
+The residual is $`3.19 \times 10^{-11}`$ and `certified` is `TRUE`. It
+indicates that the fitted precision matrix satisfies the optimization
+conditions to numerical precision. This diagnostic checks computation,
+not sampling stability or causal validity.
+
+## Visualizing the actor-level network
+
+[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
+draws the fitted object when `cograph` is available. Psychological
+styling distinguishes positive and negative edges and adds the stored
+predictability rings.
+
+``` r
+
+cograph::splot(actor_net, psych_styling = TRUE)
+```
+
+![](group-networks-from-event-data_files/figure-html/plot-actor-network-1.png)
+
+The layout provides orientation but has no statistical distance scale.
+Exact interpretation should use the edge table.
+
+## Estimating one network per achievement level
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+estimates one network per level when `group` names a grouping column. It
+returns a `psychnet_group` object. Here, separate networks are fitted
+for high- and low-achieving students.
+
+``` r
+
+achievement_nets <- psychnet(data = event_log, actor = "Actor", group = "Achiever")
+achievement_nets
 #> <psychnet_group> 2 networks by Achiever (method: glasso)
 #>  group nodes edges    n
 #>   High     9    25 1000
 #>    Low     9    27 1000
 ```
 
+The high-achieving network contains 25 edges across 1,000 students. The
+low-achieving network contains 27 edges across 1,000 students. Edge
+counts alone do not show that one group has a stronger network, so the
+weight summaries must also be examined.
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns one row per
+group with `group`, `nodes`, `edges`, and `mean_abs_weight`.
+
 ``` r
 
-cograph::splot(byach, psych_styling = TRUE)
+summary(achievement_nets)
+#>   group nodes edges mean_abs_weight
+#> 1  High     9    25       0.1141111
+#> 2   Low     9    27       0.1139959
 ```
 
-![](group-networks-from-event-data_files/figure-html/group-grid-1.png)
+The mean absolute edge weight is 0.114 in both groups. The typical
+retained-edge magnitude is therefore similar even though the selected
+structures differ by two edges.
 
-The framework verbs notice the group object and return one result per
-group — you never loop over the groups yourself.
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
+applies to every network in the group object. It returns strength and
+expected influence for each action within each achievement level.
 
 ``` r
 
-net_centralities(byach)
+net_centralities(achievement_nets)
 #> <psychnet_centrality_group> 2 groups: High, Low
 #> 
 #> --- High ---
@@ -140,126 +242,169 @@ net_centralities(byach)
 #> 9  synthesis 0.4415186          0.4415186
 ```
 
-## Part 3 — sessions, and why nesting needs de-clustering
-
-So far each student gave **one** occasion. But a student’s log is really
-several short **working sessions**. If we treat a pause longer than five
-minutes as the start of a new session (`time_threshold = 300` seconds),
-each student now contributes **several** occasions — and those occasions
-are **nested** inside the student. (With this data the sessions only
-appear at a short gap like this: each student’s raw log is one
-continuous episode, so the default 15-minute gap never splits it.)
-
-Why does that matter? Because two different questions get tangled
-together:
-
-- **Within a student:** across *their own* sessions, which actions move
-  together?
-- **Between students:** do some students simply do more of everything
-  than others?
-
-If you ignore the nesting, these mix and the network can be misleading.
-`psychnets` separates them.
-
-### The de-clustered network (default)
-
-By default (`standardize = TRUE`)
-[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-**removes the between-student differences** — it centres each student’s
-sessions on that student’s own average — and returns the single
-*within-student* network: how regulation states move together inside a
-person’s work, with overall student differences taken out.
+`consensus` has the largest strength in both groups: 1.448 among high
+achievers and 1.200 among low achievers. Among low achievers, `discuss`
+has the second-largest strength at 1.081. These are descriptive
+differences between the estimated networks. Formal claims about group
+differences require a network comparison procedure.
 
 ``` r
 
-net_within <- psychnet(gr, actor = "Actor", time = "Time", time_threshold = 300)
-net_within
+cograph::splot(achievement_nets, psych_styling = TRUE)
+```
+
+![](group-networks-from-event-data_files/figure-html/plot-group-networks-1.png)
+
+## Estimating a person-centered session network
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+can infer sessions from gaps in an event-time column. With
+`time = "Time"` and `time_threshold = 300`, a pause longer than five
+minutes starts a new session. The time values define occasions only.
+They are not used to estimate lagged or temporal effects.
+
+When `standardize = TRUE`, the default,
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+calculates action frequencies for every actor-session and subtracts each
+actor’s mean frequencies. It then fits one pooled network to these
+person-centered session values. The result describes which deviations
+from an actor’s usual action profile tend to occur together across
+sessions.
+
+``` r
+
+within_net <- psychnet(data = event_log, actor = "Actor", time = "Time", time_threshold = 300)
+within_net
 #> <psychnet> glasso network
 #>   nodes: 9   edges: 14   (undirected)
 #>   lambda: 0.0288   gamma: 0.5
 #>   optimality (KKT residual): 1.30e-12
 ```
 
+This person-centered network is the within-actor component of the
+covariance decomposition. It is not a separate network for each actor, a
+temporal network, or a random-effects model. The fitted network contains
+14 edges, compared with 28 in the actor-level network. Its selected
+penalty is $`\lambda = 0.0288`$.
+
 ``` r
 
-cograph::splot(net_within, psych_styling = TRUE)
+summary(within_net)
+#> <psychnet> glasso network
+#>   nodes: 9   edges: 14   (undirected)
+#>   lambda: 0.0288   gamma: 0.5
+#>   optimality (KKT residual): 1.30e-12
+#>   edge weight: range [-0.074, 0.148], mean 0.042
 ```
 
-![](group-networks-from-event-data_files/figure-html/declustered-plot-1.png)
-
-### Keeping both levels
-
-Set `standardize = FALSE` to keep **both** networks: the
-**within-student** network (co-movement across a person’s sessions) and
-the **between-student** network (how students’ average profiles differ).
+The largest person-centered edge joins `cohesion` and `emotion`
+($`r = 0.148`$). In sessions where a student produces more cohesion
+events than that student’s usual level, emotion events also tend to be
+above the student’s usual level, after the other action deviations are
+considered. The `discuss`-`plan` edge is negative ($`r = -0.074`$).
+These edges answer a different question from the actor-level edges and
+should not be compared as if they shared the same unit of variation.
 
 ``` r
 
-wb <- psychnet(gr, actor = "Actor", time = "Time", time_threshold = 300,
-               standardize = FALSE)
-wb
+certificate(within_net)
+#>   method  certificate kind certified
+#> 1 glasso 1.296872e-12  kkt      TRUE
+```
+
+The KKT residual is $`1.30 \times 10^{-12}`$ and is certified,
+indicating numerical optimality to numerical precision.
+
+``` r
+
+cograph::splot(within_net, psych_styling = TRUE)
+```
+
+![](group-networks-from-event-data_files/figure-html/plot-within-network-1.png)
+
+## Keeping the within- and between-actor networks
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+returns a `psychnet_multilevel` object when session-based event data are
+fitted with `standardize = FALSE`. The object contains the pooled
+person-centered network and the between-actor network. The between
+network relates actors’ average action profiles. The word multilevel
+here refers to the within-between covariance decomposition, not to a
+fitted random-effects model.
+
+``` r
+
+multilevel_nets <- psychnet(data = event_log, actor = "Actor", time = "Time", time_threshold = 300, standardize = FALSE)
+multilevel_nets
 #> <psychnet_multilevel> glasso networks (within + between)
 #>   actors: 2000   occasions: 12305
 #>   within : 9 nodes, 14 edges
 #>   between: 9 nodes, 24 edges
 ```
 
-``` r
+The analysis contains 2,000 actors and 12,305 inferred occasions. The
+within-actor network has 14 edges, and the between-actor network has 24.
+The larger between-actor edge count means that more conditional
+associations are retained among students’ average action profiles than
+among their session-level deviations.
 
-cograph::splot(wb$within,  psych_styling = TRUE)
-```
-
-![](group-networks-from-event-data_files/figure-html/wb-plots-1.png)
-
-``` r
-
-cograph::splot(wb$between, psych_styling = TRUE)
-```
-
-![](group-networks-from-event-data_files/figure-html/wb-plots-2.png)
-
-Their centralities, each a single tidy call:
+[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
+recognizes the multilevel object and displays the two networks as a
+grid.
 
 ``` r
 
-net_centralities(wb$within)
-#>         node    strength expected_influence
-#> 1      adapt 0.159298408        0.127502765
-#> 2   cohesion 0.178267388        0.167592113
-#> 3  consensus 0.232447906        0.232447906
-#> 4 coregulate 0.105893985        0.105893985
-#> 5    discuss 0.321389211        0.173684238
-#> 6    emotion 0.147896226        0.147896226
-#> 7    monitor 0.004845725        0.004845725
-#> 8       plan 0.211189059        0.021013169
-#> 9  synthesis 0.205977161        0.205977161
-net_centralities(wb$between)
-#>         node  strength expected_influence
-#> 1      adapt 0.3244106         0.21670670
-#> 2   cohesion 0.3675797         0.23521388
-#> 3  consensus 0.5958375         0.52307346
-#> 4 coregulate 0.3367773         0.27597122
-#> 5    discuss 0.7401066         0.28409926
-#> 6    emotion 0.4104631         0.19656735
-#> 7    monitor 0.1555971         0.08283304
-#> 8       plan 0.6709055        -0.10758555
-#> 9  synthesis 0.4251871         0.18968345
+cograph::splot(multilevel_nets, psych_styling = TRUE)
 ```
 
-*In plain terms:* the **within** network answers “when this student is
-working, which regulation states go hand in hand?”; the **between**
-network answers “how do students differ from one another overall?”.
-De-clustering is simply not letting those two answers contaminate each
-other.
+![](group-networks-from-event-data_files/figure-html/plot-multilevel-networks-1.png)
 
-## Recap
+## Reporting the analysis
 
-- **Actor** = the student; **action** = the regulation state;
-  **occasion** = one row of counts.
-- With no sessions, one student = one occasion → **Part 1**, a single
-  network; `group = "Achiever"` splits it into one network per group →
-  **Part 2**.
-- Split a student into **sessions** and they give many occasions nested
-  inside them → **Part 3**, where de-clustering separates
-  *within*-student co-movement from *between*-student differences
-  (`standardize = TRUE` keeps only within; `FALSE` keeps both).
+A report should identify the Dynalytics actor, action, and time or
+session columns; define the occasion; state the session-gap threshold;
+distinguish actor-level, person-centered, and between-actor questions;
+and report the network estimator and its settings. The report should
+state explicitly that inferred sessions do not form a temporal network
+or a random-effects model.
+
+The present analysis passed 27,533 events from 2,000 students directly
+to
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+using the actor-action grammar. The actor-level graphical-lasso network
+contained 28 edges. Networks by achievement level contained 25 and 27
+edges with similar mean absolute weights. A five-minute session rule
+produced 12,305 occasions, a 14-edge person-centered network, and a
+24-edge between-actor network.
+
+## How event counts and levels are constructed
+
+For actor $`a`$, occasion $`s`$, and action $`j`$, the frequency
+variable is the number of matching events,
+
+``` math
+V_{asj}=\sum_e I(A_e=a,\ S_e=s,\ J_e=j).
+```
+
+Without sessions, each actor contributes one frequency vector. With
+sessions, each actor contributes several vectors. Session inference
+sorts events within an actor by time and starts a new occasion when the
+gap exceeds the selected threshold.
+
+For nested occasions, the actor mean for action $`j`$ is
+
+``` math
+\bar V_{a\cdot j}=\frac{1}{n_a}\sum_s V_{asj},
+```
+
+and the within-actor deviation is
+
+``` math
+V^{W}_{asj}=V_{asj}-\bar V_{a\cdot j}.
+```
+
+The between-actor network is estimated from the actor means. The
+within-actor network is estimated from the deviations. Person centering
+with `standardize = TRUE` returns only the within component. Each
+resulting network uses the same Gaussian graphical estimator as a
+cross-sectional frequency network.

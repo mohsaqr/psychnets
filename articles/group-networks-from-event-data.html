@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Regulation networks from event data • psychnets</title>
+<title>Regulation networks from Dynalytics event data • psychnets</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Regulation networks from event data">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Regulation networks from Dynalytics event data">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,10 +34,10 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -65,7 +65,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Regulation networks from event data</h1>
+      <h1>Regulation networks from Dynalytics event data</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/group-networks-from-event-data.Rmd" class="external-link"><code>vignettes/group-networks-from-event-data.Rmd</code></a></small>
@@ -75,61 +75,78 @@
     
     
 <div class="section level2">
-<h2 id="about-psychnets">About psychnets<a class="anchor" aria-label="anchor" href="#about-psychnets"></a>
+<h2 id="using-the-dynalytics-event-data-grammar">Using the Dynalytics event-data grammar<a class="anchor" aria-label="anchor" href="#using-the-dynalytics-event-data-grammar"></a>
 </h2>
-<p><code>psychnets</code> is the psychometric-network engine of
-<strong>Dynalytics</strong>, a family of tools for analysing the
-<em>process</em> and <em>event</em> data that learning environments and
-log files produce. It builds a psychometric network <strong>directly
-from an event log</strong> — you do not have to reshape the log into a
-wide person-by-item table first. It handles two things for you:</p>
-<ul>
-<li>
-<strong>It counts the actions (computes frequencies).</strong> Each
-unit of observation becomes one row, and each action becomes a column
-holding how many times that action occurred. Those counts are the
-variables the network relates.</li>
-<li>
-<strong>It respects nesting.</strong> When the same person is
-observed more than once, their repeated observations are <em>nested</em>
-inside them. <code>psychnets</code> keeps the two kinds of variation
-apart — how states move together <em>within</em> a person versus how
-people <em>differ</em> on average — instead of mixing them into one
-misleading number.</li>
-</ul>
-<div class="section level3">
-<h3 id="the-three-words-you-need">The three words you need<a class="anchor" aria-label="anchor" href="#the-three-words-you-need"></a>
-</h3>
-<ul>
-<li>
-<strong>Action</strong> — the thing that happened (here, a
-regulation state such as <em>plan</em> or <em>monitor</em>). Actions
-become the <strong>nodes</strong> of the network.</li>
-<li>
-<strong>Actor</strong> — <em>who</em> did it. Here the actor is the
-<strong>student</strong> (<code>Actor</code>).</li>
-<li>
-<strong>Occasion</strong> — one row of counts. By default an actor
-gives <strong>one</strong> occasion (all their actions summed). If you
-split each actor into <strong>sessions</strong>, one actor gives
-<strong>several</strong> occasions — and that is when de-clustering
-matters (below).</li>
-</ul>
-<p>This vignette uses the <code>group_regulation_long</code> event log
-from the <strong>tna</strong> package.</p>
-</div>
+<p><code>psychnets</code> is the network-estimation component of the
+Dynalytics ecosystem. It accepts the shared event-data grammar used by
+packages such as <code>tna</code> and <code>Nestimate</code>: an actor
+identifies who performed an event, an action identifies what occurred,
+and an optional time or session identifies when the event occurred. A
+data set already organized for another Dynalytics package can therefore
+be passed directly to <code><a href="../reference/psychnet.html">psychnet()</a></code>.</p>
+<p>Specifying <code>actor = "Actor"</code> instructs
+<code><a href="../reference/psychnet.html">psychnet()</a></code> to interpret the input as an event log. By
+default, the function expects the action variable to be named
+<code>"Action"</code>, eliminating the need for an explicit data
+transformation when this convention is followed. During preprocessing,
+<code><a href="../reference/psychnet.html">psychnet()</a></code> aggregates the event log by counting the
+frequency with which each actor performs each recorded action. These
+aggregated frequencies are assembled into an analysis matrix that is
+subsequently supplied to the selected network estimation procedure.
+Consequently, the analytical workflow consists of providing an event log
+and invoking a single estimation function, with all required aggregation
+performed internally.</p>
 </div>
 <div class="section level2">
-<h2 id="the-data-a-regulation-event-log">The data: a regulation event log<a class="anchor" aria-label="anchor" href="#the-data-a-regulation-event-log"></a>
+<h2 id="what-a-network-from-event-data-represents">What a network from event data represents<a class="anchor" aria-label="anchor" href="#what-a-network-from-event-data-represents"></a>
 </h2>
-<p>Each row is a single <strong>action</strong> by a
-<strong>student</strong> (<code>Actor</code>), at a
-<strong>time</strong> (<code>Time</code>), in a collaboration
-<strong>group</strong> (<code>Group</code>), with the student’s
-achievement level (<code>Achiever</code>). This is the raw shape a
-learning platform records.</p>
+<p>A network estimated from event data represents statistical
+relationships among action frequencies rather than relationships among
+individual events. Network estimation requires a data matrix in which
+each observation has one value for every node. In
+<code>psychnets</code>, this representation is obtained by converting
+the event log into an actor-by-action frequency matrix, where actions
+constitute the network nodes and the corresponding action counts form
+the variables. Edges in the resulting network represent conditional
+associations between action frequencies after controlling for the
+frequencies of all remaining actions in the model.</p>
+<p>For example, consider the actions <em>planning</em> and
+<em>monitoring</em>. A positive edge between these nodes indicates that
+actors who engage more frequently in planning also tend to engage more
+frequently in monitoring than would be expected after accounting for
+variation in all other recorded actions. Conversely, the absence of an
+edge indicates that the estimation procedure did not identify a unique
+conditional association between the frequencies of these actions once
+the remaining action frequencies were considered. Importantly, these
+edges quantify conditional statistical dependencies among action
+frequencies and should not be interpreted as evidence of causal
+relationships between actions.</p>
+<p>The definition of the observational unit is a critical methodological
+consideration because it determines the interpretation of the estimated
+network. When each actor’s complete event history is treated as a single
+observation, the resulting network characterizes between-person
+differences in action frequencies. Alternatively, dividing each actor’s
+event history into multiple sessions produces repeated observations
+within individuals. In this case, person-centered session frequencies
+can be used to estimate within-person networks that capture the extent
+to which actions co-vary relative to each individual’s typical pattern
+of activity. These alternative aggregation strategies address distinct
+research questions and should therefore be selected according to the
+substantive aims of the analysis.</p>
+</div>
+<div class="section level2">
+<h2 id="the-event-log">The event log<a class="anchor" aria-label="anchor" href="#the-event-log"></a>
+</h2>
+<p>The <code>group_regulation_long</code> data from the optional
+<code>tna</code> package contain 27,533 events from 2,000 students. Each
+row records <code>Actor</code>, achievement level
+(<code>Achiever</code>), group, course, time, and <code>Action</code>.
+The nine action categories are <code>adapt</code>,
+<code>cohesion</code>, <code>consensus</code>, <code>coregulate</code>,
+<code>discuss</code>, <code>emotion</code>, <code>monitor</code>,
+<code>plan</code>, and <code>synthesis</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">gr</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">event_log</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Actor Achiever Group Course                Time    Action</span></span>
 <span><span class="co">#&gt; 1     1     High     1      A 2025-01-01 08:27:07  cohesion</span></span>
 <span><span class="co">#&gt; 2     1     High     1      A 2025-01-01 08:35:20 consensus</span></span>
@@ -137,51 +154,127 @@ learning platform records.</p>
 <span><span class="co">#&gt; 4     1     High     1      A 2025-01-01 08:50:00 synthesis</span></span>
 <span><span class="co">#&gt; 5     1     High     1      A 2025-01-01 08:52:25     adapt</span></span>
 <span><span class="co">#&gt; 6     1     High     1      A 2025-01-01 08:57:31 consensus</span></span></code></pre></div>
+<p>The event log is already in the Dynalytics long format. Repeated rows
+for the same actor represent different actions in that actor’s activity
+history.</p>
 </div>
 <div class="section level2">
-<h2 id="part-1-one-network-from-students-regulation-profiles">Part 1 — one network from students’ regulation profiles<a class="anchor" aria-label="anchor" href="#part-1-one-network-from-students-regulation-profiles"></a>
+<h2 id="estimating-one-actor-level-network-with-psychnet">Estimating one actor-level network with <code>psychnet()</code><a class="anchor" aria-label="anchor" href="#estimating-one-actor-level-network-with-psychnet"></a>
 </h2>
-<p>Give <code><a href="../reference/psychnet.html">psychnet()</a></code> the actor column and it does the rest:
-it counts each <strong>student’s</strong> nine regulation actions into
-one profile, then estimates the network of how those states co-occur
-across students. The result carries its own correctness certificate —
-the tiny KKT residual — so you can trust it is the optimal network for
-this data.</p>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> recognizes the event log when the
+<code>actor</code> argument is supplied. It uses the shared actor-action
+grammar, performs the required conversion internally, and fits a
+Gaussian graphical model. The default method is the EBIC graphical
+lasso.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">gr</span>, actor <span class="op">=</span> <span class="st">"Actor"</span><span class="op">)</span></span>
-<span><span class="va">net</span></span>
+<code class="sourceCode R"><span><span class="va">actor_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">event_log</span>, actor <span class="op">=</span> <span class="st">"Actor"</span><span class="op">)</span></span>
+<span><span class="va">actor_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; glasso network</span></span>
 <span><span class="co">#&gt;   nodes: 9   edges: 28   (undirected)</span></span>
 <span><span class="co">#&gt;   lambda: 0.008001   gamma: 0.5</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 3.19e-11</span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group-networks-from-event-data_files/figure-html/plain-plot-1.png" class="r-plt" alt="" width="624"></p>
-<p><em>In plain terms:</em> every student is summarised by how often
-they did each of the nine actions, and the network shows which actions
-tend to rise and fall together across students.</p>
+<p>The fitted network contains 9 action nodes and 28 edges. The selected
+penalty is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0.008001</mn></mrow><annotation encoding="application/x-tex">\lambda = 0.008001</annotation></semantics></math>
+at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0.5</mn></mrow><annotation encoding="application/x-tex">\gamma = 0.5</annotation></semantics></math>.</p>
 </div>
 <div class="section level2">
-<h2 id="part-2-one-network-per-group">Part 2 — one network per group<a class="anchor" aria-label="anchor" href="#part-2-one-network-per-group"></a>
+<h2 id="inspecting-actor-level-edges-with-summary">Inspecting actor-level edges with <code>summary()</code><a class="anchor" aria-label="anchor" href="#inspecting-actor-level-edges-with-summary"></a>
 </h2>
-<p>Add <code>group = "Achiever"</code> and <code><a href="../reference/psychnet.html">psychnet()</a></code>
-estimates a <strong>separate network for each level</strong> — here,
-high- versus low-achieving students — and returns them as one object
-that plots as a grid and is understood by every analysis verb.</p>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the fitted model and returns an edge
+table with <code>from</code>, <code>to</code>, and <code>weight</code>.
+Each weight is a partial correlation between two action counts after the
+other seven action counts are considered.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">actor_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; glasso network</span></span>
+<span><span class="co">#&gt;   nodes: 9   edges: 28   (undirected)</span></span>
+<span><span class="co">#&gt;   lambda: 0.008001   gamma: 0.5</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 3.19e-11</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.154, 0.434], mean 0.104</span></span></code></pre></div>
+<p>The largest positive edge joins <code>consensus</code> and
+<code>plan</code>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mn>0.434</mn></mrow><annotation encoding="application/x-tex">r = 0.434</annotation></semantics></math>).
+Students who plan more also tend to produce more consensus events above
+and beyond their other action frequencies. The
+<code>cohesion</code>-<code>emotion</code> edge is also positive
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mn>0.348</mn></mrow><annotation encoding="application/x-tex">r = 0.348</annotation></semantics></math>).</p>
+<p>The largest negative edge joins <code>discuss</code> and
+<code>plan</code>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mi>−</mi><mn>0.154</mn></mrow><annotation encoding="application/x-tex">r = -0.154</annotation></semantics></math>).
+Higher discussion frequency is associated with lower planning frequency
+after the other action counts are taken into account. Several retained
+edges are very small, including
+<code>coregulate</code>-<code>plan</code> (-0.007) and
+<code>coregulate</code>-<code>synthesis</code> (0.008), so their
+substantive interpretation should be cautious.</p>
+</div>
+<div class="section level2">
+<h2 id="checking-numerical-optimality-with-certificate">Checking numerical optimality with <code>certificate()</code><a class="anchor" aria-label="anchor" href="#checking-numerical-optimality-with-certificate"></a>
+</h2>
+<p><code><a href="../reference/certificate.html">certificate()</a></code> returns <code>method</code>,
+<code>certificate</code>, <code>kind</code>, and <code>certified</code>.
+For the graphical lasso, the certificate is the largest KKT stationarity
+residual.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">byach</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">gr</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, group <span class="op">=</span> <span class="st">"Achiever"</span><span class="op">)</span></span>
-<span><span class="va">byach</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">actor_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1 glasso 3.188688e-11  kkt      TRUE</span></span></code></pre></div>
+<p>The residual is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.19</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.19 \times 10^{-11}</annotation></semantics></math>
+and <code>certified</code> is <code>TRUE</code>. It indicates that the
+fitted precision matrix satisfies the optimization conditions to
+numerical precision. This diagnostic checks computation, not sampling
+stability or causal validity.</p>
+</div>
+<div class="section level2">
+<h2 id="visualizing-the-actor-level-network">Visualizing the actor-level network<a class="anchor" aria-label="anchor" href="#visualizing-the-actor-level-network"></a>
+</h2>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the fitted object when
+<code>cograph</code> is available. Psychological styling distinguishes
+positive and negative edges and adds the stored predictability
+rings.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">actor_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="group-networks-from-event-data_files/figure-html/plot-actor-network-1.png" class="r-plt" alt="" width="672"></p>
+<p>The layout provides orientation but has no statistical distance
+scale. Exact interpretation should use the edge table.</p>
+</div>
+<div class="section level2">
+<h2 id="estimating-one-network-per-achievement-level">Estimating one network per achievement level<a class="anchor" aria-label="anchor" href="#estimating-one-network-per-achievement-level"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> estimates one network per level when
+<code>group</code> names a grouping column. It returns a
+<code>psychnet_group</code> object. Here, separate networks are fitted
+for high- and low-achieving students.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">achievement_nets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">event_log</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, group <span class="op">=</span> <span class="st">"Achiever"</span><span class="op">)</span></span>
+<span><span class="va">achievement_nets</span></span>
 <span><span class="co">#&gt; &lt;psychnet_group&gt; 2 networks by Achiever (method: glasso)</span></span>
 <span><span class="co">#&gt;  group nodes edges    n</span></span>
 <span><span class="co">#&gt;   High     9    25 1000</span></span>
 <span><span class="co">#&gt;    Low     9    27 1000</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">byach</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group-networks-from-event-data_files/figure-html/group-grid-1.png" class="r-plt" alt="" width="1056"></p>
-<p>The framework verbs notice the group object and return one result per
-group — you never loop over the groups yourself.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">byach</span><span class="op">)</span></span>
+<p>The high-achieving network contains 25 edges across 1,000 students.
+The low-achieving network contains 27 edges across 1,000 students. Edge
+counts alone do not show that one group has a stronger network, so the
+weight summaries must also be examined.</p>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns one row per group with
+<code>group</code>, <code>nodes</code>, <code>edges</code>, and
+<code>mean_abs_weight</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">achievement_nets</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   group nodes edges mean_abs_weight</span></span>
+<span><span class="co">#&gt; 1  High     9    25       0.1141111</span></span>
+<span><span class="co">#&gt; 2   Low     9    27       0.1139959</span></span></code></pre></div>
+<p>The mean absolute edge weight is 0.114 in both groups. The typical
+retained-edge magnitude is therefore similar even though the selected
+structures differ by two edges.</p>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> applies to every network in the group
+object. It returns strength and expected influence for each action
+within each achievement level.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">achievement_nets</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet_centrality_group&gt; 2 groups: High, Low</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; --- High ---</span></span>
@@ -207,118 +300,147 @@ group — you never loop over the groups yourself.</p>
 <span><span class="co">#&gt; 7    monitor 0.4027815          0.4027815</span></span>
 <span><span class="co">#&gt; 8       plan 0.6447291          0.4924798</span></span>
 <span><span class="co">#&gt; 9  synthesis 0.4415186          0.4415186</span></span></code></pre></div>
+<p><code>consensus</code> has the largest strength in both groups: 1.448
+among high achievers and 1.200 among low achievers. Among low achievers,
+<code>discuss</code> has the second-largest strength at 1.081. These are
+descriptive differences between the estimated networks. Formal claims
+about group differences require a network comparison procedure.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">achievement_nets</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="group-networks-from-event-data_files/figure-html/plot-group-networks-1.png" class="r-plt" alt="" width="1056"></p>
 </div>
 <div class="section level2">
-<h2 id="part-3-sessions-and-why-nesting-needs-de-clustering">Part 3 — sessions, and why nesting needs de-clustering<a class="anchor" aria-label="anchor" href="#part-3-sessions-and-why-nesting-needs-de-clustering"></a>
+<h2 id="estimating-a-person-centered-session-network">Estimating a person-centered session network<a class="anchor" aria-label="anchor" href="#estimating-a-person-centered-session-network"></a>
 </h2>
-<p>So far each student gave <strong>one</strong> occasion. But a
-student’s log is really several short <strong>working sessions</strong>.
-If we treat a pause longer than five minutes as the start of a new
-session (<code>time_threshold = 300</code> seconds), each student now
-contributes <strong>several</strong> occasions — and those occasions are
-<strong>nested</strong> inside the student. (With this data the sessions
-only appear at a short gap like this: each student’s raw log is one
-continuous episode, so the default 15-minute gap never splits it.)</p>
-<p>Why does that matter? Because two different questions get tangled
-together:</p>
-<ul>
-<li>
-<strong>Within a student:</strong> across <em>their own</em>
-sessions, which actions move together?</li>
-<li>
-<strong>Between students:</strong> do some students simply do more
-of everything than others?</li>
-</ul>
-<p>If you ignore the nesting, these mix and the network can be
-misleading. <code>psychnets</code> separates them.</p>
-<div class="section level3">
-<h3 id="the-de-clustered-network-default">The de-clustered network (default)<a class="anchor" aria-label="anchor" href="#the-de-clustered-network-default"></a>
-</h3>
-<p>By default (<code>standardize = TRUE</code>) <code><a href="../reference/psychnet.html">psychnet()</a></code>
-<strong>removes the between-student differences</strong> — it centres
-each student’s sessions on that student’s own average — and returns the
-single <em>within-student</em> network: how regulation states move
-together inside a person’s work, with overall student differences taken
-out.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">net_within</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">gr</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, time <span class="op">=</span> <span class="st">"Time"</span>, time_threshold <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
-<span><span class="va">net_within</span></span>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> can infer sessions from gaps in an event-time
+column. With <code>time = "Time"</code> and
+<code>time_threshold = 300</code>, a pause longer than five minutes
+starts a new session. The time values define occasions only. They are
+not used to estimate lagged or temporal effects.</p>
+<p>When <code>standardize = TRUE</code>, the default,
+<code><a href="../reference/psychnet.html">psychnet()</a></code> calculates action frequencies for every
+actor-session and subtracts each actor’s mean frequencies. It then fits
+one pooled network to these person-centered session values. The result
+describes which deviations from an actor’s usual action profile tend to
+occur together across sessions.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">within_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">event_log</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, time <span class="op">=</span> <span class="st">"Time"</span>, time_threshold <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
+<span><span class="va">within_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; glasso network</span></span>
 <span><span class="co">#&gt;   nodes: 9   edges: 14   (undirected)</span></span>
 <span><span class="co">#&gt;   lambda: 0.0288   gamma: 0.5</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 1.30e-12</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">net_within</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group-networks-from-event-data_files/figure-html/declustered-plot-1.png" class="r-plt" alt="" width="624"></p>
+<p>This person-centered network is the within-actor component of the
+covariance decomposition. It is not a separate network for each actor, a
+temporal network, or a random-effects model. The fitted network contains
+14 edges, compared with 28 in the actor-level network. Its selected
+penalty is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0.0288</mn></mrow><annotation encoding="application/x-tex">\lambda = 0.0288</annotation></semantics></math>.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">within_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; glasso network</span></span>
+<span><span class="co">#&gt;   nodes: 9   edges: 14   (undirected)</span></span>
+<span><span class="co">#&gt;   lambda: 0.0288   gamma: 0.5</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.30e-12</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.074, 0.148], mean 0.042</span></span></code></pre></div>
+<p>The largest person-centered edge joins <code>cohesion</code> and
+<code>emotion</code>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mn>0.148</mn></mrow><annotation encoding="application/x-tex">r = 0.148</annotation></semantics></math>).
+In sessions where a student produces more cohesion events than that
+student’s usual level, emotion events also tend to be above the
+student’s usual level, after the other action deviations are considered.
+The <code>discuss</code>-<code>plan</code> edge is negative
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mi>−</mi><mn>0.074</mn></mrow><annotation encoding="application/x-tex">r = -0.074</annotation></semantics></math>).
+These edges answer a different question from the actor-level edges and
+should not be compared as if they shared the same unit of variation.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">within_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1 glasso 1.296872e-12  kkt      TRUE</span></span></code></pre></div>
+<p>The KKT residual is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.30</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>12</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.30 \times 10^{-12}</annotation></semantics></math>
+and is certified, indicating numerical optimality to numerical
+precision.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">within_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="group-networks-from-event-data_files/figure-html/plot-within-network-1.png" class="r-plt" alt="" width="672"></p>
 </div>
-<div class="section level3">
-<h3 id="keeping-both-levels">Keeping both levels<a class="anchor" aria-label="anchor" href="#keeping-both-levels"></a>
-</h3>
-<p>Set <code>standardize = FALSE</code> to keep <strong>both</strong>
-networks: the <strong>within-student</strong> network (co-movement
-across a person’s sessions) and the <strong>between-student</strong>
-network (how students’ average profiles differ).</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">wb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">gr</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, time <span class="op">=</span> <span class="st">"Time"</span>, time_threshold <span class="op">=</span> <span class="fl">300</span>,</span>
-<span>               standardize <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">wb</span></span>
+<div class="section level2">
+<h2 id="keeping-the-within--and-between-actor-networks">Keeping the within- and between-actor networks<a class="anchor" aria-label="anchor" href="#keeping-the-within--and-between-actor-networks"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> returns a <code>psychnet_multilevel</code>
+object when session-based event data are fitted with
+<code>standardize = FALSE</code>. The object contains the pooled
+person-centered network and the between-actor network. The between
+network relates actors’ average action profiles. The word multilevel
+here refers to the within-between covariance decomposition, not to a
+fitted random-effects model.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">multilevel_nets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">event_log</span>, actor <span class="op">=</span> <span class="st">"Actor"</span>, time <span class="op">=</span> <span class="st">"Time"</span>, time_threshold <span class="op">=</span> <span class="fl">300</span>, standardize <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">multilevel_nets</span></span>
 <span><span class="co">#&gt; &lt;psychnet_multilevel&gt; glasso networks (within + between)</span></span>
 <span><span class="co">#&gt;   actors: 2000   occasions: 12305</span></span>
 <span><span class="co">#&gt;   within : 9 nodes, 14 edges</span></span>
 <span><span class="co">#&gt;   between: 9 nodes, 24 edges</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">wb</span><span class="op">$</span><span class="va">within</span>,  psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group-networks-from-event-data_files/figure-html/wb-plots-1.png" class="r-plt" alt="" width="1056"></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">wb</span><span class="op">$</span><span class="va">between</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="group-networks-from-event-data_files/figure-html/wb-plots-2.png" class="r-plt" alt="" width="1056"></p>
-<p>Their centralities, each a single tidy call:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">wb</span><span class="op">$</span><span class="va">within</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         node    strength expected_influence</span></span>
-<span><span class="co">#&gt; 1      adapt 0.159298408        0.127502765</span></span>
-<span><span class="co">#&gt; 2   cohesion 0.178267388        0.167592113</span></span>
-<span><span class="co">#&gt; 3  consensus 0.232447906        0.232447906</span></span>
-<span><span class="co">#&gt; 4 coregulate 0.105893985        0.105893985</span></span>
-<span><span class="co">#&gt; 5    discuss 0.321389211        0.173684238</span></span>
-<span><span class="co">#&gt; 6    emotion 0.147896226        0.147896226</span></span>
-<span><span class="co">#&gt; 7    monitor 0.004845725        0.004845725</span></span>
-<span><span class="co">#&gt; 8       plan 0.211189059        0.021013169</span></span>
-<span><span class="co">#&gt; 9  synthesis 0.205977161        0.205977161</span></span>
-<span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">wb</span><span class="op">$</span><span class="va">between</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         node  strength expected_influence</span></span>
-<span><span class="co">#&gt; 1      adapt 0.3244106         0.21670670</span></span>
-<span><span class="co">#&gt; 2   cohesion 0.3675797         0.23521388</span></span>
-<span><span class="co">#&gt; 3  consensus 0.5958375         0.52307346</span></span>
-<span><span class="co">#&gt; 4 coregulate 0.3367773         0.27597122</span></span>
-<span><span class="co">#&gt; 5    discuss 0.7401066         0.28409926</span></span>
-<span><span class="co">#&gt; 6    emotion 0.4104631         0.19656735</span></span>
-<span><span class="co">#&gt; 7    monitor 0.1555971         0.08283304</span></span>
-<span><span class="co">#&gt; 8       plan 0.6709055        -0.10758555</span></span>
-<span><span class="co">#&gt; 9  synthesis 0.4251871         0.18968345</span></span></code></pre></div>
-<p><em>In plain terms:</em> the <strong>within</strong> network answers
-“when this student is working, which regulation states go hand in
-hand?”; the <strong>between</strong> network answers “how do students
-differ from one another overall?”. De-clustering is simply not letting
-those two answers contaminate each other.</p>
-</div>
+<p>The analysis contains 2,000 actors and 12,305 inferred occasions. The
+within-actor network has 14 edges, and the between-actor network has 24.
+The larger between-actor edge count means that more conditional
+associations are retained among students’ average action profiles than
+among their session-level deviations.</p>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> recognizes the multilevel object and
+displays the two networks as a grid.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">multilevel_nets</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="group-networks-from-event-data_files/figure-html/plot-multilevel-networks-1.png" class="r-plt" alt="" width="1056"></p>
 </div>
 <div class="section level2">
-<h2 id="recap">Recap<a class="anchor" aria-label="anchor" href="#recap"></a>
+<h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
 </h2>
-<ul>
-<li>
-<strong>Actor</strong> = the student; <strong>action</strong> = the
-regulation state; <strong>occasion</strong> = one row of counts.</li>
-<li>With no sessions, one student = one occasion → <strong>Part
-1</strong>, a single network; <code>group = "Achiever"</code> splits it
-into one network per group → <strong>Part 2</strong>.</li>
-<li>Split a student into <strong>sessions</strong> and they give many
-occasions nested inside them → <strong>Part 3</strong>, where
-de-clustering separates <em>within</em>-student co-movement from
-<em>between</em>-student differences (<code>standardize = TRUE</code>
-keeps only within; <code>FALSE</code> keeps both).</li>
-</ul>
+<p>A report should identify the Dynalytics actor, action, and time or
+session columns; define the occasion; state the session-gap threshold;
+distinguish actor-level, person-centered, and between-actor questions;
+and report the network estimator and its settings. The report should
+state explicitly that inferred sessions do not form a temporal network
+or a random-effects model.</p>
+<p>The present analysis passed 27,533 events from 2,000 students
+directly to <code><a href="../reference/psychnet.html">psychnet()</a></code> using the actor-action grammar. The
+actor-level graphical-lasso network contained 28 edges. Networks by
+achievement level contained 25 and 27 edges with similar mean absolute
+weights. A five-minute session rule produced 12,305 occasions, a 14-edge
+person-centered network, and a 24-edge between-actor network.</p>
+</div>
+<div class="section level2">
+<h2 id="how-event-counts-and-levels-are-constructed">How event counts and levels are constructed<a class="anchor" aria-label="anchor" href="#how-event-counts-and-levels-are-constructed"></a>
+</h2>
+<p>For actor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>,
+occasion
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>,
+and action
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
+the frequency variable is the number of matching events,</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mi>e</mi></munder><mi>I</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>A</mi><mi>e</mi></msub><mo>=</mo><mi>a</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>S</mi><mi>e</mi></msub><mo>=</mo><mi>s</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>J</mi><mi>e</mi></msub><mo>=</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+V_{asj}=\sum_e I(A_e=a,\ S_e=s,\ J_e=j).
+</annotation></semantics></math></p>
+<p>Without sessions, each actor contributes one frequency vector. With
+sessions, each actor contributes several vectors. Session inference
+sorts events within an actor by time and starts a new occasion when the
+gap exceeds the selected threshold.</p>
+<p>For nested occasions, the actor mean for action
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>V</mi><mo accent="true">‾</mo></mover><mrow><mi>a</mi><mo>⋅</mo><mi>j</mi></mrow></msub><mo>=</mo><mfrac><mn>1</mn><msub><mi>n</mi><mi>a</mi></msub></mfrac><munder><mo>∑</mo><mi>s</mi></munder><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\bar V_{a\cdot j}=\frac{1}{n_a}\sum_s V_{asj},
+</annotation></semantics></math></p>
+<p>and the within-actor deviation is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow><mi>W</mi></msubsup><mo>=</mo><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>−</mo><msub><mover><mi>V</mi><mo accent="true">‾</mo></mover><mrow><mi>a</mi><mo>⋅</mo><mi>j</mi></mrow></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
+V^{W}_{asj}=V_{asj}-\bar V_{a\cdot j}.
+</annotation></semantics></math></p>
+<p>The between-actor network is estimated from the actor means. The
+within-actor network is estimated from the deviations. Person centering
+with <code>standardize = TRUE</code> returns only the within component.
+Each resulting network uses the same Gaussian graphical estimator as a
+cross-sectional frequency network.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

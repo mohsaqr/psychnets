@@ -27,8 +27,7 @@ plot(x, ...)
 ## Examples
 
 ``` r
-# \donttest{
-plot(network_reliability(SRL_Claude))
-
-# }
+# Small `iter` for a fast example; see [network_reliability()] for the
+# default a real assessment should use.
+plot(network_reliability(SRL_Claude, iter = 10))
 ```

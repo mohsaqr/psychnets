@@ -34,10 +34,10 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -74,94 +74,297 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
-<p>The <strong>Ising model</strong> is the binary analogue of the
-Gaussian graphical model: a network for <strong>0/1 data</strong>, where
-each edge is a conditional association between two binary variables.
-<code>psychnets</code> fits it by nodewise L1-penalised logistic
-regression with EBIC selection (<code>method = "ising"</code>,
-equivalent to <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code>), or unregularised with
-Wald-based pruning (<code>method = "ising_sampler"</code>). Both
-self-certify via the nodewise GLM stationarity residual.</p>
 <div class="section level2">
-<h2 id="dichotomising">Dichotomising<a class="anchor" aria-label="anchor" href="#dichotomising"></a>
+<h2 id="what-an-ising-network-is">What an Ising network is<a class="anchor" aria-label="anchor" href="#what-an-ising-network-is"></a>
 </h2>
-<p>The construct scores are continuous, so we first binarise them with
-<code><a href="../reference/dichotomize.html">dichotomize()</a></code> – here into “high” vs “low” on each
-construct. A median split on coarse data is often badly unbalanced;
-<code>method = "rank"</code> gives a balanced ~50/50 split robust to
-ties.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dichotomize.html">dichotomize</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"rank"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">bin</span><span class="op">)</span>             <span class="co"># endorsement ("high") rate per construct (~0.5)</span></span>
-<span><span class="co">#&gt; CSU  IV  SE  SR  TA </span></span>
-<span><span class="co">#&gt; 0.5 0.5 0.5 0.5 0.5</span></span></code></pre></div>
+<p>An Ising network describes associations among binary variables. A
+node can represent whether a symptom is present, whether a student
+passed an assessment, or whether a respondent endorsed an item. Each
+variable must have two states, which <code>psychnets</code> represents
+as 0 and 1.</p>
+<p>An edge asks whether two binary variables remain associated above and
+beyond the other variables in the network. Consider a network of study
+behaviours. A positive edge between planning and completing assignments
+means that students who plan are more likely to complete assignments
+after their other recorded behaviours have been taken into account. A
+negative edge means that endorsement of one variable is associated with
+lower conditional odds of endorsing the other.</p>
+<p>The model filters negligible conditional associations that may
+reflect sampling noise. A missing edge means that the fitted model did
+not retain unique information between that pair after considering the
+other nodes. It does not mean that their ordinary association must be
+zero, and an edge does not identify a causal effect.</p>
 </div>
 <div class="section level2">
-<h2 id="fitting-the-ising-network">Fitting the Ising network<a class="anchor" aria-label="anchor" href="#fitting-the-ising-network"></a>
+<h2 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
 </h2>
+<p>The worked example uses <code>SRL_GPT</code>, which contains 300
+observations on cognitive strategy use (<code>CSU</code>), intrinsic
+value (<code>IV</code>), self-efficacy (<code>SE</code>),
+self-regulation (<code>SR</code>), and test anxiety (<code>TA</code>).
+The original variables are continuous composite scores. An Ising model
+requires binary data, so the example uses <code><a href="../reference/dichotomize.html">dichotomize()</a></code>
+with <code>method = "rank"</code> to code the lower half of each score
+as 0 and the upper half as 1.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">binary_data</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      CSU IV SE SR TA</span></span>
+<span><span class="co">#&gt; [1,]   0  0  0  0  1</span></span>
+<span><span class="co">#&gt; [2,]   1  1  1  1  1</span></span>
+<span><span class="co">#&gt; [3,]   1  1  1  1  0</span></span>
+<span><span class="co">#&gt; [4,]   0  1  1  0  1</span></span>
+<span><span class="co">#&gt; [5,]   0  0  0  0  1</span></span>
+<span><span class="co">#&gt; [6,]   0  0  0  0  0</span></span></code></pre></div>
+<p>The rank rule gives each variable an endorsement rate of 0.50 in
+these data. Here, a value of 1 means that the observation falls in the
+upper half of that construct. Dichotomization discards information from
+the original scale, so it should be used only when a binary research
+question is substantively justified. Naturally binary variables can be
+analyzed directly.</p>
+</div>
+<div class="section level2">
+<h2 id="fitting-the-network-with-psychnet">Fitting the network with <code>psychnet()</code><a class="anchor" aria-label="anchor" href="#fitting-the-network-with-psychnet"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> estimates an Ising network when
+<code>method = "ising"</code>. The default AND rule retains an edge when
+both nodewise models select it. The function returns a fitted
+<code>psychnet</code> object containing the symmetric interaction
+weights, node thresholds, and numerical certificate.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ising_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">binary_data</span>, method <span class="op">=</span> <span class="st">"ising"</span>, rule <span class="op">=</span> <span class="st">"AND"</span><span class="op">)</span></span>
+<span><span class="va">ising_net</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; ising network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 3.74e-10</span></span></code></pre></div>
+<p>The fitted network contains 5 nodes and 7 edges. Three of the ten
+possible pairs are removed by the selected model.</p>
+</div>
+<div class="section level2">
+<h2 id="inspecting-interactions-with-summary">Inspecting interactions with <code>summary()</code><a class="anchor" aria-label="anchor" href="#inspecting-interactions-with-summary"></a>
+</h2>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the fitted network and returns the edge
+table invisibly. The columns <code>from</code>, <code>to</code>, and
+<code>weight</code> identify the retained interactions. Positive weights
+indicate higher conditional odds of joint endorsement. Negative weights
+indicate lower conditional odds.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">bin</span>, method <span class="op">=</span> <span class="st">"ising"</span>, rule <span class="op">=</span> <span class="st">"AND"</span><span class="op">)</span></span>
-<span><span class="va">fit</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ising network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 3.74e-10</span></span>
-<span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.347, 2.242], mean 1.347</span></span></code></pre></div>
+<p>The six retained edges among <code>CSU</code>, <code>IV</code>,
+<code>SE</code>, and <code>SR</code> are positive. The largest is
+<code>IV</code>-<code>SR</code> at 2.242, followed by
+<code>CSU</code>-<code>SE</code> at 2.188. Students in the upper half of
+one construct have higher conditional odds of being in the upper half of
+the connected construct after the other binary variables are
+considered.</p>
+<p>The <code>SR</code>-<code>TA</code> edge is negative (-0.347).
+Upper-half self-regulation is associated with lower conditional odds of
+upper-half test anxiety after cognitive strategy use, intrinsic value,
+and self-efficacy are taken into account. Test anxiety has no other
+retained edge in this model.</p>
+<p>Ising weights are logistic interaction coefficients, not
+correlations. Their magnitudes should therefore be interpreted on the
+model’s log-odds scale and compared within the fitted network.</p>
+</div>
+<div class="section level2">
+<h2 id="checking-numerical-optimality-with-certificate">Checking numerical optimality with <code>certificate()</code><a class="anchor" aria-label="anchor" href="#checking-numerical-optimality-with-certificate"></a>
+</h2>
+<p><code><a href="../reference/certificate.html">certificate()</a></code> reports the largest stationarity residual
+across the fitted nodewise logistic models. It returns
+<code>method</code>, <code>certificate</code>, <code>kind</code>, and
+<code>certified</code>. A small residual indicates that the optimization
+satisfies its first-order conditions to the requested tolerance.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method certificate kind certified</span></span>
 <span><span class="co">#&gt; 1  ising 3.74261e-10  kkt      TRUE</span></span></code></pre></div>
-<p>The edges are the symmetrised conditional associations between
-constructs:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   from to     weight</span></span>
-<span><span class="co">#&gt; 1  CSU IV  1.8544649</span></span>
-<span><span class="co">#&gt; 2  CSU SE  2.1878175</span></span>
-<span><span class="co">#&gt; 3   IV SE  1.2096869</span></span>
-<span><span class="co">#&gt; 4  CSU SR  0.9036773</span></span>
-<span><span class="co">#&gt; 5   IV SR  2.2416461</span></span>
-<span><span class="co">#&gt; 6   SE SR  1.3762314</span></span>
-<span><span class="co">#&gt; 7   SR TA -0.3468242</span></span></code></pre></div>
-<p>Predictability for binary nodes is classification accuracy above the
-marginal baseline (<code>nCC</code>); it needs the data the model was
-fit on:</p>
+<p>The residual is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.74</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.74 \times 10^{-10}</annotation></semantics></math>
+and <code>certified</code> is <code>TRUE</code>. This value is close to
+machine precision and indicates that the penalized logistic fits satisfy
+their numerical conditions to numerical precision. The certificate
+checks optimization, not sampling stability, measurement validity, or
+causation.</p>
+</div>
+<div class="section level2">
+<h2 id="describing-node-position-with-net_centralities">Describing node position with <code>net_centralities()</code><a class="anchor" aria-label="anchor" href="#describing-node-position-with-net_centralities"></a>
+</h2>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns <code>node</code>,
+<code>strength</code>, and <code>expected_influence</code> by default.
+Strength sums the absolute interaction weights. Expected influence sums
+the signed weights, so negative connections reduce the total.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">fit</span>, data <span class="op">=</span> <span class="va">bin</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   node  strength expected_influence</span></span>
+<span><span class="co">#&gt; 1  CSU 4.9459597          4.9459597</span></span>
+<span><span class="co">#&gt; 2   IV 5.3057980          5.3057980</span></span>
+<span><span class="co">#&gt; 3   SE 4.7737358          4.7737358</span></span>
+<span><span class="co">#&gt; 4   SR 4.8683790          4.1747307</span></span>
+<span><span class="co">#&gt; 5   TA 0.3468242         -0.3468242</span></span></code></pre></div>
+<p>Intrinsic value has the highest strength (5.306), followed by
+cognitive strategy use (4.946). Self-regulation has strength 4.868 and
+expected influence 4.175 because its negative connection with test
+anxiety reduces the signed sum. Test anxiety has one edge, giving
+strength 0.347 and expected influence -0.347.</p>
+<p>These indices describe connection patterns in the estimated binary
+network. They do not show which construct should be targeted by an
+intervention.</p>
+</div>
+<div class="section level2">
+<h2 id="evaluating-binary-predictability-with-net_predict">Evaluating binary predictability with
+<code>net_predict()</code><a class="anchor" aria-label="anchor" href="#evaluating-binary-predictability-with-net_predict"></a>
+</h2>
+<p><code><a href="../reference/net_predict.html">net_predict()</a></code> evaluates how accurately each node is
+classified from the others. Binary nodes use normalized classification
+accuracy (<code>nCC</code>). An <code>nCC</code> of 0 means that
+prediction is no better than always choosing the more frequent category.
+An <code>nCC</code> of 1 means perfect classification. The
+<code>accuracy</code> column reports the unadjusted proportion
+classified correctly.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">ising_net</span>, data <span class="op">=</span> <span class="va">binary_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node   type metric predictability  accuracy</span></span>
 <span><span class="co">#&gt; 1  CSU binary    nCC      0.7066667 0.8533333</span></span>
 <span><span class="co">#&gt; 2   IV binary    nCC      0.7266667 0.8633333</span></span>
 <span><span class="co">#&gt; 3   SE binary    nCC      0.7000000 0.8500000</span></span>
 <span><span class="co">#&gt; 4   SR binary    nCC      0.7133333 0.8566667</span></span>
 <span><span class="co">#&gt; 5   TA binary    nCC      0.0000000 0.5000000</span></span></code></pre></div>
+<p>Intrinsic value has the highest normalized accuracy (0.727) and a raw
+accuracy of 0.863. Cognitive strategy use, self-efficacy, and
+self-regulation have <code>nCC</code> values from 0.700 to 0.713 and raw
+accuracies near 0.85. Their neighbours provide substantial
+classification information beyond the 0.50 marginal baseline.</p>
+<p>Test anxiety has <code>nCC = 0</code> and accuracy 0.50. Its
+neighbour does not improve classification beyond the marginal baseline
+in the penalized model. These are in-sample values; assessment on new
+observations requires validation data.</p>
 </div>
 <div class="section level2">
-<h2 id="regularised-vs-unregularised">Regularised vs unregularised<a class="anchor" aria-label="anchor" href="#regularised-vs-unregularised"></a>
+<h2 id="comparing-an-unregularized-ising-estimator">Comparing an unregularized Ising estimator<a class="anchor" aria-label="anchor" href="#comparing-an-unregularized-ising-estimator"></a>
 </h2>
-<p><code>method = "ising_sampler"</code> is the unregularised
-counterpart; with <code>alpha</code> it prunes edges by a Wald p-value
-instead of shrinking them.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">samp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">bin</span>, method <span class="op">=</span> <span class="st">"ising_sampler"</span>, alpha <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   from to     weight</span></span>
-<span><span class="co">#&gt; 1  CSU IV  1.9267940</span></span>
-<span><span class="co">#&gt; 2  CSU SE  2.2813844</span></span>
-<span><span class="co">#&gt; 3   IV SE  1.3017708</span></span>
-<span><span class="co">#&gt; 4  CSU SR  0.9405096</span></span>
-<span><span class="co">#&gt; 5   IV SR  2.3094982</span></span>
-<span><span class="co">#&gt; 6   SE SR  1.4857428</span></span>
-<span><span class="co">#&gt; 7   SR TA -0.7694226</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a>
-</h2>
-<p>Pass the network object to <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> with
-<code>psych_styling = TRUE</code> (spring layout, green = positive, red
-= negative); ask for the predictability ring with
-<code>predictability = TRUE</code>.</p>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> fits unregularized nodewise logistic models
+when <code>method = "ising_sampler"</code>. The argument
+<code>alpha = 0.05</code> removes edges whose Wald tests exceed the
+selected level. This comparison checks whether the main structure
+persists under a different estimation procedure.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">fit</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ising-networks_files/figure-html/ising-plot-1.png" class="r-plt" alt="" width="576"></p>
+<code class="sourceCode R"><span><span class="va">unregularized_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">binary_data</span>, method <span class="op">=</span> <span class="st">"ising_sampler"</span>, alpha <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
+<span><span class="va">unregularized_net</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; ising_sampler network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.38e-08</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">unregularized_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; ising_sampler network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.38e-08</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.769, 2.309], mean 1.354</span></span></code></pre></div>
+<p>The unregularized model retains the same 7 edges. Its positive
+learning-cluster interactions are slightly larger, and the
+<code>SR</code>-<code>TA</code> edge is -0.769 compared with -0.347 in
+the penalized model. The shared structure provides evidence that the
+main qualitative pattern is not specific to the penalized estimator. The
+change in magnitude reflects the different estimation and pruning
+procedures.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">unregularized_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;          method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1 ising_sampler 1.384701e-08  kkt      TRUE</span></span></code></pre></div>
+<p>The residual is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.38</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.38 \times 10^{-8}</annotation></semantics></math>
+and <code>certified</code> is <code>TRUE</code>, indicating that the
+unregularized nodewise fits satisfy their score conditions within the
+default tolerance.</p>
+</div>
+<div class="section level2">
+<h2 id="visualizing-the-network-with-cographsplot">Visualizing the network with <code>cograph::splot()</code><a class="anchor" aria-label="anchor" href="#visualizing-the-network-with-cographsplot"></a>
+</h2>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the network when the optional
+<code>cograph</code> package is available. Psychological styling uses
+green for positive interactions and red for negative interactions.
+Predictability rings summarize node classification.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">ising_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ising-networks_files/figure-html/plot-network-1.png" class="r-plt" alt="" width="672"></p>
+<p>Node placement is determined by a layout algorithm and has no
+statistical scale. The edge table remains the primary source for
+numerical interpretation.</p>
+</div>
+<div class="section level2">
+<h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
+</h2>
+<p>A report should define what 0 and 1 mean for every node, describe any
+dichotomization rule, state the sample size, estimator, EBIC setting,
+edge rule, and missing-data procedure, and report interaction weights
+numerically. Results should be described as conditional associations on
+a log-odds scale.</p>
+<p>The present analysis used rank dichotomization, 300 complete
+observations, the EBIC-regularized Ising estimator, and the AND rule.
+The model retained 7 edges. The largest interaction was
+<code>IV</code>-<code>SR</code> (2.242), and
+<code>SR</code>-<code>TA</code> was negative (-0.347). The KKT residual
+was
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.74</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.74 \times 10^{-10}</annotation></semantics></math>.
+An unregularized sensitivity model retained the same edge set.</p>
+</div>
+<div class="section level2">
+<h2 id="how-the-ising-network-is-estimated">How the Ising network is estimated<a class="anchor" aria-label="anchor" href="#how-the-ising-network-is-estimated"></a>
+</h2>
+<p>Each binary node is modeled with logistic regression using the
+remaining nodes as predictors. The regularized estimator applies an
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ℓ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\ell_1</annotation></semantics></math>
+penalty and selects a penalty value by EBIC for every node. Small
+coefficients can be set to zero, which removes the corresponding
+neighbour from that node’s model.</p>
+<p>Each pair receives two estimates because either node can be treated
+as the outcome. The AND rule retains a pair when both regressions select
+it and averages the two estimates into one undirected interaction. The
+OR rule retains a pair when either regression selects it.</p>
+</div>
+<div class="section level2">
+<h2 id="mathematical-foundations">Mathematical foundations<a class="anchor" aria-label="anchor" href="#mathematical-foundations"></a>
+</h2>
+<p>For a binary vector
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐱</mi><mo>∈</mo><mo stretchy="false" form="prefix">{</mo><mn>0</mn><mo>,</mo><mn>1</mn><msup><mo stretchy="false" form="postfix">}</mo><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\mathbf{x} \in \{0,1\}^p</annotation></semantics></math>,
+the Ising model is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mi>𝐱</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mn>1</mn><mi>Z</mi></mfrac><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>τ</mi><mi>i</mi></msub><msub><mi>x</mi><mi>i</mi></msub><mo>+</mo><munder><mo>∑</mo><mrow><mi>i</mi><mo>&lt;</mo><mi>j</mi></mrow></munder><msub><mi>ω</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msub><mi>x</mi><mi>i</mi></msub><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
+P(\mathbf{x}) = \frac{1}{Z}\exp\left(
+\sum_i \tau_i x_i + \sum_{i&lt;j}\omega_{ij}x_ix_j
+\right),
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\tau_i</annotation></semantics></math>
+is a node threshold,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ω</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\omega_{ij}</annotation></semantics></math>
+is an interaction, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Z</mi><annotation encoding="application/x-tex">Z</annotation></semantics></math>
+is the normalizing constant. The conditional model for node
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
+is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">logit</mi><mo>⁡</mo></mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>X</mi><mi>i</mi></msub><mo>=</mo><mn>1</mn><mo>∣</mo><msub><mi>𝐗</mi><mrow><mi>−</mi><mi>i</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>τ</mi><mi>i</mi></msub><mo>+</mo><munder><mo>∑</mo><mrow><mi>j</mi><mo>≠</mo><mi>i</mi></mrow></munder><msub><mi>ω</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msub><mi>X</mi><mi>j</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\operatorname{logit}P(X_i=1\mid\mathbf{X}_{-i})
+= \tau_i + \sum_{j\ne i}\omega_{ij}X_j.
+</annotation></semantics></math></p>
+<p>The regularized estimator minimizes the negative nodewise
+log-likelihood plus
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><msub><mo>∑</mo><mrow><mi>j</mi><mo>≠</mo><mi>i</mi></mrow></msub><mo stretchy="false" form="prefix">|</mo><msub><mi>ω</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">\lambda\sum_{j\ne i}|\omega_{ij}|</annotation></semantics></math>.
+EBIC selects
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>.
+The certificate is the largest violation of the penalized logistic
+stationarity conditions across all nodes.</p>
+<p>For binary predictability, normalized classification accuracy is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">nCC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>=</mo><mfrac><mrow><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub></mrow><mrow><mn>1</mn><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\operatorname{nCC}_j
+= \frac{\operatorname{CC}_j-m_j}{1-m_j},
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><annotation encoding="application/x-tex">\operatorname{CC}_j</annotation></semantics></math>
+is classification accuracy and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>m</mi><mi>j</mi></msub><annotation encoding="application/x-tex">m_j</annotation></semantics></math>
+is the larger marginal class proportion.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

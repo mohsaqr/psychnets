@@ -84,45 +84,18 @@ psychological networks and their accuracy. *Behavior Research Methods*,
 ## Examples
 
 ``` r
-# \donttest{
-casedrop_reliability(SRL_Claude)
-#> # edge-weight stability: glasso | CS = 0.90 (spearman cor >= 0.70 at 95%)
-#>            metric drop_prop       mean          sd
-#> 1    mean_abs_dev       0.1 0.01210425 0.006842117
-#> 2    mean_abs_dev       0.2 0.01890183 0.009083151
-#> 3    mean_abs_dev       0.3 0.02149010 0.011285685
-#> 4    mean_abs_dev       0.4 0.02698512 0.011699679
-#> 5    mean_abs_dev       0.5 0.03276844 0.015423245
-#> 6    mean_abs_dev       0.6 0.04346120 0.019907911
-#> 7    mean_abs_dev       0.7 0.05458419 0.019680164
-#> 8    mean_abs_dev       0.8 0.07213005 0.028998661
-#> 9    mean_abs_dev       0.9 0.11435088 0.041262261
-#> 10 median_abs_dev       0.1 0.01087812 0.007526945
-#> 11 median_abs_dev       0.2 0.01662288 0.009894813
-#> 12 median_abs_dev       0.3 0.01908751 0.012849561
-#> 13 median_abs_dev       0.4 0.02328488 0.012107749
-#> 14 median_abs_dev       0.5 0.02834539 0.016470417
-#> 15 median_abs_dev       0.6 0.03893692 0.021357956
-#> 16 median_abs_dev       0.7 0.04928713 0.022370871
-#> 17 median_abs_dev       0.8 0.06351304 0.032443227
-#> 18 median_abs_dev       0.9 0.10422689 0.046986840
-#> 19    correlation       0.1 0.97948093 0.018021434
-#> 20    correlation       0.2 0.97726341 0.017660241
-#> 21    correlation       0.3 0.97759688 0.018398626
-#> 22    correlation       0.4 0.97386763 0.017045752
-#> 23    correlation       0.5 0.96892625 0.019271040
-#> 24    correlation       0.6 0.96668355 0.019234762
-#> 25    correlation       0.7 0.95693658 0.020374142
-#> 26    correlation       0.8 0.95491323 0.024149980
-#> 27    correlation       0.9 0.91966867 0.047363394
-#> 28    max_abs_dev       0.1 0.02782703 0.013178779
-#> 29    max_abs_dev       0.2 0.04431631 0.019171457
-#> 30    max_abs_dev       0.3 0.05063819 0.022210782
-#> 31    max_abs_dev       0.4 0.06527754 0.027760050
-#> 32    max_abs_dev       0.5 0.07769319 0.031758263
-#> 33    max_abs_dev       0.6 0.09759017 0.038810847
-#> 34    max_abs_dev       0.7 0.12589880 0.043891748
-#> 35    max_abs_dev       0.8 0.16921224 0.061437261
-#> 36    max_abs_dev       0.9 0.26500688 0.104004806
-# }
+# `iter` and `drop_prop` are kept small here so the example runs quickly;
+# the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
+# reliability assessment should use.
+casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
+#> # edge-weight stability: glasso | CS = 0.50 (spearman cor >= 0.70 at 95%)
+#>           metric drop_prop       mean          sd
+#> 1   mean_abs_dev      0.25 0.01887120 0.009120429
+#> 2   mean_abs_dev      0.50 0.02206496 0.005387005
+#> 3 median_abs_dev      0.25 0.01604977 0.008175395
+#> 4 median_abs_dev      0.50 0.01955155 0.006003321
+#> 5    correlation      0.25 0.97513583 0.008683012
+#> 6    correlation      0.50 0.97512845 0.012960209
+#> 7    max_abs_dev      0.25 0.04745924 0.024045972
+#> 8    max_abs_dev      0.50 0.05437319 0.015481959
 ```

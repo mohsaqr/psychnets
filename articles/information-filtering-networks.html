@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Information-filtering networks: TMFG and LoGo • psychnets</title>
+<title>Information-filtering networks with TMFG and LoGo • psychnets</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Information-filtering networks: TMFG and LoGo">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Information-filtering networks with TMFG and LoGo">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,10 +34,10 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/gaussian-graphical-models-v2.html">Gaussian graphical models: an extended tutorial</a></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise unregularized GGM</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from event data</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks: TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
@@ -65,7 +65,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Information-filtering networks: TMFG and LoGo</h1>
+      <h1>Information-filtering networks with TMFG and LoGo</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/information-filtering-networks.Rmd" class="external-link"><code>vignettes/information-filtering-networks.Rmd</code></a></small>
@@ -74,79 +74,427 @@
 
     
     
+<div class="section level2">
+<h2 id="what-an-information-filtering-network-is">What an information-filtering network is<a class="anchor" aria-label="anchor" href="#what-an-information-filtering-network-is"></a>
+</h2>
+<p>An information-filtering network reduces a large set of associations
+to a structured backbone. The practical goal is to retain the
+connections that best organize the variables while removing many weak or
+redundant links. This approach is useful when a complete correlation
+network is too dense to support a clear interpretation.</p>
+<p>The workflow has two stages. The Triangulated Maximally Filtered
+Graph (TMFG) selects the network structure. Its edge weights are
+ordinary correlations, so a TMFG edge describes the association between
+two variables before adjustment for the others. The Local-Global method
+(LoGo) then estimates partial correlations on the selected structure. A
+LoGo edge describes the association that remains above and beyond what
+the other variables in the network can explain.</p>
+<p>Consider motivation and academic achievement in a larger network that
+also contains prior achievement, study effort, self-efficacy, and test
+anxiety. TMFG can retain the motivation-achievement correlation as part
+of the backbone. LoGo then asks how much of that association remains
+after the other variables have been accounted for. A large TMFG weight
+and a small LoGo weight would suggest that much of the ordinary
+correlation is shared with the other measured variables.</p>
+<p>TMFG and LoGo therefore answer related but distinct questions. TMFG
+identifies a compact organization of the correlations. LoGo converts
+that organization into a conditional-dependence network. Neither method
+identifies causal direction.</p>
+</div>
+<div class="section level2">
+<h2 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
+</h2>
+<p>The worked example uses <code>SRL_GPT</code>, a data frame with 300
+observations on five self-regulated learning constructs. Cognitive
+strategy use (<code>CSU</code>), intrinsic value (<code>IV</code>),
+self-efficacy (<code>SE</code>), self-regulation (<code>SR</code>), and
+test anxiety (<code>TA</code>) are composite scores on a 1 to 7
+scale.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
-<p><strong>Information-filtering networks</strong> take a different
-route to sparsity than the graphical lasso. Instead of penalising edges,
-they keep a fixed, theoretically motivated <em>topology</em> and let the
-data fill in the weights.</p>
-<ul>
-<li>
-<strong>TMFG</strong> (Triangulated Maximally Filtered Graph,
-<code>method = "tmfg"</code>) greedily builds a planar, chordal graph
-with exactly <code>3(p - 2)</code> edges – the strongest associations
-that still form a triangulated structure.</li>
-<li>
-<strong>LoGo</strong> (Local-Global, <code>method = "logo"</code>)
-takes the TMFG topology and returns the <em>closed-form</em> sparse
-inverse covariance (a partial-correlation network) for that chordal
-graph – no iteration, no tuning.</li>
-</ul>
-<p>Both are deterministic and dependency-free, and both carry a
-structural certificate.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        CSU       IV       SE       SR   TA</span></span>
+<span><span class="co">#&gt; 1 5.307692 5.666667 5.777778 5.333333 4.00</span></span>
+<span><span class="co">#&gt; 2 5.846154 6.444444 6.000000 5.777778 4.00</span></span>
+<span><span class="co">#&gt; 3 6.615385 6.666667 6.222222 6.333333 3.25</span></span>
+<span><span class="co">#&gt; 4 5.692308 6.555556 6.333333 5.555556 4.50</span></span>
+<span><span class="co">#&gt; 5 4.384615 5.555556 4.888889 4.777778 4.00</span></span>
+<span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
+<p>Rows are observations and columns are network nodes. The analysis
+treats these composite scores as continuous. The data are complete, so
+the default Pearson correlations use all 300 observations. Applications
+to other data should examine missingness, distributions, unusual
+observations, and measurement scales before network estimation.</p>
+</div>
+<div class="section level2">
+<h2 id="building-the-correlation-backbone-with-psychnet">Building the correlation backbone with <code>psychnet()</code><a class="anchor" aria-label="anchor" href="#building-the-correlation-backbone-with-psychnet"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> builds a TMFG network when
+<code>method = "tmfg"</code>. It computes the correlation matrix and
+selects a planar, connected structure. The returned
+<code>psychnet</code> object stores signed correlations on the retained
+edges.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tmfg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"tmfg"</span><span class="op">)</span></span>
-<span><span class="va">logo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"logo"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">tmfg</span></span>
+<code class="sourceCode R"><span><span class="va">tmfg_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"tmfg"</span><span class="op">)</span></span>
+<span><span class="va">tmfg_net</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; tmfg network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span></code></pre></div>
+<p>The fitted backbone contains 5 nodes and 9 edges. With five nodes,
+only one of the ten possible pairs is removed. Information filtering
+becomes more selective as the number of nodes increases because the
+number of retained edges grows approximately linearly with the number of
+nodes.</p>
+</div>
+<div class="section level2">
+<h2 id="inspecting-the-tmfg-edges-with-summary">Inspecting the TMFG edges with <code>summary()</code><a class="anchor" aria-label="anchor" href="#inspecting-the-tmfg-edges-with-summary"></a>
+</h2>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the fitted network and returns its edge
+table invisibly. The columns <code>from</code>, <code>to</code>, and
+<code>weight</code> identify each retained pair and its signed Pearson
+correlation.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tmfg_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; tmfg network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="va">logo</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.302, 0.861], mean 0.486</span></span></code></pre></div>
+<p>The learning constructs form a strongly correlated block. Their
+retained correlations range from 0.779 for
+<code>SE</code>-<code>SR</code> to 0.861 for
+<code>CSU</code>-<code>IV</code>. Test anxiety has negative correlations
+with the learning constructs in the backbone. Its largest absolute
+relation is with self-regulation
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mi>−</mi><mn>0.302</mn></mrow><annotation encoding="application/x-tex">r = -0.302</annotation></semantics></math>).</p>
+<p>The <code>SE</code>-<code>TA</code> pair is the single edge excluded
+from the five-node backbone. Its absence means that TMFG did not select
+that pair within the constrained network structure. It does not imply a
+zero population correlation. TMFG chooses edges as a connected system,
+so edge inclusion depends on how a pair contributes to the complete
+topology.</p>
+</div>
+<div class="section level2">
+<h2 id="estimating-conditional-associations-with-logo">Estimating conditional associations with LoGo<a class="anchor" aria-label="anchor" href="#estimating-conditional-associations-with-logo"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> estimates the LoGo network when
+<code>method = "logo"</code>. It constructs the same TMFG support and
+estimates a sparse precision matrix on that structure. The returned edge
+weights are partial correlations.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">logo_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"logo"</span><span class="op">)</span></span>
+<span><span class="va">logo_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; logo network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span></code></pre></div>
-<p>With only five nodes the filter is mild (a 5-node graph has 10
-possible edges and TMFG keeps <code>3(5 - 2) = 9</code>); the method
-shows its value on larger node sets, where it drops the great majority
-of edges. The TMFG certificate confirms the graph has the correct edge
-count and is chordal and connected:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">tmfg</span><span class="op">)</span></span>
+<p>The LoGo model contains the same number of nodes and edges as the
+TMFG backbone. Its weights have a different meaning because each
+relation is adjusted for the remaining variables.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">logo_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; logo network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.372, 0.404], mean 0.191</span></span></code></pre></div>
+<p>The largest positive partial correlation joins <code>CSU</code> and
+<code>IV</code>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mn>0.404</mn></mrow><annotation encoding="application/x-tex">r = 0.404</annotation></semantics></math>).
+Cognitive strategy use and intrinsic value remain positively associated
+above and beyond self-efficacy, self-regulation, and test anxiety. The
+<code>CSU</code>-<code>SE</code> and <code>CSU</code>-<code>SR</code>
+partial correlations are also positive, at 0.393 and 0.377.</p>
+<p>The <code>SR</code>-<code>TA</code> edge is negative
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mi>−</mi><mn>0.372</mn></mrow><annotation encoding="application/x-tex">r = -0.372</annotation></semantics></math>).
+Higher self-regulation is associated with lower test anxiety after the
+other constructs have been taken into account. This adjusted relation is
+slightly larger in absolute magnitude than its TMFG correlation of
+-0.302.</p>
+<p>The change in the <code>IV</code>-<code>SE</code> edge illustrates
+why the two stages should not be interpreted interchangeably. Its TMFG
+correlation is 0.785, while its LoGo partial correlation is 0.165. Much
+of the ordinary association between intrinsic value and self-efficacy is
+shared with the other learning constructs. The LoGo edge represents the
+smaller association that remains after this shared structure is
+accounted for.</p>
+</div>
+<div class="section level2">
+<h2 id="checking-the-tmfg-structure-with-certificate">Checking the TMFG structure with <code>certificate()</code><a class="anchor" aria-label="anchor" href="#checking-the-tmfg-structure-with-certificate"></a>
+</h2>
+<p><code><a href="../reference/certificate.html">certificate()</a></code> checks the defining properties of a fitted
+network and returns <code>method</code>, <code>certificate</code>,
+<code>kind</code>, and <code>certified</code>. For TMFG, the certificate
+is structural. A zero value means that the graph has the required edge
+count, is connected, and has the chordal structure required by the
+method.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">tmfg_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method certificate       kind certified</span></span>
 <span><span class="co">#&gt; 1   tmfg           0 structural      TRUE</span></span></code></pre></div>
-<p>The LoGo edges are the partial correlations on the TMFG backbone:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">logo</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   from to     weight</span></span>
-<span><span class="co">#&gt; 1  CSU IV  0.4035714</span></span>
-<span><span class="co">#&gt; 2  CSU SE  0.3934966</span></span>
-<span><span class="co">#&gt; 3   IV SE  0.1648976</span></span>
-<span><span class="co">#&gt; 4  CSU SR  0.3771675</span></span>
-<span><span class="co">#&gt; 5   IV SR  0.3300708</span></span>
-<span><span class="co">#&gt; 6   SE SR  0.1681288</span></span>
-<span><span class="co">#&gt; 7  CSU TA  0.1100782</span></span>
-<span><span class="co">#&gt; 8   IV TA  0.1463203</span></span>
-<span><span class="co">#&gt; 9   SR TA -0.3720398</span></span></code></pre></div>
+<p>The TMFG certificate is 0 and <code>certified</code> is
+<code>TRUE</code>. The fitted backbone satisfies all three structural
+checks. This diagnostic verifies the construction of the graph. It does
+not evaluate whether the retained edges are stable across samples or
+whether the variables are measured adequately.</p>
+</div>
 <div class="section level2">
-<h2 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a>
+<h2 id="checking-the-logo-solution-with-certificate">Checking the LoGo solution with <code>certificate()</code><a class="anchor" aria-label="anchor" href="#checking-the-logo-solution-with-certificate"></a>
 </h2>
-<p>LoGo weights the TMFG backbone with partial correlations. Pass the
-network object to <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> with
-<code>psych_styling = TRUE</code> (spring layout, green = positive, red
-= negative); ask for the predictability ring with
-<code>predictability = TRUE</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">logo</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="information-filtering-networks_files/figure-html/logo-plot-1.png" class="r-plt" alt="" width="576"></p>
-<p>LoGo reproduces the sample correlation exactly on the TMFG support
-(its defining property), so its constrained-MLE certificate is near
-zero:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">logo</span><span class="op">)</span></span>
+<p><code><a href="../reference/certificate.html">certificate()</a></code> evaluates numerical optimality for a LoGo
+network. Its <code>certificate</code> value is the largest discrepancy
+between the observed correlation matrix and the covariance matrix
+implied by the fitted precision on retained edges and diagonal entries.
+It also checks that precision entries outside the selected structure are
+zero.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">logo_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
 <span><span class="co">#&gt; 1   logo 6.661338e-16  kkt      TRUE</span></span></code></pre></div>
+<p>The LoGo residual is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.33 \times 10^{-15}</annotation></semantics></math>
+and <code>certified</code> is <code>TRUE</code>. The value is at the
+order of machine precision, which indicates that the fitted precision
+matrix satisfies the defining numerical conditions to numerical
+precision. This check concerns computation. It does not assess sampling
+uncertainty or causal validity.</p>
 </div>
-  </main>
+<div class="section level2">
+<h2 id="describing-node-position-with-net_centralities">Describing node position with <code>net_centralities()</code><a class="anchor" aria-label="anchor" href="#describing-node-position-with-net_centralities"></a>
+</h2>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> summarizes the position of each node
+in the LoGo network. Its default output contains <code>node</code>,
+<code>strength</code>, and <code>expected_influence</code>. Strength
+sums the absolute partial correlations at a node. Expected influence
+sums the signed partial correlations, allowing positive and negative
+edges to offset each other.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">logo_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   node  strength expected_influence</span></span>
+<span><span class="co">#&gt; 1  CSU 1.2843138          1.2843138</span></span>
+<span><span class="co">#&gt; 2   IV 1.0448601          1.0448601</span></span>
+<span><span class="co">#&gt; 3   SE 0.7265229          0.7265229</span></span>
+<span><span class="co">#&gt; 4   SR 1.2474068          0.5033273</span></span>
+<span><span class="co">#&gt; 5   TA 0.6284383         -0.1156412</span></span></code></pre></div>
+<p>Cognitive strategy use has the largest strength and expected
+influence, both 1.284, because all of its edges are positive.
+Self-regulation has strength 1.247 and expected influence 0.503. Its
+negative edge with test anxiety reduces the signed total.</p>
+<p>Test anxiety has strength 0.628 and expected influence -0.116. These
+values describe its connections within the fitted model. They do not
+imply that a node with high centrality causes the other variables or
+should automatically become an intervention target.</p>
+</div>
+<div class="section level2">
+<h2 id="quantifying-node-predictability-with-net_predict">Quantifying node predictability with <code>net_predict()</code><a class="anchor" aria-label="anchor" href="#quantifying-node-predictability-with-net_predict"></a>
+</h2>
+<p><code><a href="../reference/net_predict.html">net_predict()</a></code> reports the proportion of each node’s
+variance accounted for by the remaining nodes. For LoGo, the function
+returns <code>node</code>, <code>type</code>, <code>metric</code>,
+<code>predictability</code>, and <code>accuracy</code>. The continuous
+nodes use
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
+and classification accuracy is recorded as <code>NA</code>.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">logo_net</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   node     type metric predictability accuracy</span></span>
+<span><span class="co">#&gt; 1  CSU gaussian     R2      0.8347645       NA</span></span>
+<span><span class="co">#&gt; 2   IV gaussian     R2      0.7824561       NA</span></span>
+<span><span class="co">#&gt; 3   SE gaussian     R2      0.7227872       NA</span></span>
+<span><span class="co">#&gt; 4   SR gaussian     R2      0.7923888       NA</span></span>
+<span><span class="co">#&gt; 5   TA gaussian     R2      0.1589941       NA</span></span></code></pre></div>
+<p>Cognitive strategy use has the highest predictability
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.835</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.835</annotation></semantics></math>).
+Self-regulation
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.792</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.792</annotation></semantics></math>),
+intrinsic value
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.782</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.782</annotation></semantics></math>),
+and self-efficacy
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.723</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.723</annotation></semantics></math>)
+are also strongly accounted for by the remaining constructs. Test
+anxiety has the lowest predictability
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.159</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.159</annotation></semantics></math>),
+leaving most of its variance outside this network.</p>
+<p>Predictability is an in-sample model quantity here. Claims about
+performance on new observations require a separate validation
+procedure.</p>
+</div>
+<div class="section level2">
+<h2 id="visualizing-the-conditional-network-with-cographsplot">Visualizing the conditional network with
+<code>cograph::splot()</code><a class="anchor" aria-label="anchor" href="#visualizing-the-conditional-network-with-cographsplot"></a>
+</h2>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the LoGo network when the
+optional <code>cograph</code> package is available. Psychological
+styling uses green for positive partial correlations and red for
+negative partial correlations. The predictability ring displays the
+node-level
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+values.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">logo_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="information-filtering-networks_files/figure-html/plot-logo-1.png" class="r-plt" alt="" width="672"></p>
+<p>The plot is a visual summary of the LoGo edge table. Edge colour
+represents sign and edge width represents magnitude. Node positions are
+produced by a layout algorithm and have no statistical unit. Numerical
+interpretation should use the printed edge table and node summaries.</p>
+</div>
+<div class="section level2">
+<h2 id="sensitivity-to-rank-correlations">Sensitivity to rank correlations<a class="anchor" aria-label="anchor" href="#sensitivity-to-rank-correlations"></a>
+</h2>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> accepts <code>cor_method = "spearman"</code>
+for a rank-based sensitivity analysis. Applying this option to LoGo
+checks whether the conditional structure has a similar interpretation
+when the analysis uses monotonic rank associations.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">logo_spearman</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"logo"</span>, cor_method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span></span>
+<span><span class="va">logo_spearman</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; logo network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.55e-15</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;psychnet&gt; logo network</span></span>
+<span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.55e-15</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.301, 0.440], mean 0.191</span></span></code></pre></div>
+<p>The rank-based LoGo model retains the same nine pairs. The main
+relations also persist. The <code>CSU</code>-<code>IV</code> and
+<code>CSU</code>-<code>SE</code> partial correlations are 0.412 and
+0.440, and the <code>SR</code>-<code>TA</code> edge remains negative at
+-0.301. The weak <code>CSU</code>-<code>TA</code> edge decreases from
+0.110 to 0.071. The main structure is consistent across the two
+correlation estimators, while some edge magnitudes remain sensitive.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1   logo 1.554312e-15  kkt      TRUE</span></span></code></pre></div>
+<p>The rank-based LoGo model has a residual of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.67</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.67 \times 10^{-15}</annotation></semantics></math>
+and is certified, indicating numerical agreement with its defining
+conditions to numerical precision.</p>
+</div>
+<div class="section level2">
+<h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
+</h2>
+<p>A report should identify the variables, sample size, correlation
+estimator, missing-data procedure, and the distinct roles of TMFG and
+LoGo. TMFG weights must be described as correlations, while LoGo weights
+must be described as partial correlations. Edge tables should be
+reported numerically, and conditional associations should be kept
+separate from causal claims.</p>
+<p>The present analysis used Pearson correlations on 300 complete
+observations. TMFG selected a nine-edge backbone. LoGo estimated partial
+correlations on that structure and returned a numerical residual of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.33 \times 10^{-15}</annotation></semantics></math>.
+The largest positive LoGo edge was <code>CSU</code>-<code>IV</code>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mn>0.404</mn></mrow><annotation encoding="application/x-tex">r = 0.404</annotation></semantics></math>),
+and the negative <code>SR</code>-<code>TA</code> edge was -0.372. A
+Spearman sensitivity model retained the same edge set and preserved the
+main qualitative pattern.</p>
+</div>
+<div class="section level2">
+<h2 id="how-information-filtering-works">How information filtering works<a class="anchor" aria-label="anchor" href="#how-information-filtering-works"></a>
+</h2>
+<p>TMFG builds a network under a fixed structural rule. It begins with
+four nodes that have strong associations within the correlation matrix.
+Each remaining node is added to the triangular location where its
+connections contribute the greatest total association. This sequential
+construction produces a connected graph made of linked triangles.</p>
+<p>A TMFG with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+nodes retains exactly
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>−</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">3(p-2)</annotation></semantics></math>
+edges. The edge count grows linearly with the number of nodes, while the
+number of all possible pairs grows quadratically. The method therefore
+performs stronger filtering in larger networks. Edge selection is
+determined by the structure as a whole, so TMFG is not a simple list of
+the globally largest correlations.</p>
+<p>LoGo uses the triangular structure to estimate the conditional
+network. The TMFG graph can be decomposed into overlapping groups of
+four nodes and their shared three-node separators. LoGo combines
+covariance information from these small blocks to obtain the precision
+matrix. This construction yields partial correlations on the TMFG
+support without a penalty parameter or an iterative optimization
+path.</p>
+</div>
+<div class="section level2">
+<h2 id="mathematical-foundations">Mathematical foundations<a class="anchor" aria-label="anchor" href="#mathematical-foundations"></a>
+</h2>
+<p>This section states the structural and statistical identities
+precisely. It can be skipped when the practical workflow is the main
+interest.</p>
+<div class="section level3">
+<h3 id="tmfg-edge-count">TMFG edge count<a class="anchor" aria-label="anchor" href="#tmfg-edge-count"></a>
+</h3>
+<p>TMFG begins with a four-node clique containing six edges. Each
+subsequent node is inserted into one triangular face and connected to
+its three corners. Every insertion adds one node and three edges. A
+network with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+nodes therefore has</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>6</mn><mo>+</mo><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>−</mo><mn>4</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>−</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">
+6 + 3(p-4) = 3(p-2)
+</annotation></semantics></math></p>
+<p>edges. The insertion rule preserves planarity and chordality
+throughout the construction.</p>
+</div>
+<div class="section level3">
+<h3 id="logo-precision-matrix">LoGo precision matrix<a class="anchor" aria-label="anchor" href="#logo-precision-matrix"></a>
+</h3>
+<p>Let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐒</mi><annotation encoding="application/x-tex">\mathbf{S}</annotation></semantics></math>
+be the sample correlation matrix,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>
+the set of four-node cliques, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒯</mi><annotation encoding="application/x-tex">\mathcal{T}</annotation></semantics></math>
+the set of three-node separators. LoGo constructs the precision matrix
+as</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>𝐊</mi><mo accent="true">̂</mo></mover><mo>=</mo><munder><mo>∑</mo><mrow><mi>c</mi><mo>∈</mo><mi>𝒞</mi></mrow></munder><mo stretchy="false" form="prefix">[</mo><msubsup><mi>𝐒</mi><mrow><mi>c</mi><mi>c</mi></mrow><mrow><mi>−</mi><mn>1</mn></mrow></msubsup><msup><mo stretchy="false" form="postfix">]</mo><mn>0</mn></msup><mo>−</mo><munder><mo>∑</mo><mrow><mi>t</mi><mo>∈</mo><mi>𝒯</mi></mrow></munder><mo stretchy="false" form="prefix">[</mo><msubsup><mi>𝐒</mi><mrow><mi>t</mi><mi>t</mi></mrow><mrow><mi>−</mi><mn>1</mn></mrow></msubsup><msup><mo stretchy="false" form="postfix">]</mo><mn>0</mn></msup><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\widehat{\mathbf{K}}
+= \sum_{c \in \mathcal{C}} [\mathbf{S}_{cc}^{-1}]^{0}
+- \sum_{t \in \mathcal{T}} [\mathbf{S}_{tt}^{-1}]^{0},
+</annotation></semantics></math></p>
+<p>where the superscript
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>
+denotes placement of each inverse block into the full
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>×</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">p \times p</annotation></semantics></math>
+matrix with zeros outside that block. The required block inverses must
+exist, so duplicate or perfectly collinear variables must be resolved
+before fitting LoGo.</p>
+<p>The partial correlation between nodes
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ρ</mi><mrow><mi>i</mi><mi>j</mi><mo>⋅</mo><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></mrow></msub><mo>=</mo><mi>−</mi><mfrac><msub><mi>K</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msqrt><mrow><msub><mi>K</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><msub><mi>K</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub></mrow></msqrt></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\rho_{ij \cdot \mathrm{rest}}
+= -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}}.
+</annotation></semantics></math></p>
+</div>
+<div class="section level3">
+<h3 id="numerical-certificate">Numerical certificate<a class="anchor" aria-label="anchor" href="#numerical-certificate"></a>
+</h3>
+<p>Let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐖</mi><mo>=</mo><msup><mover><mi>𝐊</mi><mo accent="true">̂</mo></mover><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathbf{W} = \widehat{\mathbf{K}}^{-1}</annotation></semantics></math>.
+On every retained edge and every diagonal entry, the fitted covariance
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐖</mi><annotation encoding="application/x-tex">\mathbf{W}</annotation></semantics></math>
+equals the corresponding entry of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐒</mi><annotation encoding="application/x-tex">\mathbf{S}</annotation></semantics></math>.
+Precision entries outside the TMFG support are zero.
+<code><a href="../reference/certificate.html">certificate()</a></code> reports the largest absolute discrepancy
+across these conditions. A value near machine precision indicates that
+the LoGo construction satisfies the defining identities to numerical
+precision.</p>
+</div>
+<div class="section level3">
+<h3 id="predictability">Predictability<a class="anchor" aria-label="anchor" href="#predictability"></a>
+</h3>
+<p>For node
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
+LoGo predictability follows from the diagonal precision entry:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>R</mi><mi>j</mi><mn>2</mn></msubsup><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mn>1</mn><mrow><msub><mi>K</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub><msub><mi>S</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+R_j^2 = 1 - \frac{1}{K_{jj}S_{jj}}.
+</annotation></semantics></math></p>
+<p><code><a href="../reference/net_predict.html">net_predict()</a></code> evaluates this identity for every node in
+the conditional network.</p>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

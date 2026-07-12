@@ -66,9 +66,9 @@ set.seed(1)
 a <- matrix(stats::rnorm(150 * 5), 150, 5)
 b <- matrix(stats::rnorm(150 * 5), 150, 5)
 colnames(a) <- colnames(b) <- paste0("V", 1:5)
-fit <- net_compare(a, b, iter = 50)
+fit <- net_compare(a, b, iter = 25)
 fit
-#> Network Comparison Test (50 permutations)
-#>   Global strength (M): observed 0.000, p = 0.471
-#>   Network structure (S): observed 0.000, p = 0.490
+#> Network Comparison Test (25 permutations)
+#>   Global strength (M): observed 0.000, p = 1.000
+#>   Network structure (S): observed 0.000, p = 1.000
 ```

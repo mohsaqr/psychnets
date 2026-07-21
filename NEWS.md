@@ -1,4 +1,4 @@
-# psychnets 0.4.0
+# psychnets 0.4.2
 
 * First CRAN release.
 

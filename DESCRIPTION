@@ -1,21 +1,23 @@
 Package: psychnets
-Title: Clean-Room Base-R Psychometric Network Estimation
-Version: 0.4.0
+Title: Tidy Clean-Room Psychological Network Modeling
+Version: 0.4.2
 Authors@R:
-    person("Mohammed", "Saqr", email = "ueflaunit@gmail.com",
-           role = c("aut", "cre"))
-Description: Estimates psychometric network models -- correlation and partial
-    correlation, the EBIC-regularized Gaussian graphical model (graphical lasso),
-    its nonparanormal and unregularized stepwise variants,
-    information-filtering graphs (TMFG and LoGo), relative-importance
-    networks, and the Ising and mixed graphical models -- reimplemented from
-    first principles in base R with no compiled dependencies. Each regularized
-    estimator ships a
-    dependency-free correctness certificate (for the Gaussian graphical model,
-    the graphical-lasso stationarity / KKT residual) so a fitted network is
-    self-verifying: its distance from the unique optimum of its own convex
-    objective is reported directly, rather than trusted only because it matches
-    an external solver. The R counterpart to the 'psychaj' TypeScript library.
+    c(person("Mohammed", "Saqr", email = "ueflaunit@gmail.com",
+             role = c("aut", "cre")),
+      person("Sonsoles", "López-Pernas", role = "aut"))
+Description: Provides clean-room implementations for estimating psychometric
+    network models, including correlation and partial-correlation networks,
+    Gaussian graphical models with EBIC
+    regularization, nonparanormal and unregularized stepwise variants,
+    information-filtering networks (TMFG and LoGo), relative-importance
+    networks, and Ising and mixed graphical models
+    (doi:10.3758/s13428-017-0862-1; doi:10.1007/978-3-031-54464-4_19). All
+    methods are implemented from first principles in base R without compiled
+    dependencies and return consistent, tidy outputs. Functions are designed
+    to be auditable and report optimization diagnostics where applicable. For
+    Gaussian graphical models, the graphical lasso stationarity
+    (Karush–Kuhn–Tucker) residual quantifies the deviation of the estimated
+    solution from the optimum of the corresponding convex optimization problem.
 License: GPL-3
 URL: https://pak.dynasite.org/psychnets, https://github.com/mohsaqr/psychnets
 BugReports: https://github.com/mohsaqr/psychnets/issues

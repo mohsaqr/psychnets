@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Clean-Room Base-R Psychometric Network Estimation • psychnets</title>
+<title>Tidy Clean-Room Psychological Network Modeling • psychnets</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Clean-Room Base-R Psychometric Network Estimation">
-<meta name="description" content="Estimates psychometric network models -- correlation and partial correlation, the EBIC-regularized Gaussian graphical model (graphical lasso), its nonparanormal and unregularized stepwise variants, information-filtering graphs (TMFG and LoGo), relative-importance networks, and the Ising and mixed graphical models -- reimplemented from first principles in base R with no compiled dependencies. Each regularized estimator ships a dependency-free correctness certificate (for the Gaussian graphical model, the graphical-lasso stationarity / KKT residual) so a fitted network is self-verifying: its distance from the unique optimum of its own convex objective is reported directly, rather than trusted only because it matches an external solver. The R counterpart to the psychaj TypeScript library.">
-<meta property="og:description" content="Estimates psychometric network models -- correlation and partial correlation, the EBIC-regularized Gaussian graphical model (graphical lasso), its nonparanormal and unregularized stepwise variants, information-filtering graphs (TMFG and LoGo), relative-importance networks, and the Ising and mixed graphical models -- reimplemented from first principles in base R with no compiled dependencies. Each regularized estimator ships a dependency-free correctness certificate (for the Gaussian graphical model, the graphical-lasso stationarity / KKT residual) so a fitted network is self-verifying: its distance from the unique optimum of its own convex objective is reported directly, rather than trusted only because it matches an external solver. The R counterpart to the psychaj TypeScript library.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Tidy Clean-Room Psychological Network Modeling">
+<meta name="description" content="Provides clean-room implementations for estimating psychometric network models, including correlation and partial-correlation networks, Gaussian graphical models with EBIC regularization, nonparanormal and unregularized stepwise variants, information-filtering networks (TMFG and LoGo), relative-importance networks, and Ising and mixed graphical models (doi:10.3758/s13428-017-0862-1; doi:10.1007/978-3-031-54464-4_19). All methods are implemented from first principles in base R without compiled dependencies and return consistent, tidy outputs. Functions are designed to be auditable and report optimization diagnostics where applicable. For Gaussian graphical models, the graphical lasso stationarity (Karush–Kuhn–Tucker) residual quantifies the deviation of the estimated solution from the optimum of the corresponding convex optimization problem.">
+<meta property="og:description" content="Provides clean-room implementations for estimating psychometric network models, including correlation and partial-correlation networks, Gaussian graphical models with EBIC regularization, nonparanormal and unregularized stepwise variants, information-filtering networks (TMFG and LoGo), relative-importance networks, and Ising and mixed graphical models (doi:10.3758/s13428-017-0862-1; doi:10.1007/978-3-031-54464-4_19). All methods are implemented from first principles in base R without compiled dependencies and return consistent, tidy outputs. Functions are designed to be auditable and report optimization diagnostics where applicable. For Gaussian graphical models, the graphical lasso stationarity (Karush–Kuhn–Tucker) residual quantifies the deviation of the estimated solution from the optimum of the corresponding convex optimization problem.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -558,6 +558,7 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Mohammed Saqr <br><small class="roles"> Author, maintainer </small>   </li>
+<li>Sonsoles López-Pernas <br><small class="roles"> Author </small>   </li>
 </ul>
 </div>
 
@@ -568,7 +569,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Mohammed Saqr.</p>
+  <p>Developed by Mohammed Saqr, Sonsoles López-Pernas.</p>
 </div>
 
 <div class="pkgdown-footer-right">

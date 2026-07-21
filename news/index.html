@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4.0" id="psychnets-040">psychnets 0.4.0<a class="anchor" aria-label="anchor" href="#psychnets-040"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.2" id="psychnets-042">psychnets 0.4.2<a class="anchor" aria-label="anchor" href="#psychnets-042"></a></h2>
 <ul><li><p>First CRAN release.</p></li>
 <li><p><code>mgm_fit(..., moderators = )</code> (the moderated mixed graphical model, read with <code><a href="../reference/condition.html">condition()</a></code>) now runs on psychnets’ own base-R penalized-IRLS kernel and is KKT-certified. It previously required the compiled <code>glmnet</code> package and silently ignored <code>native =</code>. Every estimator in the package is now pure base R by default; <code>glmnet</code> and <code>glasso</code> remain optional reference engines selected with <code>native = FALSE</code>.</p></li>
 <li><p>The base moderated kernel covers gaussian and binary nodes (the documented <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> scope) and errors explicitly on a categorical node with more than two levels, which needs <code>native = FALSE</code>.</p></li>
@@ -54,7 +54,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Mohammed Saqr.</p>
+  <p>Developed by Mohammed Saqr, Sonsoles López-Pernas.</p>
 </div>
 
 <div class="pkgdown-footer-right">

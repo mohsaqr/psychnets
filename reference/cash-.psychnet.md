@@ -27,3 +27,13 @@ x$name
 
 The requested field, or `NULL` if neither a canonical field nor a known
 alias.
+
+## Examples
+
+``` r
+fit <- pcor_network(SRL_GPT)
+fit$method
+#> [1] "pcor"
+fit$labels
+#> [1] "CSU" "IV"  "SE"  "SR"  "TA" 
+```

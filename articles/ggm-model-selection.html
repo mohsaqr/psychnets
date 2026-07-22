@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,7 +153,7 @@ stepwise search considers single-edge additions and removals.</p>
 <span><span class="va">stepwise_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.22e-15</span></span></code></pre></div>
 <p>The fitted network contains 5 nodes and 9 edges. One of the 10
 possible pairs is removed. The printed KKT residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.33 \times 10^{-15}</annotation></semantics></math>,
@@ -170,7 +170,7 @@ estimated under the selected network structure.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.22e-15</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.370, 0.422], mean 0.196</span></span></code></pre></div>
 <p>The retained weights range from -0.370 to 0.422. The largest positive
 edge joins <code>CSU</code> and <code>IV</code>
@@ -205,7 +205,7 @@ largest numerical discrepancy across the defining conditions, and
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    ggm 6.661338e-16  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    ggm 1.221245e-15  kkt      TRUE</span></span></code></pre></div>
 <p>The residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.33 \times 10^{-15}</annotation></semantics></math>
 and <code>certified</code> is <code>TRUE</code>. This value is at the
@@ -343,12 +343,12 @@ is less sensitive to extreme values.</p>
 <span><span class="va">spearman_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-15</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-15</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.266, 0.483], mean 0.245</span></span></code></pre></div>
 <p>The Spearman model contains 7 edges, compared with 9 in the Pearson
 model. The positive <code>CSU</code>-<code>IV</code>,
@@ -362,7 +362,7 @@ connections depend on the correlation estimator.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    ggm 1.110223e-15  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    ggm 6.661338e-16  kkt      TRUE</span></span></code></pre></div>
 <p>The Spearman fit has a residual of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.55</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.55 \times 10^{-15}</annotation></semantics></math>
 and is certified. Its numerical solution therefore satisfies the

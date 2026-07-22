@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,7 +139,7 @@ for every node.</p>
 <span><span class="va">importance_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span></code></pre></div>
 <p>The network contains 5 nodes and 20 directed edges, one for every
 ordered pair of distinct nodes. Relative importance allocates a
 contribution to every predictor, so the raw network is complete unless a
@@ -158,7 +158,7 @@ outcome’s
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [0.006, 0.299], mean 0.165</span></span></code></pre></div>
 <p>The weights range from 0.006 to 0.299. The largest edge runs from
 <code>CSU</code> to <code>IV</code> (0.299), meaning that cognitive
@@ -189,7 +189,7 @@ sum and its full-model
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate       kind certified</span></span>
-<span><span class="co">#&gt; 1 relimp 1.110223e-16 structural      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 relimp 2.220446e-16 structural      TRUE</span></span></code></pre></div>
 <p>The residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.33</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.33 \times 10^{-16}</annotation></semantics></math>
 and <code>certified</code> is <code>TRUE</code>. This value is at the
@@ -282,12 +282,12 @@ based on monotonic rank associations.</p>
 <span><span class="va">importance_spearman</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">importance_spearman</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.11e-16</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [0.004, 0.299], mean 0.160</span></span></code></pre></div>
 <p>The largest rank-based edge remains <code>CSU</code> to
 <code>IV</code> at 0.299. The learning constructs retain substantial

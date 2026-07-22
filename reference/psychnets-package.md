@@ -35,4 +35,8 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Mohammed Saqr <ueflaunit@gmail.com>
+**Maintainer**: Mohammed Saqr <saqr@saqr.me> \[copyright holder\]
+
+Authors:
+
+- Sonsoles López-Pernas

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,35 @@
     <p>A one-row-per-edge <code>data.frame</code> with columns <code>from</code>, <code>to</code>, <code>weight</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="pcor_network.html">pcor_network</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    from to      weight</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   CSU IV  0.41366984</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   CSU SE  0.38511179</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    IV SE  0.14991214</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   CSU SR  0.36093733</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5    IV SR  0.32444290</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6    SE SR  0.20913531</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7   CSU TA  0.06697959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8    IV TA  0.12908925</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9    SE TA  0.11123319</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10   SR TA -0.39003887</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, include_zero <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    from to      weight</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   CSU IV  0.41366984</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   CSU SE  0.38511179</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    IV SE  0.14991214</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   CSU SR  0.36093733</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5    IV SR  0.32444290</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6    SE SR  0.20913531</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7   CSU TA  0.06697959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8    IV TA  0.12908925</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9    SE TA  0.11123319</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10   SR TA -0.39003887</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -63,7 +63,7 @@ importance_net <- psychnet(data = SRL_GPT, method = "relimp")
 importance_net
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 1.11e-16
+#>   optimality (KKT residual): 2.22e-16
 ```
 
 The network contains 5 nodes and 20 directed edges, one for every
@@ -83,7 +83,7 @@ is the predictor’s share of the outcome’s $`R^2`$.
 summary(importance_net)
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 1.11e-16
+#>   optimality (KKT residual): 2.22e-16
 #>   edge weight: range [0.006, 0.299], mean 0.165
 ```
 
@@ -114,7 +114,7 @@ incoming edge sum and its full-model $`R^2`$.
 
 certificate(importance_net)
 #>   method  certificate       kind certified
-#> 1 relimp 1.110223e-16 structural      TRUE
+#> 1 relimp 2.220446e-16 structural      TRUE
 ```
 
 The residual is $`3.33 \times 10^{-16}`$ and `certified` is `TRUE`. This
@@ -214,7 +214,7 @@ importance_spearman <- psychnet(data = SRL_GPT, method = "relimp", cor_method = 
 importance_spearman
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 1.11e-16
+#>   optimality (KKT residual): 2.22e-16
 ```
 
 ``` r
@@ -222,7 +222,7 @@ importance_spearman
 summary(importance_spearman)
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 1.11e-16
+#>   optimality (KKT residual): 2.22e-16
 #>   edge weight: range [0.004, 0.299], mean 0.160
 ```
 

@@ -22,3 +22,12 @@ print(x, ...)
 ## Value
 
 `x`, invisibly.
+
+## Examples
+
+``` r
+fit <- pcor_network(SRL_GPT)
+print(fit)
+#> <psychnet> pcor network
+#>   nodes: 5   edges: 10   (undirected)
+```

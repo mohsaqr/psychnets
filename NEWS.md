@@ -1,4 +1,4 @@
-# psychnets 0.4.2
+# psychnets 0.4.3
 
 * First CRAN release.
 
@@ -12,3 +12,10 @@
 * The base moderated kernel covers gaussian and binary nodes (the documented
   `mgm_fit()` scope) and errors explicitly on a categorical node with more than
   two levels, which needs `native = FALSE`.
+
+* The two resampling-heavy long-form guides, "Network reliability" and
+  "Visualizing networks", are now website articles rather than installed
+  vignettes, so they keep their full iteration counts while the package check
+  stays inside CRAN's time budget. Read them at
+  <https://pak.dynasite.org/psychnets>. The eight remaining vignettes are
+  unchanged and still ship with the package.

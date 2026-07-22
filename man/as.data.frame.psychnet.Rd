@@ -21,3 +21,8 @@ A one-row-per-edge \code{data.frame} with columns \code{from}, \code{to}, \code{
 \description{
 Tidy edge list for a psychnet network
 }
+\examples{
+fit <- pcor_network(SRL_GPT)
+as.data.frame(fit)
+as.data.frame(fit, include_zero = TRUE)
+}

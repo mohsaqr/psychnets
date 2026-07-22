@@ -54,6 +54,7 @@ test_that("an isolated binary node gets a logit-scale threshold", {
 })
 
 test_that("net_stability CS is invariant to drop_prop ordering", {
+  skip_slow()
   set.seed(7)
   x <- mk(8, n = 250, p = 5)
   a <- net_stability(x, drop_prop = c(0.1, 0.3, 0.5), iter = 25)
@@ -62,6 +63,7 @@ test_that("net_stability CS is invariant to drop_prop ordering", {
 })
 
 test_that("bootstrap keeps all directed edges for relimp", {
+  skip_slow()
   set.seed(9)
   x <- mk(9, n = 150, p = 4)
   bs <- net_boot(x, method = "relimp", n_boot = 20, cores = 1)
@@ -69,6 +71,7 @@ test_that("bootstrap keeps all directed edges for relimp", {
 })
 
 test_that("paired net_compare requires equal group sizes", {
+  skip_slow()
   expect_error(net_compare(mk(1, 10, 3), mk(2, 12, 3), iter = 5, paired = TRUE),
                "equal size")
 })
@@ -117,6 +120,7 @@ test_that("relimp accepts a covariance-scale matrix via cov2cor", {
 })
 
 test_that("net_compare tolerates a constant column and rejects mismatched columns", {
+  skip_slow()
   set.seed(5)
   a <- cbind(x = stats::rnorm(60), y = stats::rnorm(60), z = 1)  # z constant
   b <- cbind(x = stats::rnorm(60), y = stats::rnorm(60), z = 1)

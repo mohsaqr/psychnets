@@ -24,3 +24,5 @@
 ^AUDIT_REPORT\.md$
 ^EDIT_REPORT\.md$
 ^README\.html$
+^vignettes/articles$
+^psychnets_.*\.tar\.gz.*$

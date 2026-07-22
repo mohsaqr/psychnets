@@ -205,8 +205,12 @@ test_that("moderated mgm_fit + condition() matches mgm::mgm(moderators) + condit
   cfgs <- list(c(200, 4, 0), c(250, 3, 1), c(300, 3, 2))
   for (cf in cfgs) {
     d <- gen(cf[1] * 7L, cf[1], cf[2], cf[3])
+    # This gate checks the optional glmnet-backed reference engine for exact
+    # parity with mgm.  The default base engine is independently optimized and
+    # has its own structure/magnitude/KKT comparison in test-mgm.R; it also
+    # intentionally rejects categorical nodes with more than two levels.
     fit <- mgm_fit(d$dat, types = d$type, moderators = d$mod, gamma = 0.25,
-                   rule = "AND", threshold = "LW")
+                   rule = "AND", threshold = "LW", native = FALSE)
     ref <- suppressWarnings(suppressMessages(mgm::mgm(
       as.matrix(d$dat), type = d$type, level = d$level, moderators = d$mod,
       lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND", threshold = "LW",
@@ -261,10 +265,9 @@ test_that("net_clustering matches qgraph::clustcoef_auto", {
     expect_lt(max(abs(oc[[col]] - rc[[col]]), na.rm = TRUE), 1e-8)
 })
 
-test_that("Hittner2003 test matches cocor; redundancy matches goldbricker", {
+test_that("Hittner2003 test matches cocor", {
   skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
   skip_if_not_installed("cocor")
-  skip_if_not_installed("networktools")
   set.seed(3)
   for (. in 1:5) {
     r <- stats::runif(3, -0.7, 0.7); n <- sample(80:400, 1)
@@ -273,6 +276,11 @@ test_that("Hittner2003 test matches cocor; redundancy matches goldbricker", {
       r[1], r[2], r[3], n, test = "hittner2003")@hittner2003$p.value)
     expect_lt(abs(ours - ref), 1e-10)
   }
+})
+
+test_that("redundancy matches networktools::goldbricker", {
+  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
+  skip_if_not_installed("networktools")
   og <- redundancy(SRL_Claude, cor_method = "auto")
   rg <- tryCatch(
     suppressWarnings(networktools::goldbricker(SRL_Claude, progressbar = FALSE)),

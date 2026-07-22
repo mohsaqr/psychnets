@@ -96,6 +96,7 @@ test_that("ising_sampler validates alpha and ising_fit validates the path grid",
 # --- MEDIUM: integer coercion (was a print crash) ----------------------------
 
 test_that("a fractional n_boot / iter does not corrupt the printed object", {
+  skip_slow()
   X <- mat_g(7)
   expect_no_error(utils::capture.output(print(net_boot(X, n_boot = 2.7, cores = 1))))
   expect_no_error(utils::capture.output(print(net_stability(X, drop_prop = 0.5, iter = 2.7))))

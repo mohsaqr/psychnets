@@ -17,3 +17,7 @@
 \description{
 Print a psychnet network
 }
+\examples{
+fit <- pcor_network(SRL_GPT)
+print(fit)
+}

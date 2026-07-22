@@ -1,6 +1,7 @@
 # Regression tests for the 2026-06-30 code-review fixes.
 
 test_that("#1 group net_boot/net_stability forward the group's labels", {
+  skip_slow()
   set.seed(1)
   g <- data.frame(matrix(stats::rnorm(160 * 4), 160, 4), grp = rep(c("A", "B"), 80))
   gp <- psychnet(g, group = "grp", method = "glasso", labels = c("W", "X", "Y", "Z"))
@@ -47,6 +48,7 @@ test_that("#5 .psn_refit pads a dropped (constant) column back to the full node 
 })
 
 test_that("#6 group net_compare ignores a stray non-numeric column", {
+  skip_slow()
   set.seed(1)
   g <- data.frame(matrix(stats::rnorm(160 * 4), 160, 4),
                   note = sample(letters, 160, TRUE), grp = rep(c("A", "B"), 80))
@@ -69,6 +71,7 @@ test_that("#8 net_smallworld returns NA (not Inf/NaN) when reference has no tria
 })
 
 test_that("#9 difference box matrix orders items by observed value", {
+  skip_slow()
   set.seed(1)
   bs <- net_boot(matrix(stats::rnorm(120 * 4), 120, 4), n_boot = 30, cores = 1)
   pdf(file = tempfile(fileext = ".pdf")); on.exit(dev.off())

@@ -13,6 +13,7 @@ drew <- function(expr) { pdf(file = tempfile(fileext = ".pdf"))
   on.exit(dev.off()); expr; invisible(TRUE) }
 
 test_that("casedrop_reliability returns a tidy data.frame", {
+  skip_slow()
   cd <- casedrop_reliability(mk(), drop_prop = c(0.3, 0.5, 0.7), iter = 20)
   expect_s3_class(cd, "psychnet_casedrop")
   expect_s3_class(cd, "data.frame")
@@ -25,6 +26,7 @@ test_that("casedrop_reliability returns a tidy data.frame", {
 })
 
 test_that("casedrop_reliability CS is non-increasing-ish and in range", {
+  skip_slow()
   cd <- casedrop_reliability(mk(), drop_prop = seq(0.2, 0.8, 0.2), iter = 25)
   corr <- cd[cd$metric == "correlation", ]
   corr <- corr[order(corr$drop_prop), ]
@@ -32,6 +34,7 @@ test_that("casedrop_reliability CS is non-increasing-ish and in range", {
 })
 
 test_that("network_reliability returns a tidy per-metric data.frame", {
+  skip_slow()
   rel <- network_reliability(mk(), iter = 40)
   expect_s3_class(rel, "psychnet_reliability")
   expect_s3_class(rel, "data.frame")
@@ -41,6 +44,7 @@ test_that("network_reliability returns a tidy per-metric data.frame", {
 })
 
 test_that("both verbs are estimator-agnostic (pcor) and route through psychnet", {
+  skip_slow()
   cd <- casedrop_reliability(mk(), method = "pcor",
                              drop_prop = c(0.3, 0.6), iter = 15)
   rel <- network_reliability(mk(), method = "pcor", iter = 20)
@@ -49,6 +53,7 @@ test_that("both verbs are estimator-agnostic (pcor) and route through psychnet",
 })
 
 test_that("plot methods render without error", {
+  skip_slow()
   cd <- casedrop_reliability(mk(), drop_prop = c(0.3, 0.5, 0.7), iter = 20)
   rel <- network_reliability(mk(), iter = 30)
   expect_true(drew(plot(cd)))
@@ -56,6 +61,7 @@ test_that("plot methods render without error", {
 })
 
 test_that("print shows the CS header and the tidy table", {
+  skip_slow()
   cd <- casedrop_reliability(mk(), drop_prop = 0.5, iter = 10)
   rel <- network_reliability(mk(), iter = 10)
   expect_output(print(cd), "edge-weight stability")

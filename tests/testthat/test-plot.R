@@ -25,6 +25,7 @@ test_that("net_centralities carries a plotting class but stays a data.frame", {
 })
 
 test_that("difference_test carries a plotting class and the observed attribute", {
+  skip_slow()
   bs <- net_boot(mk_data(), n_boot = 60, cores = 1)
   dt <- difference_test(bs, type = "strength")
   expect_s3_class(dt, "psychnet_difference")
@@ -40,6 +41,7 @@ test_that("plot.psychnet_centrality renders both types without error", {
 })
 
 test_that("plot.psychnet_bootstrap renders every type without error", {
+  skip_slow()
   bs <- net_boot(mk_data(), n_boot = 60, cores = 1, predictability = TRUE)
   expect_true(draws_clean(plot(bs)))
   expect_true(draws_clean(plot(bs, type = "centrality")))
@@ -49,12 +51,14 @@ test_that("plot.psychnet_bootstrap renders every type without error", {
 })
 
 test_that("plot.psychnet_bootstrap errors for predictability when absent", {
+  skip_slow()
   bs <- net_boot(mk_data(), n_boot = 40, cores = 1)
   pdf(file = tempfile(fileext = ".pdf")); on.exit(dev.off())
   expect_error(plot(bs, type = "predictability"), "predictability")
 })
 
 test_that("plot.psychnet_difference renders box and forest styles", {
+  skip_slow()
   bs <- net_boot(mk_data(), n_boot = 60, cores = 1)
   expect_true(draws_clean(plot(difference_test(bs, type = "edge"))))
   expect_true(draws_clean(plot(difference_test(bs, type = "strength"))))
@@ -63,11 +67,13 @@ test_that("plot.psychnet_difference renders box and forest styles", {
 })
 
 test_that("plot.psychnet_stability renders without error", {
+  skip_slow()
   st <- net_stability(mk_data(), drop_prop = c(0.3, 0.5, 0.7), iter = 15)
   expect_true(draws_clean(plot(st)))
 })
 
 test_that("plot.psychnet_nct renders every type without error", {
+  skip_slow()
   cmp <- net_compare(mk_data(seed = 1),
                      mk_data(seed = 2) + 0.2, iter = 60)
   expect_true(draws_clean(plot(cmp)))

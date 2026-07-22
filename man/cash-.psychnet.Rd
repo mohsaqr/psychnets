@@ -22,3 +22,8 @@ The canonical (\code{str}-visible) fields are the lean netobject set; this metho
 adds virtual aliases so older/external accessors keep working without storing
 redundant fields.
 }
+\examples{
+fit <- pcor_network(SRL_GPT)
+fit$method
+fit$labels
+}

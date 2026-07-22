@@ -56,6 +56,7 @@ test_that("net_predict dispatches per group using each level's data", {
 })
 
 test_that("net_boot bootstraps each group and stacks CIs", {
+  skip_slow()
   g <- psychnet(.mk_groups(), method = "glasso", group = "g")
   b <- net_boot(g, n_boot = 40)
   expect_s3_class(b, "psychnet_bootstrap_group")
@@ -66,6 +67,7 @@ test_that("net_boot bootstraps each group and stacks CIs", {
 })
 
 test_that("net_stability dispatches per group", {
+  skip_slow()
   g <- psychnet(.mk_groups(), method = "glasso", group = "g")
   s <- net_stability(g, iter = 15)
   expect_s3_class(s, "psychnet_stability_group")
@@ -73,6 +75,7 @@ test_that("net_stability dispatches per group", {
 })
 
 test_that("net_compare compares two group levels", {
+  skip_slow()
   g <- psychnet(.mk_groups(), method = "glasso", group = "g")
   cmp <- net_compare(g, c("A", "B"), iter = 60)
   expect_s3_class(cmp, "psychnet_nct")
@@ -82,6 +85,7 @@ test_that("net_compare compares two group levels", {
 })
 
 test_that("group mode validates levels and missing columns", {
+  skip_slow()
   expect_error(psychnet(.mk_groups(), group = "nope"),
                "Group column")
   d1 <- data.frame(g = rep("only", 50), V1 = stats::rnorm(50),
@@ -102,6 +106,7 @@ test_that("group mode honors vars for an id feature table", {
 })
 
 test_that("a raw event log + group is accepted as-is and is bootstrappable", {
+  skip_slow()
   set.seed(9)
   ev <- data.frame(
     Actor  = rep(paste0("s", 1:120), each = 12),

@@ -17,3 +17,7 @@ The tidy edge list (invisibly); prints a summary as a side effect.
 \description{
 Summarize a psychnet network
 }
+\examples{
+fit <- pcor_network(SRL_GPT)
+summary(fit)
+}

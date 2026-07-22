@@ -30,7 +30,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Mohammed Saqr \email{ueflaunit@gmail.com}
+\strong{Maintainer}: Mohammed Saqr \email{saqr@saqr.me} [copyright holder]
+
+Authors:
+\itemize{
+  \item Sonsoles López-Pernas
+}
 
 }
 \keyword{internal}

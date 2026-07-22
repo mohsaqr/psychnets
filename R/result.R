@@ -83,6 +83,10 @@
 #'   `n_obs` (= `n`).
 #' @return The requested field, or `NULL` if neither a canonical field nor a
 #'   known alias.
+#' @examples
+#' fit <- pcor_network(SRL_GPT)
+#' fit$method
+#' fit$labels
 #' @method $ psychnet
 #' @export
 `$.psychnet` <- function(x, name) {
@@ -102,6 +106,9 @@
 #' @param x A `psychnet` object.
 #' @param ... Unused.
 #' @return `x`, invisibly.
+#' @examples
+#' fit <- pcor_network(SRL_GPT)
+#' print(fit)
 #' @export
 print.psychnet <- function(x, ...) {
   cat(sprintf("<psychnet> %s network\n", x$method))
@@ -124,6 +131,10 @@ print.psychnet <- function(x, ...) {
 #' @param include_zero If TRUE, keep zero-weight (absent) edges. Default FALSE.
 #' @param row.names,optional Ignored (for S3 consistency).
 #' @return A one-row-per-edge `data.frame` with columns `from`, `to`, `weight`.
+#' @examples
+#' fit <- pcor_network(SRL_GPT)
+#' as.data.frame(fit)
+#' as.data.frame(fit, include_zero = TRUE)
 #' @export
 as.data.frame.psychnet <- function(x, row.names = NULL, optional = FALSE, ...,
                                    include_zero = FALSE) {
@@ -137,6 +148,9 @@ as.data.frame.psychnet <- function(x, row.names = NULL, optional = FALSE, ...,
 #' @param object A `psychnet` object.
 #' @param ... Unused.
 #' @return The tidy edge list (invisibly); prints a summary as a side effect.
+#' @examples
+#' fit <- pcor_network(SRL_GPT)
+#' summary(fit)
 #' @export
 summary.psychnet <- function(object, ...) {
   print(object)

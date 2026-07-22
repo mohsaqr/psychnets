@@ -6,6 +6,7 @@ mk <- function(seed, n = 150, p = 5) {
 }
 
 test_that("net_compare returns valid invariants and p-values", {
+  skip_slow()
   fit <- net_compare(mk(1), mk(2), iter = 30)
   expect_s3_class(fit, "psychnet_nct")
   expect_true(fit$M$p_value >= 0 && fit$M$p_value <= 1)
@@ -23,6 +24,7 @@ test_that("nearest-correlation projection returns a valid correlation matrix", {
 })
 
 test_that("net_boot returns tidy edge and centrality CIs", {
+  skip_slow()
   bs <- net_boot(mk(3), n_boot = 40, cores = 1)
   expect_s3_class(bs, "psychnet_bootstrap")
   expect_named(bs$edges,
@@ -41,6 +43,7 @@ test_that("net_boot returns tidy edge and centrality CIs", {
 })
 
 test_that("parallel bootstrap is byte-identical to the serial run", {
+  skip_slow()
   set.seed(123); bs1 <- net_boot(mk(3), n_boot = 40, cores = 1)
   set.seed(123); bs2 <- net_boot(mk(3), n_boot = 40, cores = 2)
   expect_equal(bs1$edge_boot, bs2$edge_boot)
@@ -49,6 +52,7 @@ test_that("parallel bootstrap is byte-identical to the serial run", {
 })
 
 test_that("difference_test returns a tidy pairwise table with sound intervals", {
+  skip_slow()
   bs <- net_boot(mk(3), n_boot = 60, cores = 1)
   for (ty in c("edge", "strength", "expected_influence")) {
     dt <- difference_test(bs, type = ty)
@@ -65,6 +69,7 @@ test_that("difference_test returns a tidy pairwise table with sound intervals", 
 })
 
 test_that("difference_test edge difference brackets the observed difference", {
+  skip_slow()
   bs <- net_boot(mk(7), n_boot = 80, cores = 1)
   dt <- difference_test(bs, type = "strength")
   # the observed difference lies inside its own bootstrap interval, allowing
@@ -74,6 +79,7 @@ test_that("difference_test edge difference brackets the observed difference", {
 })
 
 test_that("net_stability returns CS-coefficients in [0,1]", {
+  skip_slow()
   cs <- net_stability(mk(4), drop_prop = c(0.3, 0.5, 0.7), iter = 15)
   expect_s3_class(cs, "psychnet_stability")
   expect_true(all(cs$cs >= 0 & cs$cs <= 1))
@@ -85,6 +91,7 @@ test_that("net_stability returns CS-coefficients in [0,1]", {
 })
 
 test_that("net_boot enrichments: extra centralities, predictability, threshold, diff_test", {
+  skip_slow()
   set.seed(3)
   x <- matrix(stats::rnorm(200 * 5), 200, 5) %*%
     chol(0.4^abs(outer(1:5, 1:5, "-")))

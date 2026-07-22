@@ -1,3 +1,4 @@
-"dataset","citation","p","n","max_delta","struct","edges_psychnet","edges_isingfit"
-"psychTools::ability","Revelle; ICAR ability items",16,1248,0.059164,0.9917,69,70
-"psychTools::iqitems","Condon & Revelle; ICAR",11,1523,0.011912,1,14,14
+"dataset","citation","p","n","max_delta_base","struct_base","edges_psychnet","edges_isingfit","max_delta_reference","struct_reference","kkt_base"
+"psychTools::ability","Revelle; ICAR ability items",16,1248,0.059164,0.9917,69,70,0,1,7.90216816634604e-09
+"EGAnet::wmt2","Wiener Matrizen-Test; EGAnet",18,1185,0.006867,1,109,109,0,1,5.56039385195273e-09
+"psychTools::iqitems","Condon & Revelle; ICAR",11,1523,0.011912,1,14,14,0,1,5.85631600505399e-10

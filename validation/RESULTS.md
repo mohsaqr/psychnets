@@ -1,14 +1,14 @@
-# psychnet validation results
+# psychnets validation results
 
-Generated 2026-06-21. Reference packages: qgraph 1.9.8, IsingFit 0.4, mgm 1.2.15.
+Generated 2026-07-20. Reference packages: qgraph 1.9.8, IsingFit 0.4, mgm 1.2.15.
 
 ## Part A: EBICglasso vs qgraph (real questionnaire data)
 
-19 datasets; all structure agreement = 1.000, max edge delta <= 0.00801.
+20 datasets; all structure agreement = 1.000, max edge delta <= 0.00801.
 
 ## Part B: Ising vs IsingFit (real binary data)
 
-2 datasets; min structure agreement 0.992.
+3 datasets; default pure-R engine minimum structure agreement 0.992; all fits KKT-certified. The optional reference engine matches IsingFit exactly.
 
 ## Part C: synthetic ground truth
 

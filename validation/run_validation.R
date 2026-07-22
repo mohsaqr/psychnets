@@ -1,5 +1,5 @@
 # =====================================================================
-# psychnet validation: agreement with the reference packages on real
+# psychnets validation: agreement with the reference packages on real
 # questionnaire data, with a synthetic ground-truth supplement.
 #
 # Part A. EBIC graphical lasso, psychnet vs qgraph, on real questionnaire
@@ -21,7 +21,7 @@
 
 suppressMessages({
   ok <- requireNamespace("devtools", quietly = TRUE)
-  if (ok) devtools::load_all(".", quiet = TRUE) else library(psychnet)
+  if (ok) devtools::load_all(".", quiet = TRUE) else library(psychnets)
   for (p in c("qgraph", "psych", "psychTools", "mgm", "NetworkToolbox",
               "networktools", "EGAnet", "IsingFit")) suppressWarnings(library(p, character.only = TRUE))
 })
@@ -34,14 +34,47 @@ get_data <- function(name, pkg) {                 # load a dataset, return $data
   if (is.list(o) && !is.data.frame(o) && !is.null(o$data)) o$data else o
 }
 to_items <- function(X, maxp = 50) {              # numeric item matrix, capped
-  X <- suppressWarnings(matrix(as.numeric(as.matrix(X)), nrow(as.matrix(X))))
+  raw <- as.matrix(X)
+  X <- suppressWarnings(matrix(
+    as.numeric(raw), nrow(raw), dimnames = list(NULL, colnames(raw))
+  ))
   keep <- apply(X, 2, function(c) sum(!is.na(c)) > 10 && length(unique(c[!is.na(c)])) > 1)
   X <- X[, keep, drop = FALSE]
   if (ncol(X) > maxp) X[, seq_len(maxp), drop = FALSE] else X
 }
-shared_cor <- function(X) {                       # pairwise correlation + effective n
-  S <- psychnet:::.nearest_pd_cor(suppressWarnings(stats::cor(X, use = "pairwise.complete.obs")))
-  co <- crossprod(!is.na(X)); list(S = S, n = round(stats::median(co[upper.tri(co)])))
+shared_cor <- function(X, min_pair = 10L) {       # finite pairwise correlation + effective n
+  dropped <- character()
+  repeat {
+    co <- crossprod(!is.na(X))
+    S <- suppressWarnings(stats::cor(X, use = "pairwise.complete.obs"))
+    bad <- !is.finite(S) | co < min_pair
+    diag(bad) <- FALSE
+    if (!any(bad)) break
+
+    # Drop the item involved in the most undefined/under-observed pairs.
+    # Ties go to the least-observed item, retaining as much information as
+    # possible.  This matters for multi-study datasets with structural gaps.
+    degree <- rowSums(bad)
+    candidates <- which(degree == max(degree))
+    observed <- colSums(!is.na(X))
+    worst <- candidates[which.min(observed[candidates])]
+    item_name <- if (!is.null(colnames(X)) && nzchar(colnames(X)[worst])) {
+      colnames(X)[worst]
+    } else {
+      paste0("column_", worst)
+    }
+    dropped <- c(dropped, item_name)
+    X <- X[, -worst, drop = FALSE]
+    if (ncol(X) < 4L) {
+      stop("Fewer than four mutually comparable items remain.", call. = FALSE)
+    }
+  }
+  list(
+    X = X,
+    S = psychnets:::.nearest_pd_cor(S),
+    n = round(stats::median(co[upper.tri(co)])),
+    dropped = dropped
+  )
 }
 
 # ---- Part A: EBICglasso vs qgraph on real questionnaire data --------
@@ -71,31 +104,62 @@ A <- list(
 cat("== Part A: EBICglasso, psychnet vs qgraph (real questionnaire data) ==\n")
 rowsA <- list()
 for (s in A) {
-  res <- tryCatch({
-    X <- to_items(get_data(s[3], s[2]), as.integer(s[5]))
-    if (ncol(X) < 4) stop("too few items")
-    sc <- shared_cor(X)
-    P <- psychnet(NULL, "EBICglasso", cor_matrix = sc$S, n = sc$n, gamma = 0.5)$graph
-    Q <- suppressWarnings(qgraph::EBICglasso(sc$S, n = sc$n, gamma = 0.5, verbose = FALSE))
-    data.frame(dataset = s[1], citation = s[4], p = ncol(X), n = sc$n,
-               max_delta = round(max(abs(ute(P) - ute(Q))), 6),
-               struct = round(mean((abs(ute(P)) > 1e-6) == (abs(ute(Q)) > 1e-6)), 4),
-               edges_psychnet = sum(abs(ute(P)) > 1e-6), edges_qgraph = sum(abs(ute(Q)) > 1e-6),
-               stringsAsFactors = FALSE)
-  }, error = function(e) NULL)
-  if (is.null(res)) { cat(sprintf("  %-28s skipped (%s)\n", s[1], "structure not raw items")); next }
+  X <- to_items(get_data(s[3], s[2]), as.integer(s[5]))
+  if (ncol(X) < 4) {
+    stop(s[1], " yielded fewer than four usable items.", call. = FALSE)
+  }
+  sc <- shared_cor(X)
+  P <- psychnet(NULL, "EBICglasso", cor_matrix = sc$S, n = sc$n, gamma = 0.5)$graph
+  Q <- suppressWarnings(qgraph::EBICglasso(sc$S, n = sc$n, gamma = 0.5, verbose = FALSE))
+  res <- data.frame(dataset = s[1], citation = s[4], p = ncol(sc$X), n = sc$n,
+                    max_delta = round(max(abs(ute(P) - ute(Q))), 6),
+                    struct = round(mean((abs(ute(P)) > 1e-6) == (abs(ute(Q)) > 1e-6)), 4),
+                    edges_psychnet = sum(abs(ute(P)) > 1e-6),
+                    edges_qgraph = sum(abs(ute(Q)) > 1e-6),
+                    excluded_items = paste(sc$dropped, collapse = ";"),
+                    stringsAsFactors = FALSE)
   rowsA[[length(rowsA) + 1L]] <- res
   cat(sprintf("  %-28s p=%-3d n=%-5d  maxD=%.5f struct=%.3f  %d/%d\n",
               res$dataset, res$p, res$n, res$max_delta, res$struct, res$edges_psychnet, res$edges_qgraph))
+  if (length(sc$dropped)) {
+    cat("    excluded structurally non-overlapping item(s): ",
+        paste(sc$dropped, collapse = ", "), "\n", sep = "")
+  }
 }
 resA <- do.call(rbind, rowsA)
+stopifnot(nrow(resA) == length(A))
 
 # ---- Part B: Ising vs IsingFit on real binary item responses --------
 # Coerce to a clean 0/1 matrix: keep native 0/1 columns as is, map other
-# two-level columns to 0/1, split polytomous columns at the median, drop
-# near-constant columns. Both estimators then see the identical matrix.
-prep_binary <- function(X) {
-  X <- suppressWarnings(matrix(as.numeric(as.matrix(X)), nrow = nrow(as.matrix(X))))
+# two-level columns to 0/1, split polytomous columns at the median, and drop
+# near-constant columns. Data-frame columns are converted independently so a
+# factor-valued metadata column cannot coerce the entire matrix to character.
+# Both estimators then see the identical matrix.
+prep_binary <- function(X, select = NULL, maxp = Inf) {
+  if (!is.null(select)) {
+    if (is.null(colnames(X))) stop("Named columns are needed for `select`.", call. = FALSE)
+    X <- X[, grepl(select, colnames(X)), drop = FALSE]
+  }
+  if (!ncol(X)) return(NULL)
+  X <- vapply(seq_len(ncol(X)), function(j) {
+    x <- X[, j]
+    if (is.factor(x) || is.character(x)) {
+      ch <- as.character(x)
+      num <- suppressWarnings(as.numeric(ch))
+      present <- !is.na(ch)
+      if (sum(!is.na(num)) >= 0.9 * sum(present)) return(num)
+      u <- sort(unique(ch[present]))
+      if (length(u) == 2L) return(ifelse(present, as.numeric(ch == u[2]), NA_real_))
+      return(rep(NA_real_, length(ch)))
+    }
+    suppressWarnings(as.numeric(x))
+  }, numeric(nrow(X)))
+  usable <- apply(X, 2, function(c) {
+    z <- c[!is.na(c)]
+    length(z) >= 50L && length(unique(z)) >= 2L
+  })
+  X <- X[, usable, drop = FALSE]
+  if (ncol(X) < 4L) return(NULL)
   X <- X[stats::complete.cases(X), , drop = FALSE]
   if (nrow(X) < 50 || ncol(X) < 4) return(NULL)
   X <- vapply(seq_len(ncol(X)), function(j) {
@@ -106,34 +170,55 @@ prep_binary <- function(X) {
   }, numeric(nrow(X)))
   keep <- apply(X, 2, function(c) { m <- mean(c); length(unique(c)) == 2 && min(m, 1 - m) > 0.05 })
   X <- X[, keep, drop = FALSE]
+  if (ncol(X) > maxp) X <- X[, seq_len(maxp), drop = FALSE]
   if (ncol(X) < 4) NULL else X
 }
 B <- list(
-  c("psychTools::ability", "psychTools", "ability", "Revelle; ICAR ability items", "16"),
-  c("EGAnet::wmt2",        "EGAnet",     "wmt2",    "Wiener Matrizen-Test; EGAnet", "20"),
-  c("psychTools::iqitems", "psychTools", "iqitems", "Condon & Revelle; ICAR",       "16"))
+  list(label = "psychTools::ability", package = "psychTools", dataset = "ability",
+       citation = "Revelle; ICAR ability items", maxp = 16L, select = NULL),
+  list(label = "EGAnet::wmt2", package = "EGAnet", dataset = "wmt2",
+       citation = "Wiener Matrizen-Test; EGAnet", maxp = 20L, select = "^wmt[0-9]+$"),
+  list(label = "psychTools::iqitems", package = "psychTools", dataset = "iqitems",
+       citation = "Condon & Revelle; ICAR", maxp = 16L, select = NULL))
 
 cat("\n== Part B: Ising, psychnet vs IsingFit (real binary data) ==\n")
 rowsB <- list()
 for (s in B) {
-  res <- tryCatch({
-    bx <- prep_binary(get_data(s[3], s[2]))
-    if (is.null(bx)) stop("no clean binary matrix")
-    P <- psychnet(bx, "ising", gamma = 0.25, rule = "AND")$graph
-    R <- suppressWarnings(suppressMessages(IsingFit::IsingFit(bx, gamma = 0.25, AND = TRUE,
-                          plot = FALSE, progressbar = FALSE)$weiadj))
-    data.frame(dataset = s[1], citation = s[4], p = ncol(bx), n = nrow(bx),
-               max_delta = round(max(abs(ute(P) - ute(R))), 6),
-               struct = round(mean((abs(ute(P)) > 1e-6) == (abs(ute(R)) > 1e-6)), 4),
-               edges_psychnet = sum(abs(ute(P)) > 1e-6), edges_isingfit = sum(abs(ute(R)) > 1e-6),
-               stringsAsFactors = FALSE)
-  }, error = function(e) NULL)
-  if (is.null(res)) { cat(sprintf("  %-28s skipped\n", s[1])); next }
+  bx <- prep_binary(get_data(s$dataset, s$package), s$select, s$maxp)
+  if (is.null(bx)) {
+    stop(s$label, " yielded no usable binary item matrix.", call. = FALSE)
+  }
+  fit_base <- psychnet(bx, "ising", gamma = 0.25, rule = "AND")
+  fit_reference <- psychnet(
+    bx, "ising", gamma = 0.25, rule = "AND", native = FALSE
+  )
+  P <- fit_base$graph
+  P_reference <- fit_reference$graph
+  R <- suppressWarnings(suppressMessages(IsingFit::IsingFit(
+    bx, gamma = 0.25, AND = TRUE, plot = FALSE, progressbar = FALSE
+  )$weiadj))
+  exact_delta <- max(abs(ute(P_reference) - ute(R)))
+  exact_struct <- mean((abs(ute(P_reference)) > 1e-6) == (abs(ute(R)) > 1e-6))
+  cert <- certificate(fit_base)
+  if (exact_delta > 1e-12 || exact_struct != 1 || !isTRUE(cert$certified)) {
+    stop(s$label, " failed the exact-parity or KKT-certificate gate.", call. = FALSE)
+  }
+  res <- data.frame(dataset = s$label, citation = s$citation, p = ncol(bx), n = nrow(bx),
+                    max_delta_base = round(max(abs(ute(P) - ute(R))), 6),
+                    struct_base = round(mean((abs(ute(P)) > 1e-6) == (abs(ute(R)) > 1e-6)), 4),
+                    edges_psychnet = sum(abs(ute(P)) > 1e-6),
+                    edges_isingfit = sum(abs(ute(R)) > 1e-6),
+                    max_delta_reference = exact_delta,
+                    struct_reference = exact_struct,
+                    kkt_base = cert$certificate,
+                    stringsAsFactors = FALSE)
   rowsB[[length(rowsB) + 1L]] <- res
   cat(sprintf("  %-28s p=%-3d n=%-5d  maxD=%.5f struct=%.3f  %d/%d\n",
-              res$dataset, res$p, res$n, res$max_delta, res$struct, res$edges_psychnet, res$edges_isingfit))
+              res$dataset, res$p, res$n, res$max_delta_base, res$struct_base,
+              res$edges_psychnet, res$edges_isingfit))
 }
-resB <- if (length(rowsB)) do.call(rbind, rowsB) else NULL
+resB <- do.call(rbind, rowsB)
+stopifnot(nrow(resB) == length(B))
 
 # ---- Part C: synthetic ground-truth supplement ----------------------
 # Known sparse precision (chain / cluster). Report agreement with qgraph AND
@@ -170,7 +255,7 @@ utils::write.csv(resA, "validation/results_realdata.csv", row.names = FALSE)
 if (!is.null(resB)) utils::write.csv(resB, "validation/results_ising.csv", row.names = FALSE)
 utils::write.csv(resC, "validation/results_synthetic.csv", row.names = FALSE)
 
-md <- c("# psychnet validation results",
+md <- c("# psychnets validation results",
   "",
   sprintf("Generated %s. Reference packages: qgraph %s, IsingFit %s, mgm %s.",
           format(Sys.Date()), packageVersion("qgraph"), packageVersion("IsingFit"), packageVersion("mgm")),
@@ -178,7 +263,9 @@ md <- c("# psychnet validation results",
   sprintf("%d datasets; all structure agreement = %.3f, max edge delta <= %.5f.",
           nrow(resA), min(resA$struct), max(resA$max_delta)),
   "", "## Part B: Ising vs IsingFit (real binary data)", "",
-  if (!is.null(resB)) sprintf("%d datasets; min structure agreement %.3f.", nrow(resB), min(resB$struct)) else "none",
+  sprintf(paste0("%d datasets; default pure-R engine minimum structure agreement %.3f; ",
+                 "all fits KKT-certified. The optional reference engine matches IsingFit exactly."),
+          nrow(resB), min(resB$struct_base)),
   "", "## Part C: synthetic ground truth", "",
   "psychnet and qgraph agree, and recover the true graph at the same F-measure.",
   "", "See results_realdata.csv, results_ising.csv, results_synthetic.csv.")
@@ -187,4 +274,5 @@ writeLines(md, "validation/RESULTS.md")
 cat(sprintf("\nPart A: %d datasets, all struct = %.3f, max delta = %.5f\n",
             nrow(resA), min(resA$struct), max(resA$max_delta)))
 cat("Wrote validation/results_*.csv and validation/RESULTS.md\n\n")
-cat("R", as.character(getRversion()), "| psychnet", as.character(packageVersion("psychnet")), "\n")
+pkg_version <- read.dcf("DESCRIPTION", fields = "Version")[1, 1]
+cat("R", as.character(getRversion()), "| psychnets", pkg_version, "\n")

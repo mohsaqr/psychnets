@@ -1,8 +1,8 @@
 # Two robustness diagnostics adapted from Nestimate, in the psychnets idiom
 # (raw `data` in, re-estimate via psychnet(method=), base R only):
-#   * casedrop_reliability() - edge-weight case-dropping stability (the
+#   * net_casedrop_reliability() - edge-weight case-dropping stability (the
 #     edge-vector complement to net_stability()'s centrality CS-coefficient).
-#   * network_reliability()  - split-half reliability of the edge structure.
+#   * net_split_reliability()  - split-half reliability of the edge structure.
 # Both are estimator-agnostic: they route every refit through psychnet(method=).
 
 # Off-diagonal edge vector of a weight matrix (upper triangle when undirected,
@@ -79,16 +79,16 @@
 #' # `iter` and `drop_prop` are kept small here so the example runs quickly;
 #' # the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
 #' # reliability assessment should use.
-#' casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
+#' net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
 #' @export
-casedrop_reliability <- function(data, method = "glasso",
+net_casedrop_reliability <- function(data, method = "glasso",
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
                                  iter = 100L, threshold = 0.7, certainty = 0.95,
                                  cor_method = c("spearman", "pearson", "kendall"),
                                  labels = NULL, ...) {
   # Group object -> case-drop each level from its stored cross-sectional data.
   if (inherits(data, "psychnet_group")) {
-    return(.group_data_apply(data, casedrop_reliability, "casedrop_reliability",
+    return(.group_data_apply(data, net_casedrop_reliability, "net_casedrop_reliability",
       "psychnet_casedrop_group",
       list(drop_prop = drop_prop, iter = iter, threshold = threshold,
            certainty = certainty, cor_method = cor_method)))
@@ -174,9 +174,9 @@ print.psychnet_casedrop <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' # Small `iter` / `drop_prop` for a fast example; see [casedrop_reliability()]
+#' # Small `iter` / `drop_prop` for a fast example; see [net_casedrop_reliability()]
 #' # for the defaults a real assessment should use.
-#' plot(casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
+#' plot(net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
 #' @export
 plot.psychnet_casedrop <- function(x, ...) {
   panels <- c("correlation", "mean_abs_dev", "median_abs_dev", "max_abs_dev")
@@ -230,14 +230,14 @@ plot.psychnet_casedrop <- function(x, ...) {
 #' @examples
 #' # `iter` is kept small here so the example runs quickly; the default
 #' # (iter = 100) is what a real reliability assessment should use.
-#' network_reliability(SRL_Claude, iter = 10)
+#' net_split_reliability(SRL_Claude, iter = 10)
 #' @export
-network_reliability <- function(data, method = "glasso", iter = 100L,
+net_split_reliability <- function(data, method = "glasso", iter = 100L,
                                 split = 0.5,
                                 cor_method = c("pearson", "spearman", "kendall"),
                                 labels = NULL, ...) {
   if (inherits(data, "psychnet_group")) {
-    return(.group_data_apply(data, network_reliability, "network_reliability",
+    return(.group_data_apply(data, net_split_reliability, "net_split_reliability",
       "psychnet_reliability_group",
       list(iter = iter, split = split, cor_method = cor_method)))
   }
@@ -304,9 +304,9 @@ print.psychnet_reliability <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' # Small `iter` for a fast example; see [network_reliability()] for the
+#' # Small `iter` for a fast example; see [net_split_reliability()] for the
 #' # default a real assessment should use.
-#' plot(network_reliability(SRL_Claude, iter = 10))
+#' plot(net_split_reliability(SRL_Claude, iter = 10))
 #' @export
 plot.psychnet_reliability <- function(x, ...) {
   it <- attr(x, "iterations")

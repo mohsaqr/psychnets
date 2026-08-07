@@ -182,7 +182,7 @@ summary.psychnet_group <- function(object, ...) {
 }
 
 # Data-first group dispatch shared by the resampling verbs (net_boot,
-# net_stability, casedrop_reliability, network_reliability): re-run `verb` on
+# net_stability, net_casedrop_reliability, net_split_reliability): re-run `verb` on
 # each level's stored cross-sectional subset, reproducing the SAME estimator
 # configuration the group networks were built with -- the saved method, gamma,
 # labels, and estimator dots. `args` carries the verb's own (non-estimation)

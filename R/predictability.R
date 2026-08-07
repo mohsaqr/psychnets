@@ -48,6 +48,15 @@ net_predict <- function(x, data = NULL, ...) {
 
   # --- nodewise models: compute from data ------------------------------------
   if (!is.null(x$nodewise)) {
+    # Checked before anything touches `data`: a network with a multi-level
+    # categorical node stores no p-wide coefficient matrix (a k-level predictor
+    # occupies k-1 design columns), so there is nothing to predict from however
+    # the data is supplied. Refusing here gives the real reason rather than a
+    # confusing coercion error about the factor column.
+    if (isFALSE(x$nodewise$exact)) {
+      stop("net_predict() does not support mgm networks containing multi-level categorical nodes; the nodewise design cannot be represented per variable.",
+           call. = FALSE)
+    }
     if (is.null(data)) {
       stop(sprintf("`data` is required for predictability of a '%s' network.",
                    x$method), call. = FALSE)

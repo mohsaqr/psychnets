@@ -5,21 +5,70 @@
 # supports gaussian and binary nodes (the dominant mixed case); categorical
 # nodes with more than two levels are not yet implemented and error explicitly.
 
-# Detect node types: "c" (binary categorical, values in {0,1}) or "g" (gaussian).
+# Detect node types, following mgm::mgm's own rule: a factor/character column is
+# categorical, and so is a numeric column with <= 10 distinct integer values;
+# everything else is gaussian. Returns a list of parallel `type` ("c"/"g") and
+# `level` (number of levels for "c", else 1) vectors.
+#
+# The <= 10-distinct-integers rule is what mgm actually uses, and Likert / count
+# items hit it constantly, so a numeric column caught by it is warned about by
+# name: it silently switches that node from gaussian to multinomial, which is a
+# different model rather than a different encoding.
 #' @noRd
-.detect_types <- function(mat) {
-  vapply(seq_len(ncol(mat)), function(j) {
-    u <- unique(mat[, j])
-    if (length(u) == 2L && all(u %in% c(0, 1))) {
-      "c"
-    } else if (length(u) <= 10L && all(u == round(u)) && any(!u %in% c(0, 1))) {
-      stop(sprintf(
-        "Column '%s' is integer-coded with %d levels not in {0, 1}; mgm_fit() v0.1 supports gaussian and binary (0/1) nodes only. Recode a binary column to 0/1, or one-hot encode a multi-level categorical.",
-        colnames(mat)[j], length(u)), call. = FALSE)
-    } else {
-      "g"
-    }
-  }, character(1))
+.detect_types <- function(data, warn = TRUE) {
+  cols <- if (is.data.frame(data)) as.list(data) else
+    lapply(seq_len(ncol(data)), function(j) data[, j])
+  nms <- if (is.data.frame(data)) names(data) else colnames(data)
+
+  is_cat <- vapply(cols, function(x) {
+    if (is.factor(x) || is.character(x)) return(TRUE)
+    u <- unique(x[!is.na(x)])
+    length(u) <= 10L && all(u == round(u))
+  }, logical(1))
+
+  # Warn only for numeric columns promoted by the integer rule, and only when
+  # they are not the plain 0/1 binaries that were always categorical.
+  promoted <- vapply(seq_along(cols), function(j) {
+    x <- cols[[j]]
+    if (!is_cat[j] || is.factor(x) || is.character(x)) return(FALSE)
+    u <- unique(x[!is.na(x)])
+    !(length(u) == 2L && all(u %in% c(0, 1)))
+  }, logical(1))
+  if (warn && any(promoted)) {
+    warning(sprintf(
+      "Column(s) %s are numeric with <= 10 distinct integer values and are treated as categorical (mgm's rule), not gaussian. Pass types = to override.",
+      paste(nms[promoted], collapse = ", ")), call. = FALSE)
+  }
+
+  list(
+    type = ifelse(is_cat, "c", "g"),
+    level = vapply(seq_along(cols), function(j) {
+      if (!is_cat[j]) return(1L)
+      length(unique(cols[[j]][!is.na(cols[[j]])]))
+    }, integer(1))
+  )
+}
+
+# Canonical data.frame view for the nodewise fits: every categorical node is a
+# factor (so model.matrix() expands it into level dummies), every gaussian node
+# is numeric. This is the single place a node's storage type is decided, so the
+# glmnet path and the numeric view below can never disagree about it.
+#' @noRd
+.mgm_as_frame <- function(data, types, levels_v) {
+  df <- as.data.frame(data, stringsAsFactors = FALSE)
+  cat_ix <- which(types == "c")
+  for (j in cat_ix) df[[j]] <- as.factor(df[[j]])
+  df
+}
+
+# Numeric view of that frame: a factor becomes its 0-based level index, which
+# reproduces the 0/1 coding for a binary node and gives a k-level node the
+# 0..k-1 integer coding. Supplies nrow(), the up-front gaussian scaling, and the
+# stored $data, none of which can hold a factor.
+#' @noRd
+.mgm_frame_numeric <- function(df) {
+  out <- lapply(df, function(x) if (is.factor(x)) as.integer(x) - 1L else x)
+  as.data.frame(out, stringsAsFactors = FALSE)
 }
 
 #' Mixed graphical model
@@ -30,11 +79,18 @@
 #' in purpose to `mgm::mgm()`, but pure base R and self-certified: each node's
 #' regression reports its stationarity (KKT) residual (see [glm_lasso_kkt()]).
 #'
-#' @param data Numeric data frame or matrix (rows = observations); columns are
-#'   continuous or binary (0/1).
+#' @param data Data frame or matrix (rows = observations). Columns are
+#'   continuous, binary, or -- with `native = FALSE` -- multi-level categorical
+#'   (a `factor`/`character` column, or a numeric one caught by the detection
+#'   rule below).
 #' @param gamma EBIC hyperparameter. Default 0.25.
 #' @param types Optional character vector of node types (`"g"` gaussian, `"c"`
-#'   binary); auto-detected if `NULL`.
+#'   categorical); auto-detected if `NULL`. Detection follows `mgm::mgm()`'s own
+#'   rule: a `factor`/`character` column is categorical, and so is a numeric
+#'   column with 10 or fewer distinct integer values. A numeric column promoted
+#'   by that integer rule is warned about by name, because it switches the node
+#'   from gaussian to categorical -- a different model, not a different encoding.
+#'   Likert and count items hit this rule routinely.
 #' @param nlambda Number of penalties per nodewise path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #' @param threshold Post-selection coefficient threshold: `"LW"` (default),
@@ -55,14 +111,25 @@
 #' @param native Solver switch. `TRUE` (default) uses psychnet's own pure-R,
 #'   dependency-free, self-certified L1 path (KKT ~1e-9). `FALSE` delegates each
 #'   per-node fit to the `glmnet` package with mgm's exact EBIC/LW path (gaussian
-#'   lasso for continuous nodes, 2-class multinomial lasso for binary nodes), so
+#'   lasso for continuous nodes, multinomial lasso for categorical ones), so
 #'   the returned edge magnitudes byte-match `abs(mgm::mgm()$pairwise$wadj)`
 #'   (to ~1e-6) at the cost of glmnet's looser self-certificate. `native = FALSE`
 #'   needs the optional `glmnet` package (Suggests); `weights` are supported with
 #'   `native = TRUE` only.
+#'
+#'   Only `native = FALSE` supports **multi-level** categorical nodes: the base
+#'   kernel is a binomial solver, so a node with more than two levels errors
+#'   there by name. One-hot encoding is not an equivalent workaround -- it turns
+#'   one k-level node into k separate nodes, which is a different model. A
+#'   network containing a multi-level node cannot be passed to [net_predict()],
+#'   because a k-level predictor occupies k-1 design columns and so has no
+#'   one-coefficient-per-variable representation.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the symmetric standardized
-#'   weight matrix, with `$types` and `$kkt` (the worst nodewise residual). A
+#'   weight matrix, with `$types`, `$levels` (number of levels per node, 1 for
+#'   gaussian) and `$kkt` (the worst nodewise residual). Node order in
+#'   `$weights` and `$nodes` is always the column order of the input `data`,
+#'   never sorted, and a k-level categorical stays ONE node. A
 #'   binary-binary edge carries the sign of its nodewise-logistic coefficient;
 #'   `mgm::mgm()` reports the same edge as a magnitude only (its sign is
 #'   undefined for a categorical-categorical interaction), so compare such edges
@@ -93,22 +160,50 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   engine <- .resolve_native(native, "glmnet")
   stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
             nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
-  # A factor/character column would be silently dropped by .as_numeric_matrix,
-  # quietly removing a node; reject it explicitly (consistent with the numeric
-  # multi-level guard in .detect_types).
+  # Type/level detection runs on the ORIGINAL data, before any numeric coercion,
+  # so a factor column is still recognisable as one. `.as_numeric_matrix()` would
+  # drop it and silently remove a node.
+  # The promotion warning is only meaningful when detection is actually making
+  # the call; an explicit `types` means nothing is being decided silently.
+  det <- .detect_types(data, warn = is.null(types))
+  if (is.null(types)) {
+    types <- det$type
+    levels_v <- det$level
+  } else {
+    levels_v <- ifelse(types == "c", det$level, 1L)
+  }
+
+  # Only the glmnet engine has the multinomial machinery for a >2-level node;
+  # the base kernel is a binomial solver. Reject early and by name, rather than
+  # letting a k-level column reach a logistic fit that diverges silently.
+  multi <- types == "c" & levels_v > 2L
+  nms <- if (is.data.frame(data)) names(data) else colnames(data)
+  if (any(multi) && engine != "glmnet") {
+    stop(sprintf(
+      "Column(s) %s are categorical with more than 2 levels; the base kernel is a binomial solver and supports gaussian and binary (0/1) nodes only. Pass native = FALSE to use the multinomial glmnet engine.",
+      paste(nms[multi], collapse = ", ")), call. = FALSE)
+  }
+  # A factor column can only travel the glmnet path; on the base path it would
+  # be dropped by the numeric coercion below.
   if (is.data.frame(data)) {
     nonnum <- !vapply(data, is.numeric, logical(1))
-    if (any(nonnum)) {
+    if (any(nonnum) && engine != "glmnet") {
       stop(sprintf(
-        "mgm_fit() requires numeric columns; column(s) %s are non-numeric. Recode a binary column to 0/1 or one-hot encode a categorical first.",
+        "mgm_fit() requires numeric columns when native = TRUE; column(s) %s are non-numeric. Recode a binary column to 0/1, or pass native = FALSE to model it as a categorical node.",
         paste(names(data)[nonnum], collapse = ", ")), call. = FALSE)
     }
   }
-  mat <- .na_prep_nodewise(.as_numeric_matrix(data, drop_na = FALSE), na_method)
+
+  # The glmnet path keeps a data.frame (factors intact) so model.matrix() can
+  # expand a k-level node into k-1 dummy columns; the base path keeps the numeric
+  # matrix it has always used. `mat` stays the numeric view in both cases -- it
+  # is what supplies nrow(), the up-front scaling, and the stored $data.
+  df <- .mgm_as_frame(data, types, levels_v)
+  mat <- .na_prep_nodewise(.as_numeric_matrix(.mgm_frame_numeric(df),
+                                              drop_na = FALSE), na_method)
   p <- ncol(mat)
   if (!is.null(labels)) stopifnot(length(labels) == p)
   if (is.null(labels)) labels <- colnames(mat)
-  if (is.null(types))  types  <- .detect_types(mat)
   stopifnot(length(types) == p, all(types %in% c("g", "c")))
 
   # Moderated MGM: a chosen variable moderates every edge. Dispatched before the
@@ -128,10 +223,12 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                          lambda_min_ratio = lambda_min_ratio))
   }
 
-  # A user-declared binary ('c') column must actually be 0/1, else the logistic
-  # nodewise fit diverges silently (auto-detected 'c' columns pass trivially).
-  cbin <- which(types == "c")
-  if (length(cbin)) {
+  # A user-declared binary ('c') column must actually be 0/1 on the base path,
+  # else the logistic nodewise fit diverges silently (auto-detected 'c' columns
+  # pass trivially). The glmnet path recodes via factor levels, so any coding
+  # works there.
+  cbin <- which(types == "c" & levels_v <= 2L)
+  if (length(cbin) && engine != "glmnet") {
     bad <- cbin[!vapply(cbin, function(j) all(mat[, j] %in% c(0, 1)), logical(1))]
     if (length(bad)) {
       stop(sprintf(
@@ -146,7 +243,8 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
       stop("native = FALSE does not support `weights`; use native = TRUE.",
            call. = FALSE)
     }
-    return(.mgm_fit_glmnet(mat, types, gamma, threshold, rule, nlambda, labels))
+    return(.mgm_fit_glmnet(df, types, gamma, threshold, rule, nlambda, labels,
+                           levels_v = levels_v, mat = mat))
   }
 
   # Scale continuous columns to unit variance up front (mgm::mgm scale = TRUE):

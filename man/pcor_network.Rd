@@ -49,7 +49,8 @@ complete.}
 \value{
 A \code{psychnet} object whose \verb{$weights} is the thresholded
 partial-correlation matrix, with \verb{$precision}, \verb{$cor_matrix} (and
-\verb{$p_values} when \code{alpha} is used).
+\verb{$p_values} when \code{alpha} is used). Node order in \verb{$weights} and \verb{$nodes} is
+always the column order of the input \code{data} / \code{cor_matrix}, never sorted.
 }
 \description{
 Conditional (full-order) association network: each edge is the correlation

@@ -166,7 +166,7 @@ grouped data through `psychnet()`:
 | `net_clustering()`, `net_smallworld()` | weighted clustering coefficients and the small-world index |
 | `net_predict()` | node predictability (variance explained; classification accuracy) |
 | `net_boot()`, `difference_test()` | bootstrapped accuracy and within-network difference tests |
-| `net_stability()`, `casedrop_reliability()`, `network_reliability()` | case-dropping stability and split-half reliability |
+| `net_stability()`, `net_casedrop_reliability()`, `net_split_reliability()` | case-dropping stability and split-half reliability |
 | `net_compare()` | the permutation Network Comparison Test |
 | `redundancy()`, `net_aggregate()` | redundant-node detection and community aggregation |
 

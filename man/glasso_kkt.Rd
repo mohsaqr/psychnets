@@ -4,7 +4,13 @@
 \alias{glasso_kkt}
 \title{Graphical-lasso stationarity (KKT) residual}
 \usage{
-glasso_kkt(theta, cor_matrix, rho, active_tol = 1e-08)
+glasso_kkt(
+  theta,
+  cor_matrix,
+  rho,
+  active_tol = 1e-08,
+  penalize_diagonal = FALSE
+)
 }
 \arguments{
 \item{theta}{Precision matrix to test.}
@@ -14,6 +20,9 @@ glasso_kkt(theta, cor_matrix, rho, active_tol = 1e-08)
 \item{rho}{Scalar penalty.}
 
 \item{active_tol}{Magnitude above which an off-diagonal entry is "active".}
+
+\item{penalize_diagonal}{Was the diagonal penalized in the fit being graded?
+Default \code{FALSE}, matching \code{\link[=ebic_glasso]{ebic_glasso()}}'s default.}
 }
 \value{
 Maximum absolute stationarity violation (scalar); 0 = exact optimum.
@@ -30,6 +39,13 @@ optimality conditions are \eqn{W_{ii} = S_{ii}};
 strict convexity, a precision matrix with zero violation is the unique global
 optimum, so a near-zero return certifies correctness independently of any
 reference solver.
+}
+\details{
+When the penalty also applies to the diagonal (\code{penalize_diagonal = TRUE},
+the objective adds \eqn{\rho \sum_i |\Theta_{ii}|}), the diagonal condition
+becomes \eqn{W_{ii} = S_{ii} + \rho}. Grading a diagonally-penalized fit with
+the default would report a spurious violation of exactly \eqn{\rho}, so this
+flag must match the fit being tested.
 }
 \examples{
 S <- 0.5^abs(outer(1:5, 1:5, "-"))

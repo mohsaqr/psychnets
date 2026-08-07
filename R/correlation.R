@@ -195,7 +195,8 @@
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the thresholded correlation
 #'   matrix, with `$cor_matrix`, `$n_eff`, `$na_method` (and `$p_values` when
-#'   `alpha` is used).
+#'   `alpha` is used). Node order in `$weights` and `$nodes` is always the column
+#'   order of the input `data` / `cor_matrix`, never sorted.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 4), 200, 4)
 #' cor_network(x)
@@ -247,7 +248,8 @@ cor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
 #' @inheritParams cor_network
 #' @return A `psychnet` object whose `$weights` is the thresholded
 #'   partial-correlation matrix, with `$precision`, `$cor_matrix` (and
-#'   `$p_values` when `alpha` is used).
+#'   `$p_values` when `alpha` is used). Node order in `$weights` and `$nodes` is
+#'   always the column order of the input `data` / `cor_matrix`, never sorted.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 4), 200, 4)
 #' pcor_network(x)

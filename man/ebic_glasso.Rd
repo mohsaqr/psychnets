@@ -15,6 +15,9 @@ ebic_glasso(
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   na_method = c("pairwise", "listwise"),
   native = TRUE,
+  lambda_path = NULL,
+  penalize_diagonal = FALSE,
+  refit = TRUE,
   labels = NULL
 )
 }
@@ -52,12 +55,40 @@ solve to the established \code{glasso} Fortran package (in \code{Suggests}) for 
 and byte-identical \code{glasso}/\code{qgraph} output, at its looser convergence (the
 reported \verb{$kkt} then shows glasso's tolerance rather than ~1e-11).}
 
+\item{lambda_path}{Optional numeric vector of penalties to scan, in the order
+given. When supplied it overrides \code{nlambda} / \code{lambda_min_ratio} and is
+echoed back unchanged. Intended for resampling callers: computing the path
+once from the original correlation matrix and reusing it for every resample
+keeps the selected penalties comparable across draws, whereas recomputing
+the path per resample lets the grid drift with each sample's largest
+absolute correlation.}
+
+\item{penalize_diagonal}{Apply the L1 penalty to the diagonal of the
+precision matrix as well. Default \code{FALSE} (the working covariance diagonal
+is held at \code{diag(S)}); \code{TRUE} holds it at \code{diag(S) + lambda}, and \verb{$kkt} is
+graded against the matching optimality condition.}
+
+\item{refit}{What to return at the selected penalty. \code{TRUE} (default)
+re-solves it to machine precision, so the returned network is the certified
+optimum. \code{FALSE} returns the path fit exactly as scanned (at the loose scan
+tolerance). This is a bit-compatibility switch, not a speed one: the refit
+is the strictly better answer and costs little, but a consumer holding
+frozen baselines against an unrefitted path scan needs the scanned matrix to
+reproduce them. \code{"unregularized"} keeps the selected support and refits the
+\emph{unpenalized} graph-restricted MLE on it, which is no longer a penalized
+optimum and is therefore certified by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} instead.}
+
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
 with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix}, \verb{$ebic}, \verb{$native},
-and \verb{$kkt} (the stationarity residual of the returned network).
+and \verb{$kkt} (the stationarity residual of the returned network). Node order
+in \verb{$weights}, \verb{$nodes}, and \verb{$precision} is always the column order of the
+input \code{data} / \code{cor_matrix}, never sorted. With \code{refit = "unregularized"}
+the object also carries \verb{$support}, and \verb{$kkt} is a \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}
+residual; with \code{refit = FALSE} the reported \verb{$kkt} reflects the loose scan
+tolerance (~1e-4) rather than the refit's ~1e-11.
 }
 \description{
 Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a

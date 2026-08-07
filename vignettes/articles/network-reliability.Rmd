@@ -29,8 +29,8 @@ sampling interval around each edge weight, and does that interval exclude zero?
 Do the differences between edges or between centralities survive resampling? Do
 the centrality rankings hold up when cases are dropped? Does the whole edge
 structure reproduce across independent halves of the sample? The verbs
-`net_boot()`, `difference_test()`, `net_stability()`, `casedrop_reliability()`,
-and `network_reliability()` answer these in turn. Every verb is
+`net_boot()`, `difference_test()`, `net_stability()`, `net_casedrop_reliability()`,
+and `net_split_reliability()` answer these in turn. Every verb is
 estimator-agnostic: each routes its refits through `psychnet(method = )`, so the
 same diagnostic applies to any estimator in the package, and each is written in
 base R with no compiled dependency.
@@ -154,7 +154,7 @@ plot(st)
 
 ## Edge-weight case-dropping stability
 
-`casedrop_reliability()` provides the edge-vector complement of
+`net_casedrop_reliability()` provides the edge-vector complement of
 `net_stability()`. For each drop proportion it re-estimates the network on
 random case-dropped subsets and compares the subset edge-weight vector with the
 full-sample one, reporting the correlation between the two vectors together with
@@ -166,7 +166,7 @@ drop proportion, with columns `metric`, `drop_prop`, `mean`, and `sd`; the
 CS-coefficient prints on the header line.
 
 ```{r casedrop}
-cd <- casedrop_reliability(SRL_Claude, method = "glasso", iter = 100)
+cd <- net_casedrop_reliability(SRL_Claude, method = "glasso", iter = 100)
 cd
 ```
 
@@ -187,7 +187,7 @@ plot(cd)
 
 ## Split-half reliability
 
-`network_reliability()` repeatedly splits the sample into two halves,
+`net_split_reliability()` repeatedly splits the sample into two halves,
 estimates a network on each half, and compares the two edge-weight vectors. It
 reports, across the splits, the edge-weight correlation between halves together
 with the mean, median, and maximum absolute edge deviation, a psychometric
@@ -197,7 +197,7 @@ class `psychnet_reliability`, one row per metric, with columns `metric`, `mean`,
 quantiles of the metric across the split-half iterations.
 
 ```{r reliability}
-rel <- network_reliability(SRL_Claude, method = "glasso", iter = 100)
+rel <- net_split_reliability(SRL_Claude, method = "glasso", iter = 100)
 rel
 ```
 
@@ -221,7 +221,7 @@ each applies to any estimator with no per-method code. The partial-correlation
 estimator gives its own case-dropping profile, for example.
 
 ```{r pcor}
-casedrop_reliability(SRL_Claude, method = "pcor", iter = 100)
+net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 100)
 ```
 
 Each verb also accepts a `psychnet_group` object, built with
@@ -234,8 +234,8 @@ Each verb also accepts a `psychnet_group` object, built with
 | `net_boot()` | How wide is the accuracy interval around each edge and centrality? | `psychnet_bootstrap` with tidy `$edges` and `$centrality` |
 | `difference_test()` | Do two edges or two centralities differ within the network? | tidy df (`item1`, `item2`, interval, `p_value`, `significant`) |
 | `net_stability()` | How robust is the centrality ranking to dropping cases? | `psychnet_stability` with `$cs` and `$table` |
-| `casedrop_reliability()` | How robust is the edge structure to dropping cases? | tidy df (metric by drop proportion) with the edge-weight CS |
-| `network_reliability()` | How reproducible is the edge structure across split-halves? | tidy df, one row per between-halves metric |
+| `net_casedrop_reliability()` | How robust is the edge structure to dropping cases? | tidy df (metric by drop proportion) with the edge-weight CS |
+| `net_split_reliability()` | How reproducible is the edge structure across split-halves? | tidy df, one row per between-halves metric |
 
 Together these verbs cover edge accuracy, within-network ordering, centrality
 stability, edge-weight stability, and split-half reliability in base R.

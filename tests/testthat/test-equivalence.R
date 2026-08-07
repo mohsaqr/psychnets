@@ -316,3 +316,58 @@ test_that("net_edge_betweenness matches igraph on an unweighted graph", {
   common <- intersect(names(refm), names(oursm))
   expect_lt(max(abs(oursm[common] - refm[common])), 1e-8)
 })
+
+# --- multi-level categorical nodes (the delegation gap closed 2026-08-07) ----
+
+test_that("mgm_fit(native=FALSE) matches mgm::mgm with multi-level categoricals", {
+  skip_equiv("mgm")
+  skip_if_not_installed("glmnet")
+  # One k-level factor beside a binary and three gaussian nodes. Before this
+  # capability landed, one-hot encoding was the only route and it is NOT
+  # equivalent: it turns one k-level node into k nodes, a different model.
+  for (klev in c(3L, 4L)) {
+    for (seed in 1:2) {
+      set.seed(seed)
+      n <- 400
+      f <- stats::rnorm(n)
+      d <- data.frame(
+        g1 = f + stats::rnorm(n, sd = 0.6),
+        g2 = f + stats::rnorm(n, sd = 0.6),
+        b1 = ((f + stats::rnorm(n, sd = 0.6)) > 0) * 1L,
+        fc = factor(cut(f + stats::rnorm(n, sd = 0.8), breaks = klev,
+                        labels = FALSE)),
+        g3 = stats::rnorm(n)
+      )
+      num <- data.frame(g1 = d$g1, g2 = d$g2, b1 = d$b1,
+                        fc = as.integer(d$fc) - 1L, g3 = d$g3)
+      ref <- mgm::mgm(as.matrix(num), type = c("g", "g", "c", "c", "g"),
+                      level = c(1, 1, 2, klev, 1), lambdaSel = "EBIC",
+                      lambdaGam = 0.25, ruleReg = "AND", threshold = "LW",
+                      scale = TRUE, pbar = FALSE, signInfo = FALSE)
+      ours <- suppressWarnings(
+        mgm_fit(d, gamma = 0.25, native = FALSE, threshold = "LW", rule = "AND"))
+      cmp <- off_compare(ours$weights, ref$pairwise$wadj)
+      expect_equal(cmp$struct, 1)
+      expect_lt(cmp$max_abs, 1e-10)
+    }
+  }
+})
+
+test_that("a Likert column promoted by mgm's <=10 rule matches mgm::mgm", {
+  skip_equiv("mgm")
+  skip_if_not_installed("glmnet")
+  set.seed(9)
+  n <- 300
+  f <- stats::rnorm(n)
+  d <- data.frame(g1 = f + stats::rnorm(n, sd = 0.6),
+                  g2 = f + stats::rnorm(n, sd = 0.6),
+                  lik = as.integer(cut(f + stats::rnorm(n, sd = 0.8), 5)))
+  expect_warning(ours <- mgm_fit(d, gamma = 0.25, native = FALSE), "lik")
+  num <- data.frame(g1 = d$g1, g2 = d$g2, lik = d$lik - 1L)
+  ref <- mgm::mgm(as.matrix(num), type = c("g", "g", "c"), level = c(1, 1, 5),
+                  lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND",
+                  threshold = "LW", scale = TRUE, pbar = FALSE, signInfo = FALSE)
+  cmp <- off_compare(ours$weights, ref$pairwise$wadj)
+  expect_equal(cmp$struct, 1)
+  expect_lt(cmp$max_abs, 1e-10)
+})

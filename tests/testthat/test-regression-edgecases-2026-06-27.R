@@ -20,16 +20,39 @@ test_that("mgm_fit rejects a continuous column declared binary via types", {
                "not coded 0/1")
 })
 
-test_that("mgm_fit rejects a factor/character column instead of dropping it", {
+test_that("mgm_fit never silently drops a factor/character column", {
+  # The original defect was .as_numeric_matrix() dropping the column and quietly
+  # removing a node. The base kernel is a binomial solver so it still refuses,
+  # but by name and pointing at the engine that can model it; the glmnet engine
+  # keeps it as a categorical node rather than dropping it.
   d <- as.data.frame(mat_g(2))
   d$fc <- factor(sample(letters[1:3], nrow(d), replace = TRUE))
-  expect_error(mgm_fit(d), "non-numeric")
+  expect_error(mgm_fit(d, native = TRUE), "fc")
+  skip_if_not_installed("glmnet")
+  fit <- mgm_fit(d, native = FALSE)
+  expect_true("fc" %in% fit$nodes$label)
+  expect_equal(unname(fit$types[["fc"]]), "c")
 })
 
-test_that("mgm_fit gives an accurate level-count message for a {1,2} column", {
+test_that("a {1,2}-coded column is a 2-level categorical, not an error", {
+  # mgm's own rule: <= 10 distinct integers is categorical. A 2-level column is
+  # recoded through its factor levels to 0/1, which is the same logistic model,
+  # so both engines accept any 2-level coding. The promotion is warned about
+  # because it changes the node from gaussian to categorical.
   d <- as.data.frame(mat_g(3, p = 2))
   d$x12 <- sample(1:2, nrow(d), replace = TRUE)
-  expect_error(mgm_fit(d), "2 levels not in \\{0, 1\\}")
+  expect_warning(fit <- mgm_fit(d, native = TRUE), "x12")
+  expect_equal(unname(fit$types[["x12"]]), "c")
+
+  # and it agrees with the same column already coded 0/1, which needs no
+  # warning because a 0/1 column was always treated as categorical
+  d01 <- d; d01$x12 <- d$x12 - 1L
+  expect_silent(fit01 <- mgm_fit(d01, native = TRUE))
+  expect_equal(fit$weights, fit01$weights)
+
+  skip_if_not_installed("glmnet")
+  expect_warning(fitg <- mgm_fit(d, native = FALSE), "x12")
+  expect_equal(unname(fitg$types[["x12"]]), "c")
 })
 
 # --- MEDIUM: cor_matrix normalization + PSD ----------------------------------

@@ -131,24 +131,27 @@
 # mgm$pairwise$wadj; the stored sign is recovered from a gaussian endpoint
 # where one exists (a binary-binary edge sign is undefined, stored positive).
 #' @noRd
-.mgm_fit_glmnet <- function(mat, types, gamma, threshold, rule, nlambda,
-                            labels) {
-  n <- nrow(mat); p <- ncol(mat)
+.mgm_fit_glmnet <- function(df, types, gamma, threshold, rule, nlambda,
+                            labels, levels_v = NULL, mat = NULL) {
+  n <- nrow(df); p <- ncol(df)
   gix <- which(types == "g")
+  if (is.null(levels_v)) levels_v <- ifelse(types == "c", 2L, 1L)
+  if (is.null(mat)) mat <- as.matrix(.mgm_frame_numeric(df))
+  has_multi <- any(levels_v > 2L)
 
   # Column-wise center/scale mapping raw data to the glmnet predictor scale:
   # gaussian columns are standardized (mean, sample sd, matching base scale());
-  # binary columns enter raw as 0/1.
+  # categorical columns enter as model-matrix level dummies.
+  #
+  # Scaling is applied to the whole frame ONCE, up front, before any model
+  # matrix is built -- so a gaussian node is standardized when it is the
+  # response too, not only when it is a predictor. mgm::mgm scales at the top of
+  # its main function; scaling per-node instead diverges.
   resp_center <- numeric(p); resp_scale <- rep(1, p)
   if (length(gix)) {
     resp_center[gix] <- colMeans(mat[, gix, drop = FALSE])
     resp_scale[gix]  <- pmax(apply(mat[, gix, drop = FALSE], 2L, stats::sd), 1e-12)
-  }
-  # The scaled-predictor frame: gaussian columns standardized, binary kept 0/1.
-  Xall <- mat
-  if (length(gix)) {
-    Xall[, gix] <- sweep(sweep(mat[, gix, drop = FALSE], 2L, resp_center[gix], "-"),
-                         2L, resp_scale[gix], "/")
+    for (j in gix) df[[j]] <- (mat[, j] - resp_center[j]) / resp_scale[j]
   }
 
   # Per-node fit. Returns the selected (unthresholded) coefficients on the
@@ -156,18 +159,29 @@
   # recovery), the magnitude side value (for the graph), an effective-binomial
   # representation for prediction, and the self-lambda KKT.
   node_fit <- function(v) {
-    y <- Xall[, v]
-    X <- Xall[, -v, drop = FALSE]
-    pred_var <- seq_len(p)[-v]
+    # A k-level factor contributes k-1 dummy columns; `assign` maps each design
+    # column back to its source variable, because the pairwise magnitudes are
+    # aggregated over a variable's COLUMNS, not over single coefficients.
+    mm  <- stats::model.matrix(~ ., data = df[, -v, drop = FALSE])
+    asg <- attr(mm, "assign")[-1]
+    X   <- mm[, -1, drop = FALSE]
+    pred_var <- seq_len(p)[-v][asg]
+    # npar is ncol(X) -- DUMMY COLUMNS, not variables. It enters both the EBIC
+    # penalty and the LW threshold, so a 3-level factor inflates it by 2, not 1.
     npar <- ncol(X)
 
     if (types[v] == "c") {
-      fit <- glmnet::glmnet(X, as.factor(y), family = "multinomial", alpha = 1,
+      # Categorical responses use multinomial INCLUDING the binary case: a
+      # 2-class multinomial, not family = "binomial".
+      y <- factor(df[[v]])
+      fit <- glmnet::glmnet(X, y, family = "multinomial", alpha = 1,
                             nlambda = nlambda, intercept = TRUE)
       beta_list <- lapply(fit$beta, as.matrix)                  # one per class
+      # n_neighbors counts non-zero coefficient COLUMNS aggregated across
+      # response classes, not distinct predictor variables.
       nz <- Reduce("+", lapply(beta_list, function(B) (B != 0) * 1)) > 0
       n_nb <- colSums(nz)
-      tab  <- tabulate(as.integer(as.factor(y)), nbins = length(beta_list))
+      tab  <- tabulate(as.integer(y), nbins = length(beta_list))
       pj   <- tab / n
       LL_null <- n * sum(pj[pj > 0] * log(pj[pj > 0]))
       LL_sat  <- 0.5 * fit$nulldev + LL_null
@@ -176,17 +190,31 @@
       idx  <- which.min(ebic)
       beta_sel <- lapply(beta_list, function(B) B[, idx])       # per-class, unthresholded
       a0_sel   <- fit$a0[, idx]
-      # effective 2-class binomial logit for class "1" (positive class):
-      # P(y=1) = sigma(eta1 - eta0); glmnet class order is sorted factor levels.
-      lev <- names(beta_list)
-      i1 <- match("1", lev); i0 <- match("0", lev)
-      beta_eff <- beta_sel[[i1]] - beta_sel[[i0]]
-      b0_eff   <- a0_sel[i1] - a0_sel[i0]
-      kkt <- .self_lambda_kkt(X, as.numeric(y), b0_eff, beta_eff, "binomial")
+      k <- length(beta_list)
+      if (k == 2L) {
+        # Effective 2-class binomial logit for the second (positive) class:
+        # P(y = lev2) = sigma(eta2 - eta1). glmnet's class order is the factor
+        # level order, so this is positional and works for any 2-level coding.
+        beta_eff <- beta_sel[[2L]] - beta_sel[[1L]]
+        b0_eff   <- a0_sel[2L] - a0_sel[1L]
+        y01 <- as.numeric(as.integer(y) - 1L)
+        kkt <- .self_lambda_kkt(X, y01, b0_eff, beta_eff, "binomial")
+        fam <- "binomial"
+      } else {
+        # A k > 2 response has no single effective logit; there is nothing
+        # honest to hand net_predict, so it is marked and refused there rather
+        # than collapsed into a binomial that would predict wrongly.
+        beta_eff <- numeric(npar); b0_eff <- 0
+        kkt <- max(vapply(seq_len(k), function(cl)
+          .self_lambda_kkt(X, as.numeric(as.integer(y) == cl),
+                           a0_sel[cl], beta_sel[[cl]], "binomial"), numeric(1)))
+        fam <- "multinomial"
+      }
       list(multinomial = TRUE, pred_var = pred_var, npar = npar,
            beta_sel = beta_sel, beta_eff = beta_eff, b0_eff = b0_eff,
-           family = "binomial", kkt = kkt)
+           family = fam, kkt = kkt)
     } else {
+      y <- as.numeric(df[[v]])
       fit <- glmnet::glmnet(X, y, family = "gaussian", alpha = 1,
                             nlambda = nlambda, intercept = TRUE)
       beta_path <- as.matrix(fit$beta)
@@ -234,7 +262,10 @@
       c(mag = mean(abs(vals)), sgn = NA_real_)
     } else {
       v <- beta_thr[[i]][cols]
-      c(mag = mean(abs(v)), sgn = if (v[1] != 0) sign(v[1]) else NA_real_)
+      # A sign is only meaningful when the predictor is a single column; a
+      # multi-dummy categorical has no signed direction (mgm leaves it undefined).
+      sgn <- if (length(v) == 1L && v[1] != 0) sign(v[1]) else NA_real_
+      c(mag = mean(abs(v)), sgn = sgn)
     }
   }
 
@@ -259,17 +290,25 @@
   # coefficients on that scale, intercept the (effective) intercept.
   intercepts <- vapply(fits, function(f) f$b0_eff, numeric(1))
   families   <- vapply(fits, function(f) f$family, character(1))
+  # The p-wide beta matrix is one coefficient per predictor VARIABLE, which can
+  # only represent a design where every predictor is a single column. With a
+  # multi-level node present it cannot, so it is left empty and net_predict()
+  # refuses rather than predicting from a truncated model.
   B_eff <- matrix(0, p, p, dimnames = list(labels, labels))
-  for (i in seq_len(p)) B_eff[i, fits[[i]]$pred_var] <- fits[[i]]$beta_eff
+  if (!has_multi) {
+    for (i in seq_len(p)) B_eff[i, fits[[i]]$pred_var] <- fits[[i]]$beta_eff
+  }
 
   .new_psychnet(W, labels, method = "mgm", directed = FALSE,
                 n_obs = n, data = mat,
                 extra = list(types = stats::setNames(types, labels),
+                             levels = stats::setNames(as.integer(levels_v), labels),
                              kkt = worst_kkt, threshold = threshold,
                              native = FALSE,
                              nodewise = list(intercept = intercepts,
                                              beta_std = B_eff,
                                              families = families,
+                                             exact = !has_multi,
                                              center = resp_center,
                                              scale = resp_scale,
                                              resp_center = resp_center,

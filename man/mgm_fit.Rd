@@ -20,13 +20,20 @@ mgm_fit(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations); columns are
-continuous or binary (0/1).}
+\item{data}{Data frame or matrix (rows = observations). Columns are
+continuous, binary, or -- with \code{native = FALSE} -- multi-level categorical
+(a \code{factor}/\code{character} column, or a numeric one caught by the detection
+rule below).}
 
 \item{gamma}{EBIC hyperparameter. Default 0.25.}
 
 \item{types}{Optional character vector of node types (\code{"g"} gaussian, \code{"c"}
-binary); auto-detected if \code{NULL}.}
+categorical); auto-detected if \code{NULL}. Detection follows \code{mgm::mgm()}'s own
+rule: a \code{factor}/\code{character} column is categorical, and so is a numeric
+column with 10 or fewer distinct integer values. A numeric column promoted
+by that integer rule is warned about by name, because it switches the node
+from gaussian to categorical -- a different model, not a different encoding.
+Likert and count items hit this rule routinely.}
 
 \item{nlambda}{Number of penalties per nodewise path. Default 100.}
 
@@ -55,17 +62,28 @@ keeping the full sample; \code{"listwise"} drops incomplete rows.}
 \item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
 dependency-free, self-certified L1 path (KKT ~1e-9). \code{FALSE} delegates each
 per-node fit to the \code{glmnet} package with mgm's exact EBIC/LW path (gaussian
-lasso for continuous nodes, 2-class multinomial lasso for binary nodes), so
+lasso for continuous nodes, multinomial lasso for categorical ones), so
 the returned edge magnitudes byte-match \code{abs(mgm::mgm()$pairwise$wadj)}
 (to ~1e-6) at the cost of glmnet's looser self-certificate. \code{native = FALSE}
 needs the optional \code{glmnet} package (Suggests); \code{weights} are supported with
-\code{native = TRUE} only.}
+\code{native = TRUE} only.
+
+Only \code{native = FALSE} supports \strong{multi-level} categorical nodes: the base
+kernel is a binomial solver, so a node with more than two levels errors
+there by name. One-hot encoding is not an equivalent workaround -- it turns
+one k-level node into k separate nodes, which is a different model. A
+network containing a multi-level node cannot be passed to \code{\link[=net_predict]{net_predict()}},
+because a k-level predictor occupies k-1 design columns and so has no
+one-coefficient-per-variable representation.}
 
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the symmetric standardized
-weight matrix, with \verb{$types} and \verb{$kkt} (the worst nodewise residual). A
+weight matrix, with \verb{$types}, \verb{$levels} (number of levels per node, 1 for
+gaussian) and \verb{$kkt} (the worst nodewise residual). Node order in
+\verb{$weights} and \verb{$nodes} is always the column order of the input \code{data},
+never sorted, and a k-level categorical stays ONE node. A
 binary-binary edge carries the sign of its nodewise-logistic coefficient;
 \code{mgm::mgm()} reports the same edge as a magnitude only (its sign is
 undefined for a categorical-categorical interaction), so compare such edges

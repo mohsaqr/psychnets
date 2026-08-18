@@ -118,7 +118,7 @@
         "psychnet is EBIC-only (no CV)", "no CV folds in psychnet",
         "elastic-net alpha; psychnet is pure lasso", "no alpha selection",
         "no alpha CV", "no alpha EBIC", "max interaction order; psychnet pairwise",
-        "no moderation in psychnet", "estimation method (EBIC fixed)",
+        "single moderator supported via moderators=", "estimation method (EBIC fixed)",
         "binary sign handling", "psychnet scales gaussian nodes internally",
         "no overparameterized coding", "categorical threshold",
         "sign-info messages", "verbose toggle", "progress bar",

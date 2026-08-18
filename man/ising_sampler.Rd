@@ -29,8 +29,9 @@ every edge.}
 \item{min_sum}{Minimum row sum-score; rows below it are dropped before
 fitting. \code{NULL} (default) keeps every row.}
 
-\item{weights}{Optional non-negative observation weights, one per retained
-row. \code{NULL} (default) is unweighted.}
+\item{weights}{Optional non-negative observation weights, one per input row
+after missing-data preparation. When \code{min_sum} is used, weights are filtered
+alongside their corresponding rows. \code{NULL} (default) is unweighted.}
 
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default, mode-impute) or
 \code{"listwise"}. See \code{\link[=ising_fit]{ising_fit()}}.}

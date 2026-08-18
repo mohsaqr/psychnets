@@ -44,7 +44,8 @@
 #' @param cor_method Correlation when `data` is supplied: `"pearson"` (default),
 #'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see [cor_auto()]).
 #' @param threshold Partial correlations with absolute value below this are
-#'   zeroed. Default 0.
+#'   zeroed. Default 0. With a positive value `$kkt` is `NA` for the returned
+#'   graph and the pre-threshold residual is stored as `$fit_kkt`.
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
 #' @param labels Optional node labels.
@@ -85,11 +86,15 @@ logo_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   pcor <- .precision_to_pcor(theta)
   pcor[abs(pcor) < threshold] <- 0
   dimnames(pcor) <- list(labels, labels)
+  fit_kkt <- ggm_support_kkt(theta, S, support)
 
   .new_psychnet(
     graph = pcor, labels = labels, method = "logo",
     directed = FALSE, n_obs = n,
     extra = list(precision = theta, support = support, cor_matrix = S,
-                 kkt = ggm_support_kkt(theta, S, support))
+                 kkt = if (threshold > 0) NA_real_ else fit_kkt,
+                 fit_kkt = fit_kkt,
+                 certificate_target = if (threshold > 0)
+                   "pre_threshold_fit" else "returned_network")
   )
 }

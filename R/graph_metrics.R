@@ -26,7 +26,11 @@
 #' net_clustering(ebic_glasso(cor_matrix = S, n = 400))
 #' @export
 net_clustering <- function(x, labels = NULL) {
-  if (inherits(x, "psychnet")) { W <- x$weights; labs <- x$nodes$label }
+  if (inherits(x, "psychnet")) {
+    if (isTRUE(x$directed))
+      stop("net_clustering() requires an undirected network.", call. = FALSE)
+    W <- x$weights; labs <- x$nodes$label
+  }
   else {
     if (!is.matrix(x) && !is.data.frame(x))
       stop("`x` must be a psychnet object or a square weighted matrix.",
@@ -38,6 +42,8 @@ net_clustering <- function(x, labels = NULL) {
     labs <- if (!is.null(labels)) labels else colnames(W)
     if (is.null(labs)) labs <- paste0("V", seq_len(ncol(W)))
   }
+  if (any(!is.finite(W)) || any(abs(W - t(W)) > 1e-8))
+    stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
   diag(W) <- 0
   if (min(W, na.rm = TRUE) < -1 || max(W, na.rm = TRUE) > 1) W <- W / max(abs(W))
   aW <- abs(W)
@@ -103,7 +109,9 @@ net_clustering <- function(x, labels = NULL) {
   el <- which(A > 0 & upper.tri(A), arr.ind = TRUE)
   m <- nrow(el)
   if (m < 2L) return(A)
-  for (s in seq_len(swaps)) {
+  accepted <- 0L; attempts <- 0L; max_attempts <- max(100L, 50L * swaps)
+  while (accepted < swaps && attempts < max_attempts) {
+    attempts <- attempts + 1L
     ij <- sample.int(m, 2L)
     a <- el[ij[1], 1]; b <- el[ij[1], 2]
     c <- el[ij[2], 1]; d <- el[ij[2], 2]
@@ -112,6 +120,7 @@ net_clustering <- function(x, labels = NULL) {
     A[a, b] <- A[b, a] <- 0; A[c, d] <- A[d, c] <- 0
     A[a, d] <- A[d, a] <- 1; A[c, b] <- A[b, c] <- 1
     el[ij[1], ] <- c(a, d); el[ij[2], ] <- c(c, b)
+    accepted <- accepted + 1L
   }
   A
 }
@@ -134,13 +143,25 @@ net_clustering <- function(x, labels = NULL) {
 #' net_smallworld(ebic_glasso(cor_matrix = S, n = 400), n_rand = 50, seed = 1)
 #' @export
 net_smallworld <- function(x, n_rand = 100L, seed = NULL) {
-  if (inherits(x, "psychnet")) W <- x$weights
+  if (inherits(x, "psychnet")) {
+    if (isTRUE(x$directed))
+      stop("net_smallworld() requires an undirected network.", call. = FALSE)
+    W <- x$weights
+  }
   else {
     if (!is.matrix(x) && !is.data.frame(x))
       stop("`x` must be a psychnet object or a square weighted matrix.",
            call. = FALSE)
     W <- as.matrix(x)
   }
+  if (!is.numeric(W) || nrow(W) != ncol(W) || nrow(W) < 2L)
+    stop("`x` must be a square numeric weighted adjacency matrix.", call. = FALSE)
+  if (any(!is.finite(W)) || any(abs(W - t(W)) > 1e-8))
+    stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
+  if (!is.numeric(n_rand) || length(n_rand) != 1L || !is.finite(n_rand) ||
+      n_rand < 1 || n_rand != as.integer(n_rand))
+    stop("`n_rand` must be a positive whole number.", call. = FALSE)
+  n_rand <- as.integer(n_rand)
   # Seed the rewiring draws without leaving the caller's RNG stream disturbed.
   if (!is.null(seed)) {
     if (exists(".Random.seed", envir = globalenv())) {

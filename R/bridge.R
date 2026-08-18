@@ -35,7 +35,11 @@
 #' net_bridge(fit, communities = c(1, 1, 1, 2, 2, 2))
 #' @export
 net_bridge <- function(x, communities, normalize = FALSE, labels = NULL) {
-  if (inherits(x, "psychnet")) { g <- x$weights; labs <- x$nodes$label }
+  if (inherits(x, "psychnet")) {
+    if (isTRUE(x$directed))
+      stop("net_bridge() requires an undirected network.", call. = FALSE)
+    g <- x$weights; labs <- x$nodes$label
+  }
   else {
     if (!is.matrix(x) && !is.data.frame(x))
       stop("`x` must be a psychnet object or a square weighted matrix.",
@@ -47,6 +51,8 @@ net_bridge <- function(x, communities, normalize = FALSE, labels = NULL) {
     labs <- if (!is.null(labels)) labels else colnames(g)
     if (is.null(labs)) labs <- paste0("V", seq_len(ncol(g)))
   }
+  if (any(!is.finite(g)) || any(abs(g - t(g)) > 1e-8))
+    stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
   p <- nrow(g)
   diag(g) <- 0
   rownames(g) <- colnames(g) <- labs

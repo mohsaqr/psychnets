@@ -1,5 +1,31 @@
 # psychnets 0.5.0
 
+## Pre-release correctness hardening
+
+* `cor_auto()` now rejects variable pairs with fewer than two joint
+  observations instead of optimizing an empty polychoric likelihood.
+  Marginal-correlation p-values use pair-specific effective sample sizes;
+  full-order partial-correlation inference rejects heterogeneous pairwise
+  sample sizes.
+* Bootstrap, stability, case-drop, and split-half refits retain the observed
+  node set when a resample makes a node constant. Failed-fit counts are exposed,
+  invalid small-sample splits are rejected, and `estimator_args` carries
+  estimator options whose names collide with diagnostic options. The legacy
+  `net_boot(engine=)` argument is translated to the public `native` switch.
+* Bootstrap difference tests split exact ties between both tails, so identical
+  draw distributions return `p = 1`.
+* Corrected undirected node-betweenness normalization, preserved directedness
+  in relative-importance aggregation, and prevented rank dichotomization from
+  splitting tied values by row order.
+* Certificates that are unavailable, including post-threshold GGM graphs and
+  conditioned moderated networks, now report `certified = NA`. GGM objects
+  retain the pre-threshold residual in `$fit_kkt`.
+* The glmnet Ising/MGM paths and moderated MGM now honor `nlambda` and
+  `lambda_min_ratio`; moderated MGM honors both `LW` and `HW`. MGM consistently
+  stores `$levels`, and prediction accepts original two-level factor columns.
+* GGM predictability now uses the fitted marginal variance when the precision
+  diagonal is penalized.
+
 Unblocks Nestimate's delegation of its cross-sectional psychometric estimators
 to psychnets (see `AGENT-NOTE-NESTIMATE-DELEGATION.md`, gaps A and B). Default
 *numeric* output of every estimator is unchanged; all new behaviour is opt-in.
@@ -44,7 +70,8 @@ contract, so it is genuinely one verb rather than a collision.
   as scanned -- a bit-compatibility switch for consumers holding frozen baselines
   against an unrefitted path scan, not a performance knob. `"unregularized"`
   keeps the selected support and refits the unpenalized graph-restricted MLE on
-  it, certified by `ggm_support_kkt()` instead of `glasso_kkt()`.
+  it, certified by `ggm_support_kkt()` instead of `glasso_kkt()`. `$support`
+  is stored on the object in that case only.
 
 ## `mgm_fit()` supports multi-level categorical nodes
 
@@ -58,10 +85,53 @@ contract, so it is genuinely one verb rather than a collision.
 * Node type detection now follows `mgm::mgm()`'s own rule: a `factor`/`character`
   column is categorical, and so is a numeric column with 10 or fewer distinct
   integer values. A numeric column promoted by that integer rule is **warned
-  about by name**, because it switches the node from gaussian to categorical --
-  a different model, not a different encoding. Likert and count items hit this
-  rule routinely. No previously-working call changes its result: every input
-  newly classified as categorical raised an error before.
+  about by name** (condition class `psychnet_type_promotion`), because it
+  switches the node from gaussian to categorical -- a different model, not a
+  different encoding. Likert and count items hit this rule routinely. No
+  previously-working call changes its result: every input newly classified as
+  categorical raised an error before, and constant / all-NA columns are still
+  dropped as before. A `character` column with more than 10 distinct values is
+  refused as an identifier (use `factor()` to insist), and a column declared
+  `"c"` via `types =` with more than 10 distinct values is refused as a
+  mislabelled continuous variable rather than routed to a multinomial.
+
+* `na_method` applies identically on both engines: the glmnet path is fed the
+  same imputed (or listwise-reduced) rows as the base path, and a missing
+  multi-level code is imputed with the modal level rather than a mean.
+
+* The certificate of a multi-level node is the multinomial (softmax)
+  stationarity residual. Grading each class as an independent logistic
+  regression reported ~0.2 for a fit glmnet had converged; the true residual is
+  ~1e-5. Related: on the glmnet paths (`mgm_fit` / `ising_fit`,
+  `native = FALSE`) a node whose EBIC-selected model is *empty* now certifies as
+  optimal (residual ~0) instead of reporting its whole gradient as a violation
+  -- the empty solution is exact at glmnet's own `lambda_max`. Only `$kkt`
+  changes; weights are untouched.
+
+* The resampling verbs (`net_boot()`, `net_stability()`,
+  `net_casedrop_reliability()`, `net_split_reliability()`) now hand each draw
+  to the estimator **exactly as the full data would be**: a data.frame keeps
+  its factor columns and its incomplete rows, a matrix is coerced without
+  dropping rows. So resampling `mgm_fit(native = FALSE)` keeps a factor node
+  (previously it was silently dropped), and `na_method = "pairwise"` -- every
+  estimator's default -- resamples the rows a direct call would use instead of
+  a listwise-reduced subset (previously the verbs listwise-deleted up front,
+  so the bootstrapped network was not the network `psychnet()` returns on the
+  same data). Node labels are read off the observed fit. For `method = "mgm"`
+  node types are decided once on the full data and pinned via `types=` for
+  every draw, so a borderline column cannot flip between gaussian and
+  categorical from draw to draw, and the promotion warning is raised once per
+  verb call. Complete numeric data is byte-identical to before.
+
+* `mgm_fit()`: constant / all-NA columns are dropped before anything is indexed
+  against the columns, and `moderators` (a positional index) and a `labels`
+  vector given for all original columns now follow that drop; a moderator that
+  is itself constant is refused by name. `na_method = "listwise"` is applied
+  first, so a node left with one level after deletion is dropped like any
+  other constant column on both engines. An explicit `factor` with more than
+  10 levels is accepted (that is the documented escape hatch); only `character`
+  columns and `types = "c"` declarations on non-factor columns are subject to
+  the 10-level guard.
 
 * A 2-level column is recoded through its factor levels, so any binary coding
   (`{1,2}`, `{"no","yes"}`) now works and gives the same fit as `{0,1}`.

@@ -73,7 +73,8 @@
 #' @param nlambda Number of penalties on the path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #' @param threshold Partial correlations with absolute value below this are
-#'   zeroed. Default 0.
+#'   zeroed. Default 0. With a positive value `$kkt` is `NA` for the returned
+#'   graph and the pre-threshold residual is stored as `$fit_kkt`.
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default, with the nonparanormal transform applied per column over observed
 #'   values) or `"listwise"`. See [ebic_glasso()].
@@ -132,6 +133,7 @@ huge_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   pcor[abs(pcor) < threshold] <- 0
   dimnames(pcor) <- list(labels, labels)
   dimnames(S) <- list(labels, labels)
+  fit_kkt <- glasso_kkt(sel$wi, S, sel$lambda)
 
   .new_psychnet(
     graph = pcor, labels = labels, method = "huge",
@@ -139,7 +141,10 @@ huge_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
     extra = list(
       precision = sel$wi, lambda = sel$lambda, gamma = gamma,
       cor_matrix = S, npn = npn, ebic = sel$ebic,
-      kkt = glasso_kkt(sel$wi, S, sel$lambda)
+      kkt = if (threshold > 0) NA_real_ else fit_kkt,
+      fit_kkt = fit_kkt,
+      certificate_target = if (threshold > 0) "pre_threshold_fit" else
+        "returned_network"
     )
   )
 }

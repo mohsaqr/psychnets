@@ -145,7 +145,10 @@
   dimnames(wi) <- dimnames(S)
   loglik <- (n / 2) * (sum(log(1 / diag(S))) - ncol(S))   # tr(S wi) = p
   ebic <- -2 * loglik                                      # npar = 0
-  list(wi = wi, lambda = 0, ebic = ebic, ebic_path = ebic)
+  # The empty graph's support is the diagonal, so refit = "unregularized" can
+  # certify it with ggm_support_kkt() like any other selected support.
+  support <- diag(TRUE, ncol(S)); dimnames(support) <- dimnames(S)
+  list(wi = wi, lambda = 0, ebic = ebic, ebic_path = ebic, support = support)
 }
 
 # Translate the public `native` switch into the internal solver name and check
@@ -361,7 +364,7 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #'
 #' Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a
 #' log-spaced path, then refits the chosen penalty to machine precision so the
-#' returned network is the certified global optimum of the convex objective.
+#' fitted precision matrix is the certified global optimum of the convex objective.
 #' Equivalent in purpose to `qgraph::EBICglasso()` / `bootnet`'s `"EBICglasso"`
 #' default, but pure base R and self-certified (see [glasso_kkt()]).
 #'
@@ -375,7 +378,9 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #'   Default 0.01.
 #' @param threshold Partial correlations with absolute value below this are set
-#'   to zero. Default 0.
+#'   to zero. Default 0. A positive value is post-estimation processing, so the
+#'   returned graph has `$kkt = NA`; the fitted precision's residual remains in
+#'   `$fit_kkt`.
 #' @param cor_method Correlation used when `data` is supplied: `"pearson"`
 #'   (default), `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial
 #'   for ordinal items, the `qgraph::cor_auto` / `bootnet` default). See
@@ -411,7 +416,7 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix`, `$ebic`, `$native`,
-#'   and `$kkt` (the stationarity residual of the returned network). Node order
+#'   and `$kkt` (the stationarity residual, or `NA` after thresholding). Node order
 #'   in `$weights`, `$nodes`, and `$precision` is always the column order of the
 #'   input `data` / `cor_matrix`, never sorted. With `refit = "unregularized"`
 #'   the object also carries `$support`, and `$kkt` is a [ggm_support_kkt()]
@@ -474,22 +479,29 @@ ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
   dimnames(pcor) <- list(labels, labels)
 
   # The certificate must match the objective actually solved: an unregularized
-  # support refit is a constrained MLE, not a penalized optimum.
-  kkt <- if (identical(refit, "unregularized")) {
+  # support refit is a constrained MLE, not a penalized optimum. `$support` is
+  # stored only in that case; the default object stays as lean as before.
+  unreg <- identical(refit, "unregularized")
+  kkt <- if (unreg) {
     ggm_support_kkt(sel$wi, S, sel$support)
   } else {
     glasso_kkt(sel$wi, S, sel$lambda, penalize_diagonal = penalize_diagonal)
   }
+  returned_kkt <- if (threshold > 0) NA_real_ else kkt
 
   .new_psychnet(
     graph = pcor, labels = labels, method = "glasso",
     directed = FALSE, n_obs = n,
-    extra = list(
-      precision = sel$wi, lambda = sel$lambda, gamma = gamma,
-      cor_matrix = S, ebic = sel$ebic, ebic_path = sel$ebic_path,
-      lambda_path = lambda_path, na_method = na_method, native = native,
-      penalize_diagonal = penalize_diagonal, refit = refit,
-      support = sel$support, kkt = kkt
+    extra = c(
+      list(precision = sel$wi, lambda = sel$lambda, gamma = gamma,
+           cor_matrix = S, ebic = sel$ebic, ebic_path = sel$ebic_path,
+           lambda_path = lambda_path, na_method = na_method, native = native,
+           penalize_diagonal = penalize_diagonal, refit = refit),
+      if (unreg) list(support = sel$support),
+      list(kkt = returned_kkt,
+           fit_kkt = kkt,
+           certificate_target = if (threshold > 0) "pre_threshold_fit" else
+             "returned_network")
     )
   )
 }

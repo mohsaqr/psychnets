@@ -38,7 +38,9 @@ ebic_glasso(
 Default 0.01.}
 
 \item{threshold}{Partial correlations with absolute value below this are set
-to zero. Default 0.}
+to zero. Default 0. A positive value is post-estimation processing, so the
+returned graph has \verb{$kkt = NA}; the fitted precision's residual remains in
+\verb{$fit_kkt}.}
 
 \item{cor_method}{Correlation used when \code{data} is supplied: \code{"pearson"}
 (default), \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial
@@ -83,7 +85,7 @@ optimum and is therefore certified by \code{\link[=ggm_support_kkt]{ggm_support_
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
 with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix}, \verb{$ebic}, \verb{$native},
-and \verb{$kkt} (the stationarity residual of the returned network). Node order
+and \verb{$kkt} (the stationarity residual, or \code{NA} after thresholding). Node order
 in \verb{$weights}, \verb{$nodes}, and \verb{$precision} is always the column order of the
 input \code{data} / \code{cor_matrix}, never sorted. With \code{refit = "unregularized"}
 the object also carries \verb{$support}, and \verb{$kkt} is a \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}
@@ -93,7 +95,7 @@ tolerance (~1e-4) rather than the refit's ~1e-11.
 \description{
 Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a
 log-spaced path, then refits the chosen penalty to machine precision so the
-returned network is the certified global optimum of the convex objective.
+fitted precision matrix is the certified global optimum of the convex objective.
 Equivalent in purpose to \code{qgraph::EBICglasso()} / \code{bootnet}'s \code{"EBICglasso"}
 default, but pure base R and self-certified (see \code{\link[=glasso_kkt]{glasso_kkt()}}).
 }

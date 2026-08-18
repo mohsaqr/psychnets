@@ -7,7 +7,8 @@
 
 #' Centrality-stability coefficient (case-dropping subset bootstrap)
 #'
-#' @param data Numeric data frame or matrix (rows = observations).
+#' @param data Data frame or matrix (rows = observations), resampled exactly as
+#'   given (see [net_boot()]).
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param measures Centrality measures to assess. Defaults to the two
 #'   recommended for psychometric networks (`c("strength",
@@ -21,6 +22,8 @@
 #' @param certainty Probability the correlation must exceed `threshold`.
 #'   Default 0.95.
 #' @param labels Optional node labels.
+#' @param estimator_args Named list of estimator arguments. Use this for names
+#'   consumed by the stability diagnostic itself, such as estimator `threshold`.
 #' @param ... Passed to the estimator.
 #' @return An object of class `psychnet_stability` with `$cs` (CS-coefficient
 #'   per measure) and a tidy `$table` (columns `measure`, `drop_prop`,
@@ -38,41 +41,50 @@ net_stability <- function(data, method = "glasso",
                                  centrality_fn = NULL,
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
                                  iter = 100L, threshold = 0.7, certainty = 0.95,
-                                 labels = NULL, ...) {
+                                 labels = NULL, estimator_args = list(), ...) {
   # Group object -> case-drop each level from its stored cross-sectional data.
   if (inherits(data, "psychnet_group")) {
     return(.group_data_apply(data, net_stability, "net_stability",
       "psychnet_stability_group",
       list(measures = measures, centrality_fn = centrality_fn,
            drop_prop = drop_prop, iter = iter, threshold = threshold,
-           certainty = certainty)))
+           certainty = certainty, estimator_args = estimator_args)))
   }
   stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
             is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
             threshold > 0, threshold <= 1, certainty > 0, certainty <= 1)
   iter <- as.integer(iter)   # a fractional count corrupts the stored %d field
-  mat <- .as_numeric_matrix(data)
+  inp <- .resample_input(data, method,
+                         .resample_dots(list(...), estimator_args))
+  mat <- inp$data; dots <- inp$dots
   n <- nrow(mat)
-  if (is.null(labels)) labels <- colnames(mat)
+  keep_sizes <- pmax(2L, round(n * (1 - drop_prop)))
+  if (n < 3L || any(keep_sizes >= n))
+    stop("Each `drop_prop` must remove at least one case and retain at least two cases.",
+         call. = FALSE)
   cent_of <- function(fit) net_centralities(fit, measures = measures,
                                              centrality_fn = centrality_fn)
+  fit_net <- function(m, align = NULL)
+    .psn_refit_network(m, method = method, labels = align, dots = dots)
 
-  full_cent <- cent_of(psychnet(mat, method = method, labels = labels, ...))
+  full <- fit_net(mat, labels)
+  if (is.null(full)) stop("Full-sample estimation failed.", call. = FALSE)
+  if (is.null(labels)) labels <- full$nodes$label
+  full_cent <- cent_of(full)
 
   # corr_storage[[measure]]: iter x length(drop_prop) Spearman correlations.
   corr_storage <- lapply(measures, function(m)
     matrix(NA_real_, iter, length(drop_prop)))
   names(corr_storage) <- measures
+  fit_ok <- matrix(FALSE, iter, length(drop_prop))
 
   for (pj in seq_along(drop_prop)) {
     keep_n <- max(2L, round(n * (1 - drop_prop[pj])))
     for (it in seq_len(iter)) {
       idx <- sample.int(n, keep_n, replace = FALSE)
-      fit <- tryCatch(
-        psychnet(mat[idx, , drop = FALSE], method = method,
-                         labels = labels, ...),
-        error = function(e) NULL)
+      fit <- fit_net(mat[idx, , drop = FALSE], labels)
       if (is.null(fit)) next
+      fit_ok[it, pj] <- TRUE
       ct <- cent_of(fit)
       for (m in measures) {
         corr_storage[[m]][it, pj] <- suppressWarnings(
@@ -98,9 +110,17 @@ net_stability <- function(data, method = "glasso",
                stringsAsFactors = FALSE)
   }))
 
+  n_attempted <- iter * length(drop_prop)
+  n_success <- sum(fit_ok)
+  n_failed <- n_attempted - n_success
+  if (n_failed > 0L)
+    warning(sprintf("%d of %d case-drop fits failed.",
+                    n_failed, n_attempted), call. = FALSE)
+
   structure(list(cs = cs, table = tab, drop_prop = drop_prop,
                  threshold = threshold, certainty = certainty,
-                 iter = iter, method = method),
+                 iter = iter, method = method,
+                 n_success = n_success, n_failed = n_failed),
             class = "psychnet_stability")
 }
 

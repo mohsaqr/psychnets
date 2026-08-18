@@ -51,10 +51,15 @@
   mod_value
 }
 
-# Apply the Loh-Wainwright threshold to a coefficient vector.
+# Apply the requested mgm threshold to a coefficient vector.
 #' @noRd
-.mmg_lw <- function(b, npar, n) {
-  tau <- sqrt(2L) * sqrt(sum(b^2)) * sqrt(log(npar) / n)
+.mmg_threshold <- function(b, threshold, npar, n) {
+  if (threshold == "none") return(b)
+  tau <- if (threshold == "LW") {
+    sqrt(2L) * sqrt(sum(b^2)) * sqrt(log(npar) / n)
+  } else {
+    sqrt(log(npar) / n)
+  }
   b[abs(b) < tau] <- 0
   b
 }
@@ -89,7 +94,7 @@
     fit <- .nodewise_ebic(X, y - 1, "binomial", gamma, nlambda,
                           lambda_min_ratio)
     b <- fit$beta
-    if (threshold == "LW") b <- .mmg_lw(b, npar, n)
+    b <- .mmg_threshold(b, threshold, npar, n)
     # Split the logit coefficient into glmnet's symmetric 2-class convention.
     return(list(beta = NULL, beta_list = list(-b / 2, b / 2),
                 col_names = colnames(X), multinomial = TRUE,
@@ -97,7 +102,7 @@
   }
   fit <- .nodewise_ebic(X, y, "gaussian", gamma, nlambda, lambda_min_ratio)
   b <- fit$beta
-  if (threshold == "LW") b <- .mmg_lw(b, npar, n)
+  b <- .mmg_threshold(b, threshold, npar, n)
   list(beta = b, col_names = colnames(X), multinomial = FALSE,
        lambda = fit$lambda, kkt = fit$kkt)
 }
@@ -185,8 +190,11 @@
     }
 
     if (types[v] == "c") {
-      fit <- glmnet::glmnet(X, y, family = "multinomial", alpha = 1,
-                            intercept = TRUE)
+      glm_args <- list(x = X, y = y, family = "multinomial", alpha = 1,
+                       nlambda = nlambda, intercept = TRUE)
+      if (!is.null(lambda_min_ratio))
+        glm_args$lambda.min.ratio <- lambda_min_ratio
+      fit <- do.call(glmnet::glmnet, glm_args)
       beta_list <- lapply(fit$beta, as.matrix)
       nz <- Reduce("+", lapply(beta_list, function(B) (B != 0) * 1)) > 0
       n_nb <- colSums(nz)
@@ -197,17 +205,17 @@
       EBIC <- -2 * LL_lambda + n_nb * log(n) + 2 * gamma * n_nb * log(npar)
       idx <- which.min(EBIC)
       beta_sel <- lapply(beta_list, function(B) B[, idx])
-      if (threshold == "LW") {
-        beta_sel <- lapply(beta_sel, function(bb) {
-          tau <- sqrt(2L) * sqrt(sum(bb^2)) * sqrt(log(npar) / n)
-          bb[abs(bb) < tau] <- 0; bb
-        })
-      }
+      beta_sel <- lapply(beta_sel, .mmg_threshold, threshold = threshold,
+                         npar = npar, n = n)
       return(list(beta = NULL, beta_list = beta_sel, col_names = colnames(X),
                   multinomial = TRUE, lambda = fit$lambda[idx]))
     }
 
-    fit <- glmnet::glmnet(X, y, family = "gaussian", alpha = 1, intercept = TRUE)
+    glm_args <- list(x = X, y = y, family = "gaussian", alpha = 1,
+                     nlambda = nlambda, intercept = TRUE)
+    if (!is.null(lambda_min_ratio))
+      glm_args$lambda.min.ratio <- lambda_min_ratio
+    fit <- do.call(glmnet::glmnet, glm_args)
     beta_path <- as.matrix(fit$beta)
     n_nb <- colSums(beta_path != 0)
     LL_null <- -n / 2 * (log(2 * pi * mean((y - mean(y))^2)) + 1)
@@ -216,10 +224,7 @@
     EBIC <- -2 * LL_lambda + n_nb * log(n) + 2 * gamma * n_nb * log(npar)
     idx <- which.min(EBIC)
     b <- beta_path[, idx]
-    if (threshold == "LW") {
-      tau <- sqrt(2L) * sqrt(sum(b^2)) * sqrt(log(npar) / n)
-      b[abs(b) < tau] <- 0
-    }
+    b <- .mmg_threshold(b, threshold, npar, n)
     list(beta = b, col_names = colnames(X), multinomial = FALSE,
          lambda = fit$lambda[idx])
   })
@@ -259,7 +264,9 @@
                  level = level, labels = labels, n = n, data = mat,
                  pw_alive = pw_alive, int_alive = int_alive, kkt = kkt,
                  engine = engine,
-                 params = list(gamma = gamma, rule = rule, threshold = threshold)),
+                 params = list(gamma = gamma, rule = rule, threshold = threshold,
+                               nlambda = nlambda,
+                               lambda_min_ratio = lambda_min_ratio)),
             class = "psychnet_moderated")
 }
 

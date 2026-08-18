@@ -11,12 +11,13 @@ net_split_reliability(
   split = 0.5,
   cor_method = c("pearson", "spearman", "kendall"),
   labels = NULL,
+  estimator_args = list(),
   ...
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations), or a
-\code{psychnet_group} (split-half per level).}
+\item{data}{Data frame or matrix (rows = observations), resampled exactly as
+given (see \code{\link[=net_boot]{net_boot()}}), or a \code{psychnet_group} (split-half per level).}
 
 \item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
 
@@ -28,6 +29,9 @@ net_split_reliability(
 \code{"pearson"} (default), \code{"spearman"}, or \code{"kendall"}.}
 
 \item{labels}{Optional node labels.}
+
+\item{estimator_args}{Named list of estimator arguments. Use this for names
+consumed by the diagnostic itself, such as estimator \code{threshold}.}
 
 \item{...}{Passed to the estimator.}
 }

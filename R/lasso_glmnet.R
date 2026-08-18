@@ -43,9 +43,42 @@
   mu  <- if (family == "binomial") 1 / (1 + exp(-eta)) else eta
   grad <- as.numeric(crossprod(Xs, y - mu)) / n
   active <- abs(beta_std) > 1e-8
-  lam_eff <- if (any(active)) mean(abs(grad[active])) else 0
+  # With an empty active set the penalty cannot be read off the active
+  # gradients; the smallest lambda consistent with the empty solution is
+  # max|grad| (glmnet's own lambda_max), at which the empty model is exactly
+  # optimal. Reporting lam_eff = 0 there would grade the whole gradient as a
+  # violation of a fit that is in fact optimal.
+  lam_eff <- if (any(active)) mean(abs(grad[active])) else max(abs(grad))
   v_0 <- abs(sum(y - mu) / n)
   v_a <- if (any(active))  max(abs(grad[active] - lam_eff * sign(beta_std[active]))) else 0
+  v_i <- if (any(!active)) max(pmax(abs(grad[!active]) - lam_eff, 0)) else 0
+  max(v_0, v_a, v_i)
+}
+
+# Multinomial counterpart of .self_lambda_kkt for a k-class glmnet fit with the
+# (default, ungrouped) per-class lasso. The stationarity condition of the
+# multinomial objective uses the SOFTMAX class probabilities
+#   p_cl = exp(eta_cl) / sum_m exp(eta_m),
+# not a per-class sigmoid: grading each class as an independent logistic
+# regression evaluates a different objective and reports a residual of ~0.2 for
+# a fit glmnet has in fact converged (true residual ~1e-5). `a0` is the length-k
+# intercept vector, `beta_list` the k per-class coefficient vectors.
+#' @noRd
+.self_lambda_kkt_multinomial <- function(X, y, a0, beta_list) {
+  std <- .standardize(X)
+  Xs  <- std$X
+  n <- nrow(X); k <- length(beta_list)
+  B <- do.call(cbind, lapply(beta_list, as.numeric))          # npar x k
+  B_std <- B * std$scale
+  eta <- sweep(X %*% B, 2L, a0, "+")
+  eta <- eta - apply(eta, 1L, max)                            # overflow guard
+  P <- exp(eta); P <- P / rowSums(P)
+  Y <- outer(as.integer(y), seq_len(k), "==") * 1
+  grad <- crossprod(Xs, Y - P) / n
+  active <- abs(B_std) > 1e-8
+  lam_eff <- if (any(active)) mean(abs(grad[active])) else max(abs(grad))  # see .self_lambda_kkt
+  v_0 <- max(abs(colSums(Y - P) / n))
+  v_a <- if (any(active))  max(abs(grad[active] - lam_eff * sign(B_std[active]))) else 0
   v_i <- if (any(!active)) max(pmax(abs(grad[!active]) - lam_eff, 0)) else 0
   max(v_0, v_a, v_i)
 }
@@ -59,11 +92,15 @@
 #   gaussian (mgm)     : -2*LL    + J*log(n) + 2*gamma*J*log(p_pred)
 # where J = #nonzero coefficients and p_pred = number of predictor columns.
 #' @noRd
-.nodewise_glmnet <- function(X, y, family, gamma, p_pred, nlambda) {
+.nodewise_glmnet <- function(X, y, family, gamma, p_pred, nlambda,
+                             lambda_min_ratio) {
   n <- nrow(X)
   fam <- if (family == "binomial") "binomial" else "gaussian"
-  fit <- glmnet::glmnet(X, y, family = fam, alpha = 1, nlambda = nlambda,
-                        intercept = TRUE, standardize = TRUE)
+  glm_args <- list(x = X, y = y, family = fam, alpha = 1, nlambda = nlambda,
+                   intercept = TRUE, standardize = TRUE)
+  if (!is.null(lambda_min_ratio))
+    glm_args$lambda.min.ratio <- lambda_min_ratio
+  fit <- do.call(glmnet::glmnet, glm_args)
   beta_path <- as.matrix(fit$beta)
   J <- colSums(beta_path != 0)
 
@@ -95,11 +132,13 @@
 # 0/1 and beta_std holds the raw coefficients -- giving net_predict() the
 # correct logistic linear predictor with no transform.
 #' @noRd
-.ising_fit_glmnet <- function(mat, gamma, rule, nlambda, labels) {
+.ising_fit_glmnet <- function(mat, gamma, rule, nlambda, lambda_min_ratio,
+                              labels) {
   n <- nrow(mat); p <- ncol(mat)
   fits <- lapply(seq_len(p), function(i) {
     .nodewise_glmnet(mat[, -i, drop = FALSE], mat[, i], "binomial",
-                     gamma, p_pred = p - 1L, nlambda = nlambda)
+                     gamma, p_pred = p - 1L, nlambda = nlambda,
+                     lambda_min_ratio = lambda_min_ratio)
   })
   B <- matrix(0, p, p, dimnames = list(labels, labels))
   b0_raw <- vapply(fits, function(f) f$b0, numeric(1))
@@ -115,6 +154,8 @@
                 n_obs = n, data = mat,
                 extra = list(thresholds = stats::setNames(b0_raw, labels),
                              rule = rule, kkt = worst_kkt, native = FALSE,
+                             nlambda = nlambda,
+                             lambda_min_ratio = lambda_min_ratio,
                              nodewise = list(intercept = b0_raw,
                                              beta_std = B,
                                              families = rep("binomial", p),
@@ -130,9 +171,12 @@
 # magnitude symmetrization. The reported edge magnitude byte-matches
 # mgm$pairwise$wadj; the stored sign is recovered from a gaussian endpoint
 # where one exists (a binary-binary edge sign is undefined, stored positive).
+# `df` is the factor-typed frame REBUILT from the imputed numeric matrix `mat`
+# by mgm_fit(), so both views share rows and values whatever `na_method` did.
 #' @noRd
 .mgm_fit_glmnet <- function(df, types, gamma, threshold, rule, nlambda,
-                            labels, levels_v = NULL, mat = NULL) {
+                            lambda_min_ratio, labels, levels_v = NULL,
+                            mat = NULL) {
   n <- nrow(df); p <- ncol(df)
   gix <- which(types == "g")
   if (is.null(levels_v)) levels_v <- ifelse(types == "c", 2L, 1L)
@@ -174,8 +218,11 @@
       # Categorical responses use multinomial INCLUDING the binary case: a
       # 2-class multinomial, not family = "binomial".
       y <- factor(df[[v]])
-      fit <- glmnet::glmnet(X, y, family = "multinomial", alpha = 1,
-                            nlambda = nlambda, intercept = TRUE)
+      glm_args <- list(x = X, y = y, family = "multinomial", alpha = 1,
+                       nlambda = nlambda, intercept = TRUE)
+      if (!is.null(lambda_min_ratio))
+        glm_args$lambda.min.ratio <- lambda_min_ratio
+      fit <- do.call(glmnet::glmnet, glm_args)
       beta_list <- lapply(fit$beta, as.matrix)                  # one per class
       # n_neighbors counts non-zero coefficient COLUMNS aggregated across
       # response classes, not distinct predictor variables.
@@ -203,11 +250,10 @@
       } else {
         # A k > 2 response has no single effective logit; there is nothing
         # honest to hand net_predict, so it is marked and refused there rather
-        # than collapsed into a binomial that would predict wrongly.
+        # than collapsed into a binomial that would predict wrongly. Its
+        # certificate is the multinomial (softmax) stationarity residual.
         beta_eff <- numeric(npar); b0_eff <- 0
-        kkt <- max(vapply(seq_len(k), function(cl)
-          .self_lambda_kkt(X, as.numeric(as.integer(y) == cl),
-                           a0_sel[cl], beta_sel[[cl]], "binomial"), numeric(1)))
+        kkt <- .self_lambda_kkt_multinomial(X, y, a0_sel, beta_sel)
         fam <- "multinomial"
       }
       list(multinomial = TRUE, pred_var = pred_var, npar = npar,
@@ -215,8 +261,11 @@
            family = fam, kkt = kkt)
     } else {
       y <- as.numeric(df[[v]])
-      fit <- glmnet::glmnet(X, y, family = "gaussian", alpha = 1,
-                            nlambda = nlambda, intercept = TRUE)
+      glm_args <- list(x = X, y = y, family = "gaussian", alpha = 1,
+                       nlambda = nlambda, intercept = TRUE)
+      if (!is.null(lambda_min_ratio))
+        glm_args$lambda.min.ratio <- lambda_min_ratio
+      fit <- do.call(glmnet::glmnet, glm_args)
       beta_path <- as.matrix(fit$beta)
       n_nb <- colSums(beta_path != 0)
       LL_null <- -n / 2 * (log(2 * pi * mean((y - mean(y))^2)) + 1)
@@ -305,6 +354,8 @@
                              levels = stats::setNames(as.integer(levels_v), labels),
                              kkt = worst_kkt, threshold = threshold,
                              native = FALSE,
+                             nlambda = nlambda,
+                             lambda_min_ratio = lambda_min_ratio,
                              nodewise = list(intercept = intercepts,
                                              beta_std = B_eff,
                                              families = families,

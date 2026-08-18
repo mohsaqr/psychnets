@@ -16,8 +16,13 @@ mat_b <- function(seed = 1, n = 200, p = 4) {
 
 test_that("mgm_fit rejects a continuous column declared binary via types", {
   d <- as.data.frame(mat_g(1))                       # all gaussian
+  # 200 distinct values is a continuous variable mislabelled, not a k-class
+  # node: refused as such on BOTH engines (never routed to a multinomial).
   expect_error(mgm_fit(d, types = c("c", "c", "c", "c")),
-               "not coded 0/1")
+               "more than 10 distinct values")
+  skip_if_not_installed("glmnet")
+  expect_error(mgm_fit(d, types = c("c", "c", "c", "c"), native = FALSE),
+               "more than 10 distinct values")
 })
 
 test_that("mgm_fit never silently drops a factor/character column", {

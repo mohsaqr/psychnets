@@ -23,7 +23,12 @@ mgm_fit(
 \item{data}{Data frame or matrix (rows = observations). Columns are
 continuous, binary, or -- with \code{native = FALSE} -- multi-level categorical
 (a \code{factor}/\code{character} column, or a numeric one caught by the detection
-rule below).}
+rule below). A column with fewer than two distinct observed values carries
+no information and is dropped, as in every other estimator. A \code{character}
+column with more than 10 distinct values is refused as an identifier
+(convert it with \code{factor()} if it really is a categorical node), and a
+column declared \code{"c"} via \code{types} with more than 10 distinct values is
+refused as a mislabelled continuous variable.}
 
 \item{gamma}{EBIC hyperparameter. Default 0.25.}
 
@@ -37,7 +42,9 @@ Likert and count items hit this rule routinely.}
 
 \item{nlambda}{Number of penalties per nodewise path. Default 100.}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.
+With \code{native = FALSE}, omitting the argument retains glmnet's reference
+default for compatibility; an explicitly supplied value is honored.}
 
 \item{threshold}{Post-selection coefficient threshold: \code{"LW"} (default),
 \code{"HW"}, or \code{"none"}, matching \code{mgm::mgm()}.}
@@ -56,8 +63,9 @@ categorical nodes. \code{weights} are not supported in this mode.}
 (NA-prepared) data. \code{NULL} (default) is unweighted.}
 
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
-each column over its observed values (mean for continuous, mode for binary),
-keeping the full sample; \code{"listwise"} drops incomplete rows.}
+each column over its observed values (mean for continuous, modal level for
+binary and multi-level categorical), keeping the full sample; \code{"listwise"}
+drops incomplete rows. Applies identically on both engines.}
 
 \item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
 dependency-free, self-certified L1 path (KKT ~1e-9). \code{FALSE} delegates each

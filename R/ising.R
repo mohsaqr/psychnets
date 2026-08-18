@@ -38,10 +38,13 @@
 #' @param rule Edge-combination rule: `"AND"` (default) or `"OR"`.
 #' @param nlambda Number of penalties per nodewise path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
+#'   With `native = FALSE`, omitting the argument retains glmnet's reference
+#'   default for compatibility; an explicitly supplied value is honored.
 #' @param min_sum Minimum row sum-score (number of endorsed items); rows below
 #'   it are dropped before fitting. `NULL` (default) keeps every row.
-#' @param weights Optional non-negative observation weights, one per retained
-#'   row. `NULL` (default) is unweighted.
+#' @param weights Optional non-negative observation weights, one per input row
+#'   after missing-data preparation. When `min_sum` is used, weights are filtered
+#'   alongside their corresponding rows. `NULL` (default) is unweighted.
 #' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
 #'   each column over its observed values (mode for binary), keeping the full
 #'   sample; `"listwise"` drops incomplete rows. Identical for complete data.
@@ -51,7 +54,8 @@
 #'   path, so the returned `$weights`/`$thresholds` byte-match
 #'   `IsingFit::IsingFit()` (to ~1e-16) at the cost of glmnet's looser
 #'   self-certificate. `native = FALSE` needs the optional `glmnet` package
-#'   (Suggests); `weights`/`min_sum` are supported with `native = TRUE` only.
+#'   (Suggests). `min_sum` is supported by both engines; observation `weights`
+#'   require `native = TRUE`.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the symmetric weight matrix,
 #'   with `$thresholds` (node intercepts) and `$kkt` (the worst nodewise
@@ -69,6 +73,7 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                       weights = NULL,
                       na_method = c("pairwise", "listwise"),
                       native = TRUE, labels = NULL) {
+  ratio_missing <- missing(lambda_min_ratio)
   rule <- match.arg(rule)
   na_method <- match.arg(na_method)
   engine <- .resolve_native(native, "glmnet")
@@ -87,7 +92,9 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
       stop("native = FALSE does not support `weights`; use native = TRUE.",
            call. = FALSE)
     }
-    return(.ising_fit_glmnet(mat, gamma, rule, nlambda, labels))
+    return(.ising_fit_glmnet(mat, gamma, rule, nlambda,
+                             if (ratio_missing) NULL else lambda_min_ratio,
+                             labels))
   }
 
   fits <- lapply(seq_len(p), function(i) {
@@ -121,6 +128,8 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                 n_obs = nrow(mat), data = mat,
                 extra = list(thresholds = stats::setNames(thresholds, labels),
                              rule = rule, kkt = worst_kkt, native = native,
+                             nlambda = nlambda,
+                             lambda_min_ratio = lambda_min_ratio,
                              nodewise = list(intercept = b0_std,
                                              beta_std = B_std,
                                              families = rep("binomial", p),

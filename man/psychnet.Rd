@@ -35,9 +35,10 @@ event log when \code{actor} is supplied.}
 (e.g. \code{"EBICglasso"} -> \code{"glasso"}, \code{"ggmModSelect"} -> \code{"ggm"}).
 Event data is restricted to the Gaussian graphical methods.}
 
-\item{threshold}{Absolute-weight threshold below which edges are zeroed
-(forwarded only to the methods that take it: \code{cor}, \code{pcor}, \code{glasso},
-\code{huge}, \code{ggm}, \code{logo}).}
+\item{threshold}{Absolute-weight threshold below which edges are zeroed for
+\code{cor}, \code{pcor}, \code{glasso}, \code{huge}, \code{ggm}, and \code{logo}. For \code{mgm}, supply its
+character rule (\code{"LW"}, \code{"HW"}, or \code{"none"}); the numeric default leaves
+\code{mgm_fit()}'s own default unchanged.}
 
 \item{gamma}{EBIC hyperparameter. \code{NULL} (default) keeps each method's own
 default (0.5 for the regularized Gaussian graphical models, 0 for \code{ggm},

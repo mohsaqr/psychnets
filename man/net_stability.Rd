@@ -14,11 +14,13 @@ net_stability(
   threshold = 0.7,
   certainty = 0.95,
   labels = NULL,
+  estimator_args = list(),
   ...
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations).}
+\item{data}{Data frame or matrix (rows = observations), resampled exactly as
+given (see \code{\link[=net_boot]{net_boot()}}).}
 
 \item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
 
@@ -39,6 +41,9 @@ recommended for psychometric networks (\code{c("strength", "expected_influence")
 Default 0.95.}
 
 \item{labels}{Optional node labels.}
+
+\item{estimator_args}{Named list of estimator arguments. Use this for names
+consumed by the stability diagnostic itself, such as estimator \code{threshold}.}
 
 \item{...}{Passed to the estimator.}
 }

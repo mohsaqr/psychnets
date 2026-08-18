@@ -26,7 +26,8 @@ logo_network(
 \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial; see \code{\link[=cor_auto]{cor_auto()}}).}
 
 \item{threshold}{Partial correlations with absolute value below this are
-zeroed. Default 0.}
+zeroed. Default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
+graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
 
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}

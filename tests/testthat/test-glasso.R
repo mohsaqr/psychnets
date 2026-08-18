@@ -162,3 +162,20 @@ test_that("lambda_path and refit reject malformed input", {
   expect_error(ebic_glasso(cor_matrix = S, n = 200, refit = "nope"),
                "must be TRUE, FALSE")
 })
+
+test_that("refit = 'unregularized' handles the zero-association shortcut", {
+  S <- diag(4); dimnames(S) <- list(letters[1:4], letters[1:4])
+  fit <- ebic_glasso(cor_matrix = S, n = 100, refit = "unregularized")
+  expect_equal(fit$kkt, 0)
+  expect_true(all(fit$weights == 0))
+  expect_identical(unname(fit$support), diag(TRUE, 4))
+})
+
+test_that("$support is stored only for the unregularized refit", {
+  S <- 0.4^abs(outer(1:5, 1:5, "-"))
+  expect_false("support" %in% names(unclass(ebic_glasso(cor_matrix = S, n = 200))))
+  expect_false("support" %in% names(unclass(ebic_glasso(cor_matrix = S, n = 200,
+                                                         refit = FALSE))))
+  expect_true("support" %in% names(unclass(ebic_glasso(cor_matrix = S, n = 200,
+                                                        refit = "unregularized"))))
+})

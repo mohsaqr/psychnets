@@ -37,7 +37,8 @@ or \code{"skeptic"} (Spearman).}
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
 
 \item{threshold}{Partial correlations with absolute value below this are
-zeroed. Default 0.}
+zeroed. Default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
+graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
 
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
 (default, with the nonparanormal transform applied per column over observed

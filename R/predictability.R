@@ -61,7 +61,23 @@ net_predict <- function(x, data = NULL, ...) {
       stop(sprintf("`data` is required for predictability of a '%s' network.",
                    x$method), call. = FALSE)
     }
-    mat <- .as_numeric_matrix(data)
+    # Preserve categorical nodes: factor/character columns are represented by
+    # their 0-based level code, matching mgm_fit()'s internal numeric frame.
+    if (is.data.frame(data)) {
+      if (!all(labs %in% names(data)))
+        stop("`data` is missing columns for some network nodes.", call. = FALSE)
+      d <- data[labs]
+      d[] <- lapply(d, function(v) {
+        if (is.factor(v)) as.integer(v) - 1L
+        else if (is.character(v)) as.integer(factor(v)) - 1L
+        else v
+      })
+      mat <- as.matrix(d)
+      storage.mode(mat) <- "double"
+      mat <- mat[stats::complete.cases(mat), , drop = FALSE]
+    } else {
+      mat <- .as_numeric_matrix(data)
+    }
     if (!is.null(colnames(mat))) {
       # named data must contain every node, selected by name (not by position)
       if (!all(labs %in% colnames(mat))) {
@@ -116,7 +132,8 @@ net_predict <- function(x, data = NULL, ...) {
                  x$method), call. = FALSE)
   }
   theta <- x$precision
-  s_diag <- if (!is.null(x$cor_matrix)) diag(x$cor_matrix) else rep(1, p)
+  s_diag <- if (isTRUE(x$penalize_diagonal)) diag(solve(theta))
+            else if (!is.null(x$cor_matrix)) diag(x$cor_matrix) else rep(1, p)
   r2 <- 1 - 1 / (diag(theta) * s_diag)
   data.frame(node = labs, type = "gaussian", metric = "R2",
              predictability = as.numeric(r2), accuracy = NA_real_,

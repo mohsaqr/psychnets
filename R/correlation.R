@@ -28,6 +28,72 @@
   mat
 }
 
+# The rows a resampling verb (net_boot, net_stability, net_casedrop_reliability,
+# net_split_reliability) draws from, and the estimator dots it forwards.
+#
+# `data` is kept as the caller gave it: a data.frame keeps its factor columns
+# and its incomplete rows; a matrix is coerced once WITHOUT dropping rows. Every
+# draw is therefore handed to the estimator exactly as the full data would be,
+# and the estimator applies its own `na_method` and type handling per draw --
+# so resampling `mgm_fit(native = FALSE)` keeps a factor node, resampling
+# glasso drops it, and `na_method = "pairwise"` (the default) resamples the
+# same rows a direct call would use instead of a listwise-reduced subset.
+# Columns with fewer than two distinct observed values are removed once, as
+# every estimator would remove them.
+#
+# When the estimator is mgm and the caller gave no `types`, node types are
+# decided ONCE here, on the full data, and pinned for every fit: a draw could
+# otherwise flip a borderline column (11 distinct integers in full, <= 10 in
+# the draw) from gaussian to categorical, silently changing the model between
+# draws. Deciding once also surfaces mgm's type-promotion warning exactly once
+# per verb call rather than once per draw.
+#' @noRd
+.resample_input <- function(data, method, dots) {
+  if (is.data.frame(data)) {
+    keep <- .usable_columns(data)
+    data <- data[keep]
+    if (ncol(data) < 2L) stop("Need at least 2 usable variables.", call. = FALSE)
+  } else {
+    data <- .as_numeric_matrix(data, drop_na = FALSE)
+  }
+  if (identical(.resolve_method(method), "mgm") && is.null(dots$types)) {
+    dots$types <- .detect_types(data)$type
+  }
+  list(data = data, dots = dots)
+}
+
+# Merge the dedicated estimator-argument list used by resampling verbs. The
+# separate channel is necessary because those verbs use names such as
+# `threshold` for their own diagnostics. Explicit estimator_args win over `...`.
+#' @noRd
+.resample_dots <- function(dots, estimator_args = list()) {
+  if (!is.list(estimator_args) || is.null(names(estimator_args)) && length(estimator_args)) {
+    stop("`estimator_args` must be a named list.", call. = FALSE)
+  }
+  if (length(estimator_args)) dots[names(estimator_args)] <- estimator_args
+  dots
+}
+
+# Back-compatible translation of net_boot(engine=) to the estimators' public
+# native switch. Keeping this in one place prevents an internal `engine`
+# argument from leaking through psychnet() as an unused argument.
+#' @noRd
+.resample_engine <- function(engine, method) {
+  if (is.null(engine)) return(NULL)
+  if (!is.character(engine) || length(engine) != 1L || is.na(engine))
+    stop("`engine` must be NULL or one of 'base', 'glasso', or 'glmnet'.",
+         call. = FALSE)
+  resolved <- .resolve_method(method)
+  allowed <- if (resolved %in% c("glasso", "huge")) c("base", "glasso")
+             else if (resolved %in% c("ising", "mgm")) c("base", "glmnet")
+             else character()
+  if (!engine %in% allowed) {
+    stop(sprintf("engine = '%s' is not available for method = '%s'.",
+                 engine, resolved), call. = FALSE)
+  }
+  identical(engine, "base")
+}
+
 # Validate and normalize a user-supplied `cor_matrix`: square, at least two
 # variables, finite, symmetric, positive diagonal, and positive semi-definite.
 # A covariance matrix is normalized to unit diagonal (`cov2cor`) so the GGM
@@ -87,7 +153,8 @@
     n <- if (has_na) {
       co <- crossprod(!is.na(mat)); max(round(stats::median(co[upper.tri(co)])), 2L)
     } else nrow(mat)
-    return(list(S = S, n = n, labels = colnames(mat),
+    co <- crossprod(!is.na(mat)); dimnames(co) <- list(colnames(mat), colnames(mat))
+    return(list(S = S, n = n, n_pair = co, labels = colnames(mat),
                 na_method = if (has_na) "pairwise" else "listwise"))
   }
   if (!anyNA(mat) || na_method == "listwise") {
@@ -97,7 +164,10 @@
     if (any(apply(mat, 2L, stats::sd) == 0)) {
       stop("After listwise deletion a variable has zero variance.", call. = FALSE)
     }
+    npm <- matrix(nrow(mat), ncol(mat), ncol(mat),
+                  dimnames = list(colnames(mat), colnames(mat)))
     return(list(S = stats::cor(mat, method = method), n = nrow(mat),
+                n_pair = npm,
                 labels = colnames(mat), na_method = "listwise"))
   }
   S <- stats::cor(mat, use = "pairwise.complete.obs", method = method)
@@ -107,8 +177,10 @@
   }
   S <- .nearest_pd_cor(S)                         # pairwise S may not be PD
   co <- crossprod(!is.na(mat))                    # pairwise co-observation counts
+  dimnames(co) <- list(colnames(mat), colnames(mat))
   n_eff <- max(round(stats::median(co[upper.tri(co)])), 2L)
-  list(S = S, n = n_eff, labels = colnames(mat), na_method = "pairwise")
+  list(S = S, n = n_eff, n_pair = co, labels = colnames(mat),
+       na_method = "pairwise")
 }
 
 # Missing-data prep for the nodewise (Ising / mgm) estimators, which need a
@@ -116,17 +188,33 @@
 # keeps every row and single-imputes each column over its observed values --
 # the mode for binary columns, the mean otherwise -- retaining the full sample.
 #' @noRd
-.na_prep_nodewise <- function(mat, na_method = c("pairwise", "listwise")) {
+# `categorical` (optional logical, one per column) marks columns whose values are
+# level codes: a missing entry there is filled with the modal code, never a mean
+# that would fall between levels. A 0/1 column keeps its historical rule (mean
+# rounded, ties to 1) whether or not it is flagged, so existing binary fits are
+# byte-identical.
+#' @noRd
+.na_prep_nodewise <- function(mat, na_method = c("pairwise", "listwise"),
+                              categorical = NULL) {
   na_method <- match.arg(na_method)
   if (!anyNA(mat)) return(mat)
   if (na_method == "listwise") {
     return(mat[stats::complete.cases(mat), , drop = FALSE])
   }
+  if (is.null(categorical)) categorical <- rep(FALSE, ncol(mat))
+  stopifnot(is.logical(categorical), length(categorical) == ncol(mat))
   for (j in seq_len(ncol(mat))) {
     x <- mat[, j]; miss <- is.na(x)
     if (!any(miss)) next
     obs <- x[!miss]; u <- unique(obs)
-    fill <- if (all(u %in% c(0, 1))) as.numeric(mean(obs) >= 0.5) else mean(obs)
+    fill <- if (all(u %in% c(0, 1))) {
+      as.numeric(mean(obs) >= 0.5)
+    } else if (categorical[j]) {
+      tab <- table(obs)
+      as.numeric(names(tab)[which.max(tab)])          # modal level code
+    } else {
+      mean(obs)
+    }
     mat[miss, j] <- fill
   }
   mat
@@ -146,13 +234,14 @@
 # partial correlations); df = n - 2 - k.
 #' @noRd
 .cor_pvalues <- function(r, n, k) {
+  if (length(n) == 1L) n <- matrix(n, nrow(r), ncol(r))
+  if (!identical(dim(n), dim(r)))
+    stop("Effective sample sizes must match the correlation matrix.", call. = FALSE)
   df <- n - 2L - k
-  if (df <= 0L) {                       # no residual df: the test is undefined,
-    P <- matrix(1, nrow(r), ncol(r))    # so nothing can be called significant
-    return(P)
-  }
-  tstat <- r * sqrt(df / pmax(1 - r^2, 1e-12))
-  P <- 2 * stats::pt(-abs(tstat), df)
+  P <- matrix(1, nrow(r), ncol(r), dimnames = dimnames(r))
+  valid <- df > 0L & is.finite(r)
+  tstat <- r[valid] * sqrt(df[valid] / pmax(1 - r[valid]^2, 1e-12))
+  P[valid] <- 2 * stats::pt(-abs(tstat), df[valid])
   diag(P) <- 1
   P
 }
@@ -194,8 +283,8 @@
 #'   complete.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the thresholded correlation
-#'   matrix, with `$cor_matrix`, `$n_eff`, `$na_method` (and `$p_values` when
-#'   `alpha` is used). Node order in `$weights` and `$nodes` is always the column
+#'   matrix, with `$cor_matrix`, `$n_eff`, `$n_pair`, `$na_method` (and
+#'   `$p_values` when `alpha` is used). Node order in `$weights` and `$nodes` is always the column
 #'   order of the input `data` / `cor_matrix`, never sorted.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 4), 200, 4)
@@ -211,7 +300,7 @@ cor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {
     ci <- .cor_input(data, method = cor_method, na_method = na_method)
-    S <- ci$S; n <- ci$n; na_used <- ci$na_method
+    S <- ci$S; n <- ci$n; n_pair <- ci$n_pair; na_used <- ci$na_method
     if (is.null(labels)) labels <- ci$labels
   } else {
     S <- .check_cor_matrix(cor_matrix)
@@ -229,9 +318,12 @@ cor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   diag(g) <- 0
   r_full <- g                                  # p-values use the true correlations
   g[abs(g) < threshold] <- 0
-  extra <- list(cor_matrix = S, n_eff = n, na_method = na_used)
+  extra <- c(list(cor_matrix = S, n_eff = n, na_method = na_used),
+             if (exists("n_pair", inherits = FALSE)) list(n_pair = n_pair))
   if (!is.null(alpha)) {
-    P <- .cor_pvalues(r_full, n, k = 0L)
+    P <- .cor_pvalues(r_full,
+                      if (exists("n_pair", inherits = FALSE)) n_pair else n,
+                      k = 0L)
     g <- .apply_sig(g, P, alpha, adjust)
     extra$p_values <- P
   }
@@ -264,7 +356,7 @@ pcor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {
     ci <- .cor_input(data, method = cor_method, na_method = na_method)
-    S <- ci$S; n <- ci$n; na_used <- ci$na_method
+    S <- ci$S; n <- ci$n; n_pair <- ci$n_pair; na_used <- ci$na_method
     if (is.null(labels)) labels <- ci$labels
   } else {
     S <- .check_cor_matrix(cor_matrix)
@@ -282,8 +374,15 @@ pcor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   g  <- .precision_to_pcor(wi)
   r_full <- g                                   # p-values use the true partials
   g[abs(g) < threshold] <- 0
-  extra <- list(precision = wi, cor_matrix = S, n_eff = n, na_method = na_used)
+  extra <- c(list(precision = wi, cor_matrix = S, n_eff = n,
+                  na_method = na_used),
+             if (exists("n_pair", inherits = FALSE)) list(n_pair = n_pair))
   if (!is.null(alpha)) {
+    if (identical(na_used, "pairwise") &&
+        length(unique(n_pair[upper.tri(n_pair)])) > 1L) {
+      stop("`alpha` inference for full-order partial correlations is undefined when pairwise-complete sample sizes differ; use `na_method = 'listwise'` or omit `alpha`.",
+           call. = FALSE)
+    }
     P <- .cor_pvalues(r_full, n, k = ncol(S) - 2L)   # full-order partials
     g <- .apply_sig(g, P, alpha, adjust)
     extra$p_values <- P

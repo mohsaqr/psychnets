@@ -45,8 +45,9 @@ MASS_ginv <- function(A, tol = sqrt(.Machine$double.eps)) {
 #'   [stats::p.adjust] method). Default `"none"`.
 #' @param min_sum Minimum row sum-score; rows below it are dropped before
 #'   fitting. `NULL` (default) keeps every row.
-#' @param weights Optional non-negative observation weights, one per retained
-#'   row. `NULL` (default) is unweighted.
+#' @param weights Optional non-negative observation weights, one per input row
+#'   after missing-data preparation. When `min_sum` is used, weights are filtered
+#'   alongside their corresponding rows. `NULL` (default) is unweighted.
 #' @param na_method Missing-data handling: `"pairwise"` (default, mode-impute) or
 #'   `"listwise"`. See [ising_fit()].
 #' @param labels Optional node labels.

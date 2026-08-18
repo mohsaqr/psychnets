@@ -198,6 +198,13 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
       best <- list(b0 = fit$b0, beta_std = fit$beta, lambda = lam)
     }
   }
+  # Inactive coordinates must be EXACT zeros. Coordinate descent can leave
+  # BLAS-rounding crumbs (~1e-17) on coordinates whose gradient sits exactly at
+  # the penalty boundary, and whether the crumb is 0.0 or 4e-17 differs between
+  # BLAS implementations. The EBIC df above already treats |beta| <= 1e-10 as
+  # "not a parameter"; the returned support must agree, or the AND rule counts
+  # a platform-dependent crumb as an edge.
+  best$beta_std[abs(best$beta_std) <= 1e-10] <- 0
   beta_orig <- best$beta_std / std$scale
   kkt <- glm_lasso_kkt(Xs, y, best$b0, best$beta_std, best$lambda, family,
                        weights = weights)

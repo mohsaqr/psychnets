@@ -23,6 +23,21 @@ test_that("mgm_fit base output is unchanged", {
   expect_equal(fit$weights, golden$mgm_base, tolerance = 1e-12)
 })
 
+# The platform-determinism contract behind the fixture above: inactive lasso
+# coordinates are EXACT zeros. Coordinate descent can leave a BLAS-rounding
+# crumb (~1e-17) on a coordinate whose gradient sits exactly at the penalty
+# boundary -- this data produces one on the g3 node -- and whether the crumb is
+# 0.0 or 4e-17 differs between BLAS implementations. If it survives into the
+# returned support, the AND rule fabricates a platform-dependent edge.
+test_that("base-kernel nodewise support contains no sub-tolerance crumbs", {
+  fit <- mgm_fit(golden_data_mixed(), native = TRUE)
+  b <- fit$nodewise$beta_std
+  expect_true(all(b == 0 | abs(b) > 1e-10))
+  fit2 <- ising_fit(golden_data_binary(), native = TRUE)
+  b2 <- fit2$nodewise$beta_std
+  expect_true(all(b2 == 0 | abs(b2) > 1e-10))
+})
+
 test_that("ising_fit base output is unchanged", {
   fit <- ising_fit(golden_data_binary(), native = TRUE)
   expect_equal(fit$weights, golden$ising_base, tolerance = 1e-12)

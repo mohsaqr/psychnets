@@ -2,6 +2,16 @@
 
 ## Pre-release correctness hardening
 
+* The base nodewise kernel (`ising_fit()`, `mgm_fit()`, moderated MGM with
+  `native = TRUE`) now returns exact zeros for inactive lasso coordinates.
+  Coordinate descent could leave a BLAS-rounding crumb (~1e-17) on a
+  coordinate whose gradient sits exactly at the penalty boundary; whether the
+  crumb was `0.0` or `4e-17` differed between BLAS implementations, and the
+  AND rule then counted it as an edge on some platforms but not others. The
+  EBIC degrees of freedom already ignored such coefficients (`|beta| <=
+  1e-10`); the returned support now agrees. One golden-fixture edge changes:
+  the base-kernel mixed-data mgm network loses a spurious weak edge, matching
+  the glmnet reference path, which always reported that edge as absent.
 * `cor_auto()` now rejects variable pairs with fewer than two joint
   observations instead of optimizing an empty polychoric likelihood.
   Marginal-correlation p-values use pair-specific effective sample sizes;

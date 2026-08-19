@@ -49,6 +49,7 @@
 .polychoric <- function(x, y, gl) {
   tab <- table(x, y)
   n <- sum(tab)
+  if (n < 2L || nrow(tab) < 2L || ncol(tab) < 2L) return(0)
   ax <- c(-Inf, stats::qnorm(cumsum(rowSums(tab)) / n))
   ay <- c(-Inf, stats::qnorm(cumsum(colSums(tab)) / n))
   ax[length(ax)] <- Inf
@@ -102,6 +103,11 @@
   for (i in seq_len(p - 1L)) for (j in (i + 1L):p) {
     ok <- !is.na(mat[, i]) & !is.na(mat[, j])
     a <- mat[ok, i]; b <- mat[ok, j]
+    if (length(a) < 2L) {
+      stop(sprintf(
+        "Automatic correlation is undefined: variables '%s' and '%s' have fewer than two joint observations.",
+        colnames(mat)[i], colnames(mat)[j]), call. = FALSE)
+    }
     r <- if (ord[i] && ord[j]) .polychoric(a, b, gl)
          else if (ord[i]) .polyserial(b, a)
          else if (ord[j]) .polyserial(a, b)

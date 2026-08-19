@@ -112,8 +112,11 @@ net_aggregate <- function(data, communities, method = "mean",
   # ---- association methods: community-by-community macro network -------------
   k <- length(ucomm)
   M <- matrix(0, k, k, dimnames = list(ucomm, ucomm))
+  directed <- FALSE
   if (method == "average") {
-    W <- psychnet(mat, method = estimator, labels = labs, ...)$weights
+    node_fit <- psychnet(mat, method = estimator, labels = labs, ...)
+    W <- node_fit$weights
+    directed <- isTRUE(node_fit$directed)
     for (a in seq_len(k)) for (b in seq_len(k)) if (a != b)
       M[a, b] <- mean(W[members[[a]], members[[b]]])
   } else {
@@ -139,5 +142,5 @@ net_aggregate <- function(data, communities, method = "mean",
     }
   }
   .new_psychnet(M, ucomm, method = paste0("aggregate_", method),
-                directed = FALSE, n_obs = nrow(mat))
+                directed = directed, n_obs = nrow(mat))
 }

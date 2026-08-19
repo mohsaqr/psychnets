@@ -54,9 +54,10 @@
 #' @param standardize For nested event data (several occasions per actor),
 #'   `TRUE` (default) removes the actor clustering by person-centering and fits a
 #'   single network; `FALSE` returns the within/between pair instead.
-#' @param threshold Absolute-weight threshold below which edges are zeroed
-#'   (forwarded only to the methods that take it: `cor`, `pcor`, `glasso`,
-#'   `huge`, `ggm`, `logo`).
+#' @param threshold Absolute-weight threshold below which edges are zeroed for
+#'   `cor`, `pcor`, `glasso`, `huge`, `ggm`, and `logo`. For `mgm`, supply its
+#'   character rule (`"LW"`, `"HW"`, or `"none"`); the numeric default leaves
+#'   `mgm_fit()`'s own default unchanged.
 #' @param gamma EBIC hyperparameter. `NULL` (default) keeps each method's own
 #'   default (0.5 for the regularized Gaussian graphical models, 0 for `ggm`,
 #'   0.25 for `ising`/`mgm`); set it to override. Forwarded only to the
@@ -142,6 +143,8 @@ psychnet <- function(data,
   # callee's own defaults stand otherwise (notably gamma: ising/mgm = 0.25).
   args <- c(list(data = data, labels = labels), list(...))
   if (method %in% c("cor", "pcor", "glasso", "huge", "ggm", "logo"))
+    args$threshold <- threshold
+  if (identical(method, "mgm") && is.character(threshold))
     args$threshold <- threshold
   if (!is.null(gamma) &&
       method %in% c("glasso", "huge", "ggm", "ising", "mgm"))

@@ -182,30 +182,29 @@ summary.psychnet_group <- function(object, ...) {
 }
 
 # Data-first group dispatch shared by the resampling verbs (net_boot,
-# net_stability, casedrop_reliability, network_reliability): re-run `verb` on
-# each level's stored cross-sectional subset, reproducing the SAME estimator
-# configuration the group networks were built with -- the saved method, gamma,
-# labels, and estimator dots. `args` carries the verb's own (non-estimation)
-# options; dot names that collide with a fixed/arg name are dropped so do.call()
-# never sees a duplicated argument.
+# net_stability, net_casedrop_reliability, net_split_reliability): re-run `verb` on
+# each level's stored cross-sectional subset, reproducing the same estimator
+# configuration the group networks were built with through estimator_args.
+# `args` carries the verb's own diagnostic options.
 .group_data_apply <- function(data, verb, verb_name, out_class, args) {
   if (!identical(attr(data, "source"), "data"))
     stop(sprintf("%s() supports group mode for cross-sectional data only.",
                  verb_name), call. = FALSE)
   subs <- attr(data, "subsets"); cl <- attr(data, "call")
-  extra <- cl$dots
-  if (!is.null(cl$gamma)) extra$gamma <- cl$gamma
-  # A custom estimation threshold cannot be reproduced through these verbs
-  # (each reuses the name `threshold` for a different concept), so warn rather
-  # than silently resample a differently-thresholded network.
-  if (!is.null(cl$threshold) && !isTRUE(all.equal(unname(cl$threshold), 0)))
-    warning(sprintf(paste0("Group networks were estimated with threshold = %s; ",
-            "%s() resamples at the estimator's default threshold."),
-            format(cl$threshold), verb_name), call. = FALSE)
+  estimator_args <- cl$dots
+  if (is.null(estimator_args)) estimator_args <- list()
+  if (!is.null(cl$gamma)) estimator_args$gamma <- cl$gamma
+  threshold_method <- cl$method %in% c("cor", "pcor", "glasso", "huge",
+                                        "ggm", "logo") ||
+    (identical(cl$method, "mgm") && is.character(cl$threshold))
+  if (threshold_method && !is.null(cl$threshold))
+    estimator_args$threshold <- cl$threshold
+  supplied <- args$estimator_args
+  if (length(supplied)) estimator_args[names(supplied)] <- supplied
+  args$estimator_args <- estimator_args
   fixed <- c(list(method = cl$method, labels = cl$labels), args)
-  extra <- extra[setdiff(names(extra), names(fixed))]
   res <- lapply(names(subs), function(lv)
-    do.call(verb, c(list(subs[[lv]]), fixed, extra)))
+    do.call(verb, c(list(subs[[lv]]), fixed)))
   names(res) <- names(subs)
   attr(res, "group_col") <- attr(data, "group_col")
   class(res) <- c(out_class, "psychnet_result_group")

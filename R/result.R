@@ -51,6 +51,8 @@
                         "may have been dropped from the data."),
                  length(labels), ncol(graph)), call. = FALSE)
   }
+  if (anyNA(labels) || anyDuplicated(labels))
+    stop("`labels` must be unique and non-missing.", call. = FALSE)
   weights <- graph
   diag(weights) <- 0
   dimnames(weights) <- list(labels, labels)
@@ -119,7 +121,14 @@ print.psychnet <- function(x, ...) {
     cat(sprintf("  lambda: %.4g   gamma: %.2g\n", x$lambda, x$gamma))
   }
   if (!is.null(x$kkt)) {
-    cat(sprintf("  optimality (KKT residual): %.2e\n", x$kkt))
+    if (is.finite(x$kkt)) {
+      cat(sprintf("  optimality (KKT residual): %.2e\n", x$kkt))
+    } else if (identical(x$certificate_target, "pre_threshold_fit")) {
+      cat("  optimality: unavailable for post-threshold graph",
+          sprintf(" (pre-threshold residual %.2e)\n", x$fit_kkt))
+    } else {
+      cat("  optimality: unavailable\n")
+    }
   }
   invisible(x)
 }

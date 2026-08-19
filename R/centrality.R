@@ -49,7 +49,10 @@
     d_st    <- D[idx, idx]
     on_path <- is.finite(d_st) & sg[idx, idx] > 0L & abs(d_svt - d_st) < 1e-10
     diag(on_path) <- FALSE
-    sum((outer(sg[idx, v], sg[v, idx], "*") / sg[idx, idx])[on_path], na.rm = TRUE)
+    # idx x idx contains both s->t and t->s for an undirected graph. Count each
+    # unordered source-target pair once before applying the usual normalization.
+    sum((outer(sg[idx, v], sg[v, idx], "*") / sg[idx, idx])[on_path],
+        na.rm = TRUE) / 2
   }, numeric(1))
   norm <- (n - 1) * (n - 2) / 2
   if (norm > 0) btw <- btw / norm

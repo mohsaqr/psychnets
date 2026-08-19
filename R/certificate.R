@@ -5,7 +5,10 @@
 
 #' Correctness certificate of a fitted network
 #'
-#' Every regularized or constrained estimator in `psychnet` self-certifies: it
+#' Regularized or constrained estimators in `psychnet` self-certify when the
+#' returned graph is the fitted optimization result. A graph altered by
+#' post-estimation thresholding, or an external fit without an available
+#' residual, reports `NA` rather than being presented as certified.
 #' reports how far the returned network sits from the unique optimum of its own
 #' convex objective (a KKT / stationarity residual), or -- for the structural
 #' methods -- whether the graph satisfies the identity that defines it. This
@@ -21,7 +24,9 @@
 #' @return A one-row `data.frame` with columns `method`, `certificate` (the
 #'   residual; smaller is better), `kind` (`"kkt"` for the optimization
 #'   certificates, `"structural"` for TMFG/relimp, `"none"` for cor/pcor), and
-#'   `certified` (logical: residual at or below `tol`).
+#'   `certified` (logical: residual at or below `tol`; `NA` when no applicable
+#'   certificate is available). Correlation networks use kind `"none"` and are
+#'   reported as `TRUE` because no optimization claim is made.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' certificate(ebic_glasso(cor_matrix = S, n = 250))
@@ -41,7 +46,7 @@ certificate <- function(x, tol = 1e-6) {
     method      = x$method,
     certificate = value,
     kind        = kind,
-    certified   = is.na(value) | value <= tol,
+    certified   = if (kind == "none") TRUE else if (is.na(value)) NA else value <= tol,
     row.names   = NULL, stringsAsFactors = FALSE
   )
 }

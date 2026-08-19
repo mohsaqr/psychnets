@@ -41,7 +41,8 @@ greedy single-edge add/drop search.}
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
 
 \item{threshold}{Partial correlations with absolute value below this are
-zeroed. Default 0.}
+zeroed. Default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
+graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
 
 \item{cor_method}{Correlation used when \code{data} is supplied: \code{"pearson"}
 (default), \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial,

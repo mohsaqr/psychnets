@@ -1,8 +1,8 @@
 # Two robustness diagnostics adapted from Nestimate, in the psychnets idiom
 # (raw `data` in, re-estimate via psychnet(method=), base R only):
-#   * casedrop_reliability() - edge-weight case-dropping stability (the
+#   * net_casedrop_reliability() - edge-weight case-dropping stability (the
 #     edge-vector complement to net_stability()'s centrality CS-coefficient).
-#   * network_reliability()  - split-half reliability of the edge structure.
+#   * net_split_reliability()  - split-half reliability of the edge structure.
 # Both are estimator-agnostic: they route every refit through psychnet(method=).
 
 # Off-diagonal edge vector of a weight matrix (upper triangle when undirected,
@@ -23,24 +23,44 @@
     max_abs_dev    = max(d, na.rm = TRUE))
 }
 
-# Re-estimate and return the weight matrix + directedness (NULL on failure),
-# always aligned to the full `labels` set. If a subsample makes a column
-# constant, psychnet drops it; we re-expand the result to the full node set with
-# the dropped node isolated (zero edges) so the edge vector stays comparable to
-# the full-sample one. Without this, such draws would error and be silently
-# skipped, biasing the stability/reliability estimate upward.
-.psn_refit <- function(mat, method, labels, ...) {
+# Re-estimate a complete psychnet object, aligned to the full label set. A node
+# that becomes constant in a resample is represented as an isolated node rather
+# than changing the dimension or causing the draw to be discarded.
+#' @noRd
+.psn_refit_network <- function(mat, method, labels = NULL, dots = list()) {
   if (!is.null(labels) && length(labels) == ncol(mat)) colnames(mat) <- labels
-  fit <- tryCatch(psychnet(mat, method = method, ...), error = function(e) NULL)
+  fit <- tryCatch(do.call(psychnet, c(list(mat, method = method), dots)),
+                  error = function(e) NULL)
   if (is.null(fit)) return(NULL)
+  if (is.null(labels)) return(fit)
   W <- fit$weights
-  if (!is.null(labels) && !identical(rownames(W), labels)) {
+  if (!identical(rownames(W), labels)) {
+    old <- rownames(W)
     full <- matrix(0, length(labels), length(labels),
                    dimnames = list(labels, labels))
-    keep <- intersect(rownames(W), labels)
+    keep <- intersect(old, labels)
     full[keep, keep] <- W[keep, keep]
-    W <- full
+    fit$weights <- full
+    fit$nodes <- data.frame(id = seq_along(labels), label = labels, name = labels,
+                            x = NA_real_, y = NA_real_, stringsAsFactors = FALSE)
+    fit$edges <- .edges_index_df(full, fit$directed)
+    # Precision-based predictability is undefined for a node absent from the
+    # fitted draw. Preserve the available block and mark the rest missing.
+    if (!is.null(fit$precision)) {
+      K <- matrix(NA_real_, length(labels), length(labels),
+                  dimnames = list(labels, labels))
+      K[keep, keep] <- fit$precision[keep, keep, drop = FALSE]
+      fit$precision <- K
+    }
   }
+  fit
+}
+
+# Lightweight compatibility wrapper used by the reliability diagnostics.
+.psn_refit <- function(mat, method, labels, dots = list()) {
+  fit <- .psn_refit_network(mat, method, labels, dots)
+  if (is.null(fit)) return(NULL)
+  W <- fit$weights
   list(weights = W, directed = isTRUE(fit$directed))
 }
 
@@ -55,8 +75,8 @@
 #' correlation stays `>= threshold` with probability `>= certainty` (Epskamp,
 #' Borsboom & Fried 2018).
 #'
-#' @param data Numeric data frame or matrix (rows = observations), or a
-#'   `psychnet_group` (case-dropped per level).
+#' @param data Data frame or matrix (rows = observations), resampled exactly as
+#'   given (see [net_boot()]), or a `psychnet_group` (case-dropped per level).
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param drop_prop Proportions of cases to drop. Default `seq(0.1, 0.9, 0.1)`.
 #' @param iter Subsets per proportion. Default 100.
@@ -67,6 +87,8 @@
 #'   `"spearman"` (default, robust to the wide range of edge weights),
 #'   `"pearson"`, or `"kendall"`.
 #' @param labels Optional node labels.
+#' @param estimator_args Named list of estimator arguments. Use this for names
+#'   consumed by the diagnostic itself, such as estimator `threshold`.
 #' @param ... Passed to the estimator.
 #' @return A tidy `data.frame` (class `psychnet_casedrop`), one row per metric
 #'   per drop proportion, with columns `metric`, `drop_prop`, `mean`, `sd`. The
@@ -79,45 +101,56 @@
 #' # `iter` and `drop_prop` are kept small here so the example runs quickly;
 #' # the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
 #' # reliability assessment should use.
-#' casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
+#' net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
 #' @export
-casedrop_reliability <- function(data, method = "glasso",
+net_casedrop_reliability <- function(data, method = "glasso",
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
                                  iter = 100L, threshold = 0.7, certainty = 0.95,
                                  cor_method = c("spearman", "pearson", "kendall"),
-                                 labels = NULL, ...) {
+                                 labels = NULL, estimator_args = list(), ...) {
   # Group object -> case-drop each level from its stored cross-sectional data.
   if (inherits(data, "psychnet_group")) {
-    return(.group_data_apply(data, casedrop_reliability, "casedrop_reliability",
+    return(.group_data_apply(data, net_casedrop_reliability, "net_casedrop_reliability",
       "psychnet_casedrop_group",
       list(drop_prop = drop_prop, iter = iter, threshold = threshold,
-           certainty = certainty, cor_method = cor_method)))
+           certainty = certainty, cor_method = cor_method,
+           estimator_args = estimator_args)))
   }
   cor_method <- match.arg(cor_method)
   stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
             is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
             threshold > 0, threshold <= 1, certainty > 0, certainty <= 1)
   iter <- as.integer(iter)
-  mat <- .as_numeric_matrix(data)
+  inp <- .resample_input(data, method,
+                         .resample_dots(list(...), estimator_args))
+  mat <- inp$data; dots <- inp$dots
   n <- nrow(mat)
-  if (is.null(labels)) labels <- colnames(mat)
+  keep_sizes <- pmax(2L, round(n * (1 - drop_prop)))
+  if (n < 3L || any(keep_sizes >= n))
+    stop("Each `drop_prop` must remove at least one case and retain at least two cases.",
+         call. = FALSE)
 
-  full <- .psn_refit(mat, method, labels, ...)
+  full <- .psn_refit(mat, method, labels, dots)
   if (is.null(full)) stop("Full-sample estimation failed.", call. = FALSE)
+  # Labels come from the observed fit: the estimator decides which columns are
+  # nodes, and every draw is re-expanded to that node set.
+  if (is.null(labels)) labels <- rownames(full$weights)
   orig <- .psn_edge_vector(full$weights, full$directed)
 
   metric_names <- c("mean_abs_dev", "median_abs_dev", "correlation", "max_abs_dev")
   store <- stats::setNames(
     lapply(metric_names, function(.) matrix(NA_real_, iter, length(drop_prop))),
     metric_names)
+  fit_ok <- matrix(FALSE, iter, length(drop_prop))
 
   for (pj in seq_along(drop_prop)) {
     keep_n <- max(2L, round(n * (1 - drop_prop[pj])))
     if (keep_n >= n) next
     for (it in seq_len(iter)) {
       idx <- sample.int(n, keep_n, replace = FALSE)
-      sub <- .psn_refit(mat[idx, , drop = FALSE], method, labels, ...)
+      sub <- .psn_refit(mat[idx, , drop = FALSE], method, labels, dots)
       if (is.null(sub)) next
+      fit_ok[it, pj] <- TRUE
       m <- .psn_edge_metrics(orig, .psn_edge_vector(sub$weights, sub$directed),
                              cor_method)
       for (nm in metric_names) store[[nm]][it, pj] <- m[[nm]]
@@ -134,6 +167,10 @@ casedrop_reliability <- function(data, method = "glasso",
   prop_above <- colMeans(store$correlation >= threshold, na.rm = TRUE)
   ok <- which(prop_above >= certainty)
   cs <- if (length(ok)) max(drop_prop[ok]) else 0
+  n_success <- sum(fit_ok); n_failed <- length(fit_ok) - n_success
+  if (n_failed > 0L)
+    warning(sprintf("%d of %d case-drop fits failed.", n_failed, length(fit_ok)),
+            call. = FALSE)
 
   # The result IS the tidy table (one row per metric per drop proportion);
   # the CS-coefficient and raw draws ride along as attributes for plot()/print().
@@ -146,6 +183,8 @@ casedrop_reliability <- function(data, method = "glasso",
   attr(tab, "method") <- method
   attr(tab, "n_cases") <- n
   attr(tab, "n_edges") <- length(orig)
+  attr(tab, "n_success") <- n_success
+  attr(tab, "n_failed") <- n_failed
   class(tab) <- c("psychnet_casedrop", "data.frame")
   tab
 }
@@ -174,9 +213,9 @@ print.psychnet_casedrop <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' # Small `iter` / `drop_prop` for a fast example; see [casedrop_reliability()]
+#' # Small `iter` / `drop_prop` for a fast example; see [net_casedrop_reliability()]
 #' # for the defaults a real assessment should use.
-#' plot(casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
+#' plot(net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
 #' @export
 plot.psychnet_casedrop <- function(x, ...) {
   panels <- c("correlation", "mean_abs_dev", "median_abs_dev", "max_abs_dev")
@@ -215,14 +254,16 @@ plot.psychnet_casedrop <- function(x, ...) {
 #' correlation between halves plus the mean/median/maximum absolute edge
 #' deviation - a psychometric reliability view of the estimated structure.
 #'
-#' @param data Numeric data frame or matrix (rows = observations), or a
-#'   `psychnet_group` (split-half per level).
+#' @param data Data frame or matrix (rows = observations), resampled exactly as
+#'   given (see [net_boot()]), or a `psychnet_group` (split-half per level).
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param iter Number of split-half iterations. Default 100.
 #' @param split Fraction of rows in the first half. Default 0.5.
 #' @param cor_method Correlation method for the between-halves edge comparison:
 #'   `"pearson"` (default), `"spearman"`, or `"kendall"`.
 #' @param labels Optional node labels.
+#' @param estimator_args Named list of estimator arguments. Use this for names
+#'   consumed by the diagnostic itself, such as estimator `threshold`.
 #' @param ... Passed to the estimator.
 #' @return A tidy `data.frame` (class `psychnet_reliability`), one row per metric
 #'   with columns `metric`, `mean`, `sd`, `lower`, `upper`. The per-split draws
@@ -230,35 +271,57 @@ plot.psychnet_casedrop <- function(x, ...) {
 #' @examples
 #' # `iter` is kept small here so the example runs quickly; the default
 #' # (iter = 100) is what a real reliability assessment should use.
-#' network_reliability(SRL_Claude, iter = 10)
+#' net_split_reliability(SRL_Claude, iter = 10)
 #' @export
-network_reliability <- function(data, method = "glasso", iter = 100L,
+net_split_reliability <- function(data, method = "glasso", iter = 100L,
                                 split = 0.5,
                                 cor_method = c("pearson", "spearman", "kendall"),
-                                labels = NULL, ...) {
+                                labels = NULL, estimator_args = list(), ...) {
   if (inherits(data, "psychnet_group")) {
-    return(.group_data_apply(data, network_reliability, "network_reliability",
+    return(.group_data_apply(data, net_split_reliability, "net_split_reliability",
       "psychnet_reliability_group",
-      list(iter = iter, split = split, cor_method = cor_method)))
+      list(iter = iter, split = split, cor_method = cor_method,
+           estimator_args = estimator_args)))
   }
   cor_method <- match.arg(cor_method)
   stopifnot(is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
             split > 0, split < 1)
   iter <- as.integer(iter)
-  mat <- .as_numeric_matrix(data)
+  inp <- .resample_input(data, method,
+                         .resample_dots(list(...), estimator_args))
+  mat <- inp$data; dots <- inp$dots
   n <- nrow(mat); n_half <- max(2L, round(n * split))
-  if (is.null(labels)) labels <- colnames(mat)
+  if (n_half < 2L || n - n_half < 2L) {
+    stop("`split` must leave at least two observations in each half.",
+         call. = FALSE)
+  }
+  # The node set both halves are re-expanded to is whatever the estimator makes
+  # of the full data (a factor column is a node for mgm, dropped by glasso), so
+  # it is read off one full-sample fit rather than off the input columns.
+  if (is.null(labels)) {
+    full <- .psn_refit(mat, method, NULL, dots)
+    if (is.null(full)) stop("Full-sample estimation failed.", call. = FALSE)
+    labels <- rownames(full$weights)
+  }
 
+  fit_ok <- logical(iter)
   res <- t(vapply(seq_len(iter), function(i) {
     idx_a <- sample.int(n, n_half, replace = FALSE)
-    a <- .psn_refit(mat[idx_a, , drop = FALSE], method, labels, ...)
-    b <- .psn_refit(mat[-idx_a, , drop = FALSE], method, labels, ...)
+    a <- .psn_refit(mat[idx_a, , drop = FALSE], method, labels, dots)
+    b <- .psn_refit(mat[-idx_a, , drop = FALSE], method, labels, dots)
     if (is.null(a) || is.null(b)) return(rep(NA_real_, 4L))
+    fit_ok[i] <<- TRUE
     .psn_edge_metrics(.psn_edge_vector(a$weights, a$directed),
                       .psn_edge_vector(b$weights, b$directed), cor_method)
   }, numeric(4L)))
   colnames(res) <- c("mean_abs_dev", "median_abs_dev", "correlation", "max_abs_dev")
   iters <- as.data.frame(res, stringsAsFactors = FALSE)
+  n_failed <- sum(!fit_ok)
+  if (n_failed > 0L)
+    warning(sprintf("%d of %d split-half iterations failed.", n_failed, iter),
+            call. = FALSE)
+  if (sum(fit_ok) < 2L)
+    stop("Fewer than two split-half iterations could be estimated.", call. = FALSE)
 
   summ <- do.call(rbind, lapply(colnames(res), function(m) {
     v <- iters[[m]]
@@ -277,6 +340,8 @@ network_reliability <- function(data, method = "glasso", iter = 100L,
   attr(summ, "cor_method") <- cor_method
   attr(summ, "method") <- method
   attr(summ, "n") <- n
+  attr(summ, "n_success") <- sum(fit_ok)
+  attr(summ, "n_failed") <- n_failed
   class(summ) <- c("psychnet_reliability", "data.frame")
   summ
 }
@@ -304,9 +369,9 @@ print.psychnet_reliability <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' # Small `iter` for a fast example; see [network_reliability()] for the
+#' # Small `iter` for a fast example; see [net_split_reliability()] for the
 #' # default a real assessment should use.
-#' plot(network_reliability(SRL_Claude, iter = 10))
+#' plot(net_split_reliability(SRL_Claude, iter = 10))
 #' @export
 plot.psychnet_reliability <- function(x, ...) {
   it <- attr(x, "iterations")

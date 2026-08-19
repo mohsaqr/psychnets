@@ -48,8 +48,9 @@ complete.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the thresholded correlation
-matrix, with \verb{$cor_matrix}, \verb{$n_eff}, \verb{$na_method} (and \verb{$p_values} when
-\code{alpha} is used).
+matrix, with \verb{$cor_matrix}, \verb{$n_eff}, \verb{$n_pair}, \verb{$na_method} (and
+\verb{$p_values} when \code{alpha} is used). Node order in \verb{$weights} and \verb{$nodes} is always the column
+order of the input \code{data} / \code{cor_matrix}, never sorted.
 }
 \description{
 Marginal (zero-order) association network: the Pearson correlation matrix

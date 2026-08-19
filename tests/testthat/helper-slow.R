@@ -1,5 +1,5 @@
-# Resampling verbs (net_boot, net_compare, net_stability, casedrop_reliability,
-# network_reliability, difference_test) re-estimate the whole network once per
+# Resampling verbs (net_boot, net_compare, net_stability, net_casedrop_reliability,
+# net_split_reliability, difference_test) re-estimate the whole network once per
 # draw, so a single test_that() block can cost several seconds. Run in full
 # locally and in CI; skipped on CRAN to keep R CMD check inside the 10-minute
 # budget CRAN enforces.

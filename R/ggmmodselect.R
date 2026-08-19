@@ -80,7 +80,8 @@
 #' @param nlambda Number of glasso penalties scanned for candidate graphs.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #' @param threshold Partial correlations with absolute value below this are
-#'   zeroed. Default 0.
+#'   zeroed. Default 0. With a positive value `$kkt` is `NA` for the returned
+#'   graph and the pre-threshold residual is stored as `$fit_kkt`.
 #' @param cor_method Correlation used when `data` is supplied: `"pearson"`
 #'   (default), `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial,
 #'   the `qgraph`/`bootnet` default for ordinal items). See [cor_auto()].
@@ -180,6 +181,7 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
   pcor <- .precision_to_pcor(best_theta)
   pcor[abs(pcor) < threshold] <- 0
   dimnames(pcor) <- list(labels, labels)
+  fit_kkt <- ggm_support_kkt(best_theta, S, best_support)
 
   .new_psychnet(
     graph = pcor, labels = labels, method = "ggm",
@@ -187,7 +189,10 @@ ggm_modselect <- function(data = NULL, cor_matrix = NULL, n = NULL,
     extra = list(
       precision = best_theta, support = best_support, gamma = gamma,
       cor_matrix = S, ebic = best_ebic,
-      kkt = ggm_support_kkt(best_theta, S, best_support)
+      kkt = if (threshold > 0) NA_real_ else fit_kkt,
+      fit_kkt = fit_kkt,
+      certificate_target = if (threshold > 0) "pre_threshold_fit" else
+        "returned_network"
     )
   )
 }

@@ -26,13 +26,16 @@ ising_fit(
 
 \item{nlambda}{Number of penalties per nodewise path. Default 100.}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.
+With \code{native = FALSE}, omitting the argument retains glmnet's reference
+default for compatibility; an explicitly supplied value is honored.}
 
 \item{min_sum}{Minimum row sum-score (number of endorsed items); rows below
 it are dropped before fitting. \code{NULL} (default) keeps every row.}
 
-\item{weights}{Optional non-negative observation weights, one per retained
-row. \code{NULL} (default) is unweighted.}
+\item{weights}{Optional non-negative observation weights, one per input row
+after missing-data preparation. When \code{min_sum} is used, weights are filtered
+alongside their corresponding rows. \code{NULL} (default) is unweighted.}
 
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
 each column over its observed values (mode for binary), keeping the full
@@ -44,7 +47,8 @@ delegates each per-node fit to the \code{glmnet} package with the IsingFit EBIC
 path, so the returned \verb{$weights}/\verb{$thresholds} byte-match
 \code{IsingFit::IsingFit()} (to ~1e-16) at the cost of glmnet's looser
 self-certificate. \code{native = FALSE} needs the optional \code{glmnet} package
-(Suggests); \code{weights}/\code{min_sum} are supported with \code{native = TRUE} only.}
+(Suggests). \code{min_sum} is supported by both engines; observation \code{weights}
+require \code{native = TRUE}.}
 
 \item{labels}{Optional node labels.}
 }

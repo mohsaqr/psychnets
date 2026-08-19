@@ -13,9 +13,9 @@ dichotomize(data, method = c("median", "mean", "rank"))
 \describe{
 \item{\code{"median"}}{(default) \code{1} if the value is \code{>=} the column median.}
 \item{\code{"mean"}}{\code{1} if the value is \code{>} the column mean.}
-\item{\code{"rank"}}{\code{1} for the upper half of the column by rank, giving a
-balanced (~50/50) split that is robust to ties (useful for coarse
-Likert items where a median split is badly unbalanced).}
+\item{\code{"rank"}}{\code{1} for observations whose average rank is above the
+midpoint. Tied values always remain together, so the split may be
+unbalanced rather than depending on row order.}
 }}
 }
 \value{

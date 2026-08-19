@@ -16,10 +16,15 @@ Default \code{1e-6}.}
 A one-row \code{data.frame} with columns \code{method}, \code{certificate} (the
 residual; smaller is better), \code{kind} (\code{"kkt"} for the optimization
 certificates, \code{"structural"} for TMFG/relimp, \code{"none"} for cor/pcor), and
-\code{certified} (logical: residual at or below \code{tol}).
+\code{certified} (logical: residual at or below \code{tol}; \code{NA} when no applicable
+certificate is available). Correlation networks use kind \code{"none"} and are
+reported as \code{TRUE} because no optimization claim is made.
 }
 \description{
-Every regularized or constrained estimator in \code{psychnet} self-certifies: it
+Regularized or constrained estimators in \code{psychnet} self-certify when the
+returned graph is the fitted optimization result. A graph altered by
+post-estimation thresholding, or an external fit without an available
+residual, reports \code{NA} rather than being presented as certified.
 reports how far the returned network sits from the unique optimum of its own
 convex objective (a KKT / stationarity residual), or -- for the structural
 methods -- whether the graph satisfies the identity that defines it. This

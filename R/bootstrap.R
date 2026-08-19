@@ -18,13 +18,27 @@
   min(cores, nc)
 }
 
-# Closed-form GGM node predictability from a precision matrix: R^2 = 1 - 1/Kii,
-# clamped to [0, 1] (Haslbeck & Waldorp 2018). NULL when no precision is stored.
+# Closed-form GGM node predictability from a precision matrix. With a penalized
+# diagonal the fitted marginal variance is diag(solve(K)), not the input S.
 #' @noRd
 .psn_predictability <- function(fit) {
   K <- fit$precision
   if (is.null(K)) return(NULL)
-  pmin(pmax(1 - 1 / diag(as.matrix(K)), 0), 1)
+  labs <- rownames(K)
+  good <- is.finite(diag(K))
+  out <- stats::setNames(rep(NA_real_, nrow(K)), labs)
+  if (!any(good)) return(out)
+  Ks <- K[good, good, drop = FALSE]
+  glabs <- labs[good]
+  sdiag <- if (isTRUE(fit$penalize_diagonal)) {
+    diag(solve(Ks))
+  } else if (!is.null(fit$cor_matrix)) {
+    S <- fit$cor_matrix
+    if (!is.null(rownames(S)) && all(glabs %in% rownames(S)))
+      diag(S[glabs, glabs, drop = FALSE]) else diag(S)
+  } else rep(1, nrow(Ks))
+  out[good] <- pmin(pmax(1 - 1 / (diag(Ks) * sdiag), 0), 1)
+  out
 }
 
 # Pairwise difference p-value matrix from stored draws (columns = items): the
@@ -40,7 +54,11 @@
   for (i in seq_len(m - 1L)) {
     js <- seq.int(i + 1L, m)
     d <- bm[, i] - bm[, js, drop = FALSE]
-    pv <- 2 * pmin(colMeans(d > 0), colMeans(d < 0))
+    # Split ties evenly between the two tails. This gives p = 1 when every
+    # paired difference is exactly zero and avoids anti-conservative tie bias.
+    z <- colMeans(d == 0)
+    pv <- pmin(1, 2 * pmin(colMeans(d > 0) + z / 2,
+                           colMeans(d < 0) + z / 2))
     p_mat[i, js] <- pv; p_mat[js, i] <- pv
   }
   if (p_adjust != "none") {
@@ -62,7 +80,11 @@
 #' excludes zero. The raw per-resample draws are stored on the returned object
 #' for use by [difference_test()].
 #'
-#' @param data Numeric data frame or matrix (rows = observations).
+#' @param data Data frame or matrix (rows = observations). Resampled exactly as
+#'   given -- factor columns and incomplete rows included -- so each draw is
+#'   handed to the estimator as the full data would be, and the estimator's own
+#'   `na_method` and type handling apply per draw. For `method = "mgm"` node
+#'   types are decided once on the full data and pinned for every draw.
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
 #' @param n_boot Number of bootstrap resamples. Default 1000.
 #' @param ci Confidence level for percentile intervals. Default 0.95.
@@ -94,6 +116,9 @@
 #' @param engine Optional estimator engine forwarded to each resample fit
 #'   (e.g. `"base"`/`"glasso"` for glasso, `"base"`/`"glmnet"` for ising/mgm).
 #'   `NULL` (default) uses the estimator's own default.
+#' @param estimator_args Named list of estimator arguments. Use this for names
+#'   consumed by the bootstrap itself, such as an estimator's `threshold`.
+#'   Values here override matching arguments in `...`.
 #' @param ... Passed to the estimator.
 #' @return An object of class `psychnet_bootstrap`: tidy `$edges` (with a
 #'   `significant` flag) and `$centrality` data frames, the observed network in
@@ -113,7 +138,8 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
                      ci = 0.95, measures = c("strength", "expected_influence"),
                      centrality_fn = NULL, predictability = FALSE,
                      threshold = FALSE, diff_test = FALSE, p_adjust = "none",
-                     labels = NULL, cores = NULL, engine = NULL, ...) {
+                     labels = NULL, cores = NULL, engine = NULL,
+                     estimator_args = list(), ...) {
   # Group object -> bootstrap each level from its stored cross-sectional data,
   # reproducing the group's estimator configuration (incl. labels).
   if (inherits(data, "psychnet_group")) {
@@ -122,24 +148,29 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
       list(n_boot = n_boot, ci = ci, measures = measures,
            centrality_fn = centrality_fn, predictability = predictability,
            threshold = threshold, diff_test = diff_test, p_adjust = p_adjust,
-           cores = cores, engine = engine)))
+           cores = cores, engine = engine,
+           estimator_args = estimator_args)))
   }
   stopifnot(is.numeric(n_boot), length(n_boot) == 1L, is.finite(n_boot),
             n_boot >= 1, ci > 0, ci < 1)
   p_adjust <- match.arg(p_adjust, stats::p.adjust.methods)
   n_boot <- as.integer(n_boot)   # a fractional count corrupts the stored %d field
-  mat <- .as_numeric_matrix(data)
-  n <- nrow(mat)
-  if (is.null(labels)) labels <- colnames(mat)
-
   # Engine is forwarded only when set, so estimators without an engine argument
   # (cor/pcor) are unaffected unless the caller explicitly asks for one.
-  dots <- list(...)
-  if (!is.null(engine)) dots$engine <- engine
-  fit_net <- function(m)
-    do.call(psychnet, c(list(m, method = method, labels = labels), dots))
+  dots <- .resample_dots(list(...), estimator_args)
+  native <- .resample_engine(engine, method)
+  if (!is.null(native)) dots$native <- native
+  inp <- .resample_input(data, method, dots)
+  mat <- inp$data; dots <- inp$dots
+  n <- nrow(mat)
+  fit_net <- function(m, align = NULL)
+    .psn_refit_network(m, method = method, labels = align, dots = dots)
 
-  obs <- fit_net(mat)
+  # Node labels come from the observed fit, not the input columns: the
+  # estimator decides which columns are nodes (glasso drops a factor column,
+  # mgm keeps it), and the draws must align to that.
+  obs <- fit_net(mat, labels)
+  if (is.null(obs)) stop("Observed network estimation failed.", call. = FALSE)
   p <- nrow(obs$nodes)
   if (is.null(labels)) labels <- obs$nodes$label
   # Directed estimators (e.g. relimp) have an asymmetric network: take every
@@ -162,7 +193,7 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
                      function(b) sample.int(n, n, replace = TRUE))
 
   one <- function(idx) {
-    fit <- tryCatch(fit_net(mat[idx, , drop = FALSE]), error = function(e) NULL)
+    fit <- fit_net(mat[idx, , drop = FALSE], labels)
     if (is.null(fit)) return(NULL)
     ct <- net_centralities(fit, measures = measures,
                            centrality_fn = centrality_fn)
@@ -174,6 +205,14 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
   draws <- if (cores > 1L)
     parallel::mclapply(idx_list, one, mc.cores = cores)
   else lapply(idx_list, one)
+
+  n_success <- sum(vapply(draws, is.list, logical(1)))
+  n_failed <- n_boot - n_success
+  if (n_success < 2L)
+    stop("Fewer than two bootstrap resamples could be estimated.", call. = FALSE)
+  if (n_failed > 0L)
+    warning(sprintf("%d of %d bootstrap resamples failed; summaries exclude those draws.",
+                    n_failed, n_boot), call. = FALSE)
 
   alpha <- (1 - ci) / 2
   edge_boot <- matrix(NA_real_, n_boot, length(obs_edges))
@@ -222,6 +261,7 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
               edge_labels = paste(edges$from, edges$to, sep = "--"),
               node_labels = labels, measures = measures,
               n_boot = n_boot, ci = ci, method = obs$method,
+              n_success = n_success, n_failed = n_failed,
               lambda_path = obs$lambda_path, lambda_selected = obs$lambda)
 
   if (!is.null(pred_boot)) {
@@ -303,7 +343,11 @@ difference_test <- function(boot, type = "edge", ci = NULL,
   stats_k <- t(vapply(seq_len(nrow(pairs)), function(k) {
     d <- draws[, i[k]] - draws[, j[k]]
     c(stats::quantile(d, c(alpha, 1 - alpha), na.rm = TRUE, names = FALSE),
-      2 * min(mean(d > 0, na.rm = TRUE), mean(d < 0, na.rm = TRUE)))
+      {
+        z <- mean(d == 0, na.rm = TRUE)
+        min(1, 2 * min(mean(d > 0, na.rm = TRUE) + z / 2,
+                       mean(d < 0, na.rm = TRUE) + z / 2))
+      })
   }, numeric(3L)))
   pval <- stats_k[, 3L]
   if (p_adjust != "none") pval <- stats::p.adjust(pval, method = p_adjust)

@@ -15,6 +15,9 @@ ebic_glasso(
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   na_method = c("pairwise", "listwise"),
   native = TRUE,
+  lambda_path = NULL,
+  penalize_diagonal = FALSE,
+  refit = TRUE,
   labels = NULL
 )
 }
@@ -35,7 +38,9 @@ ebic_glasso(
 Default 0.01.}
 
 \item{threshold}{Partial correlations with absolute value below this are set
-to zero. Default 0.}
+to zero. Default 0. A positive value is post-estimation processing, so the
+returned graph has \verb{$kkt = NA}; the fitted precision's residual remains in
+\verb{$fit_kkt}.}
 
 \item{cor_method}{Correlation used when \code{data} is supplied: \code{"pearson"}
 (default), \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial
@@ -52,17 +57,45 @@ solve to the established \code{glasso} Fortran package (in \code{Suggests}) for 
 and byte-identical \code{glasso}/\code{qgraph} output, at its looser convergence (the
 reported \verb{$kkt} then shows glasso's tolerance rather than ~1e-11).}
 
+\item{lambda_path}{Optional numeric vector of penalties to scan, in the order
+given. When supplied it overrides \code{nlambda} / \code{lambda_min_ratio} and is
+echoed back unchanged. Intended for resampling callers: computing the path
+once from the original correlation matrix and reusing it for every resample
+keeps the selected penalties comparable across draws, whereas recomputing
+the path per resample lets the grid drift with each sample's largest
+absolute correlation.}
+
+\item{penalize_diagonal}{Apply the L1 penalty to the diagonal of the
+precision matrix as well. Default \code{FALSE} (the working covariance diagonal
+is held at \code{diag(S)}); \code{TRUE} holds it at \code{diag(S) + lambda}, and \verb{$kkt} is
+graded against the matching optimality condition.}
+
+\item{refit}{What to return at the selected penalty. \code{TRUE} (default)
+re-solves it to machine precision, so the returned network is the certified
+optimum. \code{FALSE} returns the path fit exactly as scanned (at the loose scan
+tolerance). This is a bit-compatibility switch, not a speed one: the refit
+is the strictly better answer and costs little, but a consumer holding
+frozen baselines against an unrefitted path scan needs the scanned matrix to
+reproduce them. \code{"unregularized"} keeps the selected support and refits the
+\emph{unpenalized} graph-restricted MLE on it, which is no longer a penalized
+optimum and is therefore certified by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} instead.}
+
 \item{labels}{Optional node labels.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
 with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix}, \verb{$ebic}, \verb{$native},
-and \verb{$kkt} (the stationarity residual of the returned network).
+and \verb{$kkt} (the stationarity residual, or \code{NA} after thresholding). Node order
+in \verb{$weights}, \verb{$nodes}, and \verb{$precision} is always the column order of the
+input \code{data} / \code{cor_matrix}, never sorted. With \code{refit = "unregularized"}
+the object also carries \verb{$support}, and \verb{$kkt} is a \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}
+residual; with \code{refit = FALSE} the reported \verb{$kkt} reflects the loose scan
+tolerance (~1e-4) rather than the refit's ~1e-11.
 }
 \description{
 Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a
 log-spaced path, then refits the chosen penalty to machine precision so the
-returned network is the certified global optimum of the convex objective.
+fitted precision matrix is the certified global optimum of the convex objective.
 Equivalent in purpose to \code{qgraph::EBICglasso()} / \code{bootnet}'s \code{"EBICglasso"}
 default, but pure base R and self-certified (see \code{\link[=glasso_kkt]{glasso_kkt()}}).
 }

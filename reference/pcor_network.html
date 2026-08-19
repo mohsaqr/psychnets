@@ -11,7 +11,7 @@ inverse correlation matrix. Equivalent to bootnet's &quot;pcor&quot; default."><
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,7 +125,8 @@ complete.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the thresholded
 partial-correlation matrix, with <code>$precision</code>, <code>$cor_matrix</code> (and
-<code>$p_values</code> when <code>alpha</code> is used).</p>
+<code>$p_values</code> when <code>alpha</code> is used). Node order in <code>$weights</code> and <code>$nodes</code> is
+always the column order of the input <code>data</code> / <code>cor_matrix</code>, never sorted.</p>
     </div>
 
     <div class="section level2">

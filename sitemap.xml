@@ -17,7 +17,6 @@
 <url><loc>https://pak.dynasite.org/psychnets/reference/SRL.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet_bootstrap.html</loc></url>
-<url><loc>https://pak.dynasite.org/psychnets/reference/casedrop_reliability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/cash-.psychnet.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/certificate.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/condition.html</loc></url>
@@ -41,6 +40,7 @@
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_aggregate.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_boot.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_bridge.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_centralities.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_clustering.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_compare.html</loc></url>
@@ -48,8 +48,8 @@
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_edge_betweenness.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_predict.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_smallworld.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/reference/net_split_reliability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_stability.html</loc></url>
-<url><loc>https://pak.dynasite.org/psychnets/reference/network_reliability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/node_predictability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/pcor_network.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/plot.psychnet.html</loc></url>

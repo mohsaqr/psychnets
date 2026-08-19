@@ -83,10 +83,10 @@ paths that pass through a node.
 ct <- net_centralities(fit, measures = c("strength", "expected_influence", "betweenness"))
 ct
 #>   node  strength expected_influence betweenness
-#> 1  CSU 1.1984512         1.19845117   0.3333333
+#> 1  CSU 1.1984512         1.19845117   0.1666667
 #> 2   IV 1.0012765         1.00127649   0.0000000
 #> 3   SE 0.8492185         0.84921854   0.0000000
-#> 4   SR 1.2314317         0.53172852   1.0000000
+#> 4   SR 1.2314317         0.53172852   0.5000000
 #> 5   TA 0.6082238        -0.09147935   0.0000000
 ```
 

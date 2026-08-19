@@ -32,8 +32,17 @@ mgm_fit(
 
 - data:
 
-  Numeric data frame or matrix (rows = observations); columns are
-  continuous or binary (0/1).
+  Data frame or matrix (rows = observations). Columns are continuous,
+  binary, or – with `native = FALSE` – multi-level categorical (a
+  `factor`/`character` column, or a numeric one caught by the detection
+  rule below). A column with fewer than two distinct observed values
+  carries no information and is dropped, as in every other estimator. A
+  `character` column with more than 10 distinct values is refused as an
+  identifier (convert it with
+  [`factor()`](https://rdrr.io/r/base/factor.html) if it really is a
+  categorical node), and a column declared `"c"` via `types` with more
+  than 10 distinct values is refused as a mislabelled continuous
+  variable.
 
 - gamma:
 
@@ -42,7 +51,13 @@ mgm_fit(
 - types:
 
   Optional character vector of node types (`"g"` gaussian, `"c"`
-  binary); auto-detected if `NULL`.
+  categorical); auto-detected if `NULL`. Detection follows
+  [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html)'s own rule: a
+  `factor`/`character` column is categorical, and so is a numeric column
+  with 10 or fewer distinct integer values. A numeric column promoted by
+  that integer rule is warned about by name, because it switches the
+  node from gaussian to categorical – a different model, not a different
+  encoding. Likert and count items hit this rule routinely.
 
 - nlambda:
 
@@ -50,7 +65,9 @@ mgm_fit(
 
 - lambda_min_ratio:
 
-  Smallest penalty as a fraction of the largest.
+  Smallest penalty as a fraction of the largest. With `native = FALSE`,
+  omitting the argument retains glmnet's reference default for
+  compatibility; an explicitly supplied value is honored.
 
 - threshold:
 
@@ -81,19 +98,31 @@ mgm_fit(
 - na_method:
 
   Missing-data handling: `"pairwise"` (default) single-imputes each
-  column over its observed values (mean for continuous, mode for
-  binary), keeping the full sample; `"listwise"` drops incomplete rows.
+  column over its observed values (mean for continuous, modal level for
+  binary and multi-level categorical), keeping the full sample;
+  `"listwise"` drops incomplete rows. Applies identically on both
+  engines.
 
 - native:
 
   Solver switch. `TRUE` (default) uses psychnet's own pure-R,
   dependency-free, self-certified L1 path (KKT ~1e-9). `FALSE` delegates
   each per-node fit to the `glmnet` package with mgm's exact EBIC/LW
-  path (gaussian lasso for continuous nodes, 2-class multinomial lasso
-  for binary nodes), so the returned edge magnitudes byte-match
+  path (gaussian lasso for continuous nodes, multinomial lasso for
+  categorical ones), so the returned edge magnitudes byte-match
   `abs(mgm::mgm()$pairwise$wadj)` (to ~1e-6) at the cost of glmnet's
   looser self-certificate. `native = FALSE` needs the optional `glmnet`
   package (Suggests); `weights` are supported with `native = TRUE` only.
+
+  Only `native = FALSE` supports **multi-level** categorical nodes: the
+  base kernel is a binomial solver, so a node with more than two levels
+  errors there by name. One-hot encoding is not an equivalent workaround
+  – it turns one k-level node into k separate nodes, which is a
+  different model. A network containing a multi-level node cannot be
+  passed to
+  [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md),
+  because a k-level predictor occupies k-1 design columns and so has no
+  one-coefficient-per-variable representation.
 
 - labels:
 
@@ -102,10 +131,13 @@ mgm_fit(
 ## Value
 
 A `psychnet` object whose `$weights` is the symmetric standardized
-weight matrix, with `$types` and `$kkt` (the worst nodewise residual). A
-binary-binary edge carries the sign of its nodewise-logistic
-coefficient; [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html)
-reports the same edge as a magnitude only (its sign is undefined for a
+weight matrix, with `$types`, `$levels` (number of levels per node, 1
+for gaussian) and `$kkt` (the worst nodewise residual). Node order in
+`$weights` and `$nodes` is always the column order of the input `data`,
+never sorted, and a k-level categorical stays ONE node. A binary-binary
+edge carries the sign of its nodewise-logistic coefficient;
+[`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) reports the same
+edge as a magnitude only (its sign is undefined for a
 categorical-categorical interaction), so compare such edges on
 [`abs()`](https://rdrr.io/r/base/MathFun.html). Continuous columns are
 standardized internally, binary predictors enter the graph on their 0/1

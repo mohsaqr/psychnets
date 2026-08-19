@@ -45,7 +45,9 @@ ising_fit(
 
 - lambda_min_ratio:
 
-  Smallest penalty as a fraction of the largest.
+  Smallest penalty as a fraction of the largest. With `native = FALSE`,
+  omitting the argument retains glmnet's reference default for
+  compatibility; an explicitly supplied value is honored.
 
 - min_sum:
 
@@ -54,8 +56,9 @@ ising_fit(
 
 - weights:
 
-  Optional non-negative observation weights, one per retained row.
-  `NULL` (default) is unweighted.
+  Optional non-negative observation weights, one per input row after
+  missing-data preparation. When `min_sum` is used, weights are filtered
+  alongside their corresponding rows. `NULL` (default) is unweighted.
 
 - na_method:
 
@@ -72,8 +75,9 @@ ising_fit(
   EBIC path, so the returned `$weights`/`$thresholds` byte-match
   [`IsingFit::IsingFit()`](https://rdrr.io/pkg/IsingFit/man/isingfit.html)
   (to ~1e-16) at the cost of glmnet's looser self-certificate.
-  `native = FALSE` needs the optional `glmnet` package (Suggests);
-  `weights`/`min_sum` are supported with `native = TRUE` only.
+  `native = FALSE` needs the optional `glmnet` package (Suggests).
+  `min_sum` is supported by both engines; observation `weights` require
+  `native = TRUE`.
 
 - labels:
 

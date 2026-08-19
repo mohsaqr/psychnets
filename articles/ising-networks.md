@@ -76,8 +76,8 @@ weights, node thresholds, and numerical certificate.
 ising_net <- psychnet(data = binary_data, method = "ising", rule = "AND")
 ising_net
 #> <psychnet> ising network
-#>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 3.74e-10
+#>   nodes: 5   edges: 6   (undirected)
+#>   optimality (KKT residual): 4.90e-10
 ```
 
 The fitted network contains 5 nodes and 7 edges. Three of the ten
@@ -95,9 +95,9 @@ indicate lower conditional odds.
 
 summary(ising_net)
 #> <psychnet> ising network
-#>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 3.74e-10
-#>   edge weight: range [-0.347, 2.242], mean 1.347
+#>   nodes: 5   edges: 6   (undirected)
+#>   optimality (KKT residual): 4.90e-10
+#>   edge weight: range [0.853, 2.192], mean 1.573
 ```
 
 The six retained edges among `CSU`, `IV`, `SE`, and `SR` are positive.
@@ -126,8 +126,8 @@ its first-order conditions to the requested tolerance.
 ``` r
 
 certificate(ising_net)
-#>   method certificate kind certified
-#> 1  ising 3.74261e-10  kkt      TRUE
+#>   method  certificate kind certified
+#> 1  ising 4.895833e-10  kkt      TRUE
 ```
 
 The residual is $`3.74 \times 10^{-10}`$ and `certified` is `TRUE`. This
@@ -146,12 +146,12 @@ the signed weights, so negative connections reduce the total.
 ``` r
 
 net_centralities(ising_net)
-#>   node  strength expected_influence
-#> 1  CSU 4.9459597          4.9459597
-#> 2   IV 5.3057980          5.3057980
-#> 3   SE 4.7737358          4.7737358
-#> 4   SR 4.8683790          4.1747307
-#> 5   TA 0.3468242         -0.3468242
+#>   node strength expected_influence
+#> 1  CSU 5.113778           5.113778
+#> 2   IV 5.113636           5.113636
+#> 3   SE 4.405862           4.405862
+#> 4   SR 4.244684           4.244684
+#> 5   TA 0.000000           0.000000
 ```
 
 Intrinsic value has the highest strength (5.306), followed by cognitive
@@ -178,10 +178,10 @@ correctly.
 
 net_predict(ising_net, data = binary_data)
 #>   node   type metric predictability  accuracy
-#> 1  CSU binary    nCC      0.7066667 0.8533333
-#> 2   IV binary    nCC      0.7266667 0.8633333
-#> 3   SE binary    nCC      0.7000000 0.8500000
-#> 4   SR binary    nCC      0.7133333 0.8566667
+#> 1  CSU binary    nCC      0.7114094 0.8566667
+#> 2   IV binary    nCC      0.7338129 0.8766667
+#> 3   SE binary    nCC      0.6993007 0.8566667
+#> 4   SR binary    nCC      0.6376812 0.8333333
 #> 5   TA binary    nCC      0.0000000 0.5000000
 ```
 
@@ -210,17 +210,17 @@ procedure.
 unregularized_net <- psychnet(data = binary_data, method = "ising_sampler", alpha = 0.05)
 unregularized_net
 #> <psychnet> ising_sampler network
-#>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 1.38e-08
+#>   nodes: 5   edges: 6   (undirected)
+#>   optimality (KKT residual): 1.06e-08
 ```
 
 ``` r
 
 summary(unregularized_net)
 #> <psychnet> ising_sampler network
-#>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 1.38e-08
-#>   edge weight: range [-0.769, 2.309], mean 1.354
+#>   nodes: 5   edges: 6   (undirected)
+#>   optimality (KKT residual): 1.06e-08
+#>   edge weight: range [0.882, 2.345], mean 1.734
 ```
 
 The unregularized model retains the same 7 edges. Its positive
@@ -234,7 +234,7 @@ the different estimation and pruning procedures.
 
 certificate(unregularized_net)
 #>          method  certificate kind certified
-#> 1 ising_sampler 1.384701e-08  kkt      TRUE
+#> 1 ising_sampler 1.062248e-08  kkt      TRUE
 ```
 
 The residual is $`1.38 \times 10^{-8}`$ and `certified` is `TRUE`,

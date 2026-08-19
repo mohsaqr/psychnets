@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -144,8 +144,8 @@ weights, node thresholds, and numerical certificate.</p>
 <code class="sourceCode R"><span><span class="va">ising_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">binary_data</span>, method <span class="op">=</span> <span class="st">"ising"</span>, rule <span class="op">=</span> <span class="st">"AND"</span><span class="op">)</span></span>
 <span><span class="va">ising_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ising network</span></span>
-<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 3.74e-10</span></span></code></pre></div>
+<span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 4.90e-10</span></span></code></pre></div>
 <p>The fitted network contains 5 nodes and 7 edges. Three of the ten
 possible pairs are removed by the selected model.</p>
 </div>
@@ -160,9 +160,9 @@ indicate lower conditional odds.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ising network</span></span>
-<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 3.74e-10</span></span>
-<span><span class="co">#&gt;   edge weight: range [-0.347, 2.242], mean 1.347</span></span></code></pre></div>
+<span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 4.90e-10</span></span>
+<span><span class="co">#&gt;   edge weight: range [0.853, 2.192], mean 1.573</span></span></code></pre></div>
 <p>The six retained edges among <code>CSU</code>, <code>IV</code>,
 <code>SE</code>, and <code>SR</code> are positive. The largest is
 <code>IV</code>-<code>SR</code> at 2.242, followed by
@@ -189,8 +189,8 @@ across the fitted nodewise logistic models. It returns
 satisfies its first-order conditions to the requested tolerance.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   method certificate kind certified</span></span>
-<span><span class="co">#&gt; 1  ising 3.74261e-10  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt;   method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1  ising 4.895833e-10  kkt      TRUE</span></span></code></pre></div>
 <p>The residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.74</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.74 \times 10^{-10}</annotation></semantics></math>
 and <code>certified</code> is <code>TRUE</code>. This value is close to
@@ -208,12 +208,12 @@ Strength sums the absolute interaction weights. Expected influence sums
 the signed weights, so negative connections reduce the total.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   node  strength expected_influence</span></span>
-<span><span class="co">#&gt; 1  CSU 4.9459597          4.9459597</span></span>
-<span><span class="co">#&gt; 2   IV 5.3057980          5.3057980</span></span>
-<span><span class="co">#&gt; 3   SE 4.7737358          4.7737358</span></span>
-<span><span class="co">#&gt; 4   SR 4.8683790          4.1747307</span></span>
-<span><span class="co">#&gt; 5   TA 0.3468242         -0.3468242</span></span></code></pre></div>
+<span><span class="co">#&gt;   node strength expected_influence</span></span>
+<span><span class="co">#&gt; 1  CSU 5.113778           5.113778</span></span>
+<span><span class="co">#&gt; 2   IV 5.113636           5.113636</span></span>
+<span><span class="co">#&gt; 3   SE 4.405862           4.405862</span></span>
+<span><span class="co">#&gt; 4   SR 4.244684           4.244684</span></span>
+<span><span class="co">#&gt; 5   TA 0.000000           0.000000</span></span></code></pre></div>
 <p>Intrinsic value has the highest strength (5.306), followed by
 cognitive strategy use (4.946). Self-regulation has strength 4.868 and
 expected influence 4.175 because its negative connection with test
@@ -237,10 +237,10 @@ classified correctly.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">ising_net</span>, data <span class="op">=</span> <span class="va">binary_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node   type metric predictability  accuracy</span></span>
-<span><span class="co">#&gt; 1  CSU binary    nCC      0.7066667 0.8533333</span></span>
-<span><span class="co">#&gt; 2   IV binary    nCC      0.7266667 0.8633333</span></span>
-<span><span class="co">#&gt; 3   SE binary    nCC      0.7000000 0.8500000</span></span>
-<span><span class="co">#&gt; 4   SR binary    nCC      0.7133333 0.8566667</span></span>
+<span><span class="co">#&gt; 1  CSU binary    nCC      0.7114094 0.8566667</span></span>
+<span><span class="co">#&gt; 2   IV binary    nCC      0.7338129 0.8766667</span></span>
+<span><span class="co">#&gt; 3   SE binary    nCC      0.6993007 0.8566667</span></span>
+<span><span class="co">#&gt; 4   SR binary    nCC      0.6376812 0.8333333</span></span>
 <span><span class="co">#&gt; 5   TA binary    nCC      0.0000000 0.5000000</span></span></code></pre></div>
 <p>Intrinsic value has the highest normalized accuracy (0.727) and a raw
 accuracy of 0.863. Cognitive strategy use, self-efficacy, and
@@ -264,14 +264,14 @@ persists under a different estimation procedure.</p>
 <code class="sourceCode R"><span><span class="va">unregularized_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">binary_data</span>, method <span class="op">=</span> <span class="st">"ising_sampler"</span>, alpha <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
 <span><span class="va">unregularized_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ising_sampler network</span></span>
-<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.38e-08</span></span></code></pre></div>
+<span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.06e-08</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">unregularized_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ising_sampler network</span></span>
-<span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.38e-08</span></span>
-<span><span class="co">#&gt;   edge weight: range [-0.769, 2.309], mean 1.354</span></span></code></pre></div>
+<span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.06e-08</span></span>
+<span><span class="co">#&gt;   edge weight: range [0.882, 2.345], mean 1.734</span></span></code></pre></div>
 <p>The unregularized model retains the same 7 edges. Its positive
 learning-cluster interactions are slightly larger, and the
 <code>SR</code>-<code>TA</code> edge is -0.769 compared with -0.347 in
@@ -282,7 +282,7 @@ procedures.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">unregularized_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1 ising_sampler 1.384701e-08  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 ising_sampler 1.062248e-08  kkt      TRUE</span></span></code></pre></div>
 <p>The residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.38</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.38 \times 10^{-8}</annotation></semantics></math>
 and <code>certified</code> is <code>TRUE</code>, indicating that the

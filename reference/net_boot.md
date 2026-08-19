@@ -25,6 +25,7 @@ net_boot(
   labels = NULL,
   cores = NULL,
   engine = NULL,
+  estimator_args = list(),
   ...
 )
 ```
@@ -33,7 +34,12 @@ net_boot(
 
 - data:
 
-  Numeric data frame or matrix (rows = observations).
+  Data frame or matrix (rows = observations). Resampled exactly as given
+  – factor columns and incomplete rows included – so each draw is handed
+  to the estimator as the full data would be, and the estimator's own
+  `na_method` and type handling apply per draw. For `method = "mgm"`
+  node types are decided once on the full data and pinned for every
+  draw.
 
 - method:
 
@@ -106,6 +112,12 @@ net_boot(
   Optional estimator engine forwarded to each resample fit (e.g.
   `"base"`/`"glasso"` for glasso, `"base"`/`"glmnet"` for ising/mgm).
   `NULL` (default) uses the estimator's own default.
+
+- estimator_args:
+
+  Named list of estimator arguments. Use this for names consumed by the
+  bootstrap itself, such as an estimator's `threshold`. Values here
+  override matching arguments in `...`.
 
 - ...:
 

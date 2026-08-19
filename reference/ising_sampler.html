@@ -13,7 +13,7 @@ maximum-likelihood score residual (see glm_lasso_kkt() at lambda = 0)."></head><
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,8 +100,9 @@ fitting. <code>NULL</code> (default) keeps every row.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Optional non-negative observation weights, one per retained
-row. <code>NULL</code> (default) is unweighted.</p></dd>
+<dd><p>Optional non-negative observation weights, one per input row
+after missing-data preparation. When <code>min_sum</code> is used, weights are filtered
+alongside their corresponding rows. <code>NULL</code> (default) is unweighted.</p></dd>
 
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>

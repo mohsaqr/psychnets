@@ -15,7 +15,7 @@ regression reports its stationarity (KKT) residual (see glm_lasso_kkt())."></hea
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,8 +84,15 @@ regression reports its stationarity (KKT) residual (see <code><a href="glm_lasso
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Numeric data frame or matrix (rows = observations); columns are
-continuous or binary (0/1).</p></dd>
+<dd><p>Data frame or matrix (rows = observations). Columns are
+continuous, binary, or – with <code>native = FALSE</code> – multi-level categorical
+(a <code>factor</code>/<code>character</code> column, or a numeric one caught by the detection
+rule below). A column with fewer than two distinct observed values carries
+no information and is dropped, as in every other estimator. A <code>character</code>
+column with more than 10 distinct values is refused as an identifier
+(convert it with <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code> if it really is a categorical node), and a
+column declared <code>"c"</code> via <code>types</code> with more than 10 distinct values is
+refused as a mislabelled continuous variable.</p></dd>
 
 
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
@@ -94,7 +101,12 @@ continuous or binary (0/1).</p></dd>
 
 <dt id="arg-types">types<a class="anchor" aria-label="anchor" href="#arg-types"></a></dt>
 <dd><p>Optional character vector of node types (<code>"g"</code> gaussian, <code>"c"</code>
-binary); auto-detected if <code>NULL</code>.</p></dd>
+categorical); auto-detected if <code>NULL</code>. Detection follows <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code>'s own
+rule: a <code>factor</code>/<code>character</code> column is categorical, and so is a numeric
+column with 10 or fewer distinct integer values. A numeric column promoted
+by that integer rule is warned about by name, because it switches the node
+from gaussian to categorical – a different model, not a different encoding.
+Likert and count items hit this rule routinely.</p></dd>
 
 
 <dt id="arg-nlambda">nlambda<a class="anchor" aria-label="anchor" href="#arg-nlambda"></a></dt>
@@ -102,7 +114,9 @@ binary); auto-detected if <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-lambda-min-ratio">lambda_min_ratio<a class="anchor" aria-label="anchor" href="#arg-lambda-min-ratio"></a></dt>
-<dd><p>Smallest penalty as a fraction of the largest.</p></dd>
+<dd><p>Smallest penalty as a fraction of the largest.
+With <code>native = FALSE</code>, omitting the argument retains glmnet's reference
+default for compatibility; an explicitly supplied value is honored.</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
@@ -131,19 +145,27 @@ categorical nodes. <code>weights</code> are not supported in this mode.</p></dd>
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
 <dd><p>Missing-data handling: <code>"pairwise"</code> (default) single-imputes
-each column over its observed values (mean for continuous, mode for binary),
-keeping the full sample; <code>"listwise"</code> drops incomplete rows.</p></dd>
+each column over its observed values (mean for continuous, modal level for
+binary and multi-level categorical), keeping the full sample; <code>"listwise"</code>
+drops incomplete rows. Applies identically on both engines.</p></dd>
 
 
 <dt id="arg-native">native<a class="anchor" aria-label="anchor" href="#arg-native"></a></dt>
 <dd><p>Solver switch. <code>TRUE</code> (default) uses psychnet's own pure-R,
 dependency-free, self-certified L1 path (KKT ~1e-9). <code>FALSE</code> delegates each
 per-node fit to the <code>glmnet</code> package with mgm's exact EBIC/LW path (gaussian
-lasso for continuous nodes, 2-class multinomial lasso for binary nodes), so
+lasso for continuous nodes, multinomial lasso for categorical ones), so
 the returned edge magnitudes byte-match <code>abs(mgm::mgm()$pairwise$wadj)</code>
 (to ~1e-6) at the cost of glmnet's looser self-certificate. <code>native = FALSE</code>
 needs the optional <code>glmnet</code> package (Suggests); <code>weights</code> are supported with
-<code>native = TRUE</code> only.</p></dd>
+<code>native = TRUE</code> only.</p>
+<p>Only <code>native = FALSE</code> supports <strong>multi-level</strong> categorical nodes: the base
+kernel is a binomial solver, so a node with more than two levels errors
+there by name. One-hot encoding is not an equivalent workaround – it turns
+one k-level node into k separate nodes, which is a different model. A
+network containing a multi-level node cannot be passed to <code><a href="net_predict.html">net_predict()</a></code>,
+because a k-level predictor occupies k-1 design columns and so has no
+one-coefficient-per-variable representation.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
@@ -153,7 +175,10 @@ needs the optional <code>glmnet</code> package (Suggests); <code>weights</code> 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the symmetric standardized
-weight matrix, with <code>$types</code> and <code>$kkt</code> (the worst nodewise residual). A
+weight matrix, with <code>$types</code>, <code>$levels</code> (number of levels per node, 1 for
+gaussian) and <code>$kkt</code> (the worst nodewise residual). Node order in
+<code>$weights</code> and <code>$nodes</code> is always the column order of the input <code>data</code>,
+never sorted, and a k-level categorical stays ONE node. A
 binary-binary edge carries the sign of its nodewise-logistic coefficient;
 <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> reports the same edge as a magnitude only (its sign is
 undefined for a categorical-categorical interaction), so compare such edges

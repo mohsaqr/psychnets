@@ -15,7 +15,7 @@ glm_lasso_kkt())."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,7 +98,9 @@ node's regression reports its stationarity (KKT) residual (see
 
 
 <dt id="arg-lambda-min-ratio">lambda_min_ratio<a class="anchor" aria-label="anchor" href="#arg-lambda-min-ratio"></a></dt>
-<dd><p>Smallest penalty as a fraction of the largest.</p></dd>
+<dd><p>Smallest penalty as a fraction of the largest.
+With <code>native = FALSE</code>, omitting the argument retains glmnet's reference
+default for compatibility; an explicitly supplied value is honored.</p></dd>
 
 
 <dt id="arg-min-sum">min_sum<a class="anchor" aria-label="anchor" href="#arg-min-sum"></a></dt>
@@ -107,8 +109,9 @@ it are dropped before fitting. <code>NULL</code> (default) keeps every row.</p><
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Optional non-negative observation weights, one per retained
-row. <code>NULL</code> (default) is unweighted.</p></dd>
+<dd><p>Optional non-negative observation weights, one per input row
+after missing-data preparation. When <code>min_sum</code> is used, weights are filtered
+alongside their corresponding rows. <code>NULL</code> (default) is unweighted.</p></dd>
 
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
@@ -124,7 +127,8 @@ delegates each per-node fit to the <code>glmnet</code> package with the IsingFit
 path, so the returned <code>$weights</code>/<code>$thresholds</code> byte-match
 <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> (to ~1e-16) at the cost of glmnet's looser
 self-certificate. <code>native = FALSE</code> needs the optional <code>glmnet</code> package
-(Suggests); <code>weights</code>/<code>min_sum</code> are supported with <code>native = TRUE</code> only.</p></dd>
+(Suggests). <code>min_sum</code> is supported by both engines; observation <code>weights</code>
+require <code>native = TRUE</code>.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>

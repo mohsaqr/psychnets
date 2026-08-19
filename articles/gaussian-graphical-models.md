@@ -155,7 +155,7 @@ requested tolerance of $`10^{-6}`$ by default.
 
 certificate(net)
 #>   method  certificate kind certified
-#> 1 glasso 2.213401e-10  kkt      TRUE
+#> 1 glasso 2.213387e-10  kkt      TRUE
 ```
 
 The KKT residual is $`2.21 \times 10^{-10}`$ and `certified` is `TRUE`.
@@ -317,7 +317,7 @@ threshold_net
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 8   (undirected)
 #>   lambda: 0.00861   gamma: 0.5
-#>   optimality (KKT residual): 2.21e-10
+#>   optimality: unavailable for post-threshold graph  (pre-threshold residual 2.21e-10)
 ```
 
 ``` r
@@ -326,7 +326,7 @@ summary(threshold_net)
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 8   (undirected)
 #>   lambda: 0.00861   gamma: 0.5
-#>   optimality (KKT residual): 2.21e-10
+#>   optimality: unavailable for post-threshold graph  (pre-threshold residual 2.21e-10)
 #>   edge weight: range [-0.350, 0.412], mean 0.200
 ```
 
@@ -378,7 +378,7 @@ to the correlation model.
 
 certificate(npn_net)
 #>   method  certificate kind certified
-#> 1   huge 2.471425e-10  kkt      TRUE
+#> 1   huge 2.471392e-10  kkt      TRUE
 ```
 
 The KKT residual is $`2.47 \times 10^{-10}`$ and `certified` is `TRUE`.

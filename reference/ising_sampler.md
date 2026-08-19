@@ -51,8 +51,9 @@ ising_sampler(
 
 - weights:
 
-  Optional non-negative observation weights, one per retained row.
-  `NULL` (default) is unweighted.
+  Optional non-negative observation weights, one per input row after
+  missing-data preparation. When `min_sum` is used, weights are filtered
+  alongside their corresponding rows. `NULL` (default) is unweighted.
 
 - na_method:
 

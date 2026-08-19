@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,10 +152,10 @@ node.</p>
 <code class="sourceCode R"><span><span class="va">ct</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">fit</span>, measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strength"</span>, <span class="st">"expected_influence"</span>, <span class="st">"betweenness"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">ct</span></span>
 <span><span class="co">#&gt;   node  strength expected_influence betweenness</span></span>
-<span><span class="co">#&gt; 1  CSU 1.1984512         1.19845117   0.3333333</span></span>
+<span><span class="co">#&gt; 1  CSU 1.1984512         1.19845117   0.1666667</span></span>
 <span><span class="co">#&gt; 2   IV 1.0012765         1.00127649   0.0000000</span></span>
 <span><span class="co">#&gt; 3   SE 0.8492185         0.84921854   0.0000000</span></span>
-<span><span class="co">#&gt; 4   SR 1.2314317         0.53172852   1.0000000</span></span>
+<span><span class="co">#&gt; 4   SR 1.2314317         0.53172852   0.5000000</span></span>
 <span><span class="co">#&gt; 5   TA 0.6082238        -0.09147935   0.0000000</span></span></code></pre></div>
 <p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> for a <code>psychnet_centrality</code> table
 draws one panel per measure. Under the default

@@ -71,7 +71,8 @@ ggm_modselect(
 - threshold:
 
   Partial correlations with absolute value below this are zeroed.
-  Default 0.
+  Default 0. With a positive value `$kkt` is `NA` for the returned graph
+  and the pre-threshold residual is stored as `$fit_kkt`.
 
 - cor_method:
 

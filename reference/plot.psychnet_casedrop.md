@@ -29,7 +29,7 @@ plot(x, ...)
 ## Examples
 
 ``` r
-# Small `iter` / `drop_prop` for a fast example; see [casedrop_reliability()]
+# Small `iter` / `drop_prop` for a fast example; see [net_casedrop_reliability()]
 # for the defaults a real assessment should use.
-plot(casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
+plot(net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
 ```

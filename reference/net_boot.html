@@ -17,7 +17,7 @@ for use by difference_test()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,7 @@ for use by <code><a href="difference_test.html">difference_test()</a></code>.</p
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  engine <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  estimator_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -89,7 +90,11 @@ for use by <code><a href="difference_test.html">difference_test()</a></code>.</p
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Numeric data frame or matrix (rows = observations).</p></dd>
+<dd><p>Data frame or matrix (rows = observations). Resampled exactly as
+given – factor columns and incomplete rows included – so each draw is
+handed to the estimator as the full data would be, and the estimator's own
+<code>na_method</code> and type handling apply per draw. For <code>method = "mgm"</code> node
+types are decided once on the full data and pinned for every draw.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -157,6 +162,12 @@ result is identical for any number of cores and reproducible from
 <dd><p>Optional estimator engine forwarded to each resample fit
 (e.g. <code>"base"</code>/<code>"glasso"</code> for glasso, <code>"base"</code>/<code>"glmnet"</code> for ising/mgm).
 <code>NULL</code> (default) uses the estimator's own default.</p></dd>
+
+
+<dt id="arg-estimator-args">estimator_args<a class="anchor" aria-label="anchor" href="#arg-estimator-args"></a></dt>
+<dd><p>Named list of estimator arguments. Use this for names
+consumed by the bootstrap itself, such as an estimator's <code>threshold</code>.
+Values here override matching arguments in <code>...</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

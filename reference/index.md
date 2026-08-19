@@ -13,8 +13,6 @@
   : Tidy edge list for a psychnet network
 - [`as.data.frame(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet_bootstrap.md)
   : Tidy a network bootstrap
-- [`casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/casedrop_reliability.md)
-  : Edge-weight stability coefficient (case-dropping subset bootstrap)
 - [`` `$`( ``*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/cash-.psychnet.md)
   : Back-compatible field access for a psychnet object
 - [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
@@ -60,6 +58,8 @@
   : Bootstrap a psychometric network
 - [`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md)
   : Bridge centrality
+- [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
+  : Edge-weight stability coefficient (case-dropping subset bootstrap)
 - [`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
   : Node centrality
 - [`net_clustering()`](https://pak.dynasite.org/psychnets/reference/net_clustering.md)
@@ -75,10 +75,10 @@
   : Node predictability
 - [`net_smallworld()`](https://pak.dynasite.org/psychnets/reference/net_smallworld.md)
   : Small-world index
+- [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
+  : Split-half reliability of the network edge structure
 - [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
   : Centrality-stability coefficient (case-dropping subset bootstrap)
-- [`network_reliability()`](https://pak.dynasite.org/psychnets/reference/network_reliability.md)
-  : Split-half reliability of the network edge structure
 - [`node_predictability()`](https://pak.dynasite.org/psychnets/reference/node_predictability.md)
   : Node predictability as a plotting vector
 - [`pcor_network()`](https://pak.dynasite.org/psychnets/reference/pcor_network.md)

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,10 +68,10 @@
 <p>— by <a href="https://saqr.me" class="external-link"><strong>Mohammed Saqr</strong></a></p>
 </blockquote>
 <p><em>psychnets</em> implements the principal cross-sectional estimators used in psychometric network analysis entirely in base R. The package provides correlation and partial-correlation networks, the EBIC-regularized Gaussian graphical model (graphical lasso), together with its nonparanormal and unregularized stepwise variants, information-filtering networks including the Triangulated Maximally Filtered Graph (TMFG) and Local–Global inverse covariance estimation, relative-importance networks, the Ising model for binary variables, and the mixed graphical model. Whereas these estimators are conventionally accessed through high-level R packages that delegate numerical optimization to compiled Fortran or C/C++ libraries, <em>psychnets</em> reimplements the complete estimation procedures directly in R. In particular, graphical lasso estimation is commonly performed through <em>qgraph</em> and <em>bootnet</em>, which invoke the Fortran implementation provided by <em>glasso</em>, while Ising and mixed graphical models are typically estimated through <em>IsingFit</em> and <em>mgm</em>, both of which rely on the compiled optimization routines of <em>glmnet</em>. <em>psychnets</em> invokes none of these packages or their underlying compiled numerical libraries. Its only package dependencies are the standard R distributions <em>stats</em>, <em>parallel</em>, <em>graphics</em>, and <em>grDevices</em>.</p>
-<p>For every regularized estimator, <em>psychnets</em> reports a numerical certificate of optimality in the form of the Karush–Kuhn–Tucker (KKT) residual associated with the convex optimization problem defining the estimator. The KKT residual quantifies the degree to which the necessary first-order optimality conditions are satisfied and therefore provides a direct measure of convergence. Residual values approaching zero indicate that the numerical solution is effectively stationary with respect to the objective function. Because this diagnostic is computed directly from the fitted solution, its evaluation is independent of external optimization software and does not require comparison with reference implementations.</p>
-<p>The implementation philosophy of <em>psychnets</em> is based on four complementary design principles. First, the estimation procedure is fully transparent, as both the statistical methodology and the numerical optimization algorithms are implemented explicitly in R, allowing every computational step to be inspected and reproduced without reference to opaque compiled libraries. Second, estimation is reproducible because convergence behaviour is determined by user-accessible numerical criteria rather than by implementation-specific tolerances embedded within precompiled binaries. Third, the package maintains a minimal dependency structure by avoiding external numerical libraries such as <em>glasso</em>, <em>glmnet</em>, <em>qgraph</em>, and <em>Matrix</em>, together with their associated compiled dependency chains, including <em>Rcpp</em> and <em>RcppArmadillo</em>. Finally, estimation is directly auditable because every regularized solution is accompanied by an optimality certificate that quantifies its numerical accuracy with respect to the objective function being minimized. Consequently, the correctness of an estimated network can be assessed directly from the fitted model itself rather than inferred through agreement with an independent software implementation.</p>
+<p>For fitted regularized optimization models, <em>psychnets</em> reports a numerical certificate in the form of the Karush–Kuhn–Tucker (KKT) residual associated with the objective defining the estimator. The KKT residual quantifies the degree to which the necessary first-order optimality conditions are satisfied and therefore provides a direct measure of convergence. Residual values approaching zero indicate that the numerical solution is effectively stationary with respect to the objective function. Because this diagnostic is computed directly from the fitted solution, its evaluation is independent of external optimization software and does not require comparison with reference implementations. Post-estimation transformations and methods without an applicable residual report an unavailable certificate rather than a successful one.</p>
+<p>The implementation philosophy of <em>psychnets</em> is based on four complementary design principles. First, the estimation procedure is fully transparent, as both the statistical methodology and the numerical optimization algorithms are implemented explicitly in R, allowing every computational step to be inspected and reproduced without reference to opaque compiled libraries. Second, estimation is reproducible because convergence behaviour is determined by user-accessible numerical criteria rather than by implementation-specific tolerances embedded within precompiled binaries. Third, the package maintains a minimal dependency structure by avoiding external numerical libraries such as <em>glasso</em>, <em>glmnet</em>, <em>qgraph</em>, and <em>Matrix</em>, together with their associated compiled dependency chains, including <em>Rcpp</em> and <em>RcppArmadillo</em>. Finally, estimation is directly auditable because fitted optimization solutions are accompanied by an optimality certificate that quantifies its numerical accuracy with respect to the objective function being minimized. Consequently, the correctness of a fitted optimization can be assessed directly rather than inferred through agreement with an independent software implementation.</p>
 <p>Because each optimization problem is solved to numerical stationarity and model selection is performed using the standard formulation of the Extended Bayesian Information Criterion (EBIC), network recovery reflects the theoretical properties of the estimator rather than artefacts of incomplete optimization. As a consequence, edge selection is not influenced by premature termination of the numerical algorithm, thereby avoiding the inclusion of edges that may arise solely from insufficient convergence of the underlying optimization procedure.</p>
-<p>Validation was performed using both simulated data with known generating models and published psychometric datasets to verify the correctness of every implemented estimator. Across all methods, psychnets reproduces the established reference implementations to the numerical precision attainable by those packages, with remaining differences attributable to floating-point arithmetic and solver convergence tolerances. For the EBIC graphical lasso, this practical limit is determined by the convergence criterion of the underlying glasso implementation used by qgraph, which is approximately (10^{-4}). psychnets instead solves each optimization problem to substantially tighter tolerances and reports the Karush–Kuhn–Tucker residual for every regularized fit, providing an independent numerical certificate that the returned solution satisfies the optimality conditions of the estimator.</p>
+<p>Validation uses simulated data with known generating models and published psychometric datasets. Agreement with reference packages is assessed using method-appropriate criteria: exact or near-numerical agreement where objective and solver conventions coincide, and support, sign, or structural agreement where penalty paths or diagonal conventions differ. For the EBIC graphical lasso, the comparison limit is determined by the convergence criterion of the glasso implementation used by qgraph, approximately (10^{-4}). psychnets solves its native optimization to tighter tolerances. If post-estimation thresholding changes a returned graph, <code><a href="reference/certificate.html">certificate()</a></code> reports <code>NA</code> for that graph and retains the fitted model’s residual as <code>$fit_kkt</code>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -182,7 +182,8 @@
 <tr>
 <td><code><a href="reference/mgm_fit.html">mgm_fit()</a></code></td>
 <td>mixed graphical model</td>
-<td>Gaussian + binary</td>
+<td>Gaussian + binary; multi-level categorical with <code>native = FALSE</code>
+</td>
 </tr>
 <tr>
 <td><code><a href="reference/psychnet.html">psychnet()</a></code></td>
@@ -226,7 +227,7 @@
 </tr>
 <tr>
 <td>
-<code><a href="reference/net_stability.html">net_stability()</a></code>, <code><a href="reference/casedrop_reliability.html">casedrop_reliability()</a></code>, <code><a href="reference/network_reliability.html">network_reliability()</a></code>
+<code><a href="reference/net_stability.html">net_stability()</a></code>, <code><a href="reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code>, <code><a href="reference/net_split_reliability.html">net_split_reliability()</a></code>
 </td>
 <td>case-dropping stability and split-half reliability</td>
 </tr>
@@ -265,7 +266,7 @@
 <div class="section level3">
 <h3 id="estimator-equivalence-versus-the-reference-packages">Estimator equivalence versus the reference packages<a class="anchor" aria-label="anchor" href="#estimator-equivalence-versus-the-reference-packages"></a>
 </h3>
-<p>Each model is fitted by <code>psychnets</code> and by the package that implements it on the same data; equivalence is understood as <em>the same model, each solved to its own optimum</em> — the edge set is identical and the residual difference is at solver precision, while the <code>psychnets</code> KKT residual certifies its own optimality.</p>
+<p>Each model is fitted by <code>psychnets</code> and its reference package on the same data. The table reports the observed comparison criterion; it is not a claim that every independent implementation returns numerically identical weights.</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -534,6 +535,7 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
+<li><a href="https://cloud.r-project.org/package=psychnets" class="external-link">View on CRAN</a></li>
 <li><a href="https://github.com/mohsaqr/psychnets/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/mohsaqr/psychnets/issues" class="external-link">Report a bug</a></li>
 </ul>

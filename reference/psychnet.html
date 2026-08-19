@@ -11,7 +11,7 @@ picks the right one automatically (source = &quot;auto&quot;):"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,9 +97,10 @@ Event data is restricted to the Gaussian graphical methods.</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
-<dd><p>Absolute-weight threshold below which edges are zeroed
-(forwarded only to the methods that take it: <code>cor</code>, <code>pcor</code>, <code>glasso</code>,
-<code>huge</code>, <code>ggm</code>, <code>logo</code>).</p></dd>
+<dd><p>Absolute-weight threshold below which edges are zeroed for
+<code>cor</code>, <code>pcor</code>, <code>glasso</code>, <code>huge</code>, <code>ggm</code>, and <code>logo</code>. For <code>mgm</code>, supply its
+character rule (<code>"LW"</code>, <code>"HW"</code>, or <code>"none"</code>); the numeric default leaves
+<code><a href="mgm_fit.html">mgm_fit()</a></code>'s own default unchanged.</p></dd>
 
 
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>

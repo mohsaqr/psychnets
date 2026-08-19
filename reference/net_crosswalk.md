@@ -37,44 +37,66 @@ A tidy `data.frame`, one row per argument, with columns `reference` (the
 
 ``` r
 net_crosswalk("EBICglasso")
-#>             reference    psychnet           ref_arg     psychnet_arg
-#> 1  qgraph::EBICglasso ebic_glasso                 S       cor_matrix
-#> 2  qgraph::EBICglasso ebic_glasso                 n                n
-#> 3  qgraph::EBICglasso ebic_glasso             gamma            gamma
-#> 4  qgraph::EBICglasso ebic_glasso           nlambda          nlambda
-#> 5  qgraph::EBICglasso ebic_glasso  lambda.min.ratio lambda_min_ratio
-#> 6  qgraph::EBICglasso ebic_glasso         threshold        threshold
-#> 7  qgraph::EBICglasso ebic_glasso penalize.diagonal                -
-#> 8  qgraph::EBICglasso ebic_glasso             refit                -
-#> 9  qgraph::EBICglasso ebic_glasso           checkPD                -
-#> 10 qgraph::EBICglasso ebic_glasso    penalizeMatrix                -
-#> 11 qgraph::EBICglasso ebic_glasso     countDiagonal                -
-#> 12 qgraph::EBICglasso ebic_glasso  returnAllResults                -
-#> 13 qgraph::EBICglasso ebic_glasso           verbose                -
-#> 14 qgraph::EBICglasso ebic_glasso                 -             data
-#> 15 qgraph::EBICglasso ebic_glasso                 -       cor_method
-#> 16 qgraph::EBICglasso ebic_glasso                 -        na_method
-#> 17 qgraph::EBICglasso ebic_glasso                 -           native
-#> 18 qgraph::EBICglasso ebic_glasso                 -           labels
-#>              status                                                      note
-#> 1           renamed     correlation matrix in; psychnet also accepts raw data
-#> 2         identical                                                          
-#> 3         identical                                  EBIC tuning, default 0.5
-#> 4         identical                                               default 100
-#> 5           renamed                                         same default 0.01
-#> 6  semantics differ qgraph: logical sig-rule; psychnet: numeric weight cutoff
-#> 7    reference only                       psychnet always FALSE (W_ii = S_ii)
-#> 8    reference only     psychnet always refits the selected lambda (two-tier)
-#> 9    reference only            psychnet always validates/PD-checks cor_matrix
-#> 10   reference only         per-edge penalty matrix; psychnet uses scalar rho
-#> 11   reference only        EBIC df toggle; psychnet never counts the diagonal
-#> 12   reference only                 psychnet always stores $kkt, $lambda, ...
-#> 13   reference only                                        psychnet is silent
-#> 14    psychnet only                           estimate straight from raw data
-#> 15    psychnet only                             pearson/spearman/kendall/auto
-#> 16    psychnet only                            pairwise/listwise missing data
-#> 17    psychnet only             native solver (TRUE) / glasso Fortran (FALSE)
-#> 18    psychnet only                                               node labels
+#>             reference    psychnet           ref_arg      psychnet_arg
+#> 1  qgraph::EBICglasso ebic_glasso                 S        cor_matrix
+#> 2  qgraph::EBICglasso ebic_glasso                 n                 n
+#> 3  qgraph::EBICglasso ebic_glasso             gamma             gamma
+#> 4  qgraph::EBICglasso ebic_glasso           nlambda           nlambda
+#> 5  qgraph::EBICglasso ebic_glasso  lambda.min.ratio  lambda_min_ratio
+#> 6  qgraph::EBICglasso ebic_glasso         threshold         threshold
+#> 7  qgraph::EBICglasso ebic_glasso penalize.diagonal penalize_diagonal
+#> 8  qgraph::EBICglasso ebic_glasso             refit             refit
+#> 9  qgraph::EBICglasso ebic_glasso           checkPD                 -
+#> 10 qgraph::EBICglasso ebic_glasso    penalizeMatrix                 -
+#> 11 qgraph::EBICglasso ebic_glasso     countDiagonal                 -
+#> 12 qgraph::EBICglasso ebic_glasso  returnAllResults                 -
+#> 13 qgraph::EBICglasso ebic_glasso           verbose                 -
+#> 14 qgraph::EBICglasso ebic_glasso                 -              data
+#> 15 qgraph::EBICglasso ebic_glasso                 -        cor_method
+#> 16 qgraph::EBICglasso ebic_glasso                 -         na_method
+#> 17 qgraph::EBICglasso ebic_glasso                 -            native
+#> 18 qgraph::EBICglasso ebic_glasso                 -            labels
+#> 19 qgraph::EBICglasso ebic_glasso                 -       lambda_path
+#>              status
+#> 1           renamed
+#> 2         identical
+#> 3         identical
+#> 4         identical
+#> 5           renamed
+#> 6  semantics differ
+#> 7           renamed
+#> 8  semantics differ
+#> 9    reference only
+#> 10   reference only
+#> 11   reference only
+#> 12   reference only
+#> 13   reference only
+#> 14    psychnet only
+#> 15    psychnet only
+#> 16    psychnet only
+#> 17    psychnet only
+#> 18    psychnet only
+#> 19    psychnet only
+#>                                                                  note
+#> 1               correlation matrix in; psychnet also accepts raw data
+#> 2                                                                    
+#> 3                                            EBIC tuning, default 0.5
+#> 4                                                         default 100
+#> 5                                                   same default 0.01
+#> 6           qgraph: logical sig-rule; psychnet: numeric weight cutoff
+#> 7                                    same default FALSE (W_ii = S_ii)
+#> 8  qgraph: logical; psychnet also takes "unregularized" (support MLE)
+#> 9                      psychnet always validates/PD-checks cor_matrix
+#> 10                  per-edge penalty matrix; psychnet uses scalar rho
+#> 11                 EBIC df toggle; psychnet never counts the diagonal
+#> 12                          psychnet always stores $kkt, $lambda, ...
+#> 13                                                 psychnet is silent
+#> 14                                    estimate straight from raw data
+#> 15                                      pearson/spearman/kendall/auto
+#> 16                                     pairwise/listwise missing data
+#> 17                      native solver (TRUE) / glasso Fortran (FALSE)
+#> 18                                                        node labels
+#> 19                         fixed penalty grid, for resampling callers
 net_crosswalk("IsingFit")
 #>             reference  psychnet           ref_arg     psychnet_arg
 #> 1  IsingFit::IsingFit ising_fit                 x             data

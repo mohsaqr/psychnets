@@ -19,9 +19,9 @@ halves of the sample? The verbs
 [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md),
 [`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md),
 [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md),
-[`casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/casedrop_reliability.md),
+[`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md),
 and
-[`network_reliability()`](https://pak.dynasite.org/psychnets/reference/network_reliability.md)
+[`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
 answer these in turn. Every verb is estimator-agnostic: each routes its
 refits through `psychnet(method = )`, so the same diagnostic applies to
 any estimator in the package, and each is written in base R with no
@@ -226,7 +226,7 @@ plot(st)
 
 ## Edge-weight case-dropping stability
 
-[`casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/casedrop_reliability.md)
+[`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
 provides the edge-vector complement of
 [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md).
 For each drop proportion it re-estimates the network on random
@@ -242,7 +242,7 @@ prints on the header line.
 
 ``` r
 
-cd <- casedrop_reliability(SRL_Claude, method = "glasso", iter = 100)
+cd <- net_casedrop_reliability(SRL_Claude, method = "glasso", iter = 100)
 cd
 #> # edge-weight stability: glasso | CS = 0.90 (spearman cor >= 0.70 at 95%)
 #>            metric drop_prop       mean          sd
@@ -305,7 +305,7 @@ plot(cd)
 
 ## Split-half reliability
 
-[`network_reliability()`](https://pak.dynasite.org/psychnets/reference/network_reliability.md)
+[`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
 repeatedly splits the sample into two halves, estimates a network on
 each half, and compares the two edge-weight vectors. It reports, across
 the splits, the edge-weight correlation between halves together with the
@@ -318,7 +318,7 @@ iterations.
 
 ``` r
 
-rel <- network_reliability(SRL_Claude, method = "glasso", iter = 100)
+rel <- net_split_reliability(SRL_Claude, method = "glasso", iter = 100)
 rel
 #> # split-half reliability: glasso | 100 iterations (50/50 split)
 #>           metric       mean         sd      lower     upper
@@ -354,7 +354,7 @@ case-dropping profile, for example.
 
 ``` r
 
-casedrop_reliability(SRL_Claude, method = "pcor", iter = 100)
+net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 100)
 #> # edge-weight stability: pcor | CS = 0.90 (spearman cor >= 0.70 at 95%)
 #>            metric drop_prop       mean          sd
 #> 1    mean_abs_dev       0.1 0.01407596 0.005722099
@@ -405,8 +405,8 @@ Each verb also accepts a `psychnet_group` object, built with
 | [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md) | How wide is the accuracy interval around each edge and centrality? | `psychnet_bootstrap` with tidy `$edges` and `$centrality` |
 | [`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md) | Do two edges or two centralities differ within the network? | tidy df (`item1`, `item2`, interval, `p_value`, `significant`) |
 | [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md) | How robust is the centrality ranking to dropping cases? | `psychnet_stability` with `$cs` and `$table` |
-| [`casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/casedrop_reliability.md) | How robust is the edge structure to dropping cases? | tidy df (metric by drop proportion) with the edge-weight CS |
-| [`network_reliability()`](https://pak.dynasite.org/psychnets/reference/network_reliability.md) | How reproducible is the edge structure across split-halves? | tidy df, one row per between-halves metric |
+| [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md) | How robust is the edge structure to dropping cases? | tidy df (metric by drop proportion) with the edge-weight CS |
+| [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md) | How reproducible is the edge structure across split-halves? | tidy df, one row per between-halves metric |
 
 Together these verbs cover edge accuracy, within-network ordering,
 centrality stability, edge-weight stability, and split-half reliability

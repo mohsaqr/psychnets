@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,8 +91,8 @@ survive resampling? Do the centrality rankings hold up when cases are
 dropped? Does the whole edge structure reproduce across independent
 halves of the sample? The verbs <code><a href="../reference/net_boot.html">net_boot()</a></code>,
 <code><a href="../reference/difference_test.html">difference_test()</a></code>, <code><a href="../reference/net_stability.html">net_stability()</a></code>,
-<code><a href="../reference/casedrop_reliability.html">casedrop_reliability()</a></code>, and
-<code><a href="../reference/network_reliability.html">network_reliability()</a></code> answer these in turn. Every verb is
+<code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code>, and
+<code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code> answer these in turn. Every verb is
 estimator-agnostic: each routes its refits through
 <code>psychnet(method = )</code>, so the same diagnostic applies to any
 estimator in the package, and each is written in base R with no compiled
@@ -275,7 +275,7 @@ threshold.</p>
 <div class="section level2">
 <h2 id="edge-weight-case-dropping-stability">Edge-weight case-dropping stability<a class="anchor" aria-label="anchor" href="#edge-weight-case-dropping-stability"></a>
 </h2>
-<p><code><a href="../reference/casedrop_reliability.html">casedrop_reliability()</a></code> provides the edge-vector
+<p><code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code> provides the edge-vector
 complement of <code><a href="../reference/net_stability.html">net_stability()</a></code>. For each drop proportion it
 re-estimates the network on random case-dropped subsets and compares the
 subset edge-weight vector with the full-sample one, reporting the
@@ -288,7 +288,7 @@ per drop proportion, with columns <code>metric</code>,
 <code>drop_prop</code>, <code>mean</code>, and <code>sd</code>; the
 CS-coefficient prints on the header line.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/casedrop_reliability.html">casedrop_reliability</a></span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">cd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability</a></span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">cd</span></span>
 <span><span class="co">#&gt; # edge-weight stability: glasso | CS = 0.90 (spearman cor &gt;= 0.70 at 95%)</span></span>
 <span><span class="co">#&gt;            metric drop_prop       mean          sd</span></span>
@@ -346,8 +346,8 @@ carries the threshold and the CS-coefficient.</p>
 <div class="section level2">
 <h2 id="split-half-reliability">Split-half reliability<a class="anchor" aria-label="anchor" href="#split-half-reliability"></a>
 </h2>
-<p><code><a href="../reference/network_reliability.html">network_reliability()</a></code> repeatedly splits the sample into
-two halves, estimates a network on each half, and compares the two
+<p><code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code> repeatedly splits the sample
+into two halves, estimates a network on each half, and compares the two
 edge-weight vectors. It reports, across the splits, the edge-weight
 correlation between halves together with the mean, median, and maximum
 absolute edge deviation, a psychometric reliability view of the
@@ -358,7 +358,7 @@ estimated structure. The result is a tidy data frame of class
 <code>upper</code> are the 2.5% and 97.5% quantiles of the metric across
 the split-half iterations.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/network_reliability.html">network_reliability</a></span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">rel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_split_reliability.html">net_split_reliability</a></span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">rel</span></span>
 <span><span class="co">#&gt; # split-half reliability: glasso | 100 iterations (50/50 split)</span></span>
 <span><span class="co">#&gt;           metric       mean         sd      lower     upper</span></span>
@@ -387,7 +387,7 @@ the splits with the observed mean marked.</p>
 no per-method code. The partial-correlation estimator gives its own
 case-dropping profile, for example.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/casedrop_reliability.html">casedrop_reliability</a></span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability</a></span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # edge-weight stability: pcor | CS = 0.90 (spearman cor &gt;= 0.70 at 95%)</span></span>
 <span><span class="co">#&gt;            metric drop_prop       mean          sd</span></span>
 <span><span class="co">#&gt; 1    mean_abs_dev       0.1 0.01407596 0.005722099</span></span>
@@ -469,12 +469,12 @@ centrality?</td>
 </td>
 </tr>
 <tr class="even">
-<td><code><a href="../reference/casedrop_reliability.html">casedrop_reliability()</a></code></td>
+<td><code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code></td>
 <td>How robust is the edge structure to dropping cases?</td>
 <td>tidy df (metric by drop proportion) with the edge-weight CS</td>
 </tr>
 <tr class="odd">
-<td><code><a href="../reference/network_reliability.html">network_reliability()</a></code></td>
+<td><code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code></td>
 <td>How reproducible is the edge structure across split-halves?</td>
 <td>tidy df, one row per between-halves metric</td>
 </tr>

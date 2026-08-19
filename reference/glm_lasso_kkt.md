@@ -72,5 +72,5 @@ x <- scale(matrix(stats::rnorm(200 * 3), 200, 3))
 y <- as.numeric(x %*% c(0.5, 0, -0.3) + stats::rnorm(200))
 fit <- stats::lm.fit(cbind(1, x), y)
 glm_lasso_kkt(x, y, fit$coefficients[1], fit$coefficients[-1], lambda = 0)
-#> [1] 1.053324e-16
+#> [1] 7.549517e-17
 ```

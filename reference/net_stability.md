@@ -15,6 +15,7 @@ net_stability(
   threshold = 0.7,
   certainty = 0.95,
   labels = NULL,
+  estimator_args = list(),
   ...
 )
 ```
@@ -23,7 +24,9 @@ net_stability(
 
 - data:
 
-  Numeric data frame or matrix (rows = observations).
+  Data frame or matrix (rows = observations), resampled exactly as given
+  (see
+  [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)).
 
 - method:
 
@@ -63,6 +66,11 @@ net_stability(
 - labels:
 
   Optional node labels.
+
+- estimator_args:
+
+  Named list of estimator arguments. Use this for names consumed by the
+  stability diagnostic itself, such as estimator `threshold`.
 
 - ...:
 

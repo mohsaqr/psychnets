@@ -13,7 +13,7 @@ ordinal/continuous data, which require binary input."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,9 +79,9 @@ ordinal/continuous data, which require binary input.</p>
 <dd><p><code>1</code> if the value is <code>&gt;</code> the column mean.</p></dd>
 
 <dt><code>"rank"</code></dt>
-<dd><p><code>1</code> for the upper half of the column by rank, giving a
-balanced (~50/50) split that is robust to ties (useful for coarse
-Likert items where a median split is badly unbalanced).</p></dd>
+<dd><p><code>1</code> for observations whose average rank is above the
+midpoint. Tied values always remain together, so the split may be
+unbalanced rather than depending on row order.</p></dd>
 
 
 </dl></dd>

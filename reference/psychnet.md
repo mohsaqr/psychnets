@@ -46,9 +46,12 @@ psychnet(
 
 - threshold:
 
-  Absolute-weight threshold below which edges are zeroed (forwarded only
-  to the methods that take it: `cor`, `pcor`, `glasso`, `huge`, `ggm`,
-  `logo`).
+  Absolute-weight threshold below which edges are zeroed for `cor`,
+  `pcor`, `glasso`, `huge`, `ggm`, and `logo`. For `mgm`, supply its
+  character rule (`"LW"`, `"HW"`, or `"none"`); the numeric default
+  leaves
+  [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)'s
+  own default unchanged.
 
 - gamma:
 

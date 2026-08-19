@@ -75,8 +75,10 @@ cor_network(
 ## Value
 
 A `psychnet` object whose `$weights` is the thresholded correlation
-matrix, with `$cor_matrix`, `$n_eff`, `$na_method` (and `$p_values` when
-`alpha` is used).
+matrix, with `$cor_matrix`, `$n_eff`, `$n_pair`, `$na_method` (and
+`$p_values` when `alpha` is used). Node order in `$weights` and `$nodes`
+is always the column order of the input `data` / `cor_matrix`, never
+sorted.
 
 ## Examples
 

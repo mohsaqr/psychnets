@@ -77,7 +77,9 @@ pcor_network(
 
 A `psychnet` object whose `$weights` is the thresholded
 partial-correlation matrix, with `$precision`, `$cor_matrix` (and
-`$p_values` when `alpha` is used).
+`$p_values` when `alpha` is used). Node order in `$weights` and `$nodes`
+is always the column order of the input `data` / `cor_matrix`, never
+sorted.
 
 ## Examples
 

@@ -33,9 +33,9 @@ dichotomize(data, method = c("median", "mean", "rank"))
 
   `"rank"`
 
-  :   `1` for the upper half of the column by rank, giving a balanced
-      (~50/50) split that is robust to ties (useful for coarse Likert
-      items where a median split is badly unbalanced).
+  :   `1` for observations whose average rank is above the midpoint.
+      Tied values always remain together, so the split may be unbalanced
+      rather than depending on row order.
 
 ## Value
 

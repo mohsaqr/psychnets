@@ -1,8 +1,11 @@
 # Correctness certificate of a fitted network
 
-Every regularized or constrained estimator in `psychnet` self-certifies:
-it reports how far the returned network sits from the unique optimum of
-its own convex objective (a KKT / stationarity residual), or – for the
+Regularized or constrained estimators in `psychnet` self-certify when
+the returned graph is the fitted optimization result. A graph altered by
+post-estimation thresholding, or an external fit without an available
+residual, reports `NA` rather than being presented as certified. reports
+how far the returned network sits from the unique optimum of its own
+convex objective (a KKT / stationarity residual), or – for the
 structural methods – whether the graph satisfies the identity that
 defines it. This verb returns that certificate as a tidy one-row
 `data.frame`, so correctness is read the same way for every method.
@@ -30,7 +33,10 @@ certificate(x, tol = 1e-06)
 A one-row `data.frame` with columns `method`, `certificate` (the
 residual; smaller is better), `kind` (`"kkt"` for the optimization
 certificates, `"structural"` for TMFG/relimp, `"none"` for cor/pcor),
-and `certified` (logical: residual at or below `tol`).
+and `certified` (logical: residual at or below `tol`; `NA` when no
+applicable certificate is available). Correlation networks use kind
+`"none"` and are reported as `TRUE` because no optimization claim is
+made.
 
 ## Details
 

@@ -26,17 +26,19 @@ compiled numerical libraries. Its only package dependencies are the
 standard R distributions *stats*, *parallel*, *graphics*, and
 *grDevices*.
 
-For every regularized estimator, *psychnets* reports a numerical
-certificate of optimality in the form of the Karush–Kuhn–Tucker (KKT)
-residual associated with the convex optimization problem defining the
-estimator. The KKT residual quantifies the degree to which the necessary
-first-order optimality conditions are satisfied and therefore provides a
-direct measure of convergence. Residual values approaching zero indicate
-that the numerical solution is effectively stationary with respect to
-the objective function. Because this diagnostic is computed directly
-from the fitted solution, its evaluation is independent of external
+For fitted regularized optimization models, *psychnets* reports a
+numerical certificate in the form of the Karush–Kuhn–Tucker (KKT)
+residual associated with the objective defining the estimator. The KKT
+residual quantifies the degree to which the necessary first-order
+optimality conditions are satisfied and therefore provides a direct
+measure of convergence. Residual values approaching zero indicate that
+the numerical solution is effectively stationary with respect to the
+objective function. Because this diagnostic is computed directly from
+the fitted solution, its evaluation is independent of external
 optimization software and does not require comparison with reference
-implementations.
+implementations. Post-estimation transformations and methods without an
+applicable residual report an unavailable certificate rather than a
+successful one.
 
 The implementation philosophy of *psychnets* is based on four
 complementary design principles. First, the estimation procedure is
@@ -50,12 +52,12 @@ within precompiled binaries. Third, the package maintains a minimal
 dependency structure by avoiding external numerical libraries such as
 *glasso*, *glmnet*, *qgraph*, and *Matrix*, together with their
 associated compiled dependency chains, including *Rcpp* and
-*RcppArmadillo*. Finally, estimation is directly auditable because every
-regularized solution is accompanied by an optimality certificate that
-quantifies its numerical accuracy with respect to the objective function
-being minimized. Consequently, the correctness of an estimated network
-can be assessed directly from the fitted model itself rather than
-inferred through agreement with an independent software implementation.
+*RcppArmadillo*. Finally, estimation is directly auditable because
+fitted optimization solutions are accompanied by an optimality
+certificate that quantifies its numerical accuracy with respect to the
+objective function being minimized. Consequently, the correctness of a
+fitted optimization can be assessed directly rather than inferred
+through agreement with an independent software implementation.
 
 Because each optimization problem is solved to numerical stationarity
 and model selection is performed using the standard formulation of the
@@ -66,19 +68,19 @@ is not influenced by premature termination of the numerical algorithm,
 thereby avoiding the inclusion of edges that may arise solely from
 insufficient convergence of the underlying optimization procedure.
 
-Validation was performed using both simulated data with known generating
-models and published psychometric datasets to verify the correctness of
-every implemented estimator. Across all methods, psychnets reproduces
-the established reference implementations to the numerical precision
-attainable by those packages, with remaining differences attributable to
-floating-point arithmetic and solver convergence tolerances. For the
-EBIC graphical lasso, this practical limit is determined by the
-convergence criterion of the underlying glasso implementation used by
-qgraph, which is approximately (10^{-4}). psychnets instead solves each
-optimization problem to substantially tighter tolerances and reports the
-Karush–Kuhn–Tucker residual for every regularized fit, providing an
-independent numerical certificate that the returned solution satisfies
-the optimality conditions of the estimator.
+Validation uses simulated data with known generating models and
+published psychometric datasets. Agreement with reference packages is
+assessed using method-appropriate criteria: exact or near-numerical
+agreement where objective and solver conventions coincide, and support,
+sign, or structural agreement where penalty paths or diagonal
+conventions differ. For the EBIC graphical lasso, the comparison limit
+is determined by the convergence criterion of the glasso implementation
+used by qgraph, approximately (10^{-4}). psychnets solves its native
+optimization to tighter tolerances. If post-estimation thresholding
+changes a returned graph,
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+reports `NA` for that graph and retains the fitted model’s residual as
+`$fit_kkt`.
 
 ## Installation
 
@@ -156,7 +158,7 @@ self-certified:
 | [`relimp_network()`](https://pak.dynasite.org/psychnets/reference/relimp_network.md) | relative-importance network (LMG / Shapley) | continuous |
 | [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md) | Ising model, L1-penalized | binary |
 | [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md) | Ising model, unregularized | binary |
-| [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md) | mixed graphical model | Gaussian + binary |
+| [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md) | mixed graphical model | Gaussian + binary; multi-level categorical with `native = FALSE` |
 | [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md) | unified front door routing all of the above | — |
 
 The framework verbs operate on any fitted network, and on event logs and
@@ -169,7 +171,7 @@ grouped data through
 | [`net_clustering()`](https://pak.dynasite.org/psychnets/reference/net_clustering.md), [`net_smallworld()`](https://pak.dynasite.org/psychnets/reference/net_smallworld.md) | weighted clustering coefficients and the small-world index |
 | [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md) | node predictability (variance explained; classification accuracy) |
 | [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md), [`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md) | bootstrapped accuracy and within-network difference tests |
-| [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md), [`casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/casedrop_reliability.md), [`network_reliability()`](https://pak.dynasite.org/psychnets/reference/network_reliability.md) | case-dropping stability and split-half reliability |
+| [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md), [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md), [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md) | case-dropping stability and split-half reliability |
 | [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md) | the permutation Network Comparison Test |
 | [`redundancy()`](https://pak.dynasite.org/psychnets/reference/redundancy.md), [`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md) | redundant-node detection and community aggregation |
 
@@ -223,11 +225,10 @@ ways, both reproducible from a fixed set of package versions.
 
 ### Estimator equivalence versus the reference packages
 
-Each model is fitted by `psychnets` and by the package that implements
-it on the same data; equivalence is understood as *the same model, each
-solved to its own optimum* — the edge set is identical and the residual
-difference is at solver precision, while the `psychnets` KKT residual
-certifies its own optimality.
+Each model is fitted by `psychnets` and its reference package on the
+same data. The table reports the observed comparison criterion; it is
+not a claim that every independent implementation returns numerically
+identical weights.
 
 | `psychnets` estimator | Reference package | Data | Observed difference |
 |----|----|----|----|

@@ -160,12 +160,14 @@ own base-R plot methods, covered fully in the companion vignette.
 [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
 resamples the data and refits the network on each resample, and
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on its result
-defaults to the edge-weight confidence intervals.
+defaults to the edge-weight confidence intervals. The
+partial-correlation estimator keeps this vignette quick to build; for a
+real analysis use the `method = "glasso"` default with `n_boot >= 1000`.
 
 ``` r
 
 set.seed(1)
-bs <- net_boot(SRL_GPT, method = "glasso", n_boot = 250, cores = 1)
+bs <- net_boot(SRL_GPT, method = "pcor", n_boot = 250, cores = 1)
 plot(bs)
 ```
 

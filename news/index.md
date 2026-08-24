@@ -1,6 +1,33 @@
 # Changelog
 
-## psychnets 0.5.0
+## psychnets 0.5.2
+
+CRAN release: 2026-08-23
+
+### CRAN incoming-check runtime
+
+- Resubmission addressing the automated incoming pre-test NOTE (12
+  examples over 10 s and an overall checktime over 10 min on the Windows
+  builder). No estimator numerics changed.
+- Resampling examples
+  ([`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md),
+  [`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md),
+  [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md),
+  [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md),
+  [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md),
+  and their plot methods) now demonstrate the workflow with the
+  closed-form `method = "pcor"` estimator and note that the `"glasso"`
+  default with full iteration counts is what a real analysis should use.
+  [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  examples use fewer permutations on smaller data.
+- The cograph visualization vignette’s bootstrap chunk uses
+  `method = "pcor"`.
+- Four heavyweight numerical test files are skipped on CRAN (they run on
+  every GitHub Actions matrix job, R-hub platform, and local
+  `devtools::test()`); the frozen 1e-12 golden estimator baselines still
+  run on CRAN.
+
+## psychnets 0.5.1
 
 ### Pre-release correctness hardening
 

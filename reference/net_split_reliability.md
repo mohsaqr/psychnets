@@ -72,13 +72,13 @@ draws are carried in `attr(x, "iterations")` for
 ## Examples
 
 ``` r
-# `iter` is kept small here so the example runs quickly; the default
-# (iter = 100) is what a real reliability assessment should use.
-net_split_reliability(SRL_Claude, iter = 10)
-#> # split-half reliability: glasso | 10 iterations (50/50 split)
-#>           metric       mean         sd      lower     upper
-#> 1   mean_abs_dev 0.08170223 0.02772463 0.04650265 0.1204658
-#> 2 median_abs_dev 0.08375747 0.03620240 0.03625285 0.1305377
-#> 3    correlation 0.97115690 0.01858540 0.94462070 0.9904997
-#> 4    max_abs_dev 0.17091721 0.04534212 0.10944360 0.2200072
+# `method` and `iter` are chosen so the example runs quickly; the defaults
+# (method = "glasso", iter = 100) are what a real assessment should use.
+net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
+#> # split-half reliability: pcor | 10 iterations (50/50 split)
+#>           metric       mean         sd      lower      upper
+#> 1   mean_abs_dev 0.07808955 0.02457258 0.03846060 0.10963050
+#> 2 median_abs_dev 0.06588545 0.02220565 0.02991325 0.09716984
+#> 3    correlation 0.97498013 0.01592382 0.94570362 0.99516211
+#> 4    max_abs_dev 0.19047875 0.07735301 0.07527392 0.32270329
 ```

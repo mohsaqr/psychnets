@@ -92,18 +92,19 @@ psychological networks and their accuracy. *Behavior Research Methods*,
 ## Examples
 
 ``` r
-# `iter` and `drop_prop` are kept small here so the example runs quickly;
-# the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
-# reliability assessment should use.
-net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
-#> # edge-weight stability: glasso | CS = 0.50 (spearman cor >= 0.70 at 95%)
+# `method`, `iter`, and `drop_prop` are chosen so the example runs quickly;
+# the defaults (method = "glasso", iter = 100, drop_prop = seq(0.1, 0.9,
+# 0.1)) are what a real reliability assessment should use.
+net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
+                         drop_prop = c(0.25, 0.5))
+#> # edge-weight stability: pcor | CS = 0.50 (spearman cor >= 0.70 at 95%)
 #>           metric drop_prop       mean          sd
-#> 1   mean_abs_dev      0.25 0.01884860 0.004687247
-#> 2   mean_abs_dev      0.50 0.03115047 0.008578770
-#> 3 median_abs_dev      0.25 0.01399223 0.004914281
-#> 4 median_abs_dev      0.50 0.02978692 0.009641001
-#> 5    correlation      0.25 0.96606061 0.019917184
-#> 6    correlation      0.50 0.95636364 0.018382728
-#> 7    max_abs_dev      0.25 0.04901938 0.013944595
-#> 8    max_abs_dev      0.50 0.06611862 0.017100103
+#> 1   mean_abs_dev      0.25 0.02624533 0.005282477
+#> 2   mean_abs_dev      0.50 0.03307525 0.011005165
+#> 3 median_abs_dev      0.25 0.02232825 0.006143106
+#> 4 median_abs_dev      0.50 0.03082581 0.013881714
+#> 5    correlation      0.25 0.97818182 0.010141334
+#> 6    correlation      0.50 0.96363636 0.030903149
+#> 7    max_abs_dev      0.25 0.05938727 0.016592220
+#> 8    max_abs_dev      0.50 0.07034004 0.023615060
 ```

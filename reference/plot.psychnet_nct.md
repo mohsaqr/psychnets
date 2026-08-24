@@ -43,8 +43,8 @@ plot(x, type = c("strength", "structure", "edges"), alpha = 0.05, ...)
 ``` r
 set.seed(1)
 mk <- function(s) { set.seed(s)
-  matrix(stats::rnorm(120 * 4), 120, 4) %*% chol(0.3^abs(outer(1:4, 1:4, "-"))) }
-cmp <- net_compare(mk(1), mk(2), iter = 25)
+  matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.3^abs(outer(1:4, 1:4, "-"))) }
+cmp <- net_compare(mk(1), mk(2), iter = 10)  # iter >= 1000 for real use
 plot(cmp)                  # global strength permutation null
 
 plot(cmp, type = "edges")  # per-edge differences

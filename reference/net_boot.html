@@ -17,7 +17,7 @@ for use by difference_test()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -190,19 +190,21 @@ estimator reports them.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span> <span class="op">*</span> <span class="fl">5</span><span class="op">)</span>, <span class="fl">150</span>, <span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/chol.html" class="external-link">chol</a></span><span class="op">(</span><span class="fl">0.4</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="st">"-"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu">net_boot</span><span class="op">(</span><span class="va">x</span>, n_boot <span class="op">=</span> <span class="fl">50</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># method = "pcor" keeps this example fast; the "glasso" default (and</span></span></span>
+<span class="r-in"><span><span class="co"># n_boot &gt;= 1000) is what a real analysis should use.</span></span></span>
+<span class="r-in"><span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu">net_boot</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, n_boot <span class="op">=</span> <span class="fl">50</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">bs</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    from to  observed         mean       lower      upper prop_nonzero</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    V1 V2 0.2647959  0.216657987  0.06460790 0.34930531         0.98</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    V1 V3 0.0000000  0.019208250  0.00000000 0.11096685         0.24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    V2 V3 0.3114876  0.270731621  0.14521228 0.39115437         1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    V1 V4 0.0000000 -0.024222579 -0.18536844 0.00000000         0.18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5    V2 V4 0.0000000  0.017061134  0.00000000 0.11199844         0.22</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6    V3 V4 0.2936317  0.262160092  0.06928587 0.42053424         0.98</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7    V1 V5 0.0000000  0.002383375 -0.08504584 0.09770776         0.16</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8    V2 V5 0.0000000  0.004825769  0.00000000 0.07379984         0.12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9    V3 V5 0.0000000  0.015522783  0.00000000 0.13699210         0.24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10   V4 V5 0.2807738  0.265568744  0.13497982 0.38097285         1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    from to    observed         mean       lower      upper prop_nonzero</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    V1 V2  0.31118543  0.298237891  0.15159446 0.40899218            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2    V1 V3  0.03185023  0.033387300 -0.14933331 0.15793256            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    V2 V3  0.33426443  0.337131826  0.21222203 0.48649315            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    V1 V4 -0.09321933 -0.099159232 -0.29858901 0.06030023            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5    V2 V4  0.04470097  0.034035886 -0.08595976 0.19118623            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6    V3 V4  0.32962441  0.338115084  0.14664746 0.50321968            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7    V1 V5  0.03435117  0.038882968 -0.11179003 0.19742845            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8    V2 V5 -0.01153139 -0.006380471 -0.16191974 0.12517682            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9    V3 V5 -0.01001689 -0.017513993 -0.18367088 0.20086310            1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10   V4 V5  0.33034659  0.360416525  0.21937671 0.46332468            1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    significant</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1         TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2        FALSE</span>

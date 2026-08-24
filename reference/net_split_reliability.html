@@ -13,7 +13,7 @@ deviation - a psychometric reliability view of the estimated structure."></head>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,15 +120,15 @@ are carried in <code>attr(x, "iterations")</code> for <code><a href="plot.psychn
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># `iter` is kept small here so the example runs quickly; the default</span></span></span>
-<span class="r-in"><span><span class="co"># (iter = 100) is what a real reliability assessment should use.</span></span></span>
-<span class="r-in"><span><span class="fu">net_split_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span>, iter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> # split-half reliability: glasso | 10 iterations (50/50 split)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           metric       mean         sd      lower     upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev 0.08170223 0.02772463 0.04650265 0.1204658</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 median_abs_dev 0.08375747 0.03620240 0.03625285 0.1305377</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    correlation 0.97115690 0.01858540 0.94462070 0.9904997</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    max_abs_dev 0.17091721 0.04534212 0.10944360 0.2200072</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># `method` and `iter` are chosen so the example runs quickly; the defaults</span></span></span>
+<span class="r-in"><span><span class="co"># (method = "glasso", iter = 100) are what a real assessment should use.</span></span></span>
+<span class="r-in"><span><span class="fu">net_split_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, iter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # split-half reliability: pcor | 10 iterations (50/50 split)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           metric       mean         sd      lower      upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev 0.07808955 0.02457258 0.03846060 0.10963050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 median_abs_dev 0.06588545 0.02220565 0.02991325 0.09716984</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    correlation 0.97498013 0.01592382 0.94570362 0.99516211</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    max_abs_dev 0.19047875 0.07735301 0.07527392 0.32270329</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

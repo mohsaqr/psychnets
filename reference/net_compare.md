@@ -63,12 +63,12 @@ An object of class `psychnet_nct` with `$nw1`, `$nw2`, and `$M`, `$S`,
 
 ``` r
 set.seed(1)
-a <- matrix(stats::rnorm(150 * 5), 150, 5)
-b <- matrix(stats::rnorm(150 * 5), 150, 5)
-colnames(a) <- colnames(b) <- paste0("V", 1:5)
-fit <- net_compare(a, b, iter = 25)
+a <- matrix(stats::rnorm(100 * 4), 100, 4)
+b <- matrix(stats::rnorm(100 * 4), 100, 4)
+colnames(a) <- colnames(b) <- paste0("V", 1:4)
+fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
 fit
-#> Network Comparison Test (25 permutations)
-#>   Global strength (M): observed 0.000, p = 1.000
-#>   Network structure (S): observed 0.000, p = 1.000
+#> Network Comparison Test (10 permutations)
+#>   Global strength (M): observed 0.000, p = 0.364
+#>   Network structure (S): observed 0.000, p = 0.455
 ```

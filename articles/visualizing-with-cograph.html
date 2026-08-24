@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -205,10 +205,13 @@ the location of the strong edges without the graph layout.</p>
 drawn by their own base-R plot methods, covered fully in the companion
 vignette. <code><a href="../reference/net_boot.html">net_boot()</a></code> resamples the data and refits the
 network on each resample, and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on its result defaults
-to the edge-weight confidence intervals.</p>
+to the edge-weight confidence intervals. The partial-correlation
+estimator keeps this vignette quick to build; for a real analysis use
+the <code>method = "glasso"</code> default with
+<code>n_boot &gt;= 1000</code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_boot.html">net_boot</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, n_boot <span class="op">=</span> <span class="fl">250</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_boot.html">net_boot</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, n_boot <span class="op">=</span> <span class="fl">250</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/bootstrap-1.png" class="r-plt" alt="" width="800"></p>
 <p>The same bootstrap object holds the retained draws for the pairwise

@@ -98,10 +98,11 @@
 #'   psychological networks and their accuracy. *Behavior Research Methods*,
 #'   50(1), 195-212.
 #' @examples
-#' # `iter` and `drop_prop` are kept small here so the example runs quickly;
-#' # the defaults (iter = 100, drop_prop = seq(0.1, 0.9, 0.1)) are what a real
-#' # reliability assessment should use.
-#' net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5))
+#' # `method`, `iter`, and `drop_prop` are chosen so the example runs quickly;
+#' # the defaults (method = "glasso", iter = 100, drop_prop = seq(0.1, 0.9,
+#' # 0.1)) are what a real reliability assessment should use.
+#' net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
+#'                          drop_prop = c(0.25, 0.5))
 #' @export
 net_casedrop_reliability <- function(data, method = "glasso",
                                  drop_prop = seq(0.1, 0.9, by = 0.1),
@@ -213,9 +214,10 @@ print.psychnet_casedrop <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' # Small `iter` / `drop_prop` for a fast example; see [net_casedrop_reliability()]
-#' # for the defaults a real assessment should use.
-#' plot(net_casedrop_reliability(SRL_Claude, iter = 5, drop_prop = c(0.25, 0.5)))
+#' # Fast example settings; see [net_casedrop_reliability()] for the defaults
+#' # a real assessment should use.
+#' plot(net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
+#'                               drop_prop = c(0.25, 0.5)))
 #' @export
 plot.psychnet_casedrop <- function(x, ...) {
   panels <- c("correlation", "mean_abs_dev", "median_abs_dev", "max_abs_dev")
@@ -269,9 +271,9 @@ plot.psychnet_casedrop <- function(x, ...) {
 #'   with columns `metric`, `mean`, `sd`, `lower`, `upper`. The per-split draws
 #'   are carried in `attr(x, "iterations")` for [plot.psychnet_reliability()].
 #' @examples
-#' # `iter` is kept small here so the example runs quickly; the default
-#' # (iter = 100) is what a real reliability assessment should use.
-#' net_split_reliability(SRL_Claude, iter = 10)
+#' # `method` and `iter` are chosen so the example runs quickly; the defaults
+#' # (method = "glasso", iter = 100) are what a real assessment should use.
+#' net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
 #' @export
 net_split_reliability <- function(data, method = "glasso", iter = 100L,
                                 split = 0.5,
@@ -369,9 +371,9 @@ print.psychnet_reliability <- function(x, ...) {
 #' @param ... Unused.
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
-#' # Small `iter` for a fast example; see [net_split_reliability()] for the
-#' # default a real assessment should use.
-#' plot(net_split_reliability(SRL_Claude, iter = 10))
+#' # Fast example settings; see [net_split_reliability()] for the defaults a
+#' # real assessment should use.
+#' plot(net_split_reliability(SRL_Claude, method = "pcor", iter = 10))
 #' @export
 plot.psychnet_reliability <- function(x, ...) {
   it <- attr(x, "iterations")

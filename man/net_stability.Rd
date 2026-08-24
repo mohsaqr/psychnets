@@ -60,6 +60,8 @@ Centrality-stability coefficient (case-dropping subset bootstrap)
 set.seed(1)
 x <- matrix(stats::rnorm(200 * 5), 200, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-cs <- net_stability(x, drop_prop = c(0.3, 0.6), iter = 10)
+# method = "pcor" and small iter keep this example fast; the "glasso"
+# default and iter = 100 are what a real analysis should use.
+cs <- net_stability(x, method = "pcor", drop_prop = c(0.3, 0.6), iter = 10)
 cs$cs
 }

@@ -99,6 +99,8 @@ for use by \code{\link[=difference_test]{difference_test()}}.
 set.seed(1)
 x <- matrix(stats::rnorm(150 * 5), 150, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-bs <- net_boot(x, n_boot = 50, cores = 1)
+# method = "pcor" keeps this example fast; the "glasso" default (and
+# n_boot >= 1000) is what a real analysis should use.
+bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 as.data.frame(bs)
 }

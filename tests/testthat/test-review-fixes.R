@@ -1,3 +1,9 @@
+# Heavyweight numerical suite: skipped on CRAN to keep the check under the
+# incoming time limit. It runs on every GitHub Actions matrix job, R-hub
+# platform, and local devtools::test(); test-golden.R keeps the frozen
+# 1e-12 estimator baselines running on CRAN itself.
+skip_on_cran()
+
 # Regression tests for the adversarial-review fixes (2026-06-22).
 
 mk <- function(seed, n = 200, p = 5) {

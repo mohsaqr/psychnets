@@ -19,7 +19,7 @@ Histograms of the four between-halves edge metrics across split-half
 iterations, with each observed mean marked.
 }
 \examples{
-# Small `iter` for a fast example; see [net_split_reliability()] for the
-# default a real assessment should use.
-plot(net_split_reliability(SRL_Claude, iter = 10))
+# Fast example settings; see [net_split_reliability()] for the defaults a
+# real assessment should use.
+plot(net_split_reliability(SRL_Claude, method = "pcor", iter = 10))
 }

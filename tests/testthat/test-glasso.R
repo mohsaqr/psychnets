@@ -1,3 +1,9 @@
+# Heavyweight numerical suite: skipped on CRAN to keep the check under the
+# incoming time limit. It runs on every GitHub Actions matrix job, R-hub
+# platform, and local devtools::test(); test-golden.R keeps the frozen
+# 1e-12 estimator baselines running on CRAN itself.
+skip_on_cran()
+
 # Correctness is certified against the convex objective itself (KKT residual),
 # so these tests need no reference solver.
 

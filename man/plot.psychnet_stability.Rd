@@ -23,6 +23,8 @@ and the CS-coefficient annotated in the legend.
 \examples{
 set.seed(1)
 d <- matrix(stats::rnorm(200 * 5), 200, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
-s <- net_stability(d, drop_prop = c(0.3, 0.6), iter = 10)
+# method = "pcor" and small iter keep this example fast; the "glasso"
+# default and iter = 100 are what a real analysis should use.
+s <- net_stability(d, method = "pcor", drop_prop = c(0.3, 0.6), iter = 10)
 plot(s)
 }

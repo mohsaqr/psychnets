@@ -140,11 +140,13 @@ cograph::plot_edge_weights(fit)
 The bootstrap diagnostics are computed in `psychnets` and drawn by their own
 base-R plot methods, covered fully in the companion vignette.
 `net_boot()` resamples the data and refits the network on each resample, and
-`plot()` on its result defaults to the edge-weight confidence intervals.
+`plot()` on its result defaults to the edge-weight confidence intervals. The
+partial-correlation estimator keeps this vignette quick to build; for a real
+analysis use the `method = "glasso"` default with `n_boot >= 1000`.
 
 ```{r bootstrap, eval = has_cograph, fig.width = 8, fig.height = 5}
 set.seed(1)
-bs <- net_boot(SRL_GPT, method = "glasso", n_boot = 250, cores = 1)
+bs <- net_boot(SRL_GPT, method = "pcor", n_boot = 250, cores = 1)
 plot(bs)
 ```
 

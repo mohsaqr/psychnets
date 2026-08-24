@@ -131,7 +131,9 @@
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 #' colnames(x) <- paste0("V", 1:5)
-#' bs <- net_boot(x, n_boot = 50, cores = 1)
+#' # method = "pcor" keeps this example fast; the "glasso" default (and
+#' # n_boot >= 1000) is what a real analysis should use.
+#' bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 #' as.data.frame(bs)
 #' @export
 net_boot <- function(data, method = "glasso", n_boot = 1000L,
@@ -318,7 +320,9 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 #' colnames(x) <- paste0("V", 1:5)
-#' bs <- net_boot(x, n_boot = 50, cores = 1)   # n_boot >= 1000 for real use
+#' # method = "pcor" keeps this example fast; the "glasso" default (and
+#' # n_boot >= 1000) is what a real analysis should use.
+#' bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 #' difference_test(bs, type = "strength")
 #' @export
 difference_test <- function(boot, type = "edge", ci = NULL,

@@ -47,7 +47,7 @@ correlation between halves plus the mean/median/maximum absolute edge
 deviation - a psychometric reliability view of the estimated structure.
 }
 \examples{
-# `iter` is kept small here so the example runs quickly; the default
-# (iter = 100) is what a real reliability assessment should use.
-net_split_reliability(SRL_Claude, iter = 10)
+# `method` and `iter` are chosen so the example runs quickly; the defaults
+# (method = "glasso", iter = 100) are what a real assessment should use.
+net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
 }

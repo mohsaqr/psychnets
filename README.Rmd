@@ -31,7 +31,7 @@ Validation uses simulated data with known generating models and published psycho
 ## Installation
 
 ```r
-# from CRAN (once released)
+# from CRAN
 install.packages("psychnets")
 
 # development version

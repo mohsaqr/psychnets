@@ -86,7 +86,7 @@ model's residual as `$fit_kkt`.
 ## Installation
 
 ``` r
-# from CRAN (once released)
+# from CRAN
 install.packages("psychnets")
 
 # development version

@@ -86,7 +86,7 @@ reports `NA` for that graph and retains the fitted model’s residual as
 
 ``` r
 
-# from CRAN (once released)
+# from CRAN
 install.packages("psychnets")
 
 # development version

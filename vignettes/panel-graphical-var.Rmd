@@ -1,0 +1,185 @@
+---
+title: "Panel graphical VAR: temporal, contemporaneous, and between-person networks"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Panel graphical VAR: temporal, contemporaneous, and between-person networks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 11,
+                      fig.height = 4.4, dpi = 110, out.width = "100%")
+library(psychnets)
+has_cograph <- requireNamespace("cograph", quietly = TRUE)
+```
+
+## What the model estimates
+
+Panel data measure the same people a few times. The panel graphical
+vector-autoregressive model (panel-GVAR; Epskamp, 2020) splits each person's
+scores into a stable personal level and week-to-week deviations from it, and
+estimates three networks:
+
+* a **temporal** network: does being above one's own level on one variable in
+  one wave predict the next wave? Arrows are lag-1 effects; self-loops are
+  autoregressive (carry-over) effects.
+* a **contemporaneous** network: which deviations move together within a wave,
+  after the lagged effects (partial correlations)?
+* a **between-person** network: how are the stable personal levels related
+  (partial correlations)?
+
+`panel_gvar()` fits the model of `psychonetrics::panelgvar()` by maximum
+likelihood, entirely in base R, and certifies the optimum.
+
+## The data
+
+`srl_panel` is a synthetic panel of 100 students measured in four consecutive
+weeks on five self-regulated-learning indicators (0-100 scales). It was
+simulated from a panel-GVAR whose structure was taken from real
+experience-sampling data, so it is realistic and fully shareable (see
+`?srl_panel`). The data are in long format: one row per student per week.
+
+```{r data}
+head(srl_panel)
+vars <- c("efficacy", "planning", "effort", "enjoyment", "anxiety")
+```
+
+## The full model
+
+By default every edge is estimated and reported with its standard error and
+p-value; nothing is removed.
+
+```{r full}
+fit <- panel_gvar(srl_panel, vars = vars, id = "student", wave = "week")
+fit
+```
+
+The edge table has one row per edge, with a 95% Wald interval and a
+`significant` flag at `alpha = 0.01`:
+
+```{r full-edges}
+head(as.data.frame(fit), 8)
+summary(fit)
+```
+
+`plot()` draws the three networks on one layout. **Solid edges are
+significant, dashed edges are not**; blue is positive, vermillion negative, and
+the weight is printed on each edge.
+
+```{r plot-full, eval = has_cograph}
+plot(fit)
+```
+
+```{r full-numbers, include = FALSE}
+edges <- as.data.frame(fit)
+ar <- subset(edges, network == "temporal" & from == to & significant)
+cross <- subset(edges, network == "temporal" & from != to & significant)
+contemporaneous <- subset(edges, network == "contemporaneous" & significant)
+between <- subset(edges, network == "between" & significant)
+show <- function(d, sep) paste(sprintf("%s%s%s (%.2f)", d$from, sep, d$to,
+                                       d$weight), collapse = ", ")
+```
+
+Reading the significant edges:
+
+* **Temporal.** `r nrow(ar)` of the 5 autoregressive effects are
+  significant (`r show(ar, " -> ")`): a student who is above their own level in
+  one week tends to stay above it the next. One lagged effect between
+  variables is significant: `r show(cross, " -> ")`.
+* **Contemporaneous.** `r nrow(contemporaneous)` edges
+  (`r show(contemporaneous, "-")`): in weeks when a student's efficacy,
+  planning, effort and enjoyment are above their usual level, they rise
+  together. Anxiety is not connected.
+* **Between-person.** `r nrow(between)` edges (`r show(between, "-")`):
+  `r paste(sprintf("students with a higher personal level of %s tend to have a %s personal level of %s", between$from, ifelse(between$weight > 0, "higher", "lower"), between$to), collapse = "; ")`.
+  Between-person edges are estimated from only 100 personal levels, so they
+  carry more uncertainty than the within-person ones.
+
+## Selecting edges
+
+Marking significance does not change the model. To report a sparser network,
+`panel_gvar()` offers two selection methods.
+
+`select = "prune"` removes every edge with p > 0.01 in one pass, refits, and
+then runs a **step-up** search that adds edges back while they significantly
+improve the model and lower BIC (psychonetrics' `prune()` followed by
+`stepup()`). The step-up matters: edges that stand in for each other, such as
+an autoregression and a correlated lagged effect, can each look unnecessary
+while the other is present, and one-pass pruning would remove both.
+
+```{r prune}
+pruned <- panel_gvar(srl_panel, vars = vars, id = "student", wave = "week",
+                     select = "prune")
+pruned
+```
+
+```{r plot-prune, eval = has_cograph}
+plot(pruned)
+```
+
+`select = "ebic"` instead shrinks edges with a lasso penalty chosen by EBIC --
+the panel counterpart of `ebic_glasso()` (psychonetrics'
+`panelgvar(estimator = "PML")`). Weak edges become exactly zero in one
+optimization. The estimates are penalized, so they carry no p-values
+(`refit = TRUE` refits the selected network without the penalty). A shorter
+penalty path keeps this example fast:
+
+```{r ebic}
+lasso <- panel_gvar(srl_panel, vars = vars, id = "student", wave = "week",
+                    select = "ebic", nlambda = 20)
+summary(lasso)
+```
+
+```{r ebic-numbers, include = FALSE}
+lasso_between <- subset(summary(lasso), network == "between")$edges
+```
+
+The lasso keeps the temporal and contemporaneous structure but
+`r if (lasso_between == 0) "no between-person edge" else paste(lasso_between, "between-person edges")`:
+with 100 students the penalty is more conservative than the significance-based
+selection for the between-person network.
+
+## When wave means drift
+
+The model assumes **stationary means**: the average level of each variable does
+not change across waves. If it drifts (for instance a steady decline across a
+term), `standardize = "z_per_wave"` z-scores every variable within every wave,
+which removes the drift; the edges are then standardized.
+
+```{r standardize}
+z_fit <- panel_gvar(srl_panel, vars = vars, id = "student", wave = "week",
+                    standardize = "z_per_wave")
+subset(as.data.frame(z_fit, what = "fit"), select = c(chisq, df, cfi, rmsea))
+```
+
+## Fit and diagnostics
+
+Fit indices compare the model with the saturated model and with a baseline
+without temporal or network structure:
+
+```{r fit-indices}
+as.data.frame(fit, what = "fit")
+```
+
+The diagnostics report the optimality certificate (the largest remaining
+gradient of the likelihood, ~0 at the optimum), whether any part of the
+solution sits on a boundary of the parameter space, whether standard errors
+exist, and how many of the three optimizer starts reached the best optimum:
+
+```{r diagnostics}
+as.data.frame(fit, what = "diagnostics")
+```
+
+The variance split shows how much of each variable is stable between students
+and how much fluctuates within them:
+
+```{r variance}
+as.data.frame(fit, what = "variance")
+```
+
+## Reference
+
+Epskamp, S. (2020). Psychometric network models from time-series and panel
+data. *Psychometrika*, 85(1), 206-231.
+[doi:10.1007/s11336-020-09697-3](https://doi.org/10.1007/s11336-020-09697-3)

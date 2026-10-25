@@ -16,7 +16,9 @@
 # The four bootnet-style edge-vector similarity metrics. Internal.
 .psn_edge_metrics <- function(a, b, cor_method) {
   d <- abs(a - b)
-  cor_ok <- stats::sd(a, na.rm = TRUE) > 0 && stats::sd(b, na.rm = TRUE) > 0
+  sa <- stats::sd(a, na.rm = TRUE)
+  sb <- stats::sd(b, na.rm = TRUE)
+  cor_ok <- is.finite(sa) && sa > 0 && is.finite(sb) && sb > 0
   c(mean_abs_dev   = mean(d, na.rm = TRUE),
     median_abs_dev = stats::median(d, na.rm = TRUE),
     correlation    = if (cor_ok) stats::cor(a, b, method = cor_method) else NA_real_,
@@ -28,11 +30,42 @@
 # than changing the dimension or causing the draw to be discarded.
 #' @noRd
 .psn_refit_network <- function(mat, method, labels = NULL, dots = list()) {
-  if (!is.null(labels) && length(labels) == ncol(mat)) colnames(mat) <- labels
+  source_by_label <- NULL
+  if (!is.null(labels)) {
+    # Labels refer to modeled nodes, which can be fewer than the raw columns
+    # (e.g. a character id is ignored by a GGM). Rename those columns before
+    # estimation so a node dropped in one draw can still be aligned by name.
+    cols <- if (!is.data.frame(mat) || identical(.resolve_method(method), "mgm"))
+      seq_len(ncol(mat)) else which(vapply(mat, is.numeric, logical(1)))
+    if (length(labels) != length(cols)) {
+      if (all(labels %in% colnames(mat)[cols])) {
+        cols <- match(labels, colnames(mat))
+      } else {
+        # Listwise deletion or an explicit vars selection can reduce the node
+        # set further. Resolve that set using the same estimator rather than
+        # mistaking custom labels for absent variables and filling zeros.
+        probe <- tryCatch(do.call(psychnet, c(list(mat, method = method), dots)),
+                           error = function(e) NULL)
+        if (!is.null(probe)) cols <- match(probe$nodes$name, colnames(mat))
+      }
+    }
+    if (length(labels) != length(cols) || anyNA(cols) || anyNA(labels) ||
+        anyDuplicated(labels))
+      stop("`labels` must uniquely name every modeled node.", call. = FALSE)
+    source_by_label <- stats::setNames(colnames(mat)[cols] %||% labels, labels)
+    if (!is.null(dots$vars) && is.character(dots$vars)) {
+      selected <- match(dots$vars, unname(source_by_label))
+      dots$vars[!is.na(selected)] <- labels[selected[!is.na(selected)]]
+    }
+    colnames(mat)[cols] <- labels
+  }
   fit <- tryCatch(do.call(psychnet, c(list(mat, method = method), dots)),
                   error = function(e) NULL)
   if (is.null(fit)) return(NULL)
   if (is.null(labels)) return(fit)
+  fit$nodes$name <- unname(source_by_label[fit$nodes$label])
+  if (!is.null(fit$nodewise))
+    fit$nodewise$source_names <- fit$nodes$name
   W <- fit$weights
   if (!identical(rownames(W), labels)) {
     old <- rownames(W)
@@ -41,7 +74,8 @@
     keep <- intersect(old, labels)
     full[keep, keep] <- W[keep, keep]
     fit$weights <- full
-    fit$nodes <- data.frame(id = seq_along(labels), label = labels, name = labels,
+    fit$nodes <- data.frame(id = seq_along(labels), label = labels,
+                            name = unname(source_by_label[labels]),
                             x = NA_real_, y = NA_real_, stringsAsFactors = FALSE)
     fit$edges <- .edges_index_df(full, fit$directed)
     # Precision-based predictability is undefined for a node absent from the
@@ -74,6 +108,8 @@
 #' CS-coefficient is the largest drop proportion at which the edge-vector
 #' correlation stays `>= threshold` with probability `>= certainty` (Epskamp,
 #' Borsboom & Fried 2018).
+#' An undefined correlation (for example an empty subset network) counts as
+#' failing the threshold when calculating the CS-coefficient.
 #'
 #' @param data Data frame or matrix (rows = observations), resampled exactly as
 #'   given (see [net_boot()]), or a `psychnet_group` (case-dropped per level).
@@ -115,7 +151,7 @@ net_casedrop_reliability <- function(data, method = "glasso",
       "psychnet_casedrop_group",
       list(drop_prop = drop_prop, iter = iter, threshold = threshold,
            certainty = certainty, cor_method = cor_method,
-           estimator_args = estimator_args)))
+           estimator_args = .resample_dots(list(...), estimator_args))))
   }
   cor_method <- match.arg(cor_method)
   stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
@@ -165,7 +201,7 @@ net_casedrop_reliability <- function(data, method = "glasso",
                sd = apply(M, 2L, stats::sd, na.rm = TRUE),
                stringsAsFactors = FALSE, row.names = NULL)
   }))
-  prop_above <- colMeans(store$correlation >= threshold, na.rm = TRUE)
+  prop_above <- colMeans(!is.na(store$correlation) & store$correlation >= threshold)
   ok <- which(prop_above >= certainty)
   cs <- if (length(ok)) max(drop_prop[ok]) else 0
   n_success <- sum(fit_ok); n_failed <- length(fit_ok) - n_success
@@ -283,7 +319,7 @@ net_split_reliability <- function(data, method = "glasso", iter = 100L,
     return(.group_data_apply(data, net_split_reliability, "net_split_reliability",
       "psychnet_reliability_group",
       list(iter = iter, split = split, cor_method = cor_method,
-           estimator_args = estimator_args)))
+           estimator_args = .resample_dots(list(...), estimator_args))))
   }
   cor_method <- match.arg(cor_method)
   stopifnot(is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
@@ -383,6 +419,13 @@ plot.psychnet_reliability <- function(x, ...) {
   graphics::par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
   for (m in c("correlation", "mean_abs_dev", "median_abs_dev", "max_abs_dev")) {
     v <- it[[m]]
+    v <- v[is.finite(v)]
+    if (!length(v)) {
+      graphics::plot.new()
+      graphics::title(main = labs[[m]])
+      graphics::text(0.5, 0.5, "unavailable")
+      next
+    }
     graphics::hist(v, breaks = 25, col = .psn_pal$nonsig, border = "white",
                    main = labs[[m]], xlab = labs[[m]])
     graphics::abline(v = mean(v, na.rm = TRUE), col = .psn_pal$pos, lwd = 2)

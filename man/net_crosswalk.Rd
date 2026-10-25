@@ -2,15 +2,18 @@
 % Please edit documentation in R/crosswalk.R
 \name{net_crosswalk}
 \alias{net_crosswalk}
-\title{Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm}
+\title{Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm /
+psychonetrics}
 \usage{
 net_crosswalk(
-  reference = c("all", "EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm")
+  reference = c("all", "EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm",
+    "panelgvar")
 )
 }
 \arguments{
 \item{reference}{Which reference function to show: \code{"all"} (default),
-\code{"EBICglasso"}, \code{"cor_auto"}, \code{"ggmModSelect"}, \code{"IsingFit"}, or \code{"mgm"}.}
+\code{"EBICglasso"}, \code{"cor_auto"}, \code{"ggmModSelect"}, \code{"IsingFit"}, \code{"mgm"}, or
+\code{"panelgvar"}.}
 }
 \value{
 A tidy \code{data.frame}, one row per argument, with columns \code{reference}
@@ -22,11 +25,14 @@ A tidy \code{data.frame}, one row per argument, with columns \code{reference}
 \description{
 A tidy, one-row-per-argument map from each reference package's estimator to
 its \code{psychnet} equivalent, so users migrating from \code{qgraph::EBICglasso},
-\code{qgraph::cor_auto}, \code{qgraph::ggmModSelect}, \code{IsingFit::IsingFit}, or
-\code{mgm::mgm} can find the matching argument and see what \code{psychnet} changes by
-default. Cross-sectional estimators only (temporal models are out of scope).
+\code{qgraph::cor_auto}, \code{qgraph::ggmModSelect}, \code{IsingFit::IsingFit},
+\code{mgm::mgm}, or \code{psychonetrics::panelgvar} can find the matching argument and
+see what \code{psychnet} changes by default. Intensive time-series models
+(\code{graphicalVAR}, \code{mlVAR}) are out of scope; the few-wave panel model is
+covered by \code{\link[=panel_gvar]{panel_gvar()}}.
 }
 \examples{
 net_crosswalk("EBICglasso")
 net_crosswalk("IsingFit")
+net_crosswalk("panelgvar")
 }

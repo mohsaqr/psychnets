@@ -231,6 +231,49 @@
 
   best_lambda <- lambda_path[best_idx]
   support <- NULL
+  confirmed_wi <- NULL
+  if (engine == "base" && !isFALSE(refit)) {
+    # Confirm the selection at the refit tolerance. The scan solves each lambda
+    # only to scan_tol, which can leave an entry that is zero at the optimum
+    # just above the 1e-10 edge-count threshold; one miscounted edge raises that
+    # lambda's EBIC by exactly log(n) + 4 gamma log(p) and can hide the true
+    # minimum (the NCT parity audit found this in 4 of 29 divergent fits). The
+    # true minimum therefore lies within that margin of the scan minimum, so
+    # every lambda within two edge penalties is refit tightly and rescored, and
+    # the lowest exact EBIC wins (ties to the larger lambda, as in the scan).
+    pen <- log(n) + 4 * gamma * log(p)
+    cand <- which(is.finite(ebic_vals) & ebic_vals <= best_ebic + 2 * pen)
+    rescore <- function(i) {
+      wi <- tryCatch(
+        .glasso_solve(S, lambda_path[i], engine, refit_tol, refit_tol * 1e-2,
+                      penalize_diagonal = penalize_diagonal)$wi,
+        error = function(e) NULL)
+      if (is.null(wi)) return(list(wi = NULL, ebic = Inf))
+      wi[abs(wi) <= 1e-10 & row(wi) != col(wi)] <- 0
+      ld <- determinant(wi, logarithm = TRUE)
+      if (ld$sign <= 0) return(list(wi = NULL, ebic = Inf))
+      ll <- (n / 2) * (as.numeric(ld$modulus) - sum(diag(S %*% wi)))
+      k <- sum(wi[upper.tri(wi)] != 0)
+      list(wi = wi, ebic = -2 * ll + k * log(n) + 4 * k * gamma * log(p))
+    }
+    confirmed <- vector("list", length(lambda_path))
+    repeat {
+      rescored <- lapply(cand, rescore)
+      confirmed[cand] <- rescored
+      ebic_vals[cand] <- vapply(rescored, function(r) r$ebic, numeric(1))
+      if (!any(is.finite(ebic_vals)))
+        stop("All glasso refits failed; check the input data.", call. = FALSE)
+      best_idx <- which.min(ebic_vals)
+      # A correction can move the minimum to an unconfirmed scan row. Confirm
+      # that row too, so the returned path and selected fit agree.
+      if (!is.null(confirmed[[best_idx]])) break
+      cand <- best_idx
+    }
+    best_lambda <- lambda_path[best_idx]
+    best_ebic <- ebic_vals[best_idx]
+    confirmed_wi <- confirmed[[best_idx]]$wi
+    best_scan <- confirmed_wi
+  }
   if (identical(refit, "unregularized")) {
     # Zero-constrained unregularized refit: keep the EBIC-selected support and
     # re-solve the graph-restricted MLE, certified by ggm_support_kkt() instead
@@ -238,6 +281,8 @@
     support <- abs(best_scan) > 1e-10
     diag(support) <- TRUE
     best_wi <- .ggm_fit_support(S, support)
+  } else if (!is.null(confirmed_wi)) {
+    best_wi <- confirmed_wi
   } else if (isFALSE(refit)) {
     best_wi <- best_scan
   } else {
@@ -248,6 +293,14 @@
     best_wi <- .glasso_solve(S, best_lambda, engine, refit_outer, refit_inner,
                              penalize_diagonal = penalize_diagonal)$wi
   }
+  # Return exactly the support the EBIC counted: an off-diagonal entry it
+  # treated as absent (|.| <= 1e-10, as in `npar`) becomes an exact zero. At
+  # lambda = max|S_ij| (the empty graph) the soft-threshold otherwise leaves
+  # ~1e-17 residues, which read as edges downstream -- a permutation test
+  # compares statistics with `>=`, so a residue against an exact zero is a
+  # false difference.
+  absent <- abs(best_wi) <= 1e-10 & row(best_wi) != col(best_wi)
+  best_wi[absent] <- 0
   dimnames(best_wi) <- dimnames(S)
   list(wi = best_wi, lambda = best_lambda, ebic = best_ebic,
        ebic_path = ebic_vals, support = support)
@@ -257,7 +310,9 @@
 .precision_to_pcor <- function(wi) {
   x <- -stats::cov2cor(wi)
   diag(x) <- 0
-  (x + t(x)) / 2
+  # `+ 0` turns the -0 that negating an exact-zero precision entry produces
+  # into 0, so an absent edge prints as 0.000, not -0.000 (values unchanged).
+  (x + t(x)) / 2 + 0
 }
 
 #' Graphical-lasso stationarity (KKT) residual

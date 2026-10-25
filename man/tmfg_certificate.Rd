@@ -11,12 +11,12 @@ tmfg_certificate(x)
 }
 \value{
 Scalar; \code{0} certifies a valid TMFG (correct edge count, connected,
-chordal), otherwise a positive integer counting the violated invariants.
+chordal and planar), otherwise a positive integer counting the violated invariants.
 }
 \description{
 A TMFG has no convex objective, so its correctness is certified structurally:
-a valid TMFG on \code{p >= 3} nodes has exactly \code{3(p - 2)} edges, is connected, and
-is chordal (every cycle of length >= 4 has a chord). Returns a non-negative
+a valid TMFG on \code{p >= 3} nodes has exactly \code{3(p - 2)} edges, is connected,
+planar, and chordal (every cycle of length >= 4 has a chord). Returns a non-negative
 score that is \code{0} for a valid TMFG.
 }
 \examples{

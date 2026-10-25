@@ -80,7 +80,7 @@
 .mgm_as_frame <- function(data, types, levels_v) {
   df <- as.data.frame(data, stringsAsFactors = FALSE)
   cat_ix <- which(types == "c")
-  for (j in cat_ix) df[[j]] <- as.factor(df[[j]])
+  for (j in cat_ix) df[[j]] <- droplevels(as.factor(df[[j]]))
   df
 }
 
@@ -280,8 +280,12 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # data.frame with real factors so model.matrix() can expand a k-level node
   # into k-1 dummies; that frame is rebuilt FROM `mat`, after imputation, so the
   # two views can never disagree about rows or values.
+  training_frame <- .mgm_as_frame(data, types, levels_v)
+  source_names <- names(training_frame)
+  category_levels <- lapply(seq_along(types), function(j)
+    if (types[j] == "c") levels(training_frame[[j]]) else NULL)
   mat <- .na_prep_nodewise(
-    .as_numeric_matrix(.mgm_frame_numeric(.mgm_as_frame(data, types, levels_v)),
+    .as_numeric_matrix(.mgm_frame_numeric(training_frame),
                        drop_na = FALSE),
     na_method, categorical = types == "c")
   df <- .mgm_as_frame(mat, types, levels_v)
@@ -329,7 +333,9 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     }
     return(.mgm_fit_glmnet(df, types, gamma, threshold, rule, nlambda,
                            if (ratio_missing) NULL else lambda_min_ratio, labels,
-                           levels_v = levels_v, mat = mat))
+                           levels_v = levels_v, mat = mat,
+                           source_names = source_names,
+                           category_levels = category_levels))
   }
 
   # Scale continuous columns to unit variance up front (mgm::mgm scale = TRUE):
@@ -337,6 +343,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # the gaussian-node magnitudes only match mgm once each continuous variable is
   # standardized. resp_center/resp_scale record this so net_predict() can put
   # the gaussian response on the same scale as the fitted linear predictor.
+  raw_mat <- mat
   resp_center <- numeric(p); resp_scale <- rep(1, p)
   gix <- which(types == "g")
   if (length(gix)) {
@@ -409,7 +416,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   diag(W) <- 0
 
   .new_psychnet(W, labels, method = "mgm", directed = FALSE,
-                n_obs = nrow(mat), data = mat,
+                n_obs = nrow(mat), data = raw_mat,
                 extra = list(types = stats::setNames(types, labels),
                              levels = stats::setNames(as.integer(levels_v), labels),
                              kkt = worst_kkt, native = native,
@@ -417,6 +424,8 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                              nlambda = nlambda,
                              lambda_min_ratio = lambda_min_ratio,
                              nodewise = list(intercept = intercepts,
+                                             source_names = source_names,
+                                             category_levels = category_levels,
                                              beta_std = B_std,
                                              beta_std_thresholded = B_std_t,
                                              beta_graph = B,

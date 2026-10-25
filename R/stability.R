@@ -29,6 +29,8 @@
 #'   per measure) and a tidy `$table` (columns `measure`, `drop_prop`,
 #'   `mean_cor`, `sd_cor`, `prop_above`) of the case-dropping correlations by
 #'   drop proportion. Visualise it with [plot.psychnet_stability()].
+#'   Undefined correlations count as failing the threshold in `prop_above` and
+#'   the CS-coefficient; they are omitted from `mean_cor` and `sd_cor`.
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -50,7 +52,8 @@ net_stability <- function(data, method = "glasso",
       "psychnet_stability_group",
       list(measures = measures, centrality_fn = centrality_fn,
            drop_prop = drop_prop, iter = iter, threshold = threshold,
-           certainty = certainty, estimator_args = estimator_args)))
+           certainty = certainty,
+           estimator_args = .resample_dots(list(...), estimator_args))))
   }
   stopifnot(length(drop_prop) >= 1L, all(drop_prop > 0), all(drop_prop < 1),
             is.numeric(iter), length(iter) == 1L, is.finite(iter), iter >= 1,
@@ -96,7 +99,8 @@ net_stability <- function(data, method = "glasso",
   }
 
   cs <- vapply(measures, function(m) {
-    prop_above <- colMeans(corr_storage[[m]] >= threshold, na.rm = TRUE)
+    prop_above <- colMeans(!is.na(corr_storage[[m]]) &
+                            corr_storage[[m]] >= threshold)
     valid <- which(prop_above >= certainty)
     # CS = the largest drop PROPORTION that stays stable, robust to the order in
     # which drop_prop was supplied (not the largest index).
@@ -108,7 +112,7 @@ net_stability <- function(data, method = "glasso",
     data.frame(measure = m, drop_prop = drop_prop,
                mean_cor = colMeans(cm, na.rm = TRUE),
                sd_cor = apply(cm, 2L, stats::sd, na.rm = TRUE),
-               prop_above = colMeans(cm >= threshold, na.rm = TRUE),
+               prop_above = colMeans(!is.na(cm) & cm >= threshold),
                stringsAsFactors = FALSE)
   }))
 

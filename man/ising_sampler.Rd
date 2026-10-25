@@ -42,6 +42,9 @@ alongside their corresponding rows. \code{NULL} (default) is unweighted.}
 A \code{psychnet} object whose \verb{$weights} is the symmetric weight matrix,
 with \verb{$thresholds} (node intercepts), \verb{$rule}, \verb{$p_values}, \verb{$nodewise}
 (for \code{\link[=net_predict]{net_predict()}}), and \verb{$kkt} (worst nodewise score residual).
+If Wald pruning changes any coefficient, \verb{$kkt} is \code{NA} for the altered
+fit; \verb{$fit_kkt} retains the unpruned residual and \verb{$certificate_target}
+identifies it as \code{"pre_pruning_fit"}.
 }
 \description{
 Estimates an Ising model by \emph{unpenalized} nodewise logistic regression, with

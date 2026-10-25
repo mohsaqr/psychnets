@@ -52,6 +52,8 @@ An object of class \code{psychnet_stability} with \verb{$cs} (CS-coefficient
 per measure) and a tidy \verb{$table} (columns \code{measure}, \code{drop_prop},
 \code{mean_cor}, \code{sd_cor}, \code{prop_above}) of the case-dropping correlations by
 drop proportion. Visualise it with \code{\link[=plot.psychnet_stability]{plot.psychnet_stability()}}.
+Undefined correlations count as failing the threshold in \code{prop_above} and
+the CS-coefficient; they are omitted from \code{mean_cor} and \code{sd_cor}.
 }
 \description{
 Centrality-stability coefficient (case-dropping subset bootstrap)

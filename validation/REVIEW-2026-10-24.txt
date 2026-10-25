@@ -1,0 +1,964 @@
+PSYCHNETS COMPREHENSIVE FUNCTION REVIEW — 2026-10-24
+
+REMEDIATION STATUS: All main findings and confirmed lower-priority issues have been fixed and regression-tested. The source-package check (including vignette rebuilding) is clean: 0 errors, 0 warnings, 0 notes. Final combined test-suite results are recorded at the end of this report. The original findings below document pre-fix behavior.
+
+Scope: the complete current working tree, including uncommitted/untracked panel-GVAR files and the previous four fixes. This is a package-wide review, not only a review of the latest diff.
+
+Coverage: all 36 R source files; all 238 top-level named functions; all 174 nested/anonymous function definitions; 412 definitions total. Three specialist agents and the primary reviewer divided the files with no gaps. Dataset/package metadata files with no functions were also read. The inventories below account for every function.
+
+Method: complete source inspection, related API/test/documentation review, targeted adversarial execution, independent cross-checks of selected findings, panel analytic/finite-difference derivative checks, and a package-wide test run with PSYCHNET_EQUIV_TESTS=1. Source coverage does not mean every possible input was tested, and this review is not a proof of correctness. No package source or test files were changed during this review.
+
+Outcome: 20 confirmed actionable findings in the main sections below (8 framework, 4 panel, 5 estimator, 3 additional root-review findings). Lower-priority compatibility, validation, plotting-label and certificate-strength limitations are listed separately. Some issues predate the latest changes; all refer to the current package. The previously fixed glasso selection/path consistency and post-rounding panel KKT handling passed their targeted checks.
+
+HIGHEST-PRIORITY FINDINGS
+F1 [P1] Case-drop diagnostics omit undefined correlations from their probability denominator. A returned CS=.9 claims 95% certainty when only 33/40=82.5% of all draws actually attain the threshold.
+F2 [P1] Custom node labels plus an ignored nonnumeric input column silently turn observed and bootstrapped graphs into all-zero networks.
+
+OTHER CONFIRMED ACTIONABLE FINDINGS
+F3 Event-group resampling loses the effective sample size and changes the observed network.
+F4 A single missing event-feature value deletes the entire variable despite pairwise handling.
+F5 Multi-column group keys collide and silently pool distinct groups.
+F6 Two-node edge reliability diagnostics crash instead of returning available metrics.
+F7 Grouped resampling ignores estimator options passed through ... .
+F8 Valid groups of within/between models cannot be printed or summarized.
+P1 Missing panel person IDs join unrelated measurements into a fabricated person.
+P2 Empty EBIC panel networks crash the primary accessors and plotting.
+P3 Panel CFI becomes NaN when both estimated noncentralities are zero.
+P4 Ambiguous label-pair concatenation gives panel edges wrong significance styling.
+E1 Kendall correlations use Pearson p-values for edge significance.
+E2 Base MGM automatic predictability normalizes already standardized data again.
+E3 Polyserial estimates depend on arbitrary numeric spacing of ordinal codes.
+E4 IsingSampler reports its old score certificate after pruning its coefficients.
+E5 Covariance-unit PSD validation accepts tiny indefinite covariances, yielding NaN partial correlations or certified R-squared values above one.
+R1 Small-world graph rewiring preserves arbitrary edge orientations and biases the null distribution by node order.
+R2 Numeric categorical MGM encodings are not applied consistently in prediction.
+R3 Custom display labels prevent nodewise prediction on the original data.
+
+VALIDATION STATUS
+The full package test run completed with PSYCHNET_EQUIV_TESTS=1: 322 test blocks, 1,347 passing expectations, zero failures, zero errors and zero warnings. Two external reference comparisons were skipped because the installed lavaan failed inside qgraph/networktools. Existing tests therefore pass despite the adversarial reproductions below. Targeted reproduction scripts and exact source locations are provided below. Independently rerun by the primary reviewer: silent zero bootstrap graph, two-node reliability crash, inflated stability probability, empty panel accessors/CFI, stored MGM predictability, numeric categorical prediction, and the graph-rewiring invariant.
+
+
+==============================================================================
+FRAMEWORK, RESAMPLING AND GROUPS
+==============================================================================
+
+Framework function-by-function review, 2026-10-24
+Scope: current working tree, review only. No package files changed.
+61 top-level named functions and all 110 function definitions including nested helpers were read in the seven assigned files. Existing passing suites were not rerun. Findings below were reproduced with current source through devtools::load_all('.').
+
+CONFIRMED FINDINGS (ordered by impact)
+
+1. [P1] Undefined sparse-draw correlations are removed from the CS probability denominator, inflating stability.
+Locations: R/reliability.R:168 and R/stability.R:99,111.
+The CS coefficient promises a threshold correlation with probability >= certainty across case-dropped subsets. Empty estimated networks produce undefined correlations, but colMeans(..., na.rm=TRUE) excludes those subsets instead of treating their failure to attain a defined threshold as unsuccessful. These are often valid, successfully estimated sparse models, so n_failed remains zero and no warning exposes the excluded subset count.
+Exact reproduction:
+set.seed(1)
+x <- rnorm(100)
+d <- data.frame(x=x, y=.8*x+rnorm(100,sd=.6), z=rnorm(100))
+set.seed(3)
+cd <- net_casedrop_reliability(d, drop_prop=.9, iter=40)
+m <- attr(cd,'correlations')
+Result: CS=.9, n_success=40, seven NA correlations; reported conditional passing probability mean(m>=.7,na.rm=TRUE)=1. Only 33/40=.825 subsets attain .7, below the default .95 certainty. Expected: count undefined correlations as failures for the probability, or mark/refuse the unavailable diagnostic explicitly; do not claim 95% stability.
+The same input and resampling seed also reproduce the error in net_stability(d,drop_prop=.9,iter=40): both strength and expected_influence have CS=.9 and prop_above=1 despite n_success=40 and the same seven empty draws.
+Script: /private/tmp/framework-review-cs-sweep.R (first seed reproduces), /private/tmp/framework-review-cs.R.
+
+2. [P1] Custom labels plus ignored nonnumeric columns silently erase resampling networks.
+Location: R/reliability.R:30-42 (.psn_refit_network).
+The function renames raw input columns only if the label count matches ncol(raw data). With an ignored id/factor column, label count correctly matches the modeled numeric nodes, but not the raw input columns. The estimator receives original column names and no labels argument, then intersect(old, labels) is empty and all weights become zero. This shared helper powers bootstrap, stability, and both reliability diagnostics.
+Reproduction:
+set.seed(11)
+x <- data.frame(a=rnorm(30),b=rnorm(30)); x$c <- x$a+rnorm(30,0,.2)
+d <- data.frame(id=letters[1:30],x)
+a <- net_boot(d, method='pcor', n_boot=3, cores=1)
+b <- net_boot(d, method='pcor', n_boot=3, cores=1, labels=c('A','B','C'))
+Without labels observed a-c weight is .962472661; with labels every observed weight and every bootstrap draw is zero. Expected: same estimates with renamed nodes. Direct estimator labels correctly support the node count.
+Script: /private/tmp/framework-review-repro.R.
+
+3. [P2] Standardized event-group resampling loses the effective sample size and can change the observed network.
+Location: R/groups.R:73 (subsets stores only design matrix, dropping des$n); reconstruction at R/groups.R:205-207. Related generation: R/multilevel.R:233.
+For repeated-person/event data with standardize=TRUE, the original fit uses n_within=N-J. The grouped container labels centered rows as ordinary cross-sectional data and discards that effective n; resampling verbs reconstruct observed fits with N rows instead. This changes significance tests and EBIC selection even before resampling.
+Exact reproduction:
+set.seed(1)
+d <- data.frame(id=rep(1:40,each=3), group=rep(c('A','B'),each=60), x=rnorm(120), y=rnorm(120), z=rnorm(120))
+d$y <- .4*d$x+d$y
+f <- psychnet(d,id='id',group='group',method='pcor',alpha=.05)
+b <- net_boot(f,n_boot=2,cores=1)
+f$A has n=40 and one edge; b$A$observed has n=60 and three edges; max absolute weight discrepancy is .2839472. Expected: observed reconstruction reproduces f$A, with effective sample size preserved or unsupported grouped resampling rejected clearly. The issue also reaches net_compare() reconstruction.
+Scripts: /private/tmp/framework-review-event-n.R, /private/tmp/framework-review-event.R.
+
+4. [P2] One NA in an event feature drops the whole variable despite requested pairwise handling.
+Location: R/multilevel.R:153-159 (.fit_ggm).
+The precheck apply(mat,2,sd) does not use na.rm, so any missing value makes its SD NA. That variable is then reported as zero-variance and removed before .cor_input can apply pairwise/listwise handling. A repeated-person feature also propagates the NA through rowsum into other centered observations.
+Exact reproduction (single occasion avoids the latter complication):
+set.seed(22)
+d <- data.frame(id=seq_len(120),x=rnorm(120),y=rnorm(120),z=rnorm(120)); d$y[1] <- NA
+f <- psychnet(d,id='id',vars=x:z,method='pcor',na_method='pairwise')
+Returned nodes are x,z and warning says y has zero variance. Ordinary pcor_network(d[c('x','y','z')],na_method='pairwise') keeps all three nodes. Expected: missing-data handling applies to observations, not automatic deletion of an otherwise varying variable.
+Script: /private/tmp/framework-review-event-more.R (its data has the same valid construction with additional unused g column).
+
+5. [P2] Different multi-column group tuples collide and are silently pooled.
+Location: R/groups.R:40-42 (.psychnet_grouped).
+Converting interaction(...,sep='-') to character makes tuples ('a-b','c') and ('a','b-c') indistinguishable. The following row selection uses these ambiguous strings to pool cases into the same network.
+Reproduction:
+set.seed(16)
+d <- data.frame(g1=rep(c('a-b','a','other'),each=20),g2=rep(c('c','b-c','z'),each=20),matrix(rnorm(180),60,3))
+g <- psychnet(d,group=c('g1','g2'),method='pcor')
+Expected three groups of 20 rows. Actual two groups, names a-b-c and other-z, with 40 and 20 rows. Use collision-free tuple/group identities and separately unique display labels. Related interaction-based composite actor/id keys in R/multilevel.R may need the same treatment.
+Script: /private/tmp/framework-review-repro2.R.
+
+6. [P2] Two-variable undirected networks crash both edge reliability diagnostics.
+Location: R/reliability.R:19-22 (.psn_edge_metrics).
+A two-node undirected network has one edge. sd(edge_vector) is NA, so cor_ok is NA and if(cor_ok) throws 'missing value where TRUE/FALSE needed'.
+Reproduction: set.seed(11); d <- data.frame(a=rnorm(30),b=rnorm(30)); net_split_reliability(d,method='pcor',iter=2); net_casedrop_reliability(d,method='pcor',iter=2,drop_prop=.2). Both error. The estimators support two variables. Expected: return the available deviation metrics with correlation NA (or reject this diagnostic up front with a clear supported-size requirement).
+Script: /private/tmp/framework-review-repro.R.
+
+7. [P2] Grouped resampling silently ignores explicitly supplied estimator dots.
+Locations: R/bootstrap.R:147-154; analogous branches R/stability.R:48-54, R/reliability.R:113-118,282-286.
+The early grouped branch forwards diagnostic options and estimator_args, but omits list(...). Thus documented estimator options such as cor_method, rule or na_method have no effect in group mode. estimator_args provides a workaround, but is documented as needed for names consumed by the diagnostic, not a prerequisite for all overrides.
+Reproduction in /private/tmp/framework-review-repro2.R:
+A grouped correlation fit, followed by net_boot(g,n_boot=3,cores=1,cor_method='spearman'), yields Pearson observed xy=.9105406. Direct net_boot(attr(g,'subsets')$A,method='cor',n_boot=3,cores=1,cor_method='spearman') yields .9652948. Expected the explicitly requested estimator option to be forwarded (and override stored defaults) consistently.
+
+8. [P2] Valid groups of within/between models cannot be printed or summarized.
+Locations: R/groups.R:114-116 and140-143.
+psychnet(data,id='id',group='g',standardize=FALSE) legitimately returns a psychnet_group with psychnet_multilevel elements. print.psychnet_group/summary.psychnet_group assume each element has $nodes/$edges and vapply(...,integer(1)) fails because nrow(NULL) has length zero. This affects automatic console printing of a valid estimation result.
+Reproduction:
+set.seed(22)
+d <- data.frame(id=rep(1:40,each=3),g=rep(c('A','B'),each=60),x=rnorm(120),y=rnorm(120),z=rnorm(120))
+g <- psychnet(d,id='id',group='g',standardize=FALSE,method='pcor')
+print(g); summary(g)
+Both throw 'values must be length 1, but FUN(X[[1]]) result is length 0'. Expected nested-level summaries or an intentional, clear supported-operation error; current generic group methods claim to support the returned class.
+Script: /private/tmp/framework-review-event-more.R.
+
+ADDITIONAL OBSERVATIONS NOT PROMOTED TO FINDINGS
+- Date time columns are numeric days while POSIXct columns use seconds, yielding two vs four sessions in a two-day/two-actor example under the same threshold900. Current docs say 'units of time', so whether Date should normalize to seconds is ambiguous rather than a confirmed contract violation.
+- In the within-person decomposition, missing observations propagate through per-person means; the confirmed event-variable deletion already covers the immediate missingness defect.
+- Numeric argument counts are often truncated rather than required whole numbers, but this matches some existing documented behavior and is lower impact than the confirmed defects above.
+- Reviewed NCT global/edge statistics, paired permutation construction, listwise pair retention, pairwise co-observation checks, p-value correction, classed conditions, labels and S3 methods. No additional confirmed NCT-specific defect was found.
+
+FUNCTION COVERAGE INVENTORY
+All named and nested/anonymous function definitions in the following files were read; listed functions with no associated finding above had no confirmed actionable defect in this review. This is source coverage plus targeted adversarial execution, not a proof of all possible inputs.
+
+R/bootstrap.R — 7 top-level / 14 total definitions:
+.resolve_cores; .psn_predictability; .psn_diff_pmat; net_boot; difference_test; as.data.frame.psychnet_bootstrap; print.psychnet_bootstrap.
+Nested closures covered: detectCores error handler; observed/refit fit_net; index generator; one-draw estimator/centrality callback; qci; centrality difference callback; pairwise difference quantile/p-value callback.
+
+R/nct.R — 16 top-level / 29 total definitions:
+.nearest_pd_cor; .nct_bad_input; .nct_degenerate; .nct_validate; .nct_columns; .nct_cor; .nct_estimate; .nct_constant_vars; .nct_group; .nct_label; net_compare; summary.psychnet_nct; as.data.frame.psychnet_nct; print.psychnet_nct; .nct_display; $.psychnet_nct.
+Nested closures covered: logical flag validator; numeric_only; column-name listing; zero-SD warning handler; constant-column detector; undefined-correlation error constructor; estimator; binarize; global-strength function; display num/pval/star/pad formatters.
+
+R/reliability.R — 10 top-level / 15 total definitions:
+.psn_edge_vector; .psn_edge_metrics; .psn_refit_network; .psn_refit; net_casedrop_reliability; print.psychnet_casedrop; plot.psychnet_casedrop; net_split_reliability; print.psychnet_reliability; plot.psychnet_reliability.
+Nested closures covered: estimator error handler; metric-storage constructor; case-drop table builder; split-half iteration callback; per-metric summary builder.
+
+R/stability.R — 2 top-level / 7 total definitions:
+net_stability; print.psychnet_stability.
+Nested closures covered: cent_of; fit_net; correlation-storage constructor; per-measure CS computation; per-measure summary table builder.
+
+R/groups.R — 12 top-level / 28 total definitions:
+.new_psychnet_group; .psychnet_grouped; print.psychnet_group; as.data.frame.psychnet_group; summary.psychnet_group; %||%; .stack_by_group; .reject_multilevel_group; .group_obj_apply; .group_data_apply; print.psychnet_result_group; as.data.frame.psychnet_result_group.
+Nested closures covered: rows_of; event design/fitting/subset constructors; cols_of and cross-sectional fitter; per-network node/edge/n/mean summaries; stack tagging callback; per-group verb dispatcher; result coercion and error handler.
+
+R/multilevel.R — 10 top-level / 13 total definitions:
+.as_time_numeric; .event_freq; event_frequencies; .within_between_decompose; .fit_ggm; .event_design; .fit_design; .net_eventdata; print.psychnet_multilevel; as.data.frame.psychnet_multilevel.
+Nested closures covered: session inference callback; level-fitting closure; output level tagger.
+
+R/psychnet.R — 4 top-level / 4 total definitions:
+psychnet; .select_names; .select_cols; .resolve_method.
+Covered cross-sectional/event/group routing, method aliases and default argument forwarding, expression-based variable selection, and source=auto resolution.
+
+Relevant tests read: test-framework.R (resampling compatibility section), test-reliability.R, test-multilevel.R, test-groups.R, test-nct.R, test-release-audit-2026-08-18.R (selected assertions). Existing tests do not cover the specific confirmed triggers above.
+
+
+==============================================================================
+PANEL GRAPHICAL VAR
+==============================================================================
+
+Psychnets panel review: complete assigned-function audit
+Reviewer scope: R/panelgvar.R and R/panelgvar_ebic.R, all 52 top-level functions and 36 nested function expressions (88 total). Every function body was read, including all named local helpers and anonymous closures. Relevant panel tests, helper generators, public Rd/API comments and the previous fixes were checked. No package files were edited. This is function-by-function code inspection plus targeted adversarial execution, not a claim that every function was separately tested or mathematically proven correct.
+
+CONFIRMED FINDINGS (prioritized)
+
+1. [P2] Missing long-data identifiers fabricate a person by combining unrelated people across waves.
+Location: R/panelgvar.R:516-519 (.pgv_wide).
+Trigger: NA in the person ID column, with at most one NA record in each wave.
+Actual: unique(data[[id]]) retains NA; match(ids, sub[[id]]) matches it across waves as if it were one identified person. This creates a complete artificial panel row from different people's measurements. Other incomplete real persons are dropped, but the artificial person enters the covariance and likelihood.
+Expected: reject missing person identifiers as unusable input, or explicitly drop these records before constructing persons; never match unknown identities across waves.
+Public reproduction:
+  devtools::load_all('.', quiet=TRUE)
+  source('tests/testthat/helper-panelgvar.R')
+  x <- panel_sim(n=100)
+  bad <- c(1,102,203,304)  # four different people, one in each wave
+  x$id[bad] <- NA
+  wd <- .pgv_wide(x,c('V1','V2','V3'),'id','wave')
+  fake <- which(is.na(unique(x$id)))
+  complete.cases(wd$wide)[fake]  # TRUE
+  identical(unname(wd$wide[fake,]), unname(as.vector(t(as.matrix(x[bad,c('V1','V2','V3')]))))) # TRUE
+  f <- suppressWarnings(panel_gvar(x,c('V1','V2','V3'),'id','wave'))
+  attr(f,'n') # 97; only 96 identifiable real people are complete.
+
+2. [P2] Empty EBIC networks break every primary edge/report/plot accessor.
+Location: R/panelgvar.R:1141 (.pgv_edges).
+Trigger: select='ebic', refit=FALSE, with all network coefficients selected to zero.
+Actual: e has zero rows while significant=NA has length one. data.frame raises 'arguments imply differing number of rows: 0, 1'. as.data.frame(f), summary(f), print(f), and plot(f) all fail on an otherwise valid fit. This contradicts the documented empty-network plotting/reporting behavior.
+Expected: a correctly typed zero-row edge table (e.g. significant=rep(NA, nrow(e))), zero-edge summaries, successful print/plot.
+Ordinary random-data reproduction:
+  set.seed(17)
+  d <- as.data.frame(matrix(rnorm(100*12),100,12))
+  f <- suppressWarnings(panel_gvar(d,vars=matrix(names(d),3),select='ebic',nlambda=8))
+  summary(f) # 0/1 rows error; all network parameters are fixed.
+Also reproduced with exact orthogonal covariance:
+  k <- 8
+  d <- as.data.frame(rbind(diag(k),-diag(k))*sqrt(k))
+  f <- panel_gvar(d,vars=matrix(names(d),2),select='ebic',nlambda=4)
+  as.data.frame(f); summary(f); print(f); plot(f) # each fails.
+Full reproduction script: /private/tmp/panel-review-additional.R
+
+3. [P2] CFI is NaN for well-fitting panels when both estimated noncentralities are zero.
+Location: R/panelgvar.R:577 (.pgv_fit_indices).
+Trigger: max(chisq-df,0)=0 and max(baseline_chisq-baseline_df,chisq-df,0)=0. This includes good-fit null panels and perfect-fit data.
+Actual: CFI computes 1-0/0 and returns NaN, including in the fit table and printed report.
+Expected: handle the zero denominator; the installed primary reference implementations psychonetrics::addfit and lavaan::lav_fit_cfi return CFI=1 in this case.
+Exact orthogonal public reproduction above gives chisq=-2.842171e-14, baseline_chisq=0, df=baseline_df=38, CFI=NaN, RMSEA=0. The tiny negative chi-square is floating-point noise, not a convergence failure.
+Reference evidence inspected locally: psychonetrics::addfit uses ifelse(dfm > Tm,1,...); lavaan::lav_fit_cfi explicitly returns 1 when numerator and denominator are both zero.
+
+4. [P2] Space-containing node labels can give the wrong significance line type to edges.
+Location: R/panelgvar.R:1328-1329 (.pgv_edge_significance).
+Trigger: distinct endpoint pairs whose labels concatenate to the same string with a single space.
+Actual: paste(from,to) collapses (a b,c) and (a,b c) to 'a b c'; match returns the first edge's significance for both. A significant effect can therefore be drawn dashed or a non-significant one solid, and plot significance counts can be wrong.
+Expected: match two-column endpoint identities or integer node-index pairs without ambiguous concatenation.
+Public fit reproduction:
+  labs <- c('a b','c','a','b c')
+  f <- suppressWarnings(panel_gvar(panel_sim(p=4),c('V1','V2','V3','V4'),'id','wave',labels=labs))
+  e <- as.data.frame(f)
+  n <- .pgv_plot_temporal(f$temporal)
+  s <- .pgv_edge_significance(n,'temporal',e)
+Observed temporal a b -> c: p=2.557343e-08, expected significant TRUE, plotted FALSE. Temporal a -> b c: p=.5934951, expected FALSE, plotted FALSE. All labels are unique and legal.
+
+LOWER-PRIORITY CONFIRMED ISSUES
+
+5. [P3] Exact-name plot option merging does not preserve legitimate partial-name forwarding.
+Location: R/panelgvar.R:1379-1381.
+Direct cograph::splot(net,node_f='red') binds node_fill='red'. plot(panel,node_f='red') explicitly supplies default node_fill='#56B4E9', leaving node_f in ... where it is ignored. Traced all three panel calls and confirmed the default fill reaches cograph. Exact full names work, so the previous duplicate-argument bug is fixed for its tested cases.
+A related short name tit='Custom' is consumed as title_size because title was already explicitly matched, then errors 'non-numeric argument to binary operator'. Direct cograph treats tit as ambiguous, so node_f is the stronger valid-forwarding example.
+Reproduction/tracing script: /private/tmp/panel-review-plot-args.R
+
+6. [P3] A custom edge_style leaves the significance legend false.
+Location: R/panelgvar.R:1392-1393, after override handling at 1380.
+Trigger: plot(f,edge_style=1) on a full fit with non-significant estimated edges.
+Actual: all three splot calls receive edge_style=1 (solid), but mtext still says 'solid: p < 0.01   dashed: not significant'. Default panel_sim() has 8 non-significant edge rows, so this falsely explains the rendered lines. The new custom-colour legend handling works for full colour argument names but custom line styles are not reflected.
+Expected: when callers override line styles, suppress or adapt the significance-style key rather than asserting the default encoding.
+Traced splot and graphics::mtext to confirm both rendering arguments and legend text.
+Reproduction script: /private/tmp/panel-review-legend.R
+
+7. [P3] nlambda accepts fractional and infinite values despite requiring an integer.
+Location: R/panelgvar.R:750-751 and conversion at 854.
+Actual: nlambda=2.5 passes validation and silently produces a two-row EBIC path. Inf passes validation, performs the unpenalized fitting work, then warns on integer conversion and errors with an unclassed simpleError ('length.out must be a non-negative number').
+Expected: reject non-finite/non-whole values before fitting, consistent with the stated integer requirement.
+Reproduced using exact orthogonal public input above with nlambda=2.5 and Inf.
+
+PREVIOUS FIXES / ADDITIONAL VALIDATION
+
+- Full-name custom node_fill, layout, title, edge_positive_color and edge_label_size overrides were inspected and have passing existing regression coverage. Exact-name list replacement avoids duplicate formal arguments and preserves explicit NULL values.
+- Post-threshold residual recomputation is now based on the rounded state, not the optimizer's old gradient. Existing targeted test independently evaluates forward-mode scores.
+- Infeasible post-threshold candidates: constructed beta matrix [[1.2,-.8],[.8,0]] (spectral radius .8) with unit factors making one feedback coefficient smaller than beta_min on the data scale. The original state is feasible and the rounded state is not. Injected feasible optimizer fits into the path to exercise the branch. All rounded candidates are excluded; the path cleanly raises class psychnet_no_converge with 'no feasible penalized model remained after coefficient thresholding'. No null-state crash found. Script /private/tmp/panel-review-threshold-invalid.R.
+- Core moments, gradient, Jacobian and information checked over p=2,3,5 and waves=3,5. Reverse-vs-forward gradient error <=1.28e-15. Reverse-vs-central-finite-difference error <=2.80e-8. Expected information eigenvalues positive in all six interior cases. Script /private/tmp/panel-review-math.R.
+- Existing boundary inference, variance decomposition, pruning and stepup code inspected. No further confirmed formula errors found. Boundary lower-bound/polish handling and singular modification indices remain numerical limitations, not newly confirmed defects in this review.
+- No package-wide or full panel test suite rerun; prior turn already passed them. This agent ran targeted adversarial cases to avoid redundant CPU work.
+
+FUNCTION-BY-FUNCTION COVERAGE
+All entries below were read in full. Top-level functions have one slash. Entries with more slashes are local/nested named or anonymous function expressions. Repeated anonymous sibling entries are distinct closures in source order. Counts: 52 top-level + 36 nested = 88 function expressions.
+
+
+FILE R/panelgvar.R
+<top>/.pgv_layout
+<top>/.pgv_layout/<anonymous>
+<top>/.pgv_unpack
+<top>/.pgv_unpack/sym
+<top>/.pgv_ggm_cov
+<top>/.pgv_assemble
+<top>/.pgv_assemble/block
+<top>/.pgv_assemble/<anonymous>
+<top>/.pgv_assemble/<anonymous>/<anonymous>
+<top>/.pgv_moments
+<top>/.pgv_moments/<anonymous>
+<top>/.pgv_state
+<top>/.pgv_full
+<top>/.pgv_dsigma
+<top>/.pgv_ggm_grad
+<top>/.pgv_gradient_full
+<top>/.pgv_gradient_full/rows
+<top>/.pgv_gradient_full/blk
+<top>/.pgv_gradient_full/<anonymous>
+<top>/.pgv_gradient_full/<anonymous>/<anonymous>
+<top>/.pgv_jacobian
+<top>/.pgv_jacobian/ggm_d
+<top>/.pgv_jacobian/one
+<top>/.pgv_jacobian/one/<anonymous>
+<top>/.pgv_information
+<top>/.pgv_information/<anonymous>
+<top>/.pgv_score
+<top>/.pgv_spectral_shift
+<top>/.pgv_ggm_from_cov
+<top>/.pgv_start
+<top>/.pgv_start/rows
+<top>/.pgv_start/blk
+<top>/.pgv_start/<anonymous>
+<top>/.pgv_start/<anonymous>
+<top>/.pgv_start/shrink
+<top>/.pgv_optimize
+<top>/.pgv_optimize/objective
+<top>/.pgv_optimize/gradient
+<top>/.pgv_best_fit
+<top>/.pgv_best_fit/<anonymous>
+<top>/.pgv_best_fit/<anonymous>
+<top>/.pgv_simple_start
+<top>/.pgv_scale_factor
+<top>/.pgv_modification
+<top>/.pgv_stepup
+<top>/.pgv_bad_input
+<top>/.pgv_wide
+<top>/.pgv_wide/<anonymous>
+<top>/.pgv_standardize
+<top>/.pgv_standardize/z
+<top>/.pgv_standardize/<anonymous>
+<top>/.pgv_standardize/<anonymous>
+<top>/.pgv_fit_indices
+<top>/panel_gvar
+<top>/.pgv_scaled_eigen
+<top>/.pgv_identified_se
+<top>/.pgv_at_bound
+<top>/.pgv_near_zero
+<top>/.pgv_inference
+<top>/.pgv_boundary
+<top>/.pgv_theta_from_state
+<top>/.pgv_object
+<top>/.pgv_sig_applies
+<top>/.pgv_edges
+<top>/as.data.frame.psychnet_panelgvar
+<top>/.pgv_variance
+<top>/.pgv_diagnostics
+<top>/print.psychnet_panelgvar
+<top>/print.psychnet_panelgvar/tally
+<top>/summary.psychnet_panelgvar
+<top>/summary.psychnet_panelgvar/<anonymous>
+<top>/summary.psychnet_panelgvar/<anonymous>
+<top>/summary.psychnet_panelgvar/<anonymous>
+<top>/.pgv_plot_temporal
+<top>/.pgv_edge_significance
+<top>/plot.psychnet_panelgvar
+<top>/plot.psychnet_panelgvar/<anonymous>
+
+FILE R/panelgvar_ebic.R
+<top>/.pgv_pen_objective
+<top>/.pgv_pen_kkt
+<top>/.pgv_prox
+<top>/.pgv_pen_fista
+<top>/.pgv_pen_polish
+<top>/.pgv_pen_fit
+<top>/.pgv_ebic_path
+<top>/.pgv_ebic_path/ebic_of
+<top>/.pgv_ebic_path/solve_final
+<top>/.pgv_ebic_path/solve_final/<anonymous>
+<top>/.pgv_ebic_path/solve_final/<anonymous>
+
+
+==============================================================================
+CROSS-SECTIONAL ESTIMATORS AND NUMERICAL KERNELS
+==============================================================================
+
+ESTIMATOR REVIEW — current working tree, 2026-10-24
+Scope: all functions (including nested callbacks) in the 14 assigned estimator files. Review only; no package files changed. Existing passing suites were not rerun wholesale. Adversarial reproduction scripts are listed below.
+
+CONFIRMED FINDINGS, ordered by practical impact
+
+E1 [P2] Kendall edge inference uses the Pearson correlation t test.
+Location: R/correlation.R:323-326, with incorrect common formula at 236-245.
+Trigger: cor_network(data, cor_method = 'kendall', alpha = .05).
+Repro: set.seed(3); x <- rnorm(50); y <- .4*x + rnorm(50); z <- rnorm(50); f <- cor_network(data.frame(x,y,z), cor_method='kendall', alpha=.05).
+Actual: f$p_values['x','y'] = .1708854 and the edge is removed. Kendall tau is .1967347 and stats::cor.test(x,y,method='kendall',exact=FALSE)$p.value = .04380722.
+Expected: inference appropriate to Kendall tau (including tie handling), or explicitly refuse alpha for unsupported correlation methods. Current code cannot distinguish Pearson and Kendall in .cor_pvalues.
+Evidence script: /private/tmp/psychnets-estimator-review-more.R.
+
+E2 [P2] Base MGM automatic node predictability applies raw-data normalization to already standardized data.
+Location: R/mgm.R:355-356 scales mat in place; .new_psychnet(data=mat) at 411-412 passes that scaled matrix while nodewise center/scale and response transforms at 426-429 expect raw observations.
+Repro: set.seed(7); f <- rnorm(300); d <- data.frame(a=100+15*(f+rnorm(300)), b=20+3*(f+rnorm(300)), c=rnorm(300)); m <- mgm_fit(d, types=rep('g',3), threshold='none', nlambda=20).
+Actual: m$nodes$predictability = c(0,0,0), while net_predict(m,d)$predictability = c(.2893708,.2870410,0). Unclamped incorrect values are strongly negative and silently clipped to zero by .attach_predictability.
+Expected: automatic node-table/plot predictability equals prediction on the prepared raw data. Preserve the raw numeric matrix for this call.
+Native FALSE unaffected: same example gives stored and explicitly recomputed values both c(.287041,.287041,0), because that engine scales df rather than mat.
+Evidence script: /private/tmp/psychnets-estimator-review.R (final net_predict without data intentionally demonstrates required-data error; earlier outputs contain evidence).
+
+E3 [P2] Polyserial associations depend on arbitrary ordinal code spacing.
+Location: R/cor_auto.R:82-84.
+Trigger: a continuous–ordinal pair with numeric category labels that are not consecutive unit-spaced codes.
+Repro: set.seed(8); z <- matrix(rnorm(2000),1000,2) %*% chol(matrix(c(1,.5,.5,1),2)); d <- data.frame(x=z[,1],y=as.integer(cut(z[,2],c(-Inf,-.5,.5,Inf)))); cor_auto(d)[1,2]; d$y <- 10*d$y; cor_auto(d)[1,2].
+Actual: .4958623 changes to .999 although categories and ordering are identical and both vectors meet ordinal detection.
+Expected: code spacing should not alter a polyserial association. Map ordinal values to ordered category indices before the moment formula (or implement invariant likelihood-based estimation).
+
+E4 [P2] IsingSampler keeps the unpruned score certificate after pruning stored coefficients.
+Location: R/ising_unreg.R:106-112 and result field at 130-131.
+Trigger: ising_sampler(data, alpha = ...), with any removed edge.
+Repro: set.seed(5); x <- matrix(rbinom(400*4,1,.5),400,4); colnames(x) <- letters[1:4]; f <- ising_sampler(x,alpha=.01). Standardize x with f$nodewise$center/scale, then independently run glm_lasso_kkt at lambda=0 over f$nodewise$beta_std for every node.
+Actual: f$kkt = 5.600471e-12 and certificate(f)$certified = TRUE, while maximum score residual of the actual stored post-pruning nodewise coefficients is .04093294.
+Expected: preserve pre-pruning residual as fit_kkt and return NA for altered fits consistently with the documented certificate() contract, or recompute an accurately labeled post-pruning residual. A constrained refit would also need the matching constrained certificate.
+Evidence: /private/tmp/psychnets-estimator-review-ising.R.
+
+E5 [P2] Covariance-scale PSD validation accepts grossly indefinite matrices at small measurement units.
+Location: R/correlation.R:123-129 and duplicate implementation R/relimp.R:112-120.
+Repro: S <- matrix(c(1,1.5,1.5,1),2)*1e-12.
+Actual: .check_cor_matrix(S) accepts it and returns correlations 1.5. pcor_network(cor_matrix=S,n=100)$weights has NaN off-diagonals. relimp_network(cor_matrix=S)$r2 = c(2.25,2.25) and certificate(...)=TRUE.
+Expected: reject an indefinite matrix. Normalize to correlation units before symmetry/PSD tolerance checks, or use an appropriate relative tolerance, and use the same validator for relimp.
+This requires malformed or numerically indefinite supplied covariance input, so lower practical priority than the valid-data findings above.
+Evidence: /private/tmp/psychnets-estimator-review-more.R; /private/tmp/psychnets-estimator-review-extra.R.
+
+LOWER-PRIORITY CONFIRMED LIMITATIONS
+
+E6 [P2/P3] Two-node Ising/MGM fits with native=FALSE pass a one-column design to glmnet, which rejects it.
+Locations: R/lasso_glmnet.R:99-103; .mgm_fit_glmnet nested node_fit builds a one-column X at 207-215 and passes it to glmnet at 225 or 268.
+Repro: set.seed(1); b<-matrix(rbinom(200,1,.5),100,2); g<-matrix(rnorm(200),100,2); ising_fit(b,native=FALSE); mgm_fit(g,native=FALSE,types=c('g','g')).
+Actual: both error 'x should be a matrix with 2 or more columns'. Base engine supports the same valid two-node data; no public three-node minimum is documented. Could pad an inert predictor and remove it for aggregation, or provide a clear documented restriction.
+Two-node moderated mgm_fit(g,types=c('g','g'),moderators=2) also fails with a malformed formula ('V1. ~ V2. + *', R/mgm_moderated.R:163-168). Moderation intrinsically needs three variables; reject clearly before formula construction.
+
+E7 [P3, certificate-strength limitation] TMFG structural certificate does not establish planarity.
+Location: R/tmfg.R:89-108.
+Repro: take f<-tmfg_network(cor_matrix=diag(6)), then set f$adjacency to a triangle on nodes1:3 plus all nine cross-edges between1:3 and4:6.
+Actual: tmfg_certificate(f)=0, yet the adjacency contains K3,3 and is nonplanar. It is chordal, connected and has 3(p-2) edges, satisfying only the checked necessary conditions.
+Expected: either describe the certificate explicitly as checking only necessary invariants, or additionally validate planarity/TMFG clique-face structure. This affects adversarial/mutated objects, not the .tmfg_build algorithm, whose insertion structure is planar.
+Evidence: /private/tmp/psychnets-estimator-review-extra.R.
+
+OTHER CHECKS / NON-FINDINGS
+- Read every assigned estimator implementation, including anonymous lapply/vapply/tryCatch callbacks, helper closures, likelihoods, KKT functions and S3 dispatch inputs.
+- New glasso rescore path correctly updates minimum metadata and unregularized-support selection; no new defect reproduced in the previous four fixes within my scope.
+- LoGo rejects singular clique blocks rather than using pseudo-inverses, and its reconstruction uses the correct clique-minus-separator formula.
+- LMG uses predictor-to-outcome orientation and normalized reporting retains the raw decomposition certificate.
+- Native(FALSE) MGM correctly preserves the raw data for automatic predictability.
+- Continuous-moderator values are applied on internally standardized coordinates. mgm::condition does the same; I have NOT listed that as a confirmed implementation bug, although public docs could clarify coordinates.
+- Singular IsingSampler information uses a pseudo-inverse and can report finite Wald p-values for unidentified duplicate predictor coordinates. I reproduced this with duplicate binary columns, but separation in other nodewise responses confounds the full network example; this is a concern, not a separately confirmed finding.
+
+FUNCTION COVERAGE INVENTORY (all top-level definitions plus nested function expressions)
+
+R/glasso.R:
+  .soft; nested functions reviewed: 0
+  .glasso_lasso_column; nested functions reviewed: 0
+  .glasso_fit; nested functions reviewed: 0
+  .check_lambda_path; nested functions reviewed: 0
+  .check_refit; nested functions reviewed: 0
+  .compute_lambda_path; nested functions reviewed: 0
+  .empty_glasso; nested functions reviewed: 0
+  .resolve_native; nested functions reviewed: 0
+  .glasso_solve; nested functions reviewed: 0
+  .select_ebic; nested functions reviewed: 4 [.select_ebic/<anonymous>, .select_ebic/<anonymous>/rescore, .select_ebic/<anonymous>/rescore, .select_ebic/<anonymous>]
+  .precision_to_pcor; nested functions reviewed: 0
+  glasso_kkt; nested functions reviewed: 1 [glasso_kkt/<anonymous>]
+  ggm_support_kkt; nested functions reviewed: 1 [ggm_support_kkt/<anonymous>]
+  ebic_glasso; nested functions reviewed: 0
+  TOTAL: 14 top-level, 6 nested.
+
+R/ggmmodselect.R:
+  .ggm_fit_support; nested functions reviewed: 0
+  .support_ebic; nested functions reviewed: 0
+  ggm_modselect; nested functions reviewed: 3 [ggm_modselect/<anonymous>, ggm_modselect/<anonymous>, ggm_modselect/<anonymous>]
+  TOTAL: 3 top-level, 3 nested.
+
+R/correlation.R:
+  .as_numeric_matrix; nested functions reviewed: 0
+  .resample_input; nested functions reviewed: 0
+  .resample_dots; nested functions reviewed: 0
+  .resample_engine; nested functions reviewed: 0
+  .check_cor_matrix; nested functions reviewed: 0
+  .cor_input; nested functions reviewed: 0
+  .na_prep_nodewise; nested functions reviewed: 0
+  .pd_solve; nested functions reviewed: 1 [.pd_solve/<anonymous>]
+  .cor_pvalues; nested functions reviewed: 0
+  .apply_sig; nested functions reviewed: 0
+  cor_network; nested functions reviewed: 0
+  pcor_network; nested functions reviewed: 0
+  TOTAL: 12 top-level, 1 nested.
+
+R/cor_auto.R:
+  .gauss_legendre; nested functions reviewed: 0
+  .pbivnorm; nested functions reviewed: 0
+  .polychoric; nested functions reviewed: 1 [.polychoric/<anonymous>/negll]
+  .polyserial; nested functions reviewed: 0
+  .is_ordinal; nested functions reviewed: 0
+  .cor_auto_matrix; nested functions reviewed: 1 [.cor_auto_matrix/<anonymous>]
+  cor_auto; nested functions reviewed: 0
+  TOTAL: 7 top-level, 2 nested.
+
+R/huge.R:
+  .npn_scores; nested functions reviewed: 1 [.npn_scores/<anonymous>]
+  .npn_cor; nested functions reviewed: 0
+  huge_network; nested functions reviewed: 0
+  TOTAL: 3 top-level, 1 nested.
+
+R/ising.R:
+  .as_binary_matrix; nested functions reviewed: 0
+  .apply_min_sum; nested functions reviewed: 0
+  ising_fit; nested functions reviewed: 4 [ising_fit/<anonymous>, ising_fit/<anonymous>, ising_fit/<anonymous>, ising_fit/<anonymous>]
+  TOTAL: 3 top-level, 4 nested.
+
+R/ising_unreg.R:
+  .logit_wald_p; nested functions reviewed: 1 [.logit_wald_p/<anonymous>]
+  MASS_ginv; nested functions reviewed: 0
+  ising_sampler; nested functions reviewed: 3 [ising_sampler/<anonymous>, ising_sampler/<anonymous>, ising_sampler/<anonymous>]
+  TOTAL: 3 top-level, 4 nested.
+
+R/lasso_glm.R:
+  .check_weights; nested functions reviewed: 0
+  .wls_lasso; nested functions reviewed: 0
+  .glm_lasso_fit; nested functions reviewed: 0
+  glm_lasso_kkt; nested functions reviewed: 0
+  .standardize; nested functions reviewed: 0
+  .nodewise_ebic; nested functions reviewed: 0
+  TOTAL: 6 top-level, 0 nested.
+
+R/lasso_glmnet.R:
+  .log1pexp; nested functions reviewed: 0
+  .self_lambda_kkt; nested functions reviewed: 0
+  .self_lambda_kkt_multinomial; nested functions reviewed: 0
+  .nodewise_glmnet; nested functions reviewed: 1 [.nodewise_glmnet/<anonymous>]
+  .ising_fit_glmnet; nested functions reviewed: 3 [.ising_fit_glmnet/<anonymous>, .ising_fit_glmnet/<anonymous>, .ising_fit_glmnet/<anonymous>]
+  .mgm_fit_glmnet; nested functions reviewed: 10 [.mgm_fit_glmnet/<anonymous>/node_fit, .mgm_fit_glmnet/<anonymous>/node_fit, .mgm_fit_glmnet/<anonymous>/node_fit, .mgm_fit_glmnet/<anonymous>/thr_side, .mgm_fit_glmnet/<anonymous>/thr_side, .mgm_fit_glmnet/<anonymous>/side, .mgm_fit_glmnet/<anonymous>/side, .mgm_fit_glmnet/<anonymous>, .mgm_fit_glmnet/<anonymous>, .mgm_fit_glmnet/<anonymous>]
+  TOTAL: 6 top-level, 14 nested.
+
+R/mgm.R:
+  .detect_types; nested functions reviewed: 4 [.detect_types/<anonymous>, .detect_types/<anonymous>, .detect_types/<anonymous>, .detect_types/<anonymous>]
+  .usable_columns; nested functions reviewed: 2 [.usable_columns/<anonymous>, .usable_columns/<anonymous>]
+  .mgm_as_frame; nested functions reviewed: 0
+  .mgm_frame_numeric; nested functions reviewed: 1 [.mgm_frame_numeric/<anonymous>]
+  mgm_fit; nested functions reviewed: 4 [mgm_fit/<anonymous>, mgm_fit/<anonymous>, mgm_fit/<anonymous>, mgm_fit/<anonymous>]
+  TOTAL: 5 top-level, 11 nested.
+
+R/mgm_moderated.R:
+  .mmg_main_mag; nested functions reviewed: 1 [.mmg_main_mag/<anonymous>]
+  .mmg_int_mag; nested functions reviewed: 1 [.mmg_int_mag/<anonymous>]
+  .mmg_cond_indicator; nested functions reviewed: 0
+  .mmg_threshold; nested functions reviewed: 0
+  .mmg_fit_node_base; nested functions reviewed: 0
+  .mmg_estimate; nested functions reviewed: 7 [.mmg_estimate/<anonymous>, .mmg_estimate/<anonymous>, .mmg_estimate/<anonymous>, .mmg_estimate/<anonymous>, .mmg_estimate/<anonymous>, .mmg_estimate/<anonymous>, .mmg_estimate/<anonymous>]
+  .mmg_condition_wadj; nested functions reviewed: 3 [.mmg_condition_wadj/<anonymous>/.cond_dummies, .mmg_condition_wadj/<anonymous>/.cond_dummies, .mmg_condition_wadj/<anonymous>]
+  condition; nested functions reviewed: 0
+  print.psychnet_moderated; nested functions reviewed: 0
+  TOTAL: 9 top-level, 12 nested.
+
+R/logo.R:
+  .logo_precision; nested functions reviewed: 2 [.logo_precision/<anonymous>/inv, .logo_precision/<anonymous>/inv]
+  logo_network; nested functions reviewed: 0
+  TOTAL: 2 top-level, 2 nested.
+
+R/tmfg.R:
+  .tmfg_build; nested functions reviewed: 0
+  .is_chordal; nested functions reviewed: 0
+  tmfg_certificate; nested functions reviewed: 0
+  tmfg_network; nested functions reviewed: 0
+  TOTAL: 4 top-level, 0 nested.
+
+R/relimp.R:
+  .lmg_node; nested functions reviewed: 1 [.lmg_node/<anonymous>]
+  lmg_certificate; nested functions reviewed: 0
+  relimp_network; nested functions reviewed: 0
+  TOTAL: 3 top-level, 1 nested.
+
+
+==============================================================================
+GRAPH METRICS, PREDICTION, OBJECTS AND PLOTS
+==============================================================================
+
+ROOT REVIEW: GRAPH METRICS, AGGREGATION, CENTRALITY, PREDICTION, OBJECTS, PLOTS
+Current working tree, 2026-10-24. Review only; no package source edits.
+
+R1 [P2] Small-world null rewiring retains arbitrary edge orientations and is label dependent.
+Location: R/graph_metrics.R:115-122 (.psn_rewire).
+The edge list starts with upper-triangle orientations. Every swap preserves the number of occurrences of each vertex in the first versus second edge-list column; neither edge is randomly flipped before rewiring. This is a stricter invariant than undirected degree. A six-cycle reordered c(1,3,5,2,4,6) has edges oriented from one three-node set to the other, and all sampled graphs remain bipartite, even though two disconnected triangles have the same undirected degree sequence and belong in the null.
+Confirmed reproduction: create six-cycle A; with set.seed(1), replicate(100, .psn_transitivity(.psn_rewire(A,60L))) has mean .14; the relabelled identical graph has mean exactly 0, with triangles excluded by the invariant. Public net_smallworld consequently uses the wrong reference distribution. For two triangles, permutations of the same adjacency gave smallworldness 5.2 versus 7.381818 with n_rand=200, seed=1. The invariant, not a demand for identical Monte Carlo output under a seed, establishes the defect.
+Expected: sample degree-preserving undirected graphs without preserving arbitrary orientation counts; randomly orient the selected edges (or sample both valid pairings) before swaps.
+Evidence: /private/tmp/psychnets-root-review.R and /private/tmp/psychnets-root-rewire.R.
+
+R2 [P2] Prediction fails to apply training category encodings to numeric binary MGM nodes.
+Location: R/predictability.R:70-74 and 95-100; training encoding is R/mgm.R:80-94.
+mgm_fit coerces all categorical variables to factor level indices 0/1. net_predict converts only factor/character columns; numeric categories coded 1/2, -1/1, etc. pass through unchanged. Both predictors and targets are wrong, and the majority baseline can exceed 1, making normalized accuracy fall back to zero.
+Repro: set.seed(9); a<-rbinom(300,1,.5); b<-ifelse(runif(300)<.9,a,1-a); d<-data.frame(a=a+1,b=b+1,c=rnorm(300)); f<-mgm_fit(d,types=c('c','c','g'),threshold='none',nlambda=20).
+Actual: f$nodes$predictability for a,b is .8133333/.8082192, but net_predict(f,d) gives nCC 0/0 and accuracy .5/.5133333. Recode only the two binary columns to 0/1 before the call and the correct accuracy .9066667/.9066667 and nCC are recovered. Both native=TRUE and native=FALSE are affected.
+Expected: preserve the training level mapping and use it for all categorical storage types during prediction. Do not infer a new mapping from the evaluation sample alone.
+Evidence: /private/tmp/psychnets-root-categorical.R.
+
+R3 [P2] Display labels replace source-column identity in nodewise prediction.
+Location: R/predictability.R:66-69 and 81-86; R/result.R:65 currently stores node name equal to display label.
+Repro: set.seed(1); d<-data.frame(a=rbinom(200,1,.5),b=rbinom(200,1,.5),c=rbinom(200,1,.5)); f<-ising_fit(d,labels=c('A','B','C'),nlambda=10); net_predict(f,d).
+Actual: the original training data are rejected as missing network columns. Automatic node predictability is also absent because .attach_predictability silently catches the same error. Data are complete and the fit is valid; only display labels changed.
+Expected: maintain source column names separately from labels and select prediction data by source identity, while reporting labels in output.
+Evidence: /private/tmp/psychnets-root-predict.R.
+This is related to, but independent of, the silent empty-network defect in shared resampling alignment reported by the framework reviewer.
+
+R4 [P3] Signed NCT strength plots label expected influence as global strength.
+Location: R/plot.R:436-438.
+When net_compare(..., abs=FALSE), the statistic is the difference in signed edge sums, described correctly by summary.psychnet_nct as global expected influence. plot.psychnet_nct(type='strength') unconditionally labels its x axis 'global strength difference (S)', which conventionally means absolute edge sums.
+Expected: select the axis label from x$params$abs, matching summary/print. This is a label/interpretation defect, not a numerical permutation-test defect.
+
+COVERAGE / OTHER CHECKS
+All source lines, top-level functions and nested callbacks in these 13 files were read:
+R/aggregate.R: .psn_align; net_aggregate; nested community/composite callbacks and PCA/factor fallback paths.
+R/bridge.R: net_bridge; plot.psychnet_bridge; nested betweenness/closeness/EI callbacks.
+R/centrality.R: .psn_floyd_warshall; .psn_betweenness; .psn_edge_betweenness; net_edge_betweenness; .psn_closeness; net_centralities; nested Reduce and custom-measure callbacks.
+R/certificate.R: certificate.
+R/crosswalk.R: .cw; .crosswalk_table; net_crosswalk; all argument tables and alignment with current formals.
+R/data.R: no functions; read all dataset metadata.
+R/dichotomize.R: dichotomize; all mean/median/rank callbacks and constant/missing-data validation.
+R/graph_metrics.R: .psn_diag_cube; net_clustering; .psn_transitivity; .psn_aspl; .psn_rewire; net_smallworld; random graph callback and RNG restoration.
+R/plot.R: .psn_series; .psn_stars; .psn_pointrange; .psn_left_margin; .psn_box_matrix; plot.psychnet_centrality; plot.psychnet_bootstrap; plot.psychnet_difference; plot.psychnet_stability; plot.psychnet_nct; plot.psychnet; nested transform/order callbacks.
+R/predictability.R: net_predict; .attach_predictability; node_predictability; group, encoding and per-node prediction callbacks.
+R/psychnets-package.R: no functions; read package metadata and import directives.
+R/redundancy.R: .psn_hittner2003; redundancy; print.psychnet_redundancy; transform closure.
+R/result.R: .edges_df; .edges_index_df; .new_psychnet; $.psychnet; print.psychnet; as.data.frame.psychnet; summary.psychnet.
+Totals: 45 top-level named functions and 28 nested function expressions; 73 definitions overall.
+
+Adversarial checks:
+- Weighted shortest paths, normalized node betweenness and edge betweenness matched igraph across 40 random weighted graphs, including tied paths.
+- Bridge betweenness matched networktools across 20 random graphs with tied shortest paths. Counting all tied bridge routes is intentional reference semantics, so I have NOT reported omission of a fractional divisor as a bug.
+- NCT plot ed$diff partially matches the 'difference' field in base R; this is brittle style, but it does work and is NOT reported as a numerical bug.
+- Two-node difference_test explicitly refuses fewer than two comparison items; this is a documented meaningful restriction and NOT a crash finding.
+- Mean/median/sum/PCA/factor/loadings aggregation paths, community alignment, covariance-based RV/canonical paths, and missingness preprocessing were reviewed; no additional substantive defect reproduced in these assigned files.
+
+
+==============================================================================
+COMPLETE SOURCE FUNCTION INVENTORY
+==============================================================================
+
+R/aggregate.R: 2 top-level named functions; 7 total function definitions
+   .psn_align
+   net_aggregate
+R/bootstrap.R: 7 top-level named functions; 14 total function definitions
+   .resolve_cores
+   .psn_predictability
+   .psn_diff_pmat
+   net_boot
+   difference_test
+   as.data.frame.psychnet_bootstrap
+   print.psychnet_bootstrap
+R/bridge.R: 2 top-level named functions; 7 total function definitions
+   net_bridge
+   plot.psychnet_bridge
+R/centrality.R: 6 top-level named functions; 11 total function definitions
+   .psn_floyd_warshall
+   .psn_betweenness
+   .psn_edge_betweenness
+   net_edge_betweenness
+   .psn_closeness
+   net_centralities
+R/certificate.R: 1 top-level named functions; 1 total function definitions
+   certificate
+R/cor_auto.R: 7 top-level named functions; 9 total function definitions
+   .gauss_legendre
+   .pbivnorm
+   .polychoric
+   .polyserial
+   .is_ordinal
+   .cor_auto_matrix
+   cor_auto
+R/correlation.R: 12 top-level named functions; 13 total function definitions
+   .as_numeric_matrix
+   .resample_input
+   .resample_dots
+   .resample_engine
+   .check_cor_matrix
+   .cor_input
+   .na_prep_nodewise
+   .pd_solve
+   .cor_pvalues
+   .apply_sig
+   cor_network
+   pcor_network
+R/crosswalk.R: 3 top-level named functions; 3 total function definitions
+   .cw
+   .crosswalk_table
+   net_crosswalk
+R/data.R: 0 top-level named functions; 0 total function definitions
+
+R/dichotomize.R: 1 top-level named functions; 6 total function definitions
+   dichotomize
+R/ggmmodselect.R: 3 top-level named functions; 6 total function definitions
+   .ggm_fit_support
+   .support_ebic
+   ggm_modselect
+R/glasso.R: 14 top-level named functions; 20 total function definitions
+   .soft
+   .glasso_lasso_column
+   .glasso_fit
+   .check_lambda_path
+   .check_refit
+   .compute_lambda_path
+   .empty_glasso
+   .resolve_native
+   .glasso_solve
+   .select_ebic
+   .precision_to_pcor
+   glasso_kkt
+   ggm_support_kkt
+   ebic_glasso
+R/graph_metrics.R: 6 top-level named functions; 7 total function definitions
+   .psn_diag_cube
+   net_clustering
+   .psn_transitivity
+   .psn_aspl
+   .psn_rewire
+   net_smallworld
+R/groups.R: 12 top-level named functions; 28 total function definitions
+   .new_psychnet_group
+   .psychnet_grouped
+   print.psychnet_group
+   as.data.frame.psychnet_group
+   summary.psychnet_group
+   %||%
+   .stack_by_group
+   .reject_multilevel_group
+   .group_obj_apply
+   .group_data_apply
+   print.psychnet_result_group
+   as.data.frame.psychnet_result_group
+R/huge.R: 3 top-level named functions; 4 total function definitions
+   .npn_scores
+   .npn_cor
+   huge_network
+R/ising_unreg.R: 3 top-level named functions; 7 total function definitions
+   .logit_wald_p
+   MASS_ginv
+   ising_sampler
+R/ising.R: 3 top-level named functions; 7 total function definitions
+   .as_binary_matrix
+   .apply_min_sum
+   ising_fit
+R/lasso_glm.R: 6 top-level named functions; 6 total function definitions
+   .check_weights
+   .wls_lasso
+   .glm_lasso_fit
+   glm_lasso_kkt
+   .standardize
+   .nodewise_ebic
+R/lasso_glmnet.R: 6 top-level named functions; 20 total function definitions
+   .log1pexp
+   .self_lambda_kkt
+   .self_lambda_kkt_multinomial
+   .nodewise_glmnet
+   .ising_fit_glmnet
+   .mgm_fit_glmnet
+R/logo.R: 2 top-level named functions; 4 total function definitions
+   .logo_precision
+   logo_network
+R/mgm_moderated.R: 9 top-level named functions; 21 total function definitions
+   .mmg_main_mag
+   .mmg_int_mag
+   .mmg_cond_indicator
+   .mmg_threshold
+   .mmg_fit_node_base
+   .mmg_estimate
+   .mmg_condition_wadj
+   condition
+   print.psychnet_moderated
+R/mgm.R: 5 top-level named functions; 16 total function definitions
+   .detect_types
+   .usable_columns
+   .mgm_as_frame
+   .mgm_frame_numeric
+   mgm_fit
+R/multilevel.R: 10 top-level named functions; 13 total function definitions
+   .as_time_numeric
+   .event_freq
+   event_frequencies
+   .within_between_decompose
+   .fit_ggm
+   .event_design
+   .fit_design
+   .net_eventdata
+   print.psychnet_multilevel
+   as.data.frame.psychnet_multilevel
+R/nct.R: 16 top-level named functions; 29 total function definitions
+   .nearest_pd_cor
+   .nct_bad_input
+   .nct_degenerate
+   .nct_validate
+   .nct_columns
+   .nct_cor
+   .nct_estimate
+   .nct_constant_vars
+   .nct_group
+   .nct_label
+   net_compare
+   summary.psychnet_nct
+   as.data.frame.psychnet_nct
+   print.psychnet_nct
+   .nct_display
+   $.psychnet_nct
+R/panelgvar_ebic.R: 7 top-level named functions; 11 total function definitions
+   .pgv_pen_objective
+   .pgv_pen_kkt
+   .pgv_prox
+   .pgv_pen_fista
+   .pgv_pen_polish
+   .pgv_pen_fit
+   .pgv_ebic_path
+R/panelgvar.R: 45 top-level named functions; 77 total function definitions
+   .pgv_layout
+   .pgv_unpack
+   .pgv_ggm_cov
+   .pgv_assemble
+   .pgv_moments
+   .pgv_state
+   .pgv_full
+   .pgv_dsigma
+   .pgv_ggm_grad
+   .pgv_gradient_full
+   .pgv_jacobian
+   .pgv_information
+   .pgv_score
+   .pgv_spectral_shift
+   .pgv_ggm_from_cov
+   .pgv_start
+   .pgv_optimize
+   .pgv_best_fit
+   .pgv_simple_start
+   .pgv_scale_factor
+   .pgv_modification
+   .pgv_stepup
+   .pgv_bad_input
+   .pgv_wide
+   .pgv_standardize
+   .pgv_fit_indices
+   panel_gvar
+   .pgv_scaled_eigen
+   .pgv_identified_se
+   .pgv_at_bound
+   .pgv_near_zero
+   .pgv_inference
+   .pgv_boundary
+   .pgv_theta_from_state
+   .pgv_object
+   .pgv_sig_applies
+   .pgv_edges
+   as.data.frame.psychnet_panelgvar
+   .pgv_variance
+   .pgv_diagnostics
+   print.psychnet_panelgvar
+   summary.psychnet_panelgvar
+   .pgv_plot_temporal
+   .pgv_edge_significance
+   plot.psychnet_panelgvar
+R/plot.R: 11 top-level named functions; 13 total function definitions
+   .psn_series
+   .psn_stars
+   .psn_pointrange
+   .psn_left_margin
+   .psn_box_matrix
+   plot.psychnet_centrality
+   plot.psychnet_bootstrap
+   plot.psychnet_difference
+   plot.psychnet_stability
+   plot.psychnet_nct
+   plot.psychnet
+R/predictability.R: 3 top-level named functions; 7 total function definitions
+   net_predict
+   .attach_predictability
+   node_predictability
+R/psychnet.R: 4 top-level named functions; 4 total function definitions
+   psychnet
+   .select_names
+   .select_cols
+   .resolve_method
+R/psychnets-package.R: 0 top-level named functions; 0 total function definitions
+
+R/redundancy.R: 3 top-level named functions; 4 total function definitions
+   .psn_hittner2003
+   redundancy
+   print.psychnet_redundancy
+R/reliability.R: 10 top-level named functions; 15 total function definitions
+   .psn_edge_vector
+   .psn_edge_metrics
+   .psn_refit_network
+   .psn_refit
+   net_casedrop_reliability
+   print.psychnet_casedrop
+   plot.psychnet_casedrop
+   net_split_reliability
+   print.psychnet_reliability
+   plot.psychnet_reliability
+R/relimp.R: 3 top-level named functions; 4 total function definitions
+   .lmg_node
+   lmg_certificate
+   relimp_network
+R/result.R: 7 top-level named functions; 7 total function definitions
+   .edges_df
+   .edges_index_df
+   .new_psychnet
+   $.psychnet
+   print.psychnet
+   as.data.frame.psychnet
+   summary.psychnet
+R/stability.R: 2 top-level named functions; 7 total function definitions
+   net_stability
+   print.psychnet_stability
+R/tmfg.R: 4 top-level named functions; 4 total function definitions
+   .tmfg_build
+   .is_chordal
+   tmfg_certificate
+   tmfg_network
+TOTAL: 36 files; 238 top-level named functions; 412 function definitions including nested closures
+
+
+INDEPENDENT CROSS-VALIDATION
+A second reviewer independently reproduced the root review's rewiring, numeric categorical prediction and custom-label prediction findings. Stronger rewiring example: K3,3 on vertices 1:3 and 4:6 compared with the identical graph relabelled c(1,4,2,5,3,6), seed=1, 30 rewired graphs with 90 swaps each. Mean sampled transitivity was 0 versus .2555556. K3,3 and the triangular prism are both connected, simple, 3-regular graphs, so restricting the null to connected graphs would not explain away the orientation restriction. Evidence: /private/tmp/psychnets-estimator-crossvalidate.R.
+Numeric category prediction was also reproduced on all-categorical data, eliminating the separate Gaussian MGM standardization defect as a confounder. Both engines are affected. The CS example's 33/40=.825 is the empirical passing fraction, not a claim that the underlying population probability is known exactly.
+
+
+FINAL VALIDATION
+Command: PSYCHNET_EQUIV_TESTS=1 Rscript -e 'results <- devtools::test(".", reporter="summary"); saveRDS(results, "/private/tmp/psychnets-comprehensive-review-tests.rds")'
+Result: 322 test blocks; 1,347 passing expectations; 0 failed expectations; 0 test errors; 0 test warnings; 2 skipped comparisons caused by external lavaan failures.
+Full results: /private/tmp/psychnets-comprehensive-review-tests.rds
+git diff --check: passed.
+Package source/test files: unchanged during this review. This plain-text report is the only added workspace artifact.
+
+
+REMEDIATION IMPLEMENTED
+All 20 main findings and the confirmed lower-priority issues have implementation changes and regression coverage. The combined package-wide test run passed; final source-package validation is recorded below. The review text above records the pre-fix behavior and is retained as historical evidence.
+
+F1: Undefined correlations and failed fits count against stability certainty.
+F2: Resampling maps modeled columns to custom labels and retains source identity.
+F3: Repeated-person event groups are explicitly refused by independent-row resampling/NCT; they are no longer reconstructed as a model with the wrong effective sample size. A cluster-aware resampling implementation remains outside the supported generic row resampler. One-occasion independent groups remain supported.
+F4: Event features use the requested missingness handling and per-variable available-value means for within-person centering.
+F5: Composite group identities use collision-free tuple codes with separate unique display labels.
+F6: Two-node reliability reports available deviation metrics and NA correlation.
+F7: Grouped diagnostics merge explicitly supplied estimator options.
+F8: Group print/summary handles nested within/between models.
+P1: Missing panel IDs raise a classed bad-input error.
+P2: Empty EBIC panels have typed zero-row edge tables and working accessors/plots.
+P3: CFI is one in the zero-noncentrality case.
+P4: Plot significance uses integer endpoint-pair identities.
+E1: Kendall marginal inference is tie-corrected; unsupported matrix-only/partial Kendall alpha inference is refused explicitly.
+E2: Base MGM stores correct raw-scale automatic predictability.
+E3: Polyserial estimates use category ranks independent of numeric code spacing.
+E4: Pruned IsingSampler certificates are unavailable; pre-pruning residual retained.
+E5: PSD checks normalize covariance units; LMG uses the common validator.
+R1: Undirected swaps randomize orientations and retain rejected proposals in a fixed-length chain.
+R2: Public nodewise prediction uses saved training category mappings and refuses unseen categories.
+R3: Source-column names and display labels are stored separately for prediction.
+
+Lower-priority fixes: two-node external Ising/MGM fits use inert design padding; two-node moderation is refused clearly; TMFG certification validates planar stacked structure; unique plot abbreviations override panel defaults; custom line-style legends are accurate; panel nlambda is finite, whole and in range; signed NCT plots identify global expected influence.
+
+Regression files:
+tests/testthat/test-comprehensive-framework-fixes.R
+tests/testthat/test-comprehensive-panel-fixes.R
+tests/testthat/test-comprehensive-estimator-fixes.R
+tests/testthat/test-comprehensive-root-fixes.R
+
+Existing numerical golden fixtures have not been regenerated. Intentional behavior corrections are recorded in NEWS.md.
+
+
+REMEDIATION TEST RESULTS
+Full package command: PSYCHNET_EQUIV_TESTS=1 Rscript -e 'results <- devtools::test(".", reporter="summary"); saveRDS(results, "/private/tmp/psychnets-all-review-fixes-tests.rds")'
+Result: 350 test blocks, 1,522 passing expectations, 0 failures, 0 errors, 0 warnings. Two comparisons were skipped because installed lavaan failed inside external qgraph/networktools calls. Existing numerical golden fixtures pass unchanged.
+A final selected-vars/custom-label refinement in the shared resampler was validated with a fresh comprehensive-framework-fixes run: all 60 expectations passed, including the added selected-column regression.
+The source package was rebuilt after that final refinement, with all vignettes built. Byte comparison confirmed packaged R sources, public Rd documentation, tests, NEWS.md and NAMESPACE match the workspace. R CMD check --no-manual --no-tests completed on that final archive with Status: OK: 0 errors, 0 warnings, 0 notes. It rebuilt all vignette outputs successfully; the complete test suite is validated separately above.
+The original highest-impact CS reproduction now returns CS=0 rather than .9; its empirical threshold-passing fraction remains .825, correctly below the .95 certainty requirement.
+
+REMEDIATION COMPLETE
+All 20 main findings and all confirmed lower-priority issues are addressed. No reported finding remains open. Deliberate supported-operation limits are documented: repeated-person event groups require a cluster-aware resampler and are refused by the independent-row resampling/NCT path; Kendall significance needs raw observations and is not offered for full-order partial Kendall correlations. No golden fixtures were regenerated.
+Final package check log: /private/tmp/psychnets.Rcheck/00check.log
+Final built source archive: /private/tmp/psychnets_0.6.0.tar.gz
+Final whitespace check: git diff --check passed.

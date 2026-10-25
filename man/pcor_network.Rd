@@ -34,7 +34,10 @@ supplied).}
 Default 0.}
 
 \item{alpha}{Significance level; if set, correlations not significant at
-\code{alpha} are zeroed. \code{NULL} (default) keeps every edge.}
+\code{alpha} are zeroed. \code{NULL} (default) keeps every edge.
+Kendall marginal correlations use a tie-corrected asymptotic test and
+require raw data. Significance testing of full-order partial Kendall
+correlations is not supported.}
 
 \item{adjust}{Multiple-comparison adjustment for the edge p-values (any
 \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}

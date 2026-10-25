@@ -57,3 +57,62 @@ test_that("ising_fit glmnet output is unchanged", {
   fit <- ising_fit(golden_data_binary(), native = FALSE)
   expect_equal(fit$weights, golden$ising_glmnet, tolerance = 1e-12)
 })
+
+# panel_gvar(): a separate fixture so adding the estimator did not touch the
+# frozen estimator baselines above. 1e-10 is the policy's own threshold; the ML
+# fit is polished to a score of ~1e-13, so the estimate is reproducible far
+# below it. Data from helper-panelgvar.R; regenerate with make-panelgvar.R.
+golden_pgv <- readRDS(test_path("fixtures", "golden-panelgvar.rds"))
+
+test_that("panel_gvar output is unchanged", {
+  cases <- list(default = list(n = 400, p = 3, waves = 4, seed = 1,
+                               alpha = 0.01, adjust = "none"),
+                large = list(n = 600, p = 5, waves = 5, seed = 8,
+                             alpha = 0.01, adjust = "none"),
+                bh = list(n = 150, p = 4, waves = 4, seed = 10,
+                          alpha = 0.05, adjust = "BH"),
+                stepup_small = list(n = 45, p = 4, waves = 4, seed = 21,
+                                    alpha = 0.01, adjust = "none"),
+                stepup_waves = list(n = 300, p = 4, waves = 5, seed = 12,
+                                    alpha = 0.01, adjust = "none"))
+  for (nm in names(cases)) {
+    cs <- cases[[nm]]
+    w <- panel_sim_wide(n = cs$n, p = cs$p, waves = cs$waves, seed = cs$seed)
+    # The n = 45 design is a known boundary / partly unidentified solution;
+    # its boundary and identification warnings are not what this test checks.
+    quiet <- function(expr) withCallingHandlers(expr,
+      psychnet_boundary = function(w) invokeRestart("muffleWarning"),
+      psychnet_singular_information = function(w) invokeRestart("muffleWarning"),
+      psychnet_approximate_se = function(w) invokeRestart("muffleWarning"))
+    sat <- quiet(panel_gvar(w$data, vars = w$design, select = "none"))
+    pru <- quiet(panel_gvar(w$data, vars = w$design, select = "prune",
+                            alpha = cs$alpha, adjust = cs$adjust,
+                            stepup = FALSE))
+    up <- quiet(panel_gvar(w$data, vars = w$design, select = "prune",
+                           alpha = cs$alpha, adjust = cs$adjust))
+    expect_equal(as.data.frame(sat, what = "parameters")$estimate,
+                 golden_pgv[[nm]]$saturated, tolerance = 1e-10, label = nm)
+    expect_equal(as.data.frame(pru, what = "parameters")$estimate,
+                 golden_pgv[[nm]]$pruned, tolerance = 1e-10, label = nm)
+    expect_equal(as.data.frame(up, what = "parameters")$estimate,
+                 golden_pgv[[nm]]$stepup, tolerance = 1e-10, label = nm)
+  }
+})
+
+# select = "ebic": the certified lasso optimum (KKT ~1e-10) on three designs.
+# 1e-8 rather than 1e-10: a lasso estimate's precision is its KKT residual
+# divided by the local curvature, ~1e-9 here.
+test_that("panel_gvar EBIC output is unchanged", {
+  skip_on_cran()
+  designs <- list(default = list(400, 3, 4, 1), bh = list(150, 4, 4, 10),
+                  stepup_waves = list(300, 4, 5, 12))
+  for (nm in names(designs)) {
+    d <- designs[[nm]]
+    w <- panel_sim_wide(n = d[[1]], p = d[[2]], waves = d[[3]], seed = d[[4]])
+    fit <- panel_gvar(w$data, vars = w$design, select = "ebic")
+    expect_equal(as.data.frame(fit, what = "parameters")$estimate,
+                 golden_pgv$ebic[[nm]]$estimate, tolerance = 1e-8, label = nm)
+    expect_equal(attr(fit, "settings")$lambda, golden_pgv$ebic[[nm]]$lambda,
+                 tolerance = 1e-10, label = nm)
+  }
+})

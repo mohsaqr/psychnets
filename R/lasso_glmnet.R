@@ -96,12 +96,15 @@
                              lambda_min_ratio) {
   n <- nrow(X)
   fam <- if (family == "binomial") "binomial" else "gaussian"
-  glm_args <- list(x = X, y = y, family = fam, alpha = 1, nlambda = nlambda,
+  # glmnet requires at least two design columns. An inert padding column lets
+  # a valid two-node network use the same solver; it is removed immediately.
+  X_glm <- if (ncol(X) == 1L) cbind(X, .psychnets_padding = 0) else X
+  glm_args <- list(x = X_glm, y = y, family = fam, alpha = 1, nlambda = nlambda,
                    intercept = TRUE, standardize = TRUE)
   if (!is.null(lambda_min_ratio))
     glm_args$lambda.min.ratio <- lambda_min_ratio
   fit <- do.call(glmnet::glmnet, glm_args)
-  beta_path <- as.matrix(fit$beta)
+  beta_path <- as.matrix(fit$beta)[seq_len(ncol(X)), , drop = FALSE]
   J <- colSums(beta_path != 0)
 
   if (fam == "binomial") {
@@ -176,7 +179,8 @@
 #' @noRd
 .mgm_fit_glmnet <- function(df, types, gamma, threshold, rule, nlambda,
                             lambda_min_ratio, labels, levels_v = NULL,
-                            mat = NULL) {
+                            mat = NULL, source_names = names(df),
+                            category_levels = NULL) {
   n <- nrow(df); p <- ncol(df)
   gix <- which(types == "g")
   if (is.null(levels_v)) levels_v <- ifelse(types == "c", 2L, 1L)
@@ -213,17 +217,19 @@
     # npar is ncol(X) -- DUMMY COLUMNS, not variables. It enters both the EBIC
     # penalty and the LW threshold, so a 3-level factor inflates it by 2, not 1.
     npar <- ncol(X)
+    X_glm <- if (npar == 1L) cbind(X, .psychnets_padding = 0) else X
 
     if (types[v] == "c") {
       # Categorical responses use multinomial INCLUDING the binary case: a
       # 2-class multinomial, not family = "binomial".
       y <- factor(df[[v]])
-      glm_args <- list(x = X, y = y, family = "multinomial", alpha = 1,
+      glm_args <- list(x = X_glm, y = y, family = "multinomial", alpha = 1,
                        nlambda = nlambda, intercept = TRUE)
       if (!is.null(lambda_min_ratio))
         glm_args$lambda.min.ratio <- lambda_min_ratio
       fit <- do.call(glmnet::glmnet, glm_args)
-      beta_list <- lapply(fit$beta, as.matrix)                  # one per class
+      beta_list <- lapply(fit$beta, function(b)
+        as.matrix(b)[seq_len(npar), , drop = FALSE])           # one per class
       # n_neighbors counts non-zero coefficient COLUMNS aggregated across
       # response classes, not distinct predictor variables.
       nz <- Reduce("+", lapply(beta_list, function(B) (B != 0) * 1)) > 0
@@ -261,12 +267,12 @@
            family = fam, kkt = kkt)
     } else {
       y <- as.numeric(df[[v]])
-      glm_args <- list(x = X, y = y, family = "gaussian", alpha = 1,
+    glm_args <- list(x = X_glm, y = y, family = "gaussian", alpha = 1,
                        nlambda = nlambda, intercept = TRUE)
       if (!is.null(lambda_min_ratio))
         glm_args$lambda.min.ratio <- lambda_min_ratio
       fit <- do.call(glmnet::glmnet, glm_args)
-      beta_path <- as.matrix(fit$beta)
+    beta_path <- as.matrix(fit$beta)[seq_len(npar), , drop = FALSE]
       n_nb <- colSums(beta_path != 0)
       LL_null <- -n / 2 * (log(2 * pi * mean((y - mean(y))^2)) + 1)
       LL_sat  <- 0.5 * fit$nulldev + LL_null
@@ -357,6 +363,8 @@
                              nlambda = nlambda,
                              lambda_min_ratio = lambda_min_ratio,
                              nodewise = list(intercept = intercepts,
+                                             source_names = source_names,
+                                             category_levels = category_levels,
                                              beta_std = B_eff,
                                              families = families,
                                              exact = !has_multi,

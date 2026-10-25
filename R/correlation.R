@@ -114,11 +114,14 @@
     stop("`cor_matrix` must not contain missing or infinite values.",
          call. = FALSE)
   }
-  if (any(abs(S - t(S)) > 1e-8)) {
-    stop("`cor_matrix` must be symmetric.", call. = FALSE)
-  }
   if (any(diag(S) <= 0)) {
     stop("`cor_matrix` must have a strictly positive diagonal.", call. = FALSE)
+  }
+  # Judge tolerances on correlation units: an indefinite covariance must not
+  # pass merely because its measurement units make every entry tiny.
+  S <- stats::cov2cor(S)
+  if (any(abs(S - t(S)) > 1e-8)) {
+    stop("`cor_matrix` must be symmetric.", call. = FALSE)
   }
   min_eig <- min(eigen(S, symmetric = TRUE, only.values = TRUE)$values)
   if (min_eig < -1e-8) {
@@ -126,7 +129,7 @@
                         "eigenvalue %.2e); supply a PD matrix or pass raw `data`."),
                  min_eig), call. = FALSE)
   }
-  stats::cov2cor(S)   # no-op for a unit-diagonal correlation matrix
+  S
 }
 
 # Correlation matrix + effective sample size from possibly-incomplete data.
@@ -246,6 +249,25 @@
   P
 }
 
+# Kendall's null distribution depends on ties in the original observations;
+# a Pearson t test applied to tau tests a different statistic.
+#' @noRd
+.kendall_pvalues <- function(data, na_method) {
+  mat <- .as_numeric_matrix(data, drop_na = identical(na_method, "listwise"))
+  p <- ncol(mat)
+  out <- matrix(1, p, p, dimnames = list(colnames(mat), colnames(mat)))
+  for (i in seq_len(p - 1L)) for (j in (i + 1L):p) {
+    ok <- stats::complete.cases(mat[, c(i, j), drop = FALSE])
+    a <- mat[ok, i]; b <- mat[ok, j]
+    if (length(a) >= 2L && length(unique(a)) >= 2L &&
+        length(unique(b)) >= 2L) {
+      out[i, j] <- out[j, i] <- stats::cor.test(a, b, method = "kendall",
+                                               exact = FALSE)$p.value
+    }
+  }
+  out
+}
+
 # Zero edges whose adjusted p-value exceeds alpha (symmetric upper-tri adjust).
 #' @noRd
 .apply_sig <- function(g, P, alpha, adjust) {
@@ -275,6 +297,9 @@
 #'   Default 0.
 #' @param alpha Significance level; if set, correlations not significant at
 #'   `alpha` are zeroed. `NULL` (default) keeps every edge.
+#'   Kendall marginal correlations use a tie-corrected asymptotic test and
+#'   require raw data. Significance testing of full-order partial Kendall
+#'   correlations is not supported.
 #' @param adjust Multiple-comparison adjustment for the edge p-values (any
 #'   [stats::p.adjust] method). Default `"none"`.
 #' @param na_method Missing-data handling: `"pairwise"` (default) uses
@@ -321,7 +346,11 @@ cor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   extra <- c(list(cor_matrix = S, n_eff = n, na_method = na_used),
              if (exists("n_pair", inherits = FALSE)) list(n_pair = n_pair))
   if (!is.null(alpha)) {
-    P <- .cor_pvalues(r_full,
+    if (identical(cor_method, "kendall") && !is.null(cor_matrix))
+      stop("Kendall significance testing requires raw `data` to account for ties.",
+           call. = FALSE)
+    P <- if (identical(cor_method, "kendall")) .kendall_pvalues(data, na_method)
+    else .cor_pvalues(r_full,
                       if (exists("n_pair", inherits = FALSE)) n_pair else n,
                       k = 0L)
     g <- .apply_sig(g, P, alpha, adjust)
@@ -352,6 +381,9 @@ pcor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          threshold = 0, alpha = NULL, adjust = "none",
                          na_method = c("pairwise", "listwise"), labels = NULL) {
   cor_method <- match.arg(cor_method)
+  if (!is.null(alpha) && identical(cor_method, "kendall"))
+    stop("Significance testing of full-order partial Kendall correlations is not supported; omit `alpha` or use Pearson correlations.",
+         call. = FALSE)
   adjust <- match.arg(adjust, stats::p.adjust.methods)
   na_method <- match.arg(na_method)
   if (is.null(cor_matrix)) {

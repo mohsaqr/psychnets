@@ -124,20 +124,62 @@
         "sign-info messages", "verbose toggle", "progress bar",
         "warning toggle", "model saving", "data saving",
         "lambda-path length", "smallest penalty fraction",
-        "pairwise/listwise", "node labels"))
+        "pairwise/listwise", "node labels")),
+
+    # ---- psychonetrics::panelgvar (+ runmodel / prune)  <->  panel_gvar ---
+    .cw("psychonetrics::panelgvar", "panel_gvar",
+      c("data", "vars", "idvar", "beepvar", "missing", "alpha", "adjust",
+        "recursive", "criterion", "estimator", "nLambda", "lambda_min_ratio",
+        "standardize", "datatype", "within_latent", "between_latent",
+        "stationary_means", "covtype", "optimizer", "-", "-", "-", "-", "-"),
+      c("data", "vars", "id", "wave", "na_method", "alpha", "adjust",
+        "recursive", "criterion", "select", "nlambda", "lambda_min_ratio",
+        "standardize", rep("-", 6), "select", "stepup", "gamma", "refit",
+        "labels"),
+      c("identical", "identical", "renamed", "renamed", "semantics differ",
+        "identical", "identical", "identical", "identical",
+        "semantics differ", "renamed", "identical", "semantics differ",
+        rep("reference only", 6), "psychnet only", "default differs",
+        "psychnet only", "psychnet only", "psychnet only"),
+      c("wide (one row per person) or long data",
+        "design matrix (variables x waves); psychnet also takes a character vector for long data",
+        "person id column (long data)", "wave column (long data); waves ordered by sort()",
+        "psychonetrics: FIML when data have NA; psychnet: listwise only",
+        "prune() argument, same default 0.01", "prune() argument, same default \"none\"",
+        "prune() argument, same default FALSE",
+        "stepup() argument, same default \"bic\"",
+        "estimator = \"PML\" (penalized, auto lambda) is select = \"ebic\"; FIML is not supported",
+        "find_penalized_lambda() argument, same default 50",
+        "find_penalized_lambda() argument, same default 1e-4",
+        "\"none\"/\"z\"/\"z_per_wave\" as psychonetrics; \"quantile\" is not offered",
+        "psychnet infers wide vs long from `vars`",
+        "psychnet fixes \"ggm\" (the panelgvar default)",
+        "psychnet fixes \"ggm\" (the panelgvar default)",
+        "psychnet: stationary means (the psychonetrics default)",
+        "psychnet: ML covariance (denominator n), as psychonetrics uses for raw data",
+        "psychnet: nlminb + Fisher-scoring polish, ML score stored as a certificate",
+        "\"none\" (default) = runmodel() full model with every edge's p-value; \"prune\" = prune() |> stepup(); \"ebic\" = PML with EBIC lambda",
+        "stepup() after prune(); psychnet runs it by default (FALSE = prune() alone)",
+        "EBIC gamma for select = \"ebic\" (psychonetrics encodes it in criterion = \"ebic.5\")",
+        "unpenalized refit of the EBIC-selected network",
+        "node labels"))
   )
 }
 
-#' Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm
+#' Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm /
+#' psychonetrics
 #'
 #' A tidy, one-row-per-argument map from each reference package's estimator to
 #' its `psychnet` equivalent, so users migrating from `qgraph::EBICglasso`,
-#' `qgraph::cor_auto`, `qgraph::ggmModSelect`, `IsingFit::IsingFit`, or
-#' `mgm::mgm` can find the matching argument and see what `psychnet` changes by
-#' default. Cross-sectional estimators only (temporal models are out of scope).
+#' `qgraph::cor_auto`, `qgraph::ggmModSelect`, `IsingFit::IsingFit`,
+#' `mgm::mgm`, or `psychonetrics::panelgvar` can find the matching argument and
+#' see what `psychnet` changes by default. Intensive time-series models
+#' (`graphicalVAR`, `mlVAR`) are out of scope; the few-wave panel model is
+#' covered by [panel_gvar()].
 #'
 #' @param reference Which reference function to show: `"all"` (default),
-#'   `"EBICglasso"`, `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, or `"mgm"`.
+#'   `"EBICglasso"`, `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, `"mgm"`, or
+#'   `"panelgvar"`.
 #' @return A tidy `data.frame`, one row per argument, with columns `reference`
 #'   (the `pkg::fn` being substituted), `psychnet` (the psychnet verb),
 #'   `ref_arg`, `psychnet_arg` (`"-"` when there is no counterpart), `status`
@@ -146,9 +188,11 @@
 #' @examples
 #' net_crosswalk("EBICglasso")
 #' net_crosswalk("IsingFit")
+#' net_crosswalk("panelgvar")
 #' @export
 net_crosswalk <- function(reference = c("all", "EBICglasso", "cor_auto",
-                                        "ggmModSelect", "IsingFit", "mgm")) {
+                                        "ggmModSelect", "IsingFit", "mgm",
+                                        "panelgvar")) {
   reference <- match.arg(reference)
   cw <- .crosswalk_table()
   if (reference != "all") {

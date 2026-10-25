@@ -53,7 +53,9 @@ test_that("#6 group net_compare ignores a stray non-numeric column", {
   g <- data.frame(matrix(stats::rnorm(160 * 4), 160, 4),
                   note = sample(letters, 160, TRUE), grp = rep(c("A", "B"), 80))
   gp <- psychnet(g, group = "grp", method = "pcor")
-  cmp <- net_compare(gp, c("A", "B"), iter = 30)
+  # a pcor group is compared as EBIC-glasso networks, which is now announced
+  expect_warning(cmp <- net_compare(gp, c("A", "B"), iter = 30),
+                 class = "psychnet_estimator_mismatch")
   expect_s3_class(cmp, "psychnet_nct")
 })
 

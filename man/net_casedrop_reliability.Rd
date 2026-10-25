@@ -56,6 +56,8 @@ edge-weight vector is compared with the full-sample one. The edge-weight
 CS-coefficient is the largest drop proportion at which the edge-vector
 correlation stays \verb{>= threshold} with probability \verb{>= certainty} (Epskamp,
 Borsboom & Fried 2018).
+An undefined correlation (for example an empty subset network) counts as
+failing the threshold when calculating the CS-coefficient.
 }
 \examples{
 # `method`, `iter`, and `drop_prop` are chosen so the example runs quickly;

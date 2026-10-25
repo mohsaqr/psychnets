@@ -109,15 +109,9 @@ relimp_network <- function(data = NULL, cor_matrix = NULL,
     S <- ci$S; n_obs <- ci$n
     if (is.null(labels)) labels <- ci$labels
   } else {
-    S <- as.matrix(cor_matrix)
-    if (nrow(S) != ncol(S) || any(abs(S - t(S)) > 1e-8) ||
-        any(diag(S) <= 0) ||
-        min(eigen(S, symmetric = TRUE, only.values = TRUE)$values) < -1e-8) {
-      stop("`cor_matrix` must be a symmetric positive-semidefinite matrix with ",
-           "positive diagonal; an indefinite matrix yields R-squared shares ",
-           "outside [0, 1].", call. = FALSE)
-    }
-    S <- stats::cov2cor(S)        # the LMG R-squared formula needs unit diagonal
+    S <- tryCatch(.check_cor_matrix(cor_matrix), error = function(e)
+      stop("relimp_network() requires a symmetric positive-semidefinite matrix: ",
+           conditionMessage(e), call. = FALSE))
     if (is.null(labels)) {
       labels <- colnames(S)
       if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))

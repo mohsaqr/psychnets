@@ -81,7 +81,10 @@ single network; \code{FALSE} returns the within/between pair instead.}
 
 \item{...}{Passed to the underlying estimator (e.g. \verb{cor_method=} for the
 correlation-based methods, \verb{npn=} for \code{"huge"}, \verb{rule=} for the Ising
-methods, \verb{alpha=} for the correlation / \code{"ising_sampler"} methods).}
+methods, \verb{alpha=} for the correlation / \code{"ising_sampler"} methods).
+For event feature tables, \code{na_method = "listwise"} removes incomplete
+rows before person-centering; \code{"pairwise"} (default) uses available
+observations for each person's variable means and each correlation.}
 }
 \value{
 A \code{psychnet} object; a \code{psychnet_group} (named list of networks) when

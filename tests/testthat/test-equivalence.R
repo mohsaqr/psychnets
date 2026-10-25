@@ -371,3 +371,56 @@ test_that("a Likert column promoted by mgm's <=10 rule matches mgm::mgm", {
   expect_equal(cmp$struct, 1)
   expect_lt(cmp$max_abs, 1e-10)
 })
+
+# ---- panel_gvar  vs  psychonetrics::panelgvar ---------------------------------
+# A live re-run of the reference (the stored-fixture version is in
+# test-panelgvar.R and runs ungated). psychonetrics' own fit function evaluates
+# both estimates: ours must be at least as deep an optimum of ITS objective, and
+# its gradient at our estimate ~0. Pruning must select the identical support.
+test_that("panel_gvar matches psychonetrics::panelgvar (live)", {
+  skip_equiv("psychonetrics")
+  ns <- asNamespace("psychonetrics")
+  fitfun <- get("psychonetrics_fitfunction", ns)
+  gradfun <- get("psychonetrics_gradient", ns)
+  for (cfg in list(list(n = 400, p = 3, waves = 4, seed = 11, adjust = "none"),
+                   list(n = 300, p = 4, waves = 5, seed = 12, adjust = "holm"))) {
+    w <- panel_sim_wide(n = cfg$n, p = cfg$p, waves = cfg$waves, seed = cfg$seed)
+    ref <- psychonetrics::runmodel(
+      psychonetrics::panelgvar(w$data, vars = w$design, verbose = FALSE),
+      verbose = FALSE)
+    own <- as.data.frame(panel_gvar(w$data, vars = w$design, select = "none"),
+                         what = "parameters")
+    x_ref <- get("parVector", ns)(ref)
+    expect_lte(fitfun(own$estimate, ref), fitfun(x_ref, ref) + 1e-12)
+    expect_lt(max(abs(gradfun(own$estimate, ref))), 1e-8)
+    ref_pru <- psychonetrics::prune(ref, alpha = 0.01, adjust = cfg$adjust,
+                                    verbose = FALSE)
+    own_pru <- panel_gvar(w$data, vars = w$design, select = "prune", alpha = 0.01,
+                          adjust = cfg$adjust, stepup = FALSE)
+    expect_identical(as.data.frame(own_pru, what = "parameters")$fixed,
+                     ref_pru@parameters$fixed)
+    ref_up <- psychonetrics::stepup(ref_pru, alpha = 0.01, verbose = FALSE)
+    own_up <- panel_gvar(w$data, vars = w$design, select = "prune", alpha = 0.01,
+                         adjust = cfg$adjust)
+    expect_identical(as.data.frame(own_up, what = "parameters")$fixed,
+                     ref_up@parameters$fixed)
+  }
+})
+
+test_that("panel_gvar standardize matches psychonetrics panelvar(standardize =)", {
+  skip_equiv("psychonetrics")
+  ns <- asNamespace("psychonetrics")
+  fitfun <- get("psychonetrics_fitfunction", ns)
+  w <- panel_sim_wide(n = 400, p = 3, waves = 4, seed = 1)
+  w$data$V2_w3 <- w$data$V2_w3 + 2
+  w$data$V1_w4 <- w$data$V1_w4 * 1.5
+  for (sd in c("z", "z_per_wave")) {
+    ref <- psychonetrics::runmodel(
+      psychonetrics::panelgvar(w$data, vars = w$design, standardize = sd,
+                               verbose = FALSE), verbose = FALSE)
+    own <- as.data.frame(panel_gvar(w$data, vars = w$design, standardize = sd),
+                         what = "parameters")
+    expect_lte(fitfun(own$estimate, ref), ref@objective + 1e-10)
+    expect_lt(max(abs(own$estimate - ref@parameters$est)), 1e-3)
+  }
+})

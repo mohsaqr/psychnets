@@ -1,6 +1,6 @@
 Package: psychnets
 Title: Tidy Clean-Room Psychological Network Modeling
-Version: 0.5.2
+Version: 0.6.1
 Authors@R:
     c(person("Mohammed", "Saqr", email = "saqr@saqr.me",
              role = c("aut", "cre", "cph")),
@@ -45,6 +45,7 @@ Suggests:
     mvtnorm,
     networktools,
     psych,
+    psychonetrics,
     qgraph,
     rmarkdown,
     testthat (>= 3.0.0),

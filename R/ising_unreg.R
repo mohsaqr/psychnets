@@ -54,6 +54,9 @@ MASS_ginv <- function(A, tol = sqrt(.Machine$double.eps)) {
 #' @return A `psychnet` object whose `$weights` is the symmetric weight matrix,
 #'   with `$thresholds` (node intercepts), `$rule`, `$p_values`, `$nodewise`
 #'   (for [net_predict()]), and `$kkt` (worst nodewise score residual).
+#'   If Wald pruning changes any coefficient, `$kkt` is `NA` for the altered
+#'   fit; `$fit_kkt` retains the unpruned residual and `$certificate_target`
+#'   identifies it as `"pre_pruning_fit"`.
 #' @examples
 #' set.seed(1)
 #' z <- matrix(stats::rnorm(500 * 2), 500, 2)
@@ -104,11 +107,13 @@ ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
   }
   b0_std <- vapply(fits, function(f) f$b0, numeric(1))
   worst_kkt  <- max(vapply(fits, function(f) f$kkt, numeric(1)))
+  pruned <- FALSE
 
   if (!is.null(alpha)) {
     Padj <- P; off <- row(P) != col(P)
     Padj[off] <- stats::p.adjust(P[off], method = adjust)
     drop <- Padj > alpha
+    pruned <- any(B[drop] != 0)
     B[drop] <- 0; B_std[drop] <- 0
   }
 
@@ -127,7 +132,9 @@ ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
     data = mat,
     extra = list(
       thresholds = stats::setNames(thresholds, labels), rule = rule,
-      p_values = P, alpha = alpha, kkt = worst_kkt,
+      p_values = P, alpha = alpha,
+      kkt = if (pruned) NA_real_ else worst_kkt, fit_kkt = worst_kkt,
+      certificate_target = if (pruned) "pre_pruning_fit" else "returned_network",
       nodewise = list(intercept = b0_std, beta_std = B_std,
                       families = rep("binomial", p),
                       center = std$center, scale = std$scale)

@@ -124,6 +124,9 @@
          call. = FALSE)
   }
   stopifnot(length(moderator) == 1L, moderator >= 1, moderator <= ncol(mat))
+  if (ncol(mat) < 3L)
+    stop("Moderated MGM requires at least three variables (two endpoints and a moderator).",
+         call. = FALSE)
   # The base kernel is a binomial solver: it covers gaussian + binary nodes, the
   # documented mgm_fit() scope. A multi-level categorical needs the multinomial
   # solver, which only the glmnet engine has.

@@ -185,3 +185,54 @@ test_that("$support is stored only for the unregularized refit", {
   expect_true("support" %in% names(unclass(ebic_glasso(cor_matrix = S, n = 200,
                                                         refit = "unregularized"))))
 })
+
+test_that("an edge the EBIC counted as absent is returned as an exact zero", {
+  # Independent data, n = 60, p = 12: EBIC often selects lambda = max|S_ij|
+  # (the empty graph), where the soft-threshold used to leave ~1e-17 residues
+  # in $weights (counted as no edge by the EBIC and by $edges, but read as an
+  # edge by anything comparing weights with 0 -- e.g. the NCT's `>=`).
+  invisible(lapply(1:40, function(seed) {
+    set.seed(seed)
+    x <- matrix(stats::rnorm(60 * 12), 60, 12)
+    S <- .nearest_pd_cor(stats::cor(x))
+    w <- ebic_glasso(cor_matrix = S, n = 60)$weights
+    off <- w[upper.tri(w)]
+    expect_true(all(off == 0 | abs(off) > 1e-10), label = sprintf("seed %d", seed))
+    expect_identical(sum(off != 0), nrow(as.data.frame(ebic_glasso(cor_matrix = S, n = 60))))
+  }))
+})
+
+test_that("EBIC selection is the exact minimum even when the loose scan miscounts an edge", {
+  # Three correlation matrices from the NetworkComparisonTest parity audit on
+  # which the scan (scan_tol = 1e-4) left an edge that is zero at the optimum
+  # just above the 1e-10 count threshold, overstating that lambda's EBIC by
+  # exactly one edge penalty and selecting a worse lambda. Self-certified: the
+  # selected lambda must minimise the EBIC of tightly refit solutions over the
+  # whole path.
+  cases <- readRDS(test_path("fixtures", "ebic-scan-miscount.rds"))
+  invisible(lapply(seq_along(cases), function(k) {
+    cs <- cases[[k]]; S <- cs$S; n <- cs$n; p <- ncol(S)
+    fit <- ebic_glasso(cor_matrix = S, n = n, gamma = cs$gamma)
+    path <- .compute_lambda_path(S, 100L, 0.01)
+    exact <- vapply(path, function(l) {
+      wi <- .glasso_fit(S, l, tol_outer = 1e-10, tol_inner = 1e-12)$wi
+      wi[abs(wi) <= 1e-10 & row(wi) != col(wi)] <- 0
+      k_e <- sum(wi[upper.tri(wi)] != 0)
+      -n * (as.numeric(determinant(wi)$modulus) - sum(diag(S %*% wi))) +
+        k_e * log(n) + 4 * k_e * cs$gamma * log(p)
+    }, numeric(1))
+    expect_equal(fit$lambda, path[which.min(exact)], tolerance = 1e-10,
+                 label = sprintf("case %d selected lambda", k))
+    chosen <- which.min(fit$ebic_path)
+    expect_identical(fit$lambda, fit$lambda_path[chosen])
+    expect_equal(fit$ebic, fit$ebic_path[chosen], tolerance = 1e-10)
+    expect_equal(fit$ebic_path[chosen], exact[chosen], tolerance = 1e-8)
+    # Refitting changes estimates, not the graph chosen by the lasso path.
+    unreg <- ebic_glasso(cor_matrix = S, n = n, gamma = cs$gamma,
+                         refit = "unregularized")
+    expect_identical(unreg$lambda, fit$lambda)
+    expect_identical(unreg$support, abs(fit$precision) > 1e-10)
+    expect_identical(unreg$ebic_path, fit$ebic_path)
+    expect_lt(ggm_support_kkt(unreg$precision, S, unreg$support), 1e-7)
+  }))
+})

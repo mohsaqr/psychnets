@@ -407,7 +407,8 @@ plot.psychnet_stability <- function(x, ...) {
 #'
 #' Visualises a [net_compare()] result. `type = "strength"` (default) and
 #' `type = "structure"` draw the permutation null distribution for the global
-#' strength invariance (M) and the maximum edge-difference (S) statistics, with
+#' strength invariance (S) and the network-structure (M, maximum edge
+#' difference) statistics -- the notation of van Borkulo et al. (2022) -- with
 #' the observed value and p-value marked; `type = "edges"` draws the observed
 #' per-edge absolute differences, coloured by whether each edge differs
 #' significantly.
@@ -432,9 +433,12 @@ plot.psychnet_nct <- function(x, type = c("strength", "structure", "edges"),
   op <- graphics::par(no.readonly = TRUE); on.exit(graphics::par(op))
 
   if (type %in% c("strength", "structure")) {
-    stat <- if (type == "strength") x$M else x$S
-    lab  <- if (type == "strength") "global strength difference (M)"
-            else "maximum edge difference (S)"
+    stat <- if (type == "strength") x$strength else x$structure
+    lab  <- if (type == "strength") {
+              if (isFALSE(x$params$abs)) "global expected influence difference (S)"
+              else "global strength difference (S)"
+            }
+            else "maximum edge difference (M)"
     graphics::par(mar = c(4.5, 4.5, 3, 1))
     graphics::hist(stat$perm, breaks = 30, col = .psn_pal$nonsig,
                    border = "white", xlab = lab,
@@ -446,16 +450,17 @@ plot.psychnet_nct <- function(x, type = c("strength", "structure", "edges"),
     return(invisible(x))
   }
 
-  en <- x$E$edge_names
-  labels <- paste(en$from, en$to, sep = "--")
-  sig <- x$E$p_value < alpha
-  cols <- ifelse(sig, .psn_pal$sig, .psn_pal$nonsig)
+  ed <- as.data.frame(x, alpha = alpha)
+  # significance is marked by a direct "*" label as well as by colour
+  labels <- paste0(ed$from, "--", ed$to, ifelse(ed$significant, " *", ""))
+  cols <- ifelse(ed$significant, .psn_pal$sig, .psn_pal$nonsig)
   graphics::par(mar = c(4, .psn_left_margin(labels), 3, 1))
-  ord <- order(x$E$observed)
-  graphics::barplot(x$E$observed[ord], names.arg = labels[ord], horiz = TRUE,
+  ord <- order(ed$diff, ed$from, ed$to)
+  graphics::barplot(ed$diff[ord], names.arg = labels[ord], horiz = TRUE,
                     las = 1, col = cols[ord], border = NA,
                     xlab = "|edge difference|",
-                    main = sprintf("Per-edge differences (%d sig.)", sum(sig)),
+                    main = sprintf("Per-edge differences (%d with p < %g, marked *)",
+                                   sum(ed$significant), alpha),
                     cex.names = if (length(labels) > 20) 0.6 else 0.8)
   invisible(x)
 }

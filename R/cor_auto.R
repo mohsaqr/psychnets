@@ -76,6 +76,9 @@
   # guard `sum(dnorm(tau))` is 0 and `rho` becomes NaN, which later breaks the
   # nearest-PD projection's eigen decomposition.
   if (length(unique(ord)) < 2L || stats::sd(cont) == 0) return(0)
+  # The moment denominator assumes consecutive ordered category indices.
+  # Arbitrary numeric labels (e.g. 10, 20, 30) carry no spacing information.
+  ord <- match(ord, sort(unique(ord)))
   n <- length(ord)
   ny <- as.numeric(table(ord))
   tau <- stats::qnorm(cumsum(ny[-length(ny)]) / n)

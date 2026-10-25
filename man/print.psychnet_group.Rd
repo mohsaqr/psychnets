@@ -28,8 +28,9 @@
 For \code{as.data.frame}, the per-group edge lists stacked with a \code{group}
 column.
 
-For \code{summary}, a data frame with one row per group (node/edge counts
-and mean absolute edge weight).
+For \code{summary}, a data frame with node/edge counts and mean absolute
+edge weight: one row per group, or per group and \code{level} when a group
+contains within/between networks.
 }
 \description{
 The object returned by \code{\link[=psychnet]{psychnet()}} when \code{group} is supplied: a named list of
@@ -37,4 +38,7 @@ The object returned by \code{\link[=psychnet]{psychnet()}} when \code{group} is 
 grid with \code{cograph::splot()} and is consumed per level by the framework verbs
 (\code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_predict]{net_predict()}}, \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}},
 \code{\link[=net_compare]{net_compare()}}), each returning a \verb{*_group} result.
+Data-based resampling and comparison require independent cross-sectional
+rows. Groups built from several occasions per actor need resampling at the
+actor level and are refused by these row-based diagnostics.
 }

@@ -1,3 +1,265 @@
+# psychnets 0.6.1
+
+## Complete function-review fixes
+
+* Case-dropping stability now counts undefined correlations and failed fits
+  against the requested certainty, rather than inflating stability by omitting
+  those draws. Two-node edge-reliability diagnostics return available deviation
+  metrics with an unavailable correlation instead of failing.
+* Resampling preserves source-column identities when custom labels and ignored
+  nonnumeric columns are present. Grouped diagnostics forward explicit estimator
+  options, composite grouping keys cannot pool distinct tuples, and groups of
+  within/between models can be printed and summarized.
+* Event-feature missingness follows the requested handling instead of deleting
+  an otherwise varying feature. Within-person centering uses available values
+  per variable. Generic independent-row resampling and NCT now refuse repeated-
+  person event groups: reconstructing these as cross-sectional samples had lost
+  their effective sample size and could change even the observed graph.
+* Panel models refuse missing person identifiers, support empty EBIC networks
+  in all accessors and plots, return CFI = 1 when both estimated noncentralities
+  are zero, and match edge significance without ambiguous label concatenation.
+  Plot abbreviations override defaults, custom line styles no longer carry a
+  misleading significance key, and `nlambda` must be a finite whole integer.
+* Kendall marginal-network significance uses a tie-corrected Kendall test.
+  Kendall significance without raw data, or for full-order partial
+  correlations, is refused rather than applying Pearson p-values. Polyserial
+  estimates are invariant to the numeric spacing of ordinal codes.
+* MGM automatic predictability uses raw-scale Gaussian observations. Public
+  prediction preserves original source columns independently of display labels,
+  applies the training category encoding to numeric and factor inputs alike,
+  and refuses unseen categories.
+* Wald-pruned IsingSampler fits retain their pre-pruning score as `fit_kkt` and
+  report the altered network's certificate as unavailable. Covariance PSD
+  validation runs in correlation units, including for relative-importance fits.
+* Two-node external Ising/MGM fits work through an inert design-padding column;
+  moderation requires at least three nodes. TMFG certificates now also validate
+  planar stacked-triangulation structure.
+* Small-world null rewiring randomizes undirected edge orientations and retains
+  rejected proposals, removing node-order restrictions and accepted-move bias.
+  NCT plots identify signed global expected influence when `abs = FALSE`.
+
+## Review fixes
+
+* Panel EBIC path diagnostics now recompute the objective and KKT residual
+  after small coefficients are rounded to zero. Infeasible rounded candidates
+  are excluded from selection instead of retaining a stale certificate.
+* `ebic_glasso(refit = "unregularized")` now uses the same confirmed lambda
+  and support as the default penalized fit before the unpenalized refit.
+* Glasso's returned `ebic_path` includes the rescored EBIC values, so its
+  minimum agrees with the selected lambda and reported EBIC.
+* Panel plots accept overrides such as `node_fill`, `layout`, `title`, and
+  edge colours through `...` without duplicate-argument errors.
+
+## New estimator: panel graphical VAR
+
+* `panel_gvar()` estimates the panel graphical vector-autoregressive model
+  (Epskamp 2020) from few-wave, many-person panel data: a directed temporal
+  network (within-person lag-1 effects), a contemporaneous network (partial
+  correlations of the within-person innovations), and a between-person network
+  (partial correlations of the stable person means). The within-person process
+  is a stationary VAR(1) around a random intercept with stationary means -- the
+  model of `psychonetrics::panelgvar()` -- fitted by maximum likelihood in base
+  R (nlminb with an analytic reverse-mode gradient, then a Fisher-scoring
+  polish). Long data (`vars`, `id`, `wave`) or wide data (`vars` as a
+  variables-by-waves design matrix) are accepted.
+* Robust on raw-scale, small-sample data: the optimizer works on standardized
+  variables (an exact reparameterization -- the model is scale-equivariant)
+  from three deterministic starts (moment-based, neutral, and the fitted
+  baseline), keeps the best, and refuses (`psychnet_no_converge` error) to
+  return a fit worse than its nested baseline. On weekly means of an
+  experience-sampling panel (41 persons, 0-100 scales) this reaches a lower
+  objective than psychonetrics on every design compared, where a single
+  unscaled start had diverged.
+* `plot()` draws the three networks side by side on one shared circle layout,
+  with the temporal autoregressive effects as self-loops, edge weight labels,
+  solid (significant) vs dashed (not) edges, blue positive / vermillion
+  negative (Okabe-Ito), and "no edges" on an empty network.
+* `as.data.frame(fit, what = "variance")`: per-variable split of the implied
+  variance into the between-person and stationary within-person parts (an
+  intraclass correlation, `share_between`).
+* New dataset `srl_panel`: a synthetic panel of 100 students x 4 weeks on five
+  self-regulated-learning indicators (0-100), simulated once from a
+  panel-GVAR whose structure was taken from real experience-sampling data
+  (the anonymized `esm_srl` data of the idiographic package). New vignette
+  "Panel graphical VAR: temporal, contemporaneous, and between-person
+  networks" works through it.
+* `standardize = c("none", "z", "z_per_wave")`, as psychonetrics'
+  `panelvar(standardize =)`: `"z_per_wave"` z-scores every variable within
+  every wave, removing drift in wave means and variances (matches
+  psychonetrics' chi-square to three decimals).
+* Penalized EBIC selection, `select = "ebic"` -- the panel counterpart of
+  `ebic_glasso()` and psychonetrics' `panelgvar(estimator = "PML")`: lasso on
+  every temporal (autoregressions included), contemporaneous and between
+  parameter, 50-value lambda path from lambda_max with warm starts, EBIC
+  (`gamma = 0.5`), optional unpenalized `refit`. Accelerated proximal gradient
+  that never leaves the model's domain, then an active-set Newton polish;
+  certified by the lasso KKT conditions (~1e-10); the selected lambda is
+  re-solved from three starts and their agreement reported. Matches
+  psychonetrics' PML on every simulated design compared (same lambda, same
+  zero pattern, estimates within 3e-3, lower penalized objective); on weekly
+  ESM means psychonetrics' PML returns an invalid model (non-positive-definite
+  contemporaneous block) while `select = "ebic"` returns a certified one.
+  Lasso estimates carry no p-values (`significant` is `NA`; the plot draws
+  selected edges solid).
+* Robustness (from an adversarial review): the EBIC choice is reconsidered
+  after the final certified solve (a final solve can change a lambda's EBIC;
+  the path table marks fully solved rows in `final`); only variances on the
+  optimizer's actual bound are treated as active constraints (a near-zero but
+  interior variance no longer has its score suppressed in the certificate);
+  singular-information SEs use the pseudo-inverse on the identifiable
+  eigenspace (dropping unidentified coordinates had understated the SEs of
+  parameters conditioned on their identifiable combinations); all post-fit
+  computation runs on the standardized scale, so data whose variables differ
+  in units by orders of magnitude (or are tiny) fit identically instead of
+  failing a covariance check or crashing in a data-scale solve.
+* Edge selection is one argument, `select = c("none", "prune", "ebic")`
+  (replacing the earlier logical `prune`).
+* Default output is the full model: `prune = FALSE` by default (the
+  psychonetrics default, where `prune()` is a separate step). Every edge is
+  reported with its SE, p-value, Wald CI and a new `significant` column
+  (p < `alpha`); `print()` and `summary()` count significant edges per network,
+  and `plot()` draws significant edges solid and non-significant ones dashed
+  (sign by colour plus the signed weight label, with a line-type key).
+  `select = "prune"` runs prune + step-up.
+* Step-up search after pruning (`stepup = TRUE`, the default when pruning;
+  `criterion = c("bic", "none")`), equal to `psychonetrics::stepup()`: re-add
+  the pruned edge with the largest modification index while it is significant,
+  passes a chi-square difference test, and lowers BIC. One-pass pruning alone
+  can remove parameters that substitute for each other (an autoregression and
+  correlated cross-lagged effects): on weekly ESM means it removed 22
+  parameters that were jointly significant (chi-square 76.9, p = 5e-8), and
+  step-up restores the two that matter. Modification indices match
+  psychonetrics' (score test, `n g^2 / (4 V)` with the Schur-complement
+  information); the selected supports match psychonetrics' `prune()` and
+  `prune() |> stepup()` on every well-identified design compared.
+  `stepup = FALSE` reproduces `prune()` alone.
+* Variances estimated at zero (Heywood cases) are treated as active bound
+  constraints: left out of the information (their SE is NA, the others keep
+  valid SEs) and certified by the bound KKT condition. A fit whose information
+  is singular is pruned with infinite standard errors for the parameters it
+  does not identify (rather than a pseudo-inverse, which would understate
+  them). Boundary warnings now name the part on (or heading for) the boundary,
+  e.g. "between-person variance of V2 at zero".
+* `as.data.frame(fit, what = "diagnostics")`: one row with persons, waves, the
+  ML score certificate, boundary flag, SE availability, and how many of the
+  three starts reached the best optimum (fewer than three = competing local
+  optima).
+* Pruning follows `psychonetrics::prune()`: Wald p-values from the expected
+  Fisher information, `alpha = 0.01`, optional `adjust` (any
+  `p.adjust` method) and `recursive`; `prune = FALSE` returns the saturated fit.
+* Self-certified: the ML score on the free parameters is recomputed by a
+  forward-mode Jacobian (independent of the optimizer's reverse-mode gradient)
+  and reported by `print()`; it is ~1e-13 on the validation designs.
+* Validated against psychonetrics 0.17.8 on three designs (3 x 4, 5 x 5, and a
+  BH-adjusted n = 150 case): identical pruned support in every case, and
+  psychonetrics' own fit function rates the psychnets estimate as the deeper
+  optimum (its default optimizer stops with a gradient near 1e-3, which moves
+  estimates by up to ~1e-3). Fit indices (chi-square, CFI, TLI, RMSEA, AIC,
+  BIC) agree to that tolerance.
+* Read the fit with `as.data.frame(fit)` (edges with SE, p, Wald CI),
+  `as.data.frame(fit, what = "parameters")`, `as.data.frame(fit, what =
+  "fit")`, or `as.data.frame(fit, what = "diagnostics")`. The object is a `netobject_group`, so `plot()` /
+  `cograph::splot()` draws the three networks as a grid.
+* Classed conditions: `psychnet_bad_input` errors (fewer than three waves, too
+  few persons, `na_method = "pairwise"`, ...), and `psychnet_boundary`,
+  `psychnet_singular_information`, `psychnet_listwise_drop`,
+  `psychnet_no_converge` warnings. A near-singular contemporaneous or between
+  covariance (partial correlations near +/-1, common with three waves) is
+  flagged rather than reported silently.
+* Missing data: listwise only. Full-information ML (psychonetrics' default
+  when data have missing values) is not yet implemented, and a pairwise
+  covariance is refused because it is not a likelihood for this model.
+* `net_crosswalk("panelgvar")` maps the psychonetrics arguments.
+* No existing estimator's numbers changed; the new golden baseline lives in a
+  separate fixture (`golden-panelgvar.rds`).
+
+## `ebic_glasso()`: absent edges are exact zeros
+
+* An edge the EBIC selection counted as absent could be returned in
+  `$weights` as a floating-point residue of about 1e-17 instead of 0 (the
+  `$edges` table already dropped it). This happened when the selected lambda
+  sat at max|S_ij| (the empty graph) after the positive-definite projection,
+  and in a substantial share of sparse fits generally (10 of 40 random
+  n = 60, p = 12 null draws in the new regression test). Anything that compares
+  weights with zero read the residue as an edge; in `net_compare()` two empty
+  networks gave M = S = 5.6e-17 and a false p = 0.02 instead of 1 (found by
+  the NetworkComparisonTest parity grid). Precision entries with
+  |theta_ij| <= 1e-10 -- the same rule the EBIC uses to count edges -- are now
+  returned as exact zeros, so the network has exactly the support the EBIC
+  scored. Every edge above 1e-10 is unchanged; the golden baselines pass at
+  1e-12. Because the returned support can change (residue -> 0), this ships in
+  the 0.6.0 minor release per the numerical-stability policy.
+
+## `ebic_glasso()`: the selected lambda is the exact EBIC minimum
+
+* The lambda path is scanned at a loose tolerance (`1e-4`) and only the chosen
+  lambda was refit tightly. The scan can leave an entry that is zero at the
+  optimum just above the 1e-10 edge-count threshold; one miscounted edge
+  raises that lambda's EBIC by exactly log(n) + 4 gamma log(p) and can hide the
+  true minimum. The NetworkComparisonTest parity audit found this in 4 of 29
+  divergent fits (EBIC up to 9.6 units worse than the optimum). Every lambda
+  whose scan EBIC is within two edge penalties of the best is now refit at the
+  refit tolerance and rescored, and the lowest exact EBIC wins. On the audited
+  fits psychnets now reaches the lower exact EBIC in 29 of 29 (NCT/qgraph in
+  4, because qgraph counts a ~1e-17 residue as an edge at lambda = max|S_ij|
+  and so never selects an empty graph). Default engine only; `engine =
+  "glasso"` is unchanged. About 40% more time per fit; golden baselines,
+  equivalence and every estimator suite pass unchanged.
+
+## Network comparison test (`net_compare()`) fixes
+
+* **BREAKING -- the M and S letters were the wrong way round.** In van
+  Borkulo et al. (2022) and `NetworkComparisonTest`, M is the
+  network-structure test (largest absolute edge difference) and S the
+  global-strength test; psychnets printed and stored them swapped, so a write-up
+  copied from `print()` reported the wrong statistic. The tests are now stored
+  as `$structure` (M) and `$strength` (S); reading the old `$M` / `$S` raises a
+  `psychnet_renamed` error that says which field to use, rather than silently
+  returning the other test. Printed and tabled labels use the NCT letters.
+  `$strength$by_group` (shown by `print()`) holds each network's global
+  strength, NCT's `glstrinv.sep`; with `abs = FALSE` the test
+  is labelled global expected influence, as in NCT.
+
+On complete data every returned number is unchanged (frozen in
+`tests/testthat/fixtures/nct-baseline.rds`), and under a shared seed the M, S
+and per-edge p-values equal `NetworkComparisonTest::NCT()` 2.2.2 exactly.
+
+* **Missing values no longer erase a variable.** A single `NA` made every
+  correlation of that variable `NA`, which was then replaced by 0, so the
+  variable lost all its edges in the observed networks and in every
+  permutation, with no warning. New `na_method = c("pairwise", "listwise")`
+  (default `"pairwise"`, as for the estimators): pairwise correlations with
+  the median co-observation count as the sample size; listwise drops
+  incomplete rows (whole pairs in a paired design).
+* A constant variable now enters the network as an isolated node through an
+  explicit rule (the convention of every psychnets estimator for a constant
+  column) instead of a blanket `NA` -> 0 replacement under
+  `suppressWarnings()`; a constant variable in an observed group raises a
+  `psychnet_constant_variable` warning. A variable that becomes constant in a
+  permuted split (a rare binary item) is handled the same way, so the
+  statistic is defined on every split and the test stays exact.
+* With pairwise missing data, a variable pair sharing fewer than two observed
+  rows (in a group or a permuted split) has an undefined correlation and is
+  refused with `psychnet_degenerate_sample` instead of being set to 0.
+* Columns that differ in name or order raise `psychnet_bad_input` (unchanged
+  rule, now a classed condition with the offending names).
+* Group mode (`net_compare(psychnet(d, group = "g"))`) forwards the group's
+  `gamma` and `na_method`, and warns (`psychnet_estimator_mismatch`) when the
+  group was built with a non-glasso `method`, a `threshold`, or other
+  estimator settings: the networks compared are then EBIC-glasso networks, not
+  the group's own.
+* Argument validation: `iter` must be a single whole number (2.7 was
+  truncated, `"10"` was accepted); malformed arguments raise
+  `psychnet_bad_input`.
+* Printing the result shows everything: the two groups by name (the argument
+  names, or the group levels in group mode), M and S with each group's global
+  strength, the number of differing edges, and every edge (largest difference
+  first) with both groups' weights, rounded p-values and `*` for p < 0.05
+  (`print(fit, n = 10)` shortens the edge list). As tables, `summary()` gives
+  the M and S tests and `as.data.frame()` one row per edge (`from`, `to`,
+  `weight_1`, `weight_2`, `difference`, `p_value`, `significant`).
+* `plot(type = "edges")` marks significant edges with `*` as well as colour.
+
 # psychnets 0.5.2
 
 ## CRAN incoming-check runtime

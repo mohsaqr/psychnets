@@ -59,7 +59,12 @@
   # Build a genuine cograph_network: nodes carry x/y layout slots, edges use
   # integer node indices, and meta/data/node_groups are present -- so the object
   # plots directly with cograph::splot(net) (not splot(net$weights)).
-  nodes <- data.frame(id = seq_along(labels), label = labels, name = labels,
+  source_names <- extra$nodewise$source_names
+  if (is.null(source_names) && !is.null(data) && ncol(data) == length(labels))
+    source_names <- colnames(data)
+  if (is.null(source_names)) source_names <- labels
+  if (!is.null(extra$nodewise)) extra$nodewise$source_names <- source_names
+  nodes <- data.frame(id = seq_along(labels), label = labels, name = source_names,
                       x = NA_real_, y = NA_real_, stringsAsFactors = FALSE)
   edges <- .edges_index_df(weights, directed)
   net <- structure(

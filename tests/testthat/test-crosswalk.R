@@ -13,13 +13,14 @@ test_that("net_crosswalk returns a tidy one-row-per-argument data.frame", {
   expect_false(any(cw$ref_arg == "-" & cw$psychnet_arg == "-"))
 })
 
-test_that("reference= filters to a single estimator and they cover all five", {
-  for (r in c("EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm")) {
+test_that("reference= filters to a single estimator and they cover all six", {
+  for (r in c("EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm",
+              "panelgvar")) {
     tab <- net_crosswalk(r)
     expect_gt(nrow(tab), 0L)
     expect_equal(unique(sub("^.*::", "", tab$reference)), r)
   }
-  expect_error(net_crosswalk("graphicalVAR"))   # temporal: out of scope
+  expect_error(net_crosswalk("graphicalVAR"))   # time-series VAR: out of scope
 })
 
 test_that("crosswalk psychnet_arg names match the real formals", {
@@ -27,7 +28,7 @@ test_that("crosswalk psychnet_arg names match the real formals", {
   cw <- net_crosswalk()
   verbs <- list(ebic_glasso = ebic_glasso, cor_auto = cor_auto,
                 ggm_modselect = ggm_modselect, ising_fit = ising_fit,
-                mgm_fit = mgm_fit)
+                mgm_fit = mgm_fit, panel_gvar = panel_gvar)
   for (v in names(verbs)) {
     rows <- cw[cw$psychnet == v & cw$psychnet_arg != "-", ]
     expect_true(all(rows$psychnet_arg %in% names(formals(verbs[[v]]))),

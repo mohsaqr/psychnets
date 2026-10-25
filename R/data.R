@@ -52,3 +52,41 @@
 #' @rdname SRL
 #' @format NULL
 "SRL_LLaMa"
+
+#' Synthetic weekly self-regulated-learning panel
+#'
+#' A synthetic panel of 100 students measured in four consecutive weeks on five
+#' self-regulated-learning indicators -- a small, fully shareable data set for
+#' the panel graphical VAR ([panel_gvar()]).
+#'
+#' The data were simulated, once, from a stationary random-intercept VAR(1)
+#' (the panel graphical VAR model) whose structure was taken from the weekly
+#' means of real experience-sampling data (the anonymized `esm_srl` data of the
+#' idiographic package): the contemporaneous partial correlations, the
+#' temporal pattern (autoregressive effects and an effort -> efficacy lagged
+#' effect, scaled to 0.6 of the estimated values so trait and state differences
+#' are separable in four waves), and the correlations among students' average
+#' levels, with 60% of each variable's variance between students. Values are on
+#' a 0-100 scale (one of the 2,000 values was bounded to the scale) and rounded
+#' to one decimal. No real student is represented.
+#'
+#' @format A data frame with 400 rows (100 students x 4 weeks) and 7 columns:
+#' \describe{
+#'   \item{`student`}{Student identifier, `"S001"` to `"S100"`.}
+#'   \item{`week`}{Week of measurement, 1 to 4.}
+#'   \item{`efficacy`}{Self-efficacy.}
+#'   \item{`planning`}{Planning.}
+#'   \item{`effort`}{Effort regulation.}
+#'   \item{`enjoyment`}{Enjoyment.}
+#'   \item{`anxiety`}{Anxiety.}
+#' }
+#' @source Simulated; structure derived from the weekly means of the `esm_srl`
+#'   data in the idiographic package.
+#' @examples
+#' head(srl_panel)
+#' fit <- panel_gvar(srl_panel,
+#'                   vars = c("efficacy", "planning", "effort", "enjoyment",
+#'                            "anxiety"),
+#'                   id = "student", wave = "week")
+#' summary(fit)
+"srl_panel"

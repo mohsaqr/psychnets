@@ -151,7 +151,7 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
            centrality_fn = centrality_fn, predictability = predictability,
            threshold = threshold, diff_test = diff_test, p_adjust = p_adjust,
            cores = cores, engine = engine,
-           estimator_args = estimator_args)))
+           estimator_args = .resample_dots(list(...), estimator_args))))
   }
   stopifnot(is.numeric(n_boot), length(n_boot) == 1L, is.finite(n_boot),
             n_boot >= 1, ci > 0, ci < 1)

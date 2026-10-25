@@ -27,6 +27,10 @@ For Gaussian graphical models this is the closed-form variance explained
 models (\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}}, \code{\link[=mgm_fit]{mgm_fit()}}) it requires the data
 and reports R-squared for Gaussian nodes and classification accuracy (\code{CC})
 plus normalized accuracy (\code{nCC}) for binary nodes.
+
+Prediction selects the original modeled columns, independently of display
+\code{labels}. Binary MGM categories use the levels recorded when fitting,
+including numeric codes such as 1/2; unseen categories are refused.
 }
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))

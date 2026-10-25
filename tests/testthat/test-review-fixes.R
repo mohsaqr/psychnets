@@ -130,7 +130,9 @@ test_that("net_compare tolerates a constant column and rejects mismatched column
   set.seed(5)
   a <- cbind(x = stats::rnorm(60), y = stats::rnorm(60), z = 1)  # z constant
   b <- cbind(x = stats::rnorm(60), y = stats::rnorm(60), z = 1)
-  expect_s3_class(net_compare(a, b, iter = 5), "psychnet_nct")           # no crash
+  expect_warning(cmp <- net_compare(a, b, iter = 5),                     # no crash;
+                 class = "psychnet_constant_variable")                  # z isolated
+  expect_s3_class(cmp, "psychnet_nct")
   d <- cbind(y = stats::rnorm(60), x = stats::rnorm(60), z = 1)  # reordered
   expect_error(net_compare(a, d, iter = 5), "same columns")
 })

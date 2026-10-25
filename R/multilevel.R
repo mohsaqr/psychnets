@@ -44,8 +44,7 @@
     stop("`action` has fewer than 2 distinct values; nothing to relate.",
          call. = FALSE)
   }
-  base_group <- if (length(c(actor, session)) == 1L) factor(data[[actor]])
-                else interaction(data[c(actor, session)], drop = TRUE, lex.order = TRUE)
+  base_group <- .tuple_factor(data, c(actor, session))
 
   if (isTRUE(compute_sessions) && !is.null(time)) {
     tnum <- .as_time_numeric(data[[time]])
@@ -59,7 +58,7 @@
       cumsum(new_session)
     })
     # ---------------------------------------------------------------------
-    occ <- interaction(base_group, inferred, drop = TRUE, lex.order = TRUE)
+    occ <- .tuple_factor(data.frame(base_group, inferred), c("base_group", "inferred"))
   } else {
     occ <- base_group
   }
@@ -69,7 +68,7 @@
   feats  <- matrix(as.numeric(counts), nrow(counts), ncol(counts),
                    dimnames = list(NULL, levels_a))
   actor_key <- if (length(actor) == 1L) as.character(data[[actor]])
-               else as.character(interaction(data[actor], drop = TRUE))
+               else as.character(.tuple_factor(data, actor))
   actor_per_occ <- vapply(split(actor_key, occ), `[`, character(1), 1L)
   list(features = feats, actor = unname(actor_per_occ[levels(occ)]),
        occasion = levels(occ))
@@ -132,8 +131,11 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
   J  <- nlevels(f)
   if (J < 2L) stop("Need at least 2 actors for a between-actor network.",
                    call. = FALSE)
-  nj <- tabulate(f)
-  means  <- rowsum(V, f) / nj
+  # Means use the observations available for each variable, so one missing
+  # value does not erase that actor's other observations of the variable.
+  counts <- rowsum(1L * !is.na(V), f)
+  means <- rowsum(V, f, na.rm = TRUE) / counts
+  means[counts == 0] <- NA_real_
   within <- V - means[as.integer(f), , drop = FALSE]
   list(between = means, within = within,
        n_between = J, n_within = nrow(V) - J)
@@ -150,7 +152,7 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
   # A feature with no variance at this level (e.g. an action that is constant
   # across occasions, or constant within every actor) makes the correlation
   # undefined; drop it rather than fail deep in the estimator.
-  sds <- apply(mat, 2L, stats::sd)
+  sds <- apply(mat, 2L, stats::sd, na.rm = TRUE)
   bad <- !is.finite(sds) | sds < 1e-12
   if (any(bad)) {
     warning(sprintf("Dropping %d zero-variance feature(s) at this level: %s.",
@@ -170,12 +172,15 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
   dots <- list(...)
   cor_method <- dots$cor_method %||% "pearson"
   na_method  <- dots$na_method  %||% "pairwise"
-  S <- if (method == "huge")
-    .npn_cor(mat, dots$npn %||% "shrinkage", na_method)$S
+  ci <- if (method == "huge")
+    .npn_cor(mat, dots$npn %||% "shrinkage", na_method)
   else
-    .cor_input(mat, method = cor_method, na_method = na_method)$S
+    .cor_input(mat, method = cor_method, na_method = na_method)
+  # Preserve the level's residual degrees of freedom while accounting for
+  # observations missing at this level, as the ordinary estimators do.
+  if (anyNA(mat)) n <- max(2, n - (nrow(mat) - ci$n))
   dots$cor_method <- NULL; dots$na_method <- NULL; dots$npn <- NULL
-  args <- c(list(cor_matrix = S), dots)
+  args <- c(list(cor_matrix = ci$S), dots)
   # Only the estimators with an `n` formal take a sample size (TMFG does not).
   if ("n" %in% names(formals(fn)) && !"n" %in% names(args)) args$n <- n
   do.call(fn, args)
@@ -192,7 +197,8 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 #' @noRd
 .event_design <- function(data, actor, action, session, time,
                           compute_sessions, time_threshold, id, vars,
-                          standardize, labels) {
+                          standardize, labels, na_method = "pairwise") {
+  na_method <- match.arg(na_method, c("pairwise", "listwise"))
   if (!is.null(actor)) {                                # event-log mode
     miss <- setdiff(c(actor, session, time), names(data))
     if (length(miss)) {
@@ -213,9 +219,17 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
       vars <- vars[vapply(data[vars], is.numeric, logical(1))]
     }
     V   <- as.matrix(data[, vars, drop = FALSE])
-    ids <- if (length(id) == 1L) data[[id]] else interaction(data[id], drop = TRUE)
+    ids <- if (length(id) == 1L) data[[id]] else .tuple_factor(data, id)
   }
   if (ncol(V) < 2L) stop("Need at least 2 feature columns.", call. = FALSE)
+  if (!is.numeric(V)) stop("Every selected event feature must be numeric.", call. = FALSE)
+  if (anyNA(ids)) stop("Actor identifiers must be non-missing.", call. = FALSE)
+  if (na_method == "listwise") {
+    keep <- stats::complete.cases(V)
+    V <- V[keep, , drop = FALSE]
+    ids <- ids[keep]
+  }
+  if (!nrow(V)) stop("No observed event feature rows remain.", call. = FALSE)
 
   # Honor user labels: rename the feature columns so the labels flow through the
   # fit (and survive any zero-variance column drop in .fit_ggm).
@@ -279,7 +293,8 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
                  method), call. = FALSE)
   }
   des <- .event_design(data, actor, action, session, time, compute_sessions,
-                       time_threshold, id, vars, standardize, labels)
+                       time_threshold, id, vars, standardize, labels,
+                       na_method = list(...)$na_method %||% "pairwise")
   .fit_design(des, method, threshold, gamma, ...)
 }
 

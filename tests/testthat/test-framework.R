@@ -9,10 +9,10 @@ test_that("net_compare returns valid invariants and p-values", {
   skip_slow()
   fit <- net_compare(mk(1), mk(2), iter = 30)
   expect_s3_class(fit, "psychnet_nct")
-  expect_true(fit$M$p_value >= 0 && fit$M$p_value <= 1)
-  expect_true(fit$S$p_value >= 0 && fit$S$p_value <= 1)
+  expect_true(fit$structure$p_value >= 0 && fit$structure$p_value <= 1)
+  expect_true(fit$strength$p_value >= 0 && fit$strength$p_value <= 1)
   expect_equal(dim(fit$nw1), c(5L, 5L))
-  expect_length(fit$M$perm, 30)
+  expect_length(fit$strength$perm, 30)
 })
 
 test_that("nearest-correlation projection returns a valid correlation matrix", {

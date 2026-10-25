@@ -71,16 +71,38 @@
   TRUE
 }
 
+# For a connected chordal graph with 3(p - 2) edges, planarity is equivalent
+# to being a stacked triangulation: maximal cliques have size four, and no
+# triangle belongs to more than two tetrahedra. A K5 is detected by adjacent
+# common neighbors of a triangle; three common neighbors give a K3,3 subgraph.
+# Together these tests exclude the nonplanar chordal graphs that edge count,
+# connectivity and chordality alone cannot detect.
+#' @noRd
+.tmfg_planar_structure <- function(adj) {
+  p <- nrow(adj)
+  if (p < 3L) return(TRUE)
+  for (i in seq_len(p - 2L)) {
+    for (j in which(adj[i, ] & seq_len(p) > i)) {
+      for (k in which(adj[i, ] & adj[j, ] & seq_len(p) > j)) {
+        shared <- which(adj[i, ] & adj[j, ] & adj[k, ])
+        if (length(shared) > 2L ||
+            (length(shared) == 2L && adj[shared[1L], shared[2L]])) return(FALSE)
+      }
+    }
+  }
+  TRUE
+}
+
 #' Structural certificate for a TMFG network
 #'
 #' A TMFG has no convex objective, so its correctness is certified structurally:
-#' a valid TMFG on `p >= 3` nodes has exactly `3(p - 2)` edges, is connected, and
-#' is chordal (every cycle of length >= 4 has a chord). Returns a non-negative
+#' a valid TMFG on `p >= 3` nodes has exactly `3(p - 2)` edges, is connected,
+#' planar, and chordal (every cycle of length >= 4 has a chord). Returns a non-negative
 #' score that is `0` for a valid TMFG.
 #'
 #' @param x A [psychnet] object produced by [tmfg_network()].
 #' @return Scalar; `0` certifies a valid TMFG (correct edge count, connected,
-#'   chordal), otherwise a positive integer counting the violated invariants.
+#'   chordal and planar), otherwise a positive integer counting the violated invariants.
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 6), 200, 6)
@@ -103,7 +125,8 @@ tmfg_certificate <- function(x) {
     reached <- c(reached, new); frontier <- new
   }
   connected <- length(reached) == p
-  (!edges_ok) + (!chordal) + (!connected)
+  planar <- .tmfg_planar_structure(adj)
+  (!edges_ok) + (!chordal) + (!connected) + (!planar)
 }
 
 #' Triangulated Maximally Filtered Graph (TMFG)

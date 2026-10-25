@@ -66,6 +66,9 @@
 #' @param ... Passed to the underlying estimator (e.g. `cor_method=` for the
 #'   correlation-based methods, `npn=` for `"huge"`, `rule=` for the Ising
 #'   methods, `alpha=` for the correlation / `"ising_sampler"` methods).
+#'   For event feature tables, `na_method = "listwise"` removes incomplete
+#'   rows before person-centering; `"pairwise"` (default) uses available
+#'   observations for each person's variable means and each correlation.
 #' @return A `psychnet` object; a `psychnet_group` (named list of networks) when
 #'   `group` is supplied; or, for nested event data with `standardize = FALSE`, a
 #'   `psychnet_multilevel` object carrying `$within` and `$between` networks.

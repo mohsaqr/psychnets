@@ -4,10 +4,15 @@
 \alias{print.psychnet_nct}
 \title{Print a Network Comparison Test}
 \usage{
-\method{print}{psychnet_nct}(x, ...)
+\method{print}{psychnet_nct}(x, n = Inf, alpha = 0.05, ...)
 }
 \arguments{
 \item{x}{A \code{psychnet_nct} object.}
+
+\item{n}{Number of edges to list, largest difference first. Default \code{Inf}
+(all).}
+
+\item{alpha}{Significance level for the \code{*} marks. Default 0.05.}
 
 \item{...}{Unused.}
 }
@@ -15,5 +20,7 @@
 \code{x}, invisibly.
 }
 \description{
-Print a Network Comparison Test
+Shows every result: the two global tests (M, network structure; S, global
+strength with each group's value), the number of differing edges, and every
+edge -- largest difference first -- with each group's edge weight.
 }

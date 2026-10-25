@@ -109,18 +109,22 @@ net_clustering <- function(x, labels = NULL) {
   el <- which(A > 0 & upper.tri(A), arr.ind = TRUE)
   m <- nrow(el)
   if (m < 2L) return(A)
-  accepted <- 0L; attempts <- 0L; max_attempts <- max(100L, 50L * swaps)
-  while (accepted < swaps && attempts < max_attempts) {
-    attempts <- attempts + 1L
+  # Use a fixed number of proposals, retaining rejected moves. Stopping after
+  # a fixed number of accepted swaps instead samples the jump chain, which
+  # overweights graphs with more available swaps.
+  for (attempt in seq_len(swaps)) {
     ij <- sample.int(m, 2L)
     a <- el[ij[1], 1]; b <- el[ij[1], 2]
     c <- el[ij[2], 1]; d <- el[ij[2], 2]
+    # An undirected edge has no distinguished source endpoint. Randomize one
+    # orientation so both reconnections can occur; otherwise the upper-triangle
+    # edge list preserves arbitrary source/target degrees and biases the null.
+    if (sample.int(2L, 1L) == 2L) { tmp <- c; c <- d; d <- tmp }
     if (length(unique(c(a, b, c, d))) < 4L) next         # shared endpoint
     if (A[a, d] || A[c, b]) next                         # would duplicate
     A[a, b] <- A[b, a] <- 0; A[c, d] <- A[d, c] <- 0
     A[a, d] <- A[d, a] <- 1; A[c, b] <- A[b, c] <- 1
     el[ij[1], ] <- c(a, d); el[ij[2], ] <- c(c, b)
-    accepted <- accepted + 1L
   }
   A
 }

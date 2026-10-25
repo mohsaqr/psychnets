@@ -19,6 +19,10 @@
 #' and reports R-squared for Gaussian nodes and classification accuracy (`CC`)
 #' plus normalized accuracy (`nCC`) for binary nodes.
 #'
+#' Prediction selects the original modeled columns, independently of display
+#' `labels`. Binary MGM categories use the levels recorded when fitting,
+#' including numeric codes such as 1/2; unseen categories are refused.
+#'
 #' @param x A [psychnet] object.
 #' @param data The data the network was estimated from; required for the
 #'   nodewise models (ising / IsingSampler / mgm), ignored for the GGMs.
@@ -47,77 +51,7 @@ net_predict <- function(x, data = NULL, ...) {
   p <- nrow(x$nodes)
 
   # --- nodewise models: compute from data ------------------------------------
-  if (!is.null(x$nodewise)) {
-    # Checked before anything touches `data`: a network with a multi-level
-    # categorical node stores no p-wide coefficient matrix (a k-level predictor
-    # occupies k-1 design columns), so there is nothing to predict from however
-    # the data is supplied. Refusing here gives the real reason rather than a
-    # confusing coercion error about the factor column.
-    if (isFALSE(x$nodewise$exact)) {
-      stop("net_predict() does not support mgm networks containing multi-level categorical nodes; the nodewise design cannot be represented per variable.",
-           call. = FALSE)
-    }
-    if (is.null(data)) {
-      stop(sprintf("`data` is required for predictability of a '%s' network.",
-                   x$method), call. = FALSE)
-    }
-    # Preserve categorical nodes: factor/character columns are represented by
-    # their 0-based level code, matching mgm_fit()'s internal numeric frame.
-    if (is.data.frame(data)) {
-      if (!all(labs %in% names(data)))
-        stop("`data` is missing columns for some network nodes.", call. = FALSE)
-      d <- data[labs]
-      d[] <- lapply(d, function(v) {
-        if (is.factor(v)) as.integer(v) - 1L
-        else if (is.character(v)) as.integer(factor(v)) - 1L
-        else v
-      })
-      mat <- as.matrix(d)
-      storage.mode(mat) <- "double"
-      mat <- mat[stats::complete.cases(mat), , drop = FALSE]
-    } else {
-      mat <- .as_numeric_matrix(data)
-    }
-    if (!is.null(colnames(mat))) {
-      # named data must contain every node, selected by name (not by position)
-      if (!all(labs %in% colnames(mat))) {
-        stop("`data` is missing columns for some network nodes.", call. = FALSE)
-      }
-      mat <- mat[, labs, drop = FALSE]
-    }
-    if (ncol(mat) != p) {
-      stop("`data` columns do not match the network nodes.", call. = FALSE)
-    }
-    nw <- x$nodewise
-    Xstd <- sweep(sweep(mat, 2L, nw$center, "-"), 2L, nw$scale, "/")
-    rows <- lapply(seq_len(p), function(i) {
-      eta <- nw$intercept[i] + as.numeric(Xstd %*% nw$beta_std[i, ])
-      y <- mat[, i]
-      if (nw$families[i] == "binomial") {
-        cls  <- as.numeric(1 / (1 + exp(-eta)) > 0.5)
-        cc   <- mean(cls == y)
-        marg <- max(mean(y), 1 - mean(y))
-        ncc  <- if (marg < 1) (cc - marg) / (1 - marg) else 0
-        data.frame(node = labs[i], type = "binary", metric = "nCC",
-                   predictability = ncc, accuracy = cc,
-                   stringsAsFactors = FALSE)
-      } else {
-        # mgm scales the gaussian response, so eta is on the standardized scale;
-        # put y there too (R-squared is scale-invariant, so this is a no-op for
-        # estimators that did not scale the response).
-        ys <- if (!is.null(nw$resp_scale)) {
-          (y - nw$resp_center[i]) / nw$resp_scale[i]
-        } else y
-        r2 <- 1 - sum((ys - eta)^2) / sum((ys - mean(ys))^2)
-        data.frame(node = labs[i], type = "gaussian", metric = "R2",
-                   predictability = r2, accuracy = NA_real_,
-                   stringsAsFactors = FALSE)
-      }
-    })
-    out <- do.call(rbind, rows)
-    rownames(out) <- NULL
-    return(out)
-  }
+  if (!is.null(x$nodewise)) return(.nodewise_predict(x, data))
 
   # --- relative-importance network: per-node R-squared is stored -------------
   if (identical(x$method, "relimp") && !is.null(x$r2)) {
@@ -140,6 +74,88 @@ net_predict <- function(x, data = NULL, ...) {
              row.names = NULL, stringsAsFactors = FALSE)
 }
 
+# Predict from training-scale nodewise coefficients. Constructor data already
+# use the estimator's canonical category codes; public data use training levels.
+#' @noRd
+.nodewise_predict <- function(x, data, encoded = FALSE) {
+  nw <- x$nodewise
+  if (isFALSE(nw$exact)) {
+    stop("net_predict() does not support mgm networks containing multi-level categorical nodes; the nodewise design cannot be represented per variable.",
+         call. = FALSE)
+  }
+  if (is.null(data))
+    stop(sprintf("`data` is required for predictability of a '%s' network.",
+                 x$method), call. = FALSE)
+  if (!is.data.frame(data) && !is.matrix(data))
+    stop("`data` must be a data frame or matrix.", call. = FALSE)
+  labs <- x$nodes$label
+  p <- length(labs)
+  source_names <- nw$source_names %||% x$nodes$name %||% labs
+  supplied_names <- if (is.data.frame(data)) names(data) else colnames(data)
+  if (!is.null(supplied_names)) {
+    columns <- if (all(source_names %in% supplied_names)) source_names
+               else if (all(labs %in% supplied_names)) labs else NULL
+    if (is.null(columns))
+      stop("`data` is missing columns for some network nodes.", call. = FALSE)
+    data <- data[, columns, drop = FALSE]
+  }
+  if (ncol(data) != p)
+    stop("`data` columns do not match the network nodes.", call. = FALSE)
+  d <- as.data.frame(data, stringsAsFactors = FALSE)
+  for (j in seq_len(p)) {
+    v <- d[[j]]
+    levels <- nw$category_levels[[j]]
+    if (!encoded && !is.null(levels)) {
+      code <- match(as.character(v), as.character(levels))
+      if (any(!is.na(v) & is.na(code)))
+        stop(sprintf("`data` contains an unseen category for node '%s'.", labs[j]),
+             call. = FALSE)
+      v <- code - 1L
+    } else if (is.factor(v)) {
+      v <- as.integer(v) - 1L
+    } else if (is.character(v)) {
+      v <- as.integer(factor(v)) - 1L
+    }
+    if (!is.numeric(v))
+      stop("Every prediction column must be numeric or categorical.", call. = FALSE)
+    d[[j]] <- v
+  }
+  mat <- as.matrix(d)
+  storage.mode(mat) <- "double"
+  mat <- mat[stats::complete.cases(mat), , drop = FALSE]
+  if (!nrow(mat))
+    stop("`data` needs at least one complete observation for prediction.",
+         call. = FALSE)
+  Xstd <- sweep(sweep(mat, 2L, nw$center, "-"), 2L, nw$scale, "/")
+  rows <- lapply(seq_len(p), function(i) {
+    eta <- nw$intercept[i] + as.numeric(Xstd %*% nw$beta_std[i, ])
+    y <- mat[, i]
+    if (nw$families[i] == "binomial") {
+      cls  <- as.numeric(1 / (1 + exp(-eta)) > 0.5)
+      cc   <- mean(cls == y)
+      marg <- max(mean(y), 1 - mean(y))
+      ncc  <- if (marg < 1) (cc - marg) / (1 - marg) else 0
+      data.frame(node = labs[i], type = "binary", metric = "nCC",
+                 predictability = ncc, accuracy = cc,
+                 stringsAsFactors = FALSE)
+    } else {
+      # mgm scales the gaussian response, so eta is on the standardized scale;
+      # put y there too (R-squared is scale-invariant, so this is a no-op for
+      # estimators that did not scale the response).
+      ys <- if (!is.null(nw$resp_scale)) {
+        (y - nw$resp_center[i]) / nw$resp_scale[i]
+      } else y
+      r2 <- 1 - sum((ys - eta)^2) / sum((ys - mean(ys))^2)
+      data.frame(node = labs[i], type = "gaussian", metric = "R2",
+                 predictability = r2, accuracy = NA_real_,
+                 stringsAsFactors = FALSE)
+    }
+  })
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  return(out)
+}
+
 # Compute node predictability once at fit time and store it on the node table,
 # so a plotter (cograph::splot) can self-draw the predictability ring straight
 # from the object -- the caller never assembles a pie vector by hand. The
@@ -147,7 +163,10 @@ net_predict <- function(x, data = NULL, ...) {
 # without being asked: glasso (the canonical GGM) only.
 #' @noRd
 .attach_predictability <- function(net, data = NULL) {
-  pred <- tryCatch(net_predict(net, data = data), error = function(e) NULL)
+  pred <- tryCatch(
+    if (!is.null(net$nodewise)) .nodewise_predict(net, data, encoded = TRUE)
+    else net_predict(net, data = data),
+    error = function(e) NULL)
   if (!is.null(pred)) {
     v <- pmin(pmax(pred$predictability, 0), 1)
     net$nodes$predictability <- v[match(net$nodes$label, pred$node)]

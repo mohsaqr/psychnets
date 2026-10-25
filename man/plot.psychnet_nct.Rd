@@ -22,7 +22,8 @@
 \description{
 Visualises a \code{\link[=net_compare]{net_compare()}} result. \code{type = "strength"} (default) and
 \code{type = "structure"} draw the permutation null distribution for the global
-strength invariance (M) and the maximum edge-difference (S) statistics, with
+strength invariance (S) and the network-structure (M, maximum edge
+difference) statistics -- the notation of van Borkulo et al. (2022) -- with
 the observed value and p-value marked; \code{type = "edges"} draws the observed
 per-edge absolute differences, coloured by whether each edge differs
 significantly.

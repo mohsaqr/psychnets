@@ -4,12 +4,18 @@ For Gaussian graphical models this is the closed-form variance explained
 (R-squared) from the precision matrix and needs no data. For the nodewise
 models (ising_fit(), ising_sampler(), mgm_fit()) it requires the data
 and reports R-squared for Gaussian nodes and classification accuracy (CC)
-plus normalized accuracy (nCC) for binary nodes."><meta property="og:description" content="Reports how well each node is predicted by the others in a fitted network.
+plus normalized accuracy (nCC) for binary nodes.
+Prediction selects the original modeled columns, independently of display
+labels. Binary MGM categories use the levels recorded when fitting,
+including numeric codes such as 1/2; unseen categories are refused."><meta property="og:description" content="Reports how well each node is predicted by the others in a fitted network.
 For Gaussian graphical models this is the closed-form variance explained
 (R-squared) from the precision matrix and needs no data. For the nodewise
 models (ising_fit(), ising_sampler(), mgm_fit()) it requires the data
 and reports R-squared for Gaussian nodes and classification accuracy (CC)
-plus normalized accuracy (nCC) for binary nodes."></head><body>
+plus normalized accuracy (nCC) for binary nodes.
+Prediction selects the original modeled columns, independently of display
+labels. Binary MGM categories use the levels recorded when fitting,
+including numeric codes such as 1/2; unseen categories are refused."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +23,7 @@ plus normalized accuracy (nCC) for binary nodes."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +41,7 @@ plus normalized accuracy (nCC) for binary nodes."></head><body>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
+    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
     <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
@@ -62,6 +69,9 @@ For Gaussian graphical models this is the closed-form variance explained
 models (<code><a href="ising_fit.html">ising_fit()</a></code>, <code><a href="ising_sampler.html">ising_sampler()</a></code>, <code><a href="mgm_fit.html">mgm_fit()</a></code>) it requires the data
 and reports R-squared for Gaussian nodes and classification accuracy (<code>CC</code>)
 plus normalized accuracy (<code>nCC</code>) for binary nodes.</p>
+<p>Prediction selects the original modeled columns, independently of display
+<code>labels</code>. Binary MGM categories use the levels recorded when fitting,
+including numeric codes such as 1/2; unseen categories are refused.</p>
     </div>
 
     <div class="section level2">

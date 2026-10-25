@@ -127,7 +127,7 @@ its first-order conditions to the requested tolerance.
 
 certificate(ising_net)
 #>   method  certificate kind certified
-#> 1  ising 4.895833e-10  kkt      TRUE
+#> 1  ising 4.895834e-10  kkt      TRUE
 ```
 
 The residual is $`3.74 \times 10^{-10}`$ and `certified` is `TRUE`. This
@@ -211,7 +211,7 @@ unregularized_net <- psychnet(data = binary_data, method = "ising_sampler", alph
 unregularized_net
 #> <psychnet> ising_sampler network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 1.06e-08
+#>   optimality: unavailable
 ```
 
 ``` r
@@ -219,7 +219,7 @@ unregularized_net
 summary(unregularized_net)
 #> <psychnet> ising_sampler network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 1.06e-08
+#>   optimality: unavailable
 #>   edge weight: range [0.882, 2.345], mean 1.734
 ```
 
@@ -233,8 +233,8 @@ the different estimation and pruning procedures.
 ``` r
 
 certificate(unregularized_net)
-#>          method  certificate kind certified
-#> 1 ising_sampler 1.062248e-08  kkt      TRUE
+#>          method certificate kind certified
+#> 1 ising_sampler          NA  kkt        NA
 ```
 
 The residual is $`1.38 \times 10^{-8}`$ and `certified` is `TRUE`,

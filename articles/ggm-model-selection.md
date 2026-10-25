@@ -84,7 +84,7 @@ stepwise_net <- psychnet(data = SRL_GPT, method = "ggm")
 stepwise_net
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 6.66e-16
+#>   optimality (KKT residual): 1.22e-15
 ```
 
 The fitted network contains 5 nodes and 9 edges. One of the 10 possible
@@ -103,7 +103,7 @@ estimated under the selected network structure.
 summary(stepwise_net)
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 6.66e-16
+#>   optimality (KKT residual): 1.22e-15
 #>   edge weight: range [-0.370, 0.422], mean 0.196
 ```
 
@@ -138,7 +138,7 @@ a default tolerance of $`10^{-6}`$.
 
 certificate(stepwise_net)
 #>   method  certificate kind certified
-#> 1    ggm 6.661338e-16  kkt      TRUE
+#> 1    ggm 1.221245e-15  kkt      TRUE
 ```
 
 The residual is $`1.33 \times 10^{-15}`$ and `certified` is `TRUE`. This
@@ -286,7 +286,7 @@ spearman_net <- psychnet(data = SRL_GPT, method = "ggm", cor_method = "spearman"
 spearman_net
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 1.11e-15
+#>   optimality (KKT residual): 6.66e-16
 ```
 
 ``` r
@@ -294,7 +294,7 @@ spearman_net
 summary(spearman_net)
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 1.11e-15
+#>   optimality (KKT residual): 6.66e-16
 #>   edge weight: range [-0.266, 0.483], mean 0.245
 ```
 
@@ -309,7 +309,7 @@ while several weaker connections depend on the correlation estimator.
 
 certificate(spearman_net)
 #>   method  certificate kind certified
-#> 1    ggm 1.110223e-15  kkt      TRUE
+#> 1    ggm 6.661338e-16  kkt      TRUE
 ```
 
 The Spearman fit has a residual of $`1.55 \times 10^{-15}`$ and is

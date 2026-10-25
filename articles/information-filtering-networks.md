@@ -285,7 +285,7 @@ logo_spearman <- psychnet(data = SRL_GPT, method = "logo", cor_method = "spearma
 logo_spearman
 #> <psychnet> logo network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 1.55e-15
+#>   optimality (KKT residual): 1.44e-15
 ```
 
 ``` r
@@ -293,7 +293,7 @@ logo_spearman
 summary(logo_spearman)
 #> <psychnet> logo network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 1.55e-15
+#>   optimality (KKT residual): 1.44e-15
 #>   edge weight: range [-0.301, 0.440], mean 0.191
 ```
 
@@ -307,8 +307,8 @@ estimators, while some edge magnitudes remain sensitive.
 ``` r
 
 certificate(logo_spearman)
-#>   method  certificate kind certified
-#> 1   logo 1.554312e-15  kkt      TRUE
+#>   method certificate kind certified
+#> 1   logo 1.44329e-15  kkt      TRUE
 ```
 
 The rank-based LoGo model has a residual of $`1.67 \times 10^{-15}`$ and

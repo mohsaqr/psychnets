@@ -116,6 +116,9 @@ psychnet(
   Passed to the underlying estimator (e.g. `cor_method=` for the
   correlation-based methods, `npn=` for `"huge"`, `rule=` for the Ising
   methods, `alpha=` for the correlation / `"ising_sampler"` methods).
+  For event feature tables, `na_method = "listwise"` removes incomplete
+  rows before person-centering; `"pairwise"` (default) uses available
+  observations for each person's variable means and each correlation.
 
 ## Value
 
@@ -162,7 +165,7 @@ psychnet(x, method = "glasso", vars = 1:3)         # index range
 #> <psychnet> glasso network
 #>   nodes: 3   edges: 0   (undirected)
 #>   lambda: 0.06534   gamma: 0.5
-#>   optimality (KKT residual): 0.00e+00
+#>   optimality (KKT residual): 1.39e-17
 psychnet(x, method = "EBICglasso")                 # qgraph alias, same result
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 0   (undirected)

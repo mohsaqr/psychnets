@@ -13,7 +13,10 @@ and is consumed per level by the framework verbs
 [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md),
 [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md),
 [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)),
-each returning a `*_group` result.
+each returning a `*_group` result. Data-based resampling and comparison
+require independent cross-sectional rows. Groups built from several
+occasions per actor need resampling at the actor level and are refused
+by these row-based diagnostics.
 
 ## Usage
 
@@ -53,5 +56,6 @@ summary(object, ...)
 For `as.data.frame`, the per-group edge lists stacked with a `group`
 column.
 
-For `summary`, a data frame with one row per group (node/edge counts and
-mean absolute edge weight).
+For `summary`, a data frame with node/edge counts and mean absolute edge
+weight: one row per group, or per group and `level` when a group
+contains within/between networks.

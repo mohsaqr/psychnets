@@ -11,6 +11,11 @@ it requires the data and reports R-squared for Gaussian nodes and
 classification accuracy (`CC`) plus normalized accuracy (`nCC`) for
 binary nodes.
 
+Prediction selects the original modeled columns, independently of
+display `labels`. Binary MGM categories use the levels recorded when
+fitting, including numeric codes such as 1/2; unseen categories are
+refused.
+
 ## Usage
 
 ``` r

@@ -71,7 +71,10 @@ A `psychnet` object whose `$weights` is the symmetric weight matrix,
 with `$thresholds` (node intercepts), `$rule`, `$p_values`, `$nodewise`
 (for
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)),
-and `$kkt` (worst nodewise score residual).
+and `$kkt` (worst nodewise score residual). If Wald pruning changes any
+coefficient, `$kkt` is `NA` for the altered fit; `$fit_kkt` retains the
+unpruned residual and `$certificate_target` identifies it as
+`"pre_pruning_fit"`.
 
 ## Examples
 

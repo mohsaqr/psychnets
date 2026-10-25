@@ -6,7 +6,9 @@ For each drop proportion the network is re-estimated on random
 case-dropped subsets and the subset edge-weight vector is compared with
 the full-sample one. The edge-weight CS-coefficient is the largest drop
 proportion at which the edge-vector correlation stays `>= threshold`
-with probability `>= certainty` (Epskamp, Borsboom & Fried 2018).
+with probability `>= certainty` (Epskamp, Borsboom & Fried 2018). An
+undefined correlation (for example an empty subset network) counts as
+failing the threshold when calculating the CS-coefficient.
 
 ## Usage
 

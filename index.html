@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,7 @@
     <li><a class="dropdown-item" href="articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
+    <li><a class="dropdown-item" href="articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
     <li><a class="dropdown-item" href="articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
     <li><a class="dropdown-item" href="articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
@@ -186,8 +187,13 @@
 </td>
 </tr>
 <tr>
+<td><code><a href="reference/panel_gvar.html">panel_gvar()</a></code></td>
+<td>panel graphical VAR: temporal, contemporaneous, and between-person networks (stationary random-intercept VAR(1), maximum likelihood; every edge with SE and p-value by default; optional Wald pruning + step-up, or EBIC lasso)</td>
+<td>continuous panel data, 3+ waves</td>
+</tr>
+<tr>
 <td><code><a href="reference/psychnet.html">psychnet()</a></code></td>
-<td>unified front door routing all of the above</td>
+<td>unified front door routing the cross-sectional estimators above</td>
 <td>—</td>
 </tr>
 </tbody>
@@ -302,6 +308,13 @@
 <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm</a></code> 1.2.15</td>
 <td>mixed Gaussian + binary, <em>n</em> = 3000, <em>p</em> = 4</td>
 <td>edge set identical; max |Δ| = 1.6e-03; KKT = 1.1e-09</td>
+</tr>
+<tr>
+<td><code><a href="reference/panel_gvar.html">panel_gvar()</a></code></td>
+<td>
+<code><a href="https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html" class="external-link">psychonetrics::panelgvar</a></code> 0.17.8 (+ <code>prune</code>; <code>stepup</code> supports also identical)</td>
+<td>stationary panel, <em>n</em> = 400, <em>p</em> = 3, 4 waves</td>
+<td>pruned edge set identical; max |Δ| = 1.4e-04 (psychonetrics’ stopping tolerance: its gradient 6.8e-04, ours 3.0e-13); psychnets reaches a lower ML objective (by 5.7e-08)</td>
 </tr>
 <tr>
 <td><code><a href="reference/cor_auto.html">cor_auto()</a></code></td>
@@ -522,7 +535,7 @@
 </h2>
 <ul>
 <li>
-<strong>Articles</strong> — worked tutorials for the Gaussian graphical, information-filtering, Ising, mixed, and relative-importance models, network reliability, and building networks from event data.</li>
+<strong>Articles</strong> — worked tutorials for the Gaussian graphical, information-filtering, Ising, mixed, and relative-importance models, the panel graphical VAR (temporal, contemporaneous, and between-person networks from panel data), network reliability, and building networks from event data.</li>
 <li>
 <strong>Website</strong> — <a href="https://pak.dynasite.org/psychnets" class="uri">https://pak.dynasite.org/psychnets</a>
 </li>

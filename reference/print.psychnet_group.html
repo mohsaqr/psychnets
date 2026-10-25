@@ -3,11 +3,17 @@
 psychnet networks, one per level of the grouping variable. It plots as a
 grid with cograph::splot() and is consumed per level by the framework verbs
 (net_centralities(), net_predict(), net_boot(), net_stability(),
-net_compare()), each returning a *_group result."><meta property="og:description" content="The object returned by psychnet() when group is supplied: a named list of
+net_compare()), each returning a *_group result.
+Data-based resampling and comparison require independent cross-sectional
+rows. Groups built from several occasions per actor need resampling at the
+actor level and are refused by these row-based diagnostics."><meta property="og:description" content="The object returned by psychnet() when group is supplied: a named list of
 psychnet networks, one per level of the grouping variable. It plots as a
 grid with cograph::splot() and is consumed per level by the framework verbs
 (net_centralities(), net_predict(), net_boot(), net_stability(),
-net_compare()), each returning a *_group result."></head><body>
+net_compare()), each returning a *_group result.
+Data-based resampling and comparison require independent cross-sectional
+rows. Groups built from several occasions per actor need resampling at the
+actor level and are refused by these row-based diagnostics."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +21,7 @@ net_compare()), each returning a *_group result."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +39,7 @@ net_compare()), each returning a *_group result."></head><body>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
+    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
     <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
@@ -58,7 +65,10 @@ net_compare()), each returning a *_group result."></head><body>
 <a href="psychnet.html">psychnet</a> networks, one per level of the grouping variable. It plots as a
 grid with <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> and is consumed per level by the framework verbs
 (<code><a href="net_centralities.html">net_centralities()</a></code>, <code><a href="net_predict.html">net_predict()</a></code>, <code><a href="net_boot.html">net_boot()</a></code>, <code><a href="net_stability.html">net_stability()</a></code>,
-<code><a href="net_compare.html">net_compare()</a></code>), each returning a <code>*_group</code> result.</p>
+<code><a href="net_compare.html">net_compare()</a></code>), each returning a <code>*_group</code> result.
+Data-based resampling and comparison require independent cross-sectional
+rows. Groups built from several occasions per actor need resampling at the
+actor level and are refused by these row-based diagnostics.</p>
     </div>
 
     <div class="section level2">
@@ -98,8 +108,9 @@ grid with <code><a href="https://sonsoles.me/cograph/reference/splot.html" class
     <p><code>x</code>, invisibly (for <code>print</code>).</p>
 <p>For <code>as.data.frame</code>, the per-group edge lists stacked with a <code>group</code>
 column.</p>
-<p>For <code>summary</code>, a data frame with one row per group (node/edge counts
-and mean absolute edge weight).</p>
+<p>For <code>summary</code>, a data frame with node/edge counts and mean absolute
+edge weight: one row per group, or per group and <code>level</code> when a group
+contains within/between networks.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -54,7 +54,10 @@ pcor_network(
 - alpha:
 
   Significance level; if set, correlations not significant at `alpha`
-  are zeroed. `NULL` (default) keeps every edge.
+  are zeroed. `NULL` (default) keeps every edge. Kendall marginal
+  correlations use a tie-corrected asymptotic test and require raw data.
+  Significance testing of full-order partial Kendall correlations is not
+  supported.
 
 - adjust:
 

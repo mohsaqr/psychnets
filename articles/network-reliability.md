@@ -246,42 +246,42 @@ cd <- net_casedrop_reliability(SRL_Claude, method = "glasso", iter = 100)
 cd
 #> # edge-weight stability: glasso | CS = 0.90 (spearman cor >= 0.70 at 95%)
 #>            metric drop_prop       mean          sd
-#> 1    mean_abs_dev       0.1 0.01226963 0.007075716
-#> 2    mean_abs_dev       0.2 0.01704830 0.006629743
-#> 3    mean_abs_dev       0.3 0.02273679 0.009534285
-#> 4    mean_abs_dev       0.4 0.02959752 0.013174668
+#> 1    mean_abs_dev       0.1 0.01223453 0.007078789
+#> 2    mean_abs_dev       0.2 0.01702795 0.006598546
+#> 3    mean_abs_dev       0.3 0.02274269 0.009531099
+#> 4    mean_abs_dev       0.4 0.02958753 0.013176682
 #> 5    mean_abs_dev       0.5 0.03467924 0.015125426
-#> 6    mean_abs_dev       0.6 0.04526840 0.021560769
-#> 7    mean_abs_dev       0.7 0.05571818 0.024152429
-#> 8    mean_abs_dev       0.8 0.07333163 0.028301702
-#> 9    mean_abs_dev       0.9 0.11152316 0.039803987
-#> 10 median_abs_dev       0.1 0.01116373 0.007719947
-#> 11 median_abs_dev       0.2 0.01479697 0.006925324
-#> 12 median_abs_dev       0.3 0.02010077 0.010840841
-#> 13 median_abs_dev       0.4 0.02713480 0.014261871
+#> 6    mean_abs_dev       0.6 0.04525305 0.021570568
+#> 7    mean_abs_dev       0.7 0.05571419 0.024151750
+#> 8    mean_abs_dev       0.8 0.07334800 0.028299586
+#> 9    mean_abs_dev       0.9 0.11167002 0.039600394
+#> 10 median_abs_dev       0.1 0.01113632 0.007721301
+#> 11 median_abs_dev       0.2 0.01477376 0.006876153
+#> 12 median_abs_dev       0.3 0.02009654 0.010843466
+#> 13 median_abs_dev       0.4 0.02714279 0.014258682
 #> 14 median_abs_dev       0.5 0.03001670 0.015792390
-#> 15 median_abs_dev       0.6 0.04143717 0.021706336
-#> 16 median_abs_dev       0.7 0.04888534 0.025835266
-#> 17 median_abs_dev       0.8 0.06553899 0.031146758
-#> 18 median_abs_dev       0.9 0.10039166 0.044548360
-#> 19    correlation       0.1 0.98226641 0.017514417
+#> 15 median_abs_dev       0.6 0.04140568 0.021707532
+#> 16 median_abs_dev       0.7 0.04887775 0.025843871
+#> 17 median_abs_dev       0.8 0.06558498 0.031147359
+#> 18 median_abs_dev       0.9 0.10044642 0.044467062
+#> 19    correlation       0.1 0.98238762 0.017595407
 #> 20    correlation       0.2 0.97632517 0.018269982
-#> 21    correlation       0.3 0.97262239 0.017963197
+#> 21    correlation       0.3 0.97250118 0.017899994
 #> 22    correlation       0.4 0.97281039 0.019555878
 #> 23    correlation       0.5 0.96772188 0.019468087
 #> 24    correlation       0.6 0.96538481 0.020502632
-#> 25    correlation       0.7 0.96110187 0.023930758
+#> 25    correlation       0.7 0.96098029 0.024026979
 #> 26    correlation       0.8 0.95532346 0.027832925
-#> 27    correlation       0.9 0.92473574 0.048136851
-#> 28    max_abs_dev       0.1 0.02839632 0.014376966
-#> 29    max_abs_dev       0.2 0.03951177 0.015131263
-#> 30    max_abs_dev       0.3 0.05302545 0.020119455
-#> 31    max_abs_dev       0.4 0.06982927 0.030388812
+#> 27    correlation       0.9 0.92461303 0.048148076
+#> 28    max_abs_dev       0.1 0.02827627 0.014355432
+#> 29    max_abs_dev       0.2 0.03945443 0.015041128
+#> 30    max_abs_dev       0.3 0.05301608 0.020119036
+#> 31    max_abs_dev       0.4 0.06977815 0.030387123
 #> 32    max_abs_dev       0.5 0.08135286 0.033159361
-#> 33    max_abs_dev       0.6 0.10021432 0.044140166
-#> 34    max_abs_dev       0.7 0.12784078 0.048457205
-#> 35    max_abs_dev       0.8 0.16743770 0.057784159
-#> 36    max_abs_dev       0.9 0.26030328 0.093482576
+#> 33    max_abs_dev       0.6 0.10019480 0.044161063
+#> 34    max_abs_dev       0.7 0.12779105 0.048349703
+#> 35    max_abs_dev       0.8 0.16748415 0.057766787
+#> 36    max_abs_dev       0.9 0.26079883 0.093049603
 ```
 
 The edge-weight CS-coefficient is 0.90. The `correlation` rows read the
@@ -322,10 +322,10 @@ rel <- net_split_reliability(SRL_Claude, method = "glasso", iter = 100)
 rel
 #> # split-half reliability: glasso | 100 iterations (50/50 split)
 #>           metric       mean         sd      lower     upper
-#> 1   mean_abs_dev 0.06409973 0.02200678 0.03319670 0.1092927
-#> 2 median_abs_dev 0.05676066 0.02299493 0.02115298 0.1086049
-#> 3    correlation 0.98242243 0.01210665 0.95313106 0.9960735
-#> 4    max_abs_dev 0.14187492 0.05224566 0.06749545 0.2635560
+#> 1   mean_abs_dev 0.06406132 0.02201012 0.03319670 0.1092927
+#> 2 median_abs_dev 0.05674286 0.02297601 0.02204948 0.1086049
+#> 3    correlation 0.98243129 0.01208858 0.95313106 0.9960735
+#> 4    max_abs_dev 0.14177087 0.05219793 0.06749545 0.2635560
 ```
 
 The correlation between the two independent halves averages 0.982 with a

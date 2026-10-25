@@ -8,6 +8,7 @@
 <url><loc>https://pak.dynasite.org/psychnets/articles/ising-networks.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/articles/network-reliability.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/articles/visualizing-networks.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.html</loc></url>
@@ -51,6 +52,7 @@
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_split_reliability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/net_stability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/node_predictability.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/reference/panel_gvar.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/pcor_network.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/plot.psychnet.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/plot.psychnet_bootstrap.html</loc></url>
@@ -73,10 +75,13 @@
 <url><loc>https://pak.dynasite.org/psychnets/reference/print.psychnet_result_group.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/print.psychnet_stability.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/psychnet.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/psychnets-package.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/redundancy.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/relimp_network.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/reference/srl_panel.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/summary.psychnet.html</loc></url>
+<url><loc>https://pak.dynasite.org/psychnets/reference/summary.psychnet_nct.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/tmfg_certificate.html</loc></url>
 <url><loc>https://pak.dynasite.org/psychnets/reference/tmfg_network.html</loc></url>
 </urlset>

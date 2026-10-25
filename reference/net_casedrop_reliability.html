@@ -4,12 +4,16 @@ network is re-estimated on random case-dropped subsets and the subset
 edge-weight vector is compared with the full-sample one. The edge-weight
 CS-coefficient is the largest drop proportion at which the edge-vector
 correlation stays &amp;gt;= threshold with probability &amp;gt;= certainty (Epskamp,
-Borsboom &amp;amp; Fried 2018)."><meta property="og:description" content="The edge-vector complement to net_stability(). For each drop proportion the
+Borsboom &amp;amp; Fried 2018).
+An undefined correlation (for example an empty subset network) counts as
+failing the threshold when calculating the CS-coefficient."><meta property="og:description" content="The edge-vector complement to net_stability(). For each drop proportion the
 network is re-estimated on random case-dropped subsets and the subset
 edge-weight vector is compared with the full-sample one. The edge-weight
 CS-coefficient is the largest drop proportion at which the edge-vector
 correlation stays &amp;gt;= threshold with probability &amp;gt;= certainty (Epskamp,
-Borsboom &amp;amp; Fried 2018)."></head><body>
+Borsboom &amp;amp; Fried 2018).
+An undefined correlation (for example an empty subset network) counts as
+failing the threshold when calculating the CS-coefficient."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +21,7 @@ Borsboom &amp;amp; Fried 2018)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +39,7 @@ Borsboom &amp;amp; Fried 2018)."></head><body>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
+    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
     <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
@@ -61,7 +66,9 @@ network is re-estimated on random case-dropped subsets and the subset
 edge-weight vector is compared with the full-sample one. The edge-weight
 CS-coefficient is the largest drop proportion at which the edge-vector
 correlation stays <code>&gt;= threshold</code> with probability <code>&gt;= certainty</code> (Epskamp,
-Borsboom &amp; Fried 2018).</p>
+Borsboom &amp; Fried 2018).
+An undefined correlation (for example an empty subset network) counts as
+failing the threshold when calculating the CS-coefficient.</p>
     </div>
 
     <div class="section level2">

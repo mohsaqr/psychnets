@@ -3,8 +3,9 @@
 Visualises a
 [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
 result. `type = "strength"` (default) and `type = "structure"` draw the
-permutation null distribution for the global strength invariance (M) and
-the maximum edge-difference (S) statistics, with the observed value and
+permutation null distribution for the global strength invariance (S) and
+the network-structure (M, maximum edge difference) statistics – the
+notation of van Borkulo et al. (2022) – with the observed value and
 p-value marked; `type = "edges"` draws the observed per-edge absolute
 differences, coloured by whether each edge differs significantly.
 

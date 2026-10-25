@@ -83,6 +83,8 @@ measure) and a tidy `$table` (columns `measure`, `drop_prop`,
 `mean_cor`, `sd_cor`, `prop_above`) of the case-dropping correlations by
 drop proportion. Visualise it with
 [`plot.psychnet_stability()`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_stability.md).
+Undefined correlations count as failing the threshold in `prop_above`
+and the CS-coefficient; they are omitted from `mean_cor` and `sd_cor`.
 
 ## Examples
 

@@ -159,7 +159,8 @@ self-certified:
 | [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md) | Ising model, L1-penalized | binary |
 | [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md) | Ising model, unregularized | binary |
 | [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md) | mixed graphical model | Gaussian + binary; multi-level categorical with `native = FALSE` |
-| [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md) | unified front door routing all of the above | — |
+| [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md) | panel graphical VAR: temporal, contemporaneous, and between-person networks (stationary random-intercept VAR(1), maximum likelihood; every edge with SE and p-value by default; optional Wald pruning + step-up, or EBIC lasso) | continuous panel data, 3+ waves |
+| [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md) | unified front door routing the cross-sectional estimators above | — |
 
 The framework verbs operate on any fitted network, and on event logs and
 grouped data through
@@ -235,6 +236,7 @@ identical weights.
 | [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md) | [`qgraph::EBICglasso`](https://rdrr.io/pkg/qgraph/man/EBICglasso.html) 1.9.8 | AR(1) chain, *n* = 1000, *p* = 8 | edge set identical; max \|Δ\| = 2.2e-06; KKT = 1.5e-10 |
 | [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md) | [`IsingFit::IsingFit`](https://rdrr.io/pkg/IsingFit/man/isingfit.html) 0.4 | AR(1) latent, *n* = 2000, *p* = 6, binarized | edge set identical; max \|Δ\| = 4.6e-03; threshold *r* = 1.000 |
 | [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md) | [`mgm::mgm`](https://rdrr.io/pkg/mgm/man/mgm.html) 1.2.15 | mixed Gaussian + binary, *n* = 3000, *p* = 4 | edge set identical; max \|Δ\| = 1.6e-03; KKT = 1.1e-09 |
+| [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md) | [`psychonetrics::panelgvar`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html) 0.17.8 (+ `prune`; `stepup` supports also identical) | stationary panel, *n* = 400, *p* = 3, 4 waves | pruned edge set identical; max \|Δ\| = 1.4e-04 (psychonetrics’ stopping tolerance: its gradient 6.8e-04, ours 3.0e-13); psychnets reaches a lower ML objective (by 5.7e-08) |
 | [`cor_auto()`](https://pak.dynasite.org/psychnets/reference/cor_auto.md) | [`psych::polychoric`](https://rdrr.io/pkg/psych/man/tetrachor.html) / [`qgraph::cor_auto`](https://rdrr.io/pkg/qgraph/man/cor_auto.html) | four-level Likert, *n* = 1000, *p* = 4 | max \|Δ\| = 2.0e-05 (psych), 1.7e-07 (qgraph) |
 | `.pbivnorm()` (bivariate normal CDF) | [`mvtnorm::pmvnorm`](https://rdrr.io/pkg/mvtnorm/man/pmvnorm.html) 1.2 | five (*h*, *k*, *ρ*) points | max \|Δ\| = 5.6e-17 |
 
@@ -281,6 +283,8 @@ technical report.
 
 - **Articles** — worked tutorials for the Gaussian graphical,
   information-filtering, Ising, mixed, and relative-importance models,
-  network reliability, and building networks from event data.
+  the panel graphical VAR (temporal, contemporaneous, and between-person
+  networks from panel data), network reliability, and building networks
+  from event data.
 - **Website** — <https://pak.dynasite.org/psychnets>
 - **Source** — <https://github.com/mohsaqr/psychnets>

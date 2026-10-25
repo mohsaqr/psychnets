@@ -1,4 +1,4 @@
-# Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm
+# Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm / psychonetrics
 
 A tidy, one-row-per-argument map from each reference package's estimator
 to its `psychnet` equivalent, so users migrating from
@@ -6,15 +6,19 @@ to its `psychnet` equivalent, so users migrating from
 [`qgraph::cor_auto`](https://rdrr.io/pkg/qgraph/man/cor_auto.html),
 [`qgraph::ggmModSelect`](https://rdrr.io/pkg/qgraph/man/ggmModSelect.html),
 [`IsingFit::IsingFit`](https://rdrr.io/pkg/IsingFit/man/isingfit.html),
-or [`mgm::mgm`](https://rdrr.io/pkg/mgm/man/mgm.html) can find the
-matching argument and see what `psychnet` changes by default.
-Cross-sectional estimators only (temporal models are out of scope).
+[`mgm::mgm`](https://rdrr.io/pkg/mgm/man/mgm.html), or
+[`psychonetrics::panelgvar`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html)
+can find the matching argument and see what `psychnet` changes by
+default. Intensive time-series models (`graphicalVAR`, `mlVAR`) are out
+of scope; the few-wave panel model is covered by
+[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md).
 
 ## Usage
 
 ``` r
 net_crosswalk(
-  reference = c("all", "EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm")
+  reference = c("all", "EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm",
+    "panelgvar")
 )
 ```
 
@@ -23,7 +27,8 @@ net_crosswalk(
 - reference:
 
   Which reference function to show: `"all"` (default), `"EBICglasso"`,
-  `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, or `"mgm"`.
+  `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, `"mgm"`, or
+  `"panelgvar"`.
 
 ## Value
 
@@ -126,4 +131,80 @@ net_crosswalk("IsingFit")
 #> 11   psychnet only                    observation weights
 #> 12   psychnet only                      pairwise/listwise
 #> 13   psychnet only                            node labels
+net_crosswalk("panelgvar")
+#>                   reference   psychnet          ref_arg     psychnet_arg
+#> 1  psychonetrics::panelgvar panel_gvar             data             data
+#> 2  psychonetrics::panelgvar panel_gvar             vars             vars
+#> 3  psychonetrics::panelgvar panel_gvar            idvar               id
+#> 4  psychonetrics::panelgvar panel_gvar          beepvar             wave
+#> 5  psychonetrics::panelgvar panel_gvar          missing        na_method
+#> 6  psychonetrics::panelgvar panel_gvar            alpha            alpha
+#> 7  psychonetrics::panelgvar panel_gvar           adjust           adjust
+#> 8  psychonetrics::panelgvar panel_gvar        recursive        recursive
+#> 9  psychonetrics::panelgvar panel_gvar        criterion        criterion
+#> 10 psychonetrics::panelgvar panel_gvar        estimator           select
+#> 11 psychonetrics::panelgvar panel_gvar          nLambda          nlambda
+#> 12 psychonetrics::panelgvar panel_gvar lambda_min_ratio lambda_min_ratio
+#> 13 psychonetrics::panelgvar panel_gvar      standardize      standardize
+#> 14 psychonetrics::panelgvar panel_gvar         datatype                -
+#> 15 psychonetrics::panelgvar panel_gvar    within_latent                -
+#> 16 psychonetrics::panelgvar panel_gvar   between_latent                -
+#> 17 psychonetrics::panelgvar panel_gvar stationary_means                -
+#> 18 psychonetrics::panelgvar panel_gvar          covtype                -
+#> 19 psychonetrics::panelgvar panel_gvar        optimizer                -
+#> 20 psychonetrics::panelgvar panel_gvar                -           select
+#> 21 psychonetrics::panelgvar panel_gvar                -           stepup
+#> 22 psychonetrics::panelgvar panel_gvar                -            gamma
+#> 23 psychonetrics::panelgvar panel_gvar                -            refit
+#> 24 psychonetrics::panelgvar panel_gvar                -           labels
+#>              status
+#> 1         identical
+#> 2         identical
+#> 3           renamed
+#> 4           renamed
+#> 5  semantics differ
+#> 6         identical
+#> 7         identical
+#> 8         identical
+#> 9         identical
+#> 10 semantics differ
+#> 11          renamed
+#> 12        identical
+#> 13 semantics differ
+#> 14   reference only
+#> 15   reference only
+#> 16   reference only
+#> 17   reference only
+#> 18   reference only
+#> 19   reference only
+#> 20    psychnet only
+#> 21  default differs
+#> 22    psychnet only
+#> 23    psychnet only
+#> 24    psychnet only
+#>                                                                                                                                note
+#> 1                                                                                            wide (one row per person) or long data
+#> 2                                           design matrix (variables x waves); psychnet also takes a character vector for long data
+#> 3                                                                                                      person id column (long data)
+#> 4                                                                                  wave column (long data); waves ordered by sort()
+#> 5                                                                    psychonetrics: FIML when data have NA; psychnet: listwise only
+#> 6                                                                                               prune() argument, same default 0.01
+#> 7                                                                                             prune() argument, same default "none"
+#> 8                                                                                              prune() argument, same default FALSE
+#> 9                                                                                             stepup() argument, same default "bic"
+#> 10                                             estimator = "PML" (penalized, auto lambda) is select = "ebic"; FIML is not supported
+#> 11                                                                                find_penalized_lambda() argument, same default 50
+#> 12                                                                              find_penalized_lambda() argument, same default 1e-4
+#> 13                                                              "none"/"z"/"z_per_wave" as psychonetrics; "quantile" is not offered
+#> 14                                                                                         psychnet infers wide vs long from `vars`
+#> 15                                                                                     psychnet fixes "ggm" (the panelgvar default)
+#> 16                                                                                     psychnet fixes "ggm" (the panelgvar default)
+#> 17                                                                           psychnet: stationary means (the psychonetrics default)
+#> 18                                                      psychnet: ML covariance (denominator n), as psychonetrics uses for raw data
+#> 19                                                       psychnet: nlminb + Fisher-scoring polish, ML score stored as a certificate
+#> 20 "none" (default) = runmodel() full model with every edge's p-value; "prune" = prune() |> stepup(); "ebic" = PML with EBIC lambda
+#> 21                                                      stepup() after prune(); psychnet runs it by default (FALSE = prune() alone)
+#> 22                                                EBIC gamma for select = "ebic" (psychonetrics encodes it in criterion = "ebic.5")
+#> 23                                                                                   unpenalized refit of the EBIC-selected network
+#> 24                                                                                                                      node labels
 ```

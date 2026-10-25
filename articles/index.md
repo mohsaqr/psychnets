@@ -16,6 +16,8 @@
   models](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.md):
 - [Edge-weight stability and split-half
   reliability](https://pak.dynasite.org/psychnets/articles/network-reliability.md):
+- [Panel graphical VAR: temporal, contemporaneous, and between-person
+  networks](https://pak.dynasite.org/psychnets/articles/panel-graphical-var.md):
 - [Relative-importance
   networks](https://pak.dynasite.org/psychnets/articles/relative-importance-networks.md):
 - [Visualizing bootstrap, centrality and difference results (base

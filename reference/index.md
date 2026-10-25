@@ -68,7 +68,7 @@
   : Network Comparison Test
 - [`net_crosswalk()`](https://pak.dynasite.org/psychnets/reference/net_crosswalk.md)
   : Argument crosswalk: psychnet as a substitute for qgraph / IsingFit /
-  mgm
+  mgm / psychonetrics
 - [`net_edge_betweenness()`](https://pak.dynasite.org/psychnets/reference/net_edge_betweenness.md)
   : Edge betweenness centrality
 - [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
@@ -81,6 +81,8 @@
   : Centrality-stability coefficient (case-dropping subset bootstrap)
 - [`node_predictability()`](https://pak.dynasite.org/psychnets/reference/node_predictability.md)
   : Node predictability as a plotting vector
+- [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
+  : Panel graphical VAR network (panel-GVAR)
 - [`pcor_network()`](https://pak.dynasite.org/psychnets/reference/pcor_network.md)
   : Partial correlation network
 - [`plot(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet.md)
@@ -129,12 +131,22 @@
   : Print a centrality-stability result
 - [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
   : Estimate a psychometric network
+- [`as.data.frame(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
+  [`print(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
+  [`summary(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
+  [`plot(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
+  : Read a panel graphical VAR fit
 - [`redundancy()`](https://pak.dynasite.org/psychnets/reference/redundancy.md)
   : Detect redundant node pairs ("goldbricker")
 - [`relimp_network()`](https://pak.dynasite.org/psychnets/reference/relimp_network.md)
   : Relative-importance network (LMG / Shapley)
+- [`srl_panel`](https://pak.dynasite.org/psychnets/reference/srl_panel.md)
+  : Synthetic weekly self-regulated-learning panel
 - [`summary(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/summary.psychnet.md)
   : Summarize a psychnet network
+- [`summary(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/summary.psychnet_nct.md)
+  [`as.data.frame(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/summary.psychnet_nct.md)
+  : Tables of a Network Comparison Test
 - [`tmfg_certificate()`](https://pak.dynasite.org/psychnets/reference/tmfg_certificate.md)
   : Structural certificate for a TMFG network
 - [`tmfg_network()`](https://pak.dynasite.org/psychnets/reference/tmfg_network.md)

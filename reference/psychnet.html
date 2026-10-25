@@ -11,7 +11,7 @@ picks the right one automatically (source = &quot;auto&quot;):"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,6 +29,7 @@ picks the right one automatically (source = &quot;auto&quot;):"></head><body>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
+    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
     <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
@@ -163,7 +164,10 @@ single network; <code>FALSE</code> returns the within/between pair instead.</p><
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Passed to the underlying estimator (e.g. <code>cor_method=</code> for the
 correlation-based methods, <code>npn=</code> for <code>"huge"</code>, <code>rule=</code> for the Ising
-methods, <code>alpha=</code> for the correlation / <code>"ising_sampler"</code> methods).</p></dd>
+methods, <code>alpha=</code> for the correlation / <code>"ising_sampler"</code> methods).
+For event feature tables, <code>na_method = "listwise"</code> removes incomplete
+rows before person-centering; <code>"pairwise"</code> (default) uses available
+observations for each person's variable means and each correlation.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -206,7 +210,7 @@ estimators. Whichever you pass in, the stored <code>$method</code> is the short 
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; glasso network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 3   edges: 0   (undirected)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   lambda: 0.06534   gamma: 0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 0.00e+00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 1.39e-17</span>
 <span class="r-in"><span><span class="fu">psychnet</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"EBICglasso"</span><span class="op">)</span>                 <span class="co"># qgraph alias, same result</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; glasso network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 5   edges: 0   (undirected)</span>

@@ -13,7 +13,7 @@ maximum-likelihood score residual (see glm_lasso_kkt() at lambda = 0)."></head><
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,7 @@ maximum-likelihood score residual (see glm_lasso_kkt() at lambda = 0)."></head><
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
+    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
     <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
@@ -118,7 +119,10 @@ alongside their corresponding rows. <code>NULL</code> (default) is unweighted.</
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the symmetric weight matrix,
 with <code>$thresholds</code> (node intercepts), <code>$rule</code>, <code>$p_values</code>, <code>$nodewise</code>
-(for <code><a href="net_predict.html">net_predict()</a></code>), and <code>$kkt</code> (worst nodewise score residual).</p>
+(for <code><a href="net_predict.html">net_predict()</a></code>), and <code>$kkt</code> (worst nodewise score residual).
+If Wald pruning changes any coefficient, <code>$kkt</code> is <code>NA</code> for the altered
+fit; <code>$fit_kkt</code> retains the unpruned residual and <code>$certificate_target</code>
+identifies it as <code>"pre_pruning_fit"</code>.</p>
     </div>
 
     <div class="section level2">

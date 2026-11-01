@@ -51,6 +51,9 @@
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$support` (the TMFG graph), `$cor_matrix`, and `$kkt`.
+#' @references Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
+#'   Parsimonious modeling with information filtering networks. *Physical
+#'   Review E*, 94(6), 062306. \doi{10.1103/PhysRevE.94.062306}
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(300 * 6), 300, 6)

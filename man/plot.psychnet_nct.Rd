@@ -25,14 +25,15 @@ Visualises a \code{\link[=net_compare]{net_compare()}} result. \code{type = "str
 strength invariance (S) and the network-structure (M, maximum edge
 difference) statistics -- the notation of van Borkulo et al. (2022) -- with
 the observed value and p-value marked; \code{type = "edges"} draws the observed
-per-edge absolute differences, coloured by whether each edge differs
-significantly.
+per-edge absolute differences, with significantly differing edges both
+coloured and marked \code{*}.
 }
 \examples{
 set.seed(1)
-mk <- function(s) { set.seed(s)
-  matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.3^abs(outer(1:4, 1:4, "-"))) }
-cmp <- net_compare(mk(1), mk(2), iter = 10)  # iter >= 1000 for real use
+a <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.5^abs(outer(1:4, 1:4, "-")))
+b <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.2^abs(outer(1:4, 1:4, "-")))
+colnames(a) <- colnames(b) <- paste0("V", 1:4)
+cmp <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
 plot(cmp)                  # global strength permutation null
 plot(cmp, type = "edges")  # per-edge differences
 }

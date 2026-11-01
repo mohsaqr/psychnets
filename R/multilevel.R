@@ -307,7 +307,18 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 #'
 #' @param x A `psychnet_multilevel` object.
 #' @param ... Ignored.
-#' @return `x`, invisibly (for `print`).
+#' @return `x`, invisibly (for `print`), after printing the numbers of actors and
+#'   occasions and each network's node and edge counts.
+#' @examples
+#' set.seed(1)
+#' ev <- data.frame(
+#'   Actor   = sample(paste0("s", 1:40), 1200, replace = TRUE),
+#'   Session = sample(1:3, 1200, replace = TRUE),
+#'   Action  = sample(c("read", "quiz", "note", "watch"), 1200, replace = TRUE))
+#' # Actions drawn at random, so neither network is expected to have edges.
+#' ml <- psychnet(ev, actor = "Actor", session = "Session", standardize = FALSE)
+#' ml
+#' as.data.frame(ml)
 #' @export
 print.psychnet_multilevel <- function(x, ...) {
   cat(sprintf("<psychnet_multilevel> %s networks (within + between)\n",
@@ -323,7 +334,9 @@ print.psychnet_multilevel <- function(x, ...) {
 
 #' @rdname print.psychnet_multilevel
 #' @param row.names,optional Ignored (S3 consistency).
-#' @return For `as.data.frame`, the two edge lists stacked with a `level` column.
+#' @return For `as.data.frame`, the two edge lists stacked with a leading
+#'   `level` column (`"within"` or `"between"`): columns `level`, `from`, `to`,
+#'   `weight`, one row per edge.
 #' @export
 as.data.frame.psychnet_multilevel <- function(x, row.names = NULL,
                                               optional = FALSE, ...) {

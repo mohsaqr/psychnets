@@ -85,6 +85,13 @@
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix` (the transformed
 #'   correlation), `$npn`, `$ebic`, and `$kkt`.
+#' @references Liu, H., Lafferty, J., & Wasserman, L. (2009). The
+#'   nonparanormal: Semiparametric estimation of high dimensional undirected
+#'   graphs. *Journal of Machine Learning Research*, 10, 2295-2328.
+#'
+#'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
+#'   Gaussian graphical models. *Advances in Neural Information Processing
+#'   Systems*, 23, 604-612.
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(300 * 5), 300, 5)

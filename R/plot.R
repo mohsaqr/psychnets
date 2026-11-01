@@ -131,14 +131,14 @@
 #'
 #' Draws the centrality table returned by [net_centralities()]. `type = "bar"`
 #' gives one sorted horizontal lollipop panel per measure; `type = "line"` gives
-#' the qgraph/bootnet centrality plot — one faceted panel per measure, nodes on a
+#' the qgraph/bootnet centrality plot -- one faceted panel per measure, nodes on a
 #' shared vertical axis, a line-and-marker series within each panel.
 #'
 #' @param x A `psychnet_centrality` data frame from [net_centralities()].
 #' @param type `"bar"` (default) for one sorted lollipop panel per measure, or
 #'   `"line"` for the faceted qgraph-style centrality plot.
 #' @param scale For `type = "line"`, the per-measure transform: `"raw"`
-#'   (default — each faceted panel keeps its own axis, so no rescaling is
+#'   (default -- each faceted panel keeps its own axis, so no rescaling is
 #'   needed), `"z"` (z-score per measure, centred at 0), or `"relative"` (each
 #'   measure min-max scaled to \[0, 1\]). `type = "bar"` always shows raw values.
 #' @param measures Which measure columns to draw. Default: all of them.
@@ -410,8 +410,8 @@ plot.psychnet_stability <- function(x, ...) {
 #' strength invariance (S) and the network-structure (M, maximum edge
 #' difference) statistics -- the notation of van Borkulo et al. (2022) -- with
 #' the observed value and p-value marked; `type = "edges"` draws the observed
-#' per-edge absolute differences, coloured by whether each edge differs
-#' significantly.
+#' per-edge absolute differences, with significantly differing edges both
+#' coloured and marked `*`.
 #'
 #' @param x A `psychnet_nct` object from [net_compare()].
 #' @param type One of `"strength"`, `"structure"`, `"edges"`.
@@ -421,9 +421,10 @@ plot.psychnet_stability <- function(x, ...) {
 #' @return `x`, invisibly. Called for the plot it draws.
 #' @examples
 #' set.seed(1)
-#' mk <- function(s) { set.seed(s)
-#'   matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.3^abs(outer(1:4, 1:4, "-"))) }
-#' cmp <- net_compare(mk(1), mk(2), iter = 10)  # iter >= 1000 for real use
+#' a <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.5^abs(outer(1:4, 1:4, "-")))
+#' b <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.2^abs(outer(1:4, 1:4, "-")))
+#' colnames(a) <- colnames(b) <- paste0("V", 1:4)
+#' cmp <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
 #' plot(cmp)                  # global strength permutation null
 #' plot(cmp, type = "edges")  # per-edge differences
 #' @export

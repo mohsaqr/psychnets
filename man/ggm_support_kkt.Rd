@@ -31,6 +31,14 @@ reference solver.
 }
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
-fit <- ggm_modselect(cor_matrix = S, n = 250)
-ggm_support_kkt(fit$precision, S, fit$support)
+# An AR(1) correlation has a tridiagonal inverse: the chain graph is exact.
+chain <- abs(row(S) - col(S)) <= 1
+ggm_support_kkt(solve(S), S, support = chain)
+# The same precision violates an empty-graph (diagonal) constraint.
+ggm_support_kkt(solve(S), S, support = diag(6) > 0)
+# A fitted network reports its residual through certificate().
+certificate(ggm_modselect(cor_matrix = S, n = 250))
+}
+\seealso{
+\code{\link[=certificate]{certificate()}}, which reads the stored residual of a fitted network.
 }

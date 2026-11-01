@@ -19,7 +19,7 @@
 \code{"line"} for the faceted qgraph-style centrality plot.}
 
 \item{scale}{For \code{type = "line"}, the per-measure transform: \code{"raw"}
-(default — each faceted panel keeps its own axis, so no rescaling is
+(default -- each faceted panel keeps its own axis, so no rescaling is
 needed), \code{"z"} (z-score per measure, centred at 0), or \code{"relative"} (each
 measure min-max scaled to [0, 1]). \code{type = "bar"} always shows raw values.}
 
@@ -33,7 +33,7 @@ measure min-max scaled to [0, 1]). \code{type = "bar"} always shows raw values.}
 \description{
 Draws the centrality table returned by \code{\link[=net_centralities]{net_centralities()}}. \code{type = "bar"}
 gives one sorted horizontal lollipop panel per measure; \code{type = "line"} gives
-the qgraph/bootnet centrality plot — one faceted panel per measure, nodes on a
+the qgraph/bootnet centrality plot -- one faceted panel per measure, nodes on a
 shared vertical axis, a line-and-marker series within each panel.
 }
 \examples{

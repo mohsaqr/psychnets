@@ -78,10 +78,10 @@ where objective and solver conventions coincide, and support, sign, or
 structural agreement where penalty paths or diagonal conventions differ.
 For the EBIC graphical lasso, the comparison limit is determined by the
 convergence criterion of the glasso implementation used by qgraph,
-approximately (10^{-4}). psychnets solves its native optimization to
-tighter tolerances. If post-estimation thresholding changes a returned
-graph, `certificate()` reports `NA` for that graph and retains the fitted
-model's residual as `$fit_kkt`.
+approximately 1e-4. psychnets solves its native optimization to tighter
+tolerances. If post-estimation thresholding changes a returned graph,
+`certificate()` reports `NA` for that graph, and printing the network
+shows the residual of the fit before thresholding.
 
 ## Installation
 
@@ -133,8 +133,9 @@ the unique optimum of its objective can be read without an external
 reference:
 
 ``` r
-glasso_kkt(net$precision, net$cor_matrix, net$lambda)
-#> [1] 2.213367e-10
+certificate(net)
+#>   method  certificate kind certified
+#> 1 glasso 2.213367e-10  kkt      TRUE
 ```
 
 ## Models and methods
@@ -201,8 +202,8 @@ plot(net_boot(SRL_GPT, method = "glasso", n_boot = 500), type = "edges")
 
 `psychnets` treats correctness as a measured quantity rather than as
 agreement with a second implementation. For a Gaussian graphical model,
-`glasso_kkt()` returns the stationarity residual of the graphical-lasso
-objective; because that objective is strictly convex its minimizer is
+`certificate()` reports (and `glasso_kkt()` computes) the stationarity
+residual of the graphical-lasso objective; because that objective is strictly convex its minimizer is
 unique, so a near-zero residual certifies the global optimum with no
 reference solver involved. The nodewise Ising and mixed graphical models
 are certified analogously through the penalized-likelihood score
@@ -272,10 +273,11 @@ technical report.
 
 ## Learn more
 
-- **Articles** — worked tutorials for the Gaussian graphical,
-  information-filtering, Ising, mixed, and relative-importance models,
-  the panel graphical VAR (temporal, contemporaneous, and
-  between-person networks from panel data), network reliability, and
-  building networks from event data.
+- **Articles** — worked tutorials for the Gaussian graphical, stepwise
+  model-selection, information-filtering, Ising, mixed, and
+  relative-importance models, the panel graphical VAR (temporal,
+  contemporaneous, and between-person networks from panel data), network
+  reliability, building networks from event data, and plotting with
+  `cograph`.
 - **Website** — <https://pak.dynasite.org/psychnets>
 - **Source** — <https://github.com/mohsaqr/psychnets>

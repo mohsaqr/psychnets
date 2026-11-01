@@ -94,6 +94,12 @@ lmg_certificate <- function(x) {
 #'   `normalized = TRUE` they are rescaled to sum to 1, `$raw_importance` holds
 #'   the unscaled shares, and `$kkt` (like [lmg_certificate()]) is computed from
 #'   those raw shares.
+#' @references Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980).
+#'   *Introduction to bivariate and multivariate analysis*. Scott, Foresman.
+#'
+#'   Groemping, U. (2006). Relative importance for linear regression in R: The
+#'   package relaimpo. *Journal of Statistical Software*, 17(1), 1-27.
+#'   \doi{10.18637/jss.v017.i01}
 #' @examples
 #' S <- 0.4^abs(outer(1:5, 1:5, "-"))
 #' relimp_network(cor_matrix = S)

@@ -12,8 +12,13 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly. Prints the table of edge-similarity metrics by drop
+proportion and the edge-weight CS-coefficient.
 }
 \description{
 Print an edge-weight stability result
+}
+\examples{
+print(net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
+                               drop_prop = c(0.25, 0.5)))
 }

@@ -21,7 +21,7 @@ The network structure is determined through an iterative stepwise search in whic
 
 Following model selection, the precision matrix is re-estimated by maximum likelihood on the selected graph without regularization. Consequently, the retained edge weights are not biased toward zero by a penalty term and may be preferred when the objective is parameter estimation and interpretation of partial correlations within the selected network. This approach is particularly appropriate when sample size is sufficiently large relative to the number of variables, allowing reliable estimation without regularization.
 
-When the sample size is moderate to large and the underlying network is not excessively dense, stepwise Gaussian graphical models often recover graph structures similar to those obtained using the EBIC graphical lasso, particularly when both methods employ the same information criterion for model selection. However, because the graphical lasso performs simultaneous estimation and regularization, whereas the stepwise approach separates model selection from parameter estimation, the two methods may differ in finite samples. The graphical lasso generally exhibits greater numerical stability in high-dimensional settings ((p \geq n)) or when estimation is ill-conditioned, while the stepwise estimator avoids the shrinkage bias inherent to penalized estimation by refitting the selected model using unpenalized maximum likelihood.
+When the sample size is moderate to large and the underlying network is not excessively dense, stepwise Gaussian graphical models often recover graph structures similar to those obtained using the EBIC graphical lasso, particularly when both methods employ the same information criterion for model selection. However, because the graphical lasso performs simultaneous estimation and regularization, whereas the stepwise approach separates model selection from parameter estimation, the two methods may differ in finite samples. The graphical lasso generally exhibits greater numerical stability in high-dimensional settings ($p \geq n$) or when estimation is ill-conditioned, while the stepwise estimator avoids the shrinkage bias inherent to penalized estimation by refitting the selected model using unpenalized maximum likelihood.
 
 
 ## The data
@@ -58,14 +58,16 @@ The fitted network contains 5 nodes and 9 edges. One of the 10 possible pairs is
 removed. The printed KKT residual is $1.33 \times 10^{-15}$, which will be
 interpreted in the numerical check below.
 
-## Inspecting the selected edges with `summary()`
+## Inspecting the selected edges with `summary()` and `as.data.frame()`
 
-`summary()` prints the fitted model and returns its edge table invisibly. The
-table contains `from`, `to`, and `weight`. Each weight is an unshrunk partial
-correlation estimated under the selected network structure.
+`summary()` prints the fitted model with the range and mean of the edge
+weights, and `as.data.frame()` returns the edge table with `from`, `to`, and
+`weight`. Each weight is an unshrunk partial correlation estimated under the
+selected network structure.
 
 ```{r summarize-network}
 summary(stepwise_net)
+as.data.frame(stepwise_net)
 ```
 
 The retained weights range from -0.370 to 0.422. The largest positive edge joins
@@ -115,7 +117,7 @@ glasso_net
 ```
 
 ```{r summarize-glasso}
-summary(glasso_net)
+as.data.frame(glasso_net)
 ```
 
 The graphical lasso retains all 10 possible edges, including a weak
@@ -201,13 +203,13 @@ spearman_net
 ```
 
 ```{r summarize-spearman}
-summary(spearman_net)
+as.data.frame(spearman_net)
 ```
 
 The Spearman model contains 7 edges, compared with 9 in the Pearson model. The
 positive `CSU`-`IV`, `CSU`-`SE`, `CSU`-`SR`, `IV`-`SR`, and `SE`-`SR` edges
-remain, as does the negative `SR`-`TA` edge. The `IV`-`SE` and `SE`-`TA` edges
-are removed. The main positive learning cluster and negative self-regulation to
+remain, as do the positive `IV`-`TA` edge and the negative `SR`-`TA` edge. The
+`IV`-`SE` and `SE`-`TA` edges are removed. The main positive learning cluster and negative self-regulation to
 test-anxiety relation persist, while several weaker connections depend on the
 correlation estimator.
 
@@ -316,3 +318,11 @@ $$
 
 where $S_{jj}$ is the marginal variance. `net_predict()` evaluates this identity
 for each node in the selected Gaussian graphical model.
+
+## References
+
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation networks. *Psychological Methods*, 23(4), 617-634. [doi:10.1037/met0000167](https://doi.org/10.1037/met0000167)
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for Gaussian graphical models. *Advances in Neural Information Processing Systems*, 23, 604-612.
+
+Williams, D. R., Rhemtulla, M., Wysocki, A. C., & Rast, P. (2019). On nonregularized estimation of psychological networks. *Multivariate Behavioral Research*, 54(5), 719-750. [doi:10.1080/00273171.2019.1575716](https://doi.org/10.1080/00273171.2019.1575716)

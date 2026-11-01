@@ -73,14 +73,15 @@ the ten possible pairs is removed. Information filtering becomes more selective
 as the number of nodes increases because the number of retained edges grows
 approximately linearly with the number of nodes.
 
-## Inspecting the TMFG edges with `summary()`
+## Inspecting the TMFG edges with `summary()` and `as.data.frame()`
 
-`summary()` prints the fitted network and returns its edge table invisibly. The
-columns `from`, `to`, and `weight` identify each retained pair and its signed
-Pearson correlation.
+`summary()` prints the fitted network with the range and mean of its edge
+weights, and `as.data.frame()` returns the edge table. The columns `from`, `to`,
+and `weight` identify each retained pair and its signed Pearson correlation.
 
 ```{r summarize-tmfg}
 summary(tmfg_net)
+as.data.frame(tmfg_net)
 ```
 
 The learning constructs form a strongly correlated block. Their retained
@@ -110,7 +111,7 @@ Its weights have a different meaning because each relation is adjusted for the
 remaining variables.
 
 ```{r summarize-logo}
-summary(logo_net)
+as.data.frame(logo_net)
 ```
 
 The largest positive partial correlation joins `CSU` and `IV` ($r = 0.404$).
@@ -135,14 +136,14 @@ is accounted for.
 `certificate()` checks the defining properties of a fitted network and returns
 `method`, `certificate`, `kind`, and `certified`. For TMFG, the certificate is
 structural. A zero value means that the graph has the required edge count, is
-connected, and has the chordal structure required by the method.
+connected, and is planar and chordal, as the method requires.
 
 ```{r certify-tmfg}
 certificate(tmfg_net)
 ```
 
 The TMFG certificate is 0 and `certified` is `TRUE`. The fitted backbone
-satisfies all three structural checks. This diagnostic verifies the construction
+satisfies all four structural checks. This diagnostic verifies the construction
 of the graph. It does not evaluate whether the retained edges are stable across
 samples or whether the variables are measured adequately.
 
@@ -234,7 +235,7 @@ logo_spearman
 ```
 
 ```{r summarize-logo-spearman}
-summary(logo_spearman)
+as.data.frame(logo_spearman)
 ```
 
 The rank-based LoGo model retains the same nine pairs. The main relations also
@@ -348,3 +349,9 @@ $$
 
 `net_predict()` evaluates this identity for every node in the conditional
 network.
+
+## References
+
+Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. *Physical Review E*, 94(6), 062306. [doi:10.1103/PhysRevE.94.062306](https://doi.org/10.1103/PhysRevE.94.062306)
+
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big data: Triangulated maximally filtered graph. *Journal of Complex Networks*, 5(2), 161-178. [doi:10.1093/comnet/cnw015](https://doi.org/10.1093/comnet/cnw015)

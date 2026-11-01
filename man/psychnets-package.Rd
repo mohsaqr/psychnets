@@ -6,18 +6,24 @@
 \alias{psychnets-package}
 \title{psychnets: Clean-Room Base-R Psychometric Network Estimation}
 \description{
-Estimates cross-sectional psychometric network models in pure base R, with
-no compiled dependencies and dependency-free correctness certificates. See
-\code{\link[=psychnet]{psychnet()}} for the unified entry point and \code{\link[=ebic_glasso]{ebic_glasso()}},
-\code{\link[=cor_network]{cor_network()}}, \code{\link[=pcor_network]{pcor_network()}}, \code{\link[=ising_fit]{ising_fit()}}, and \code{\link[=mgm_fit]{mgm_fit()}} for the
-individual estimators.
+Estimates psychometric network models in pure base R, with no compiled
+dependencies and dependency-free correctness certificates. See \code{\link[=psychnet]{psychnet()}}
+for the unified entry point to the cross-sectional estimators
+(\code{\link[=cor_network]{cor_network()}}, \code{\link[=pcor_network]{pcor_network()}}, \code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=huge_network]{huge_network()}},
+\code{\link[=ggm_modselect]{ggm_modselect()}}, \code{\link[=tmfg_network]{tmfg_network()}}, \code{\link[=logo_network]{logo_network()}}, \code{\link[=relimp_network]{relimp_network()}},
+\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}}, \code{\link[=mgm_fit]{mgm_fit()}}) and \code{\link[=panel_gvar]{panel_gvar()}} for the
+panel graphical VAR. Fitted networks are read with \code{as.data.frame()},
+\code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_predict]{net_predict()}} and \code{\link[=certificate]{certificate()}}, and their accuracy
+and stability are assessed with \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}} and
+\code{\link[=net_compare]{net_compare()}}.
 }
 \section{Certification}{
 
-Regularized estimators are graded against their own convex objective rather
-than an external solver. For the Gaussian graphical model, \code{\link[=glasso_kkt]{glasso_kkt()}}
-returns the stationarity (KKT) residual: zero certifies the unique global
-optimum. Every \code{\link[=ebic_glasso]{ebic_glasso()}} result carries this value in \verb{$kkt}.
+Regularized estimators are graded against their own objective rather than
+an external solver. For the Gaussian graphical model, \code{\link[=glasso_kkt]{glasso_kkt()}} gives
+the stationarity (KKT) residual: zero certifies the unique global optimum of
+the convex objective. Every fitted network stores its residual, and
+\code{\link[=certificate]{certificate()}} reports it as a one-row table for any estimator.
 }
 
 \seealso{

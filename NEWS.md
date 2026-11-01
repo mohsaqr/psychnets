@@ -1,3 +1,21 @@
+# psychnets 0.6.2
+
+## Documentation
+
+* Vignettes rechecked against current output. The Ising and mixed graphical
+  model vignettes described networks from an earlier release (7 edges and a
+  self-regulation to test-anxiety edge); their prose now matches the current
+  fits (6 edges, test anxiety isolated under the AND rule; the OR rule adds the
+  negative edge). Each vignette shows the edge table with `as.data.frame()`,
+  which `summary()` returns only invisibly, and lists its method references.
+* Examples no longer reach into result objects with `$`: certificates are read
+  with `certificate()`, stability with `print()`, and the certificate helpers
+  (`glasso_kkt()`, `ggm_support_kkt()`, `glm_lasso_kkt()`) are shown on exact
+  closed-form optima. `panel_gvar()` examples use the bundled `srl_panel`; Ising
+  examples use `dichotomize(SRL_GPT)`. Every print method has an example.
+* Method references added to the estimator, centrality, predictability and
+  resampling help pages; DESCRIPTION references now give authors and years.
+
 # psychnets 0.6.1
 
 ## Complete function-review fixes

@@ -1,6 +1,6 @@
 Package: psychnets
 Title: Tidy Clean-Room Psychological Network Modeling
-Version: 0.6.1
+Version: 0.6.2
 Authors@R:
     c(person("Mohammed", "Saqr", email = "saqr@saqr.me",
              role = c("aut", "cre", "cph")),
@@ -11,10 +11,13 @@ Description: Provides clean-room implementations for estimating psychometric
     (EBIC) regularization, nonparanormal and stepwise selection variants,
     information-filtering networks (the triangulated maximally filtered graph
     and the local-global inverse covariance), relative-importance networks,
-    and Ising and mixed graphical models
-    <doi:10.3758/s13428-017-0862-1> <doi:10.1007/978-3-031-54464-4_19>. All
-    methods are implemented from first principles in base R without compiled
-    dependencies and return consistent, tidy outputs. Functions are designed
+    Ising and mixed graphical models, and the panel graphical
+    vector-autoregressive model (Epskamp, Borsboom and Fried (2018)
+    <doi:10.3758/s13428-017-0862-1>; Saqr, Beck and Lopez-Pernas (2024)
+    <doi:10.1007/978-3-031-54464-4_19>; Epskamp (2020)
+    <doi:10.1007/s11336-020-09697-3>). All methods are implemented from
+    first principles in base R without compiled dependencies and return
+    consistent, tidy outputs. Functions are designed
     to be transparent and report optimization diagnostics where applicable. For
     Gaussian graphical models, the graphical lasso stationarity
     (Karush-Kuhn-Tucker) residual quantifies the deviation of the estimated

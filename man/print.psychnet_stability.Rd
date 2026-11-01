@@ -12,8 +12,15 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly. Prints the method, the number of subsets per drop
+proportion, and the CS-coefficient of each measure.
 }
 \description{
 Print a centrality-stability result
+}
+\examples{
+set.seed(1)
+cs <- net_stability(SRL_GPT, method = "pcor", drop_prop = c(0.3, 0.6),
+                    iter = 10)
+print(cs)
 }

@@ -230,7 +230,11 @@ net_casedrop_reliability <- function(data, method = "glasso",
 #'
 #' @param x A `psychnet_casedrop` object.
 #' @param ... Unused.
-#' @return `x`, invisibly.
+#' @return `x`, invisibly. Prints the table of edge-similarity metrics by drop
+#'   proportion and the edge-weight CS-coefficient.
+#' @examples
+#' print(net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
+#'                                drop_prop = c(0.25, 0.5)))
 #' @export
 print.psychnet_casedrop <- function(x, ...) {
   cat(sprintf("# edge-weight stability: %s | CS = %.2f (%s cor >= %.2f at %.0f%%)\n",
@@ -388,7 +392,9 @@ net_split_reliability <- function(data, method = "glasso", iter = 100L,
 #'
 #' @param x A `psychnet_reliability` object.
 #' @param ... Unused.
-#' @return `x`, invisibly.
+#' @return `x`, invisibly. Prints the table of between-halves edge metrics.
+#' @examples
+#' print(net_split_reliability(SRL_Claude, method = "pcor", iter = 10))
 #' @export
 print.psychnet_reliability <- function(x, ...) {
   cat(sprintf("# split-half reliability: %s | %d iterations (%.0f/%.0f split)\n",

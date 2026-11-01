@@ -12,8 +12,12 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly. Prints the flagged pairs, or a note that none were
+flagged.
 }
 \description{
 Print a redundancy result
+}
+\examples{
+print(redundancy(SRL_Claude))
 }

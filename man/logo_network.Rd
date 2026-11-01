@@ -51,3 +51,8 @@ set.seed(1)
 x <- matrix(stats::rnorm(300 * 6), 300, 6)
 logo_network(x)
 }
+\references{
+Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
+Parsimonious modeling with information filtering networks. \emph{Physical
+Review E}, 94(6), 062306. \doi{10.1103/PhysRevE.94.062306}
+}

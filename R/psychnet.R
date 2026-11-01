@@ -73,6 +73,7 @@
 #'   `group` is supplied; or, for nested event data with `standardize = FALSE`, a
 #'   `psychnet_multilevel` object carrying `$within` and `$between` networks.
 #' @examples
+#' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5)
 #' colnames(x) <- c("joy", "fear", "calm", "anger", "trust")
 #' psychnet(x, method = "glasso")

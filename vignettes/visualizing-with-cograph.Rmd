@@ -95,7 +95,7 @@ cograph::splot(
   layout = "circle",
   scale_nodes_by = "strength",
   node_size_range = c(4, 12),
-  node_fill = c("#4C78A8", "#F58518", "#54A24B", "#B279A2", "#E45756"),
+  node_fill = c("#E69F00", "#56B4E9", "#009E73", "#0072B2", "#CC79A7"),
   node_border_color = "white",
   node_border_width = 2,
   label_size = 0.9,
@@ -118,8 +118,8 @@ cograph::splot(
   layout = "circle",
   threshold = 0.05,
   edge_width_range = c(0.5, 5),
-  edge_positive_color = "#2A9D8F",
-  edge_negative_color = "#E76F51",
+  edge_positive_color = "#0072B2",
+  edge_negative_color = "#D55E00",
   edge_labels = TRUE,
   edge_label_size = 0.7,
   edge_label_bg = "white",
@@ -138,7 +138,8 @@ cograph::plot_edge_weights(fit)
 ## Bootstrap diagnostics
 
 The bootstrap diagnostics are computed in `psychnets` and drawn by their own
-base-R plot methods, covered fully in the companion vignette.
+base-R plot methods, covered fully in the "Visualizing networks" article on the
+package website (<https://pak.dynasite.org/psychnets>).
 `net_boot()` resamples the data and refits the network on each resample, and
 `plot()` on its result defaults to the edge-weight confidence intervals. The
 partial-correlation estimator keeps this vignette quick to build; for a real
@@ -184,9 +185,10 @@ par(op)
 Passing `group =` to `psychnet()` fits one network per level of a grouping
 column and returns the collection. `cograph::splot()` draws the
 collection as a grid that shares one layout, so a node sits in the same position
-in every panel and the panels are read side by side.
+in every panel and the panels are read side by side. The example stacks two of
+the bundled data sets and labels each row with its source.
 
-```{r group-data, include = FALSE}
+```{r group-data}
 grouped_srl <- rbind(
   data.frame(SRL_GPT, source = "GPT", check.names = FALSE),
   data.frame(SRL_Claude, source = "Claude", check.names = FALSE)

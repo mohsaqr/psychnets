@@ -24,3 +24,12 @@ Shows every result: the two global tests (M, network structure; S, global
 strength with each group's value), the number of differing edges, and every
 edge -- largest difference first -- with each group's edge weight.
 }
+\examples{
+set.seed(1)
+# group a has a stronger chain than group b
+a <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.5^abs(outer(1:4, 1:4, "-")))
+b <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.2^abs(outer(1:4, 1:4, "-")))
+colnames(a) <- colnames(b) <- paste0("V", 1:4)
+fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
+print(fit, n = 3)   # the three largest edge differences
+}

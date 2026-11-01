@@ -52,11 +52,11 @@ the network on each resample, and summarises the sampling distribution of every
 edge weight and every node centrality. For each edge it reports the resample
 mean, the percentile confidence interval, the proportion of resamples in which
 the edge is non-zero, and a `significant` flag that is `TRUE` when the interval
-excludes zero. The returned object has class `psychnet_bootstrap`; its `$edges`
-data frame carries the columns `from`, `to`, `observed`, `mean`, `lower`,
-`upper`, `prop_nonzero`, and `significant`, and its `$centrality` data frame
-carries the observed centrality of each node with a lower and upper bound per
-measure.
+excludes zero. The returned object has class `psychnet_bootstrap`;
+`as.data.frame()` returns its edge table, with the columns `from`, `to`,
+`observed`, `mean`, `lower`, `upper`, `prop_nonzero`, and `significant`, and
+`plot(type = "centrality")` draws the bootstrapped interval of each node's
+centrality.
 
 ```{r boot}
 b <- net_boot(SRL_Claude, method = "glasso", n_boot = 200, cores = 1)
@@ -67,7 +67,7 @@ The header reports 200 resamples, a 95% interval, and 8 of the 10 edges flagged
 significant. The edge table gives the accuracy interval behind each estimate.
 
 ```{r boot-edges}
-b$edges
+as.data.frame(b)
 ```
 
 A bootstrap confidence interval is the range of edge weights consistent with the

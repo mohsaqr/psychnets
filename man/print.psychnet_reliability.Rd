@@ -12,8 +12,11 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly. Prints the table of between-halves edge metrics.
 }
 \description{
 Print a split-half reliability result
+}
+\examples{
+print(net_split_reliability(SRL_Claude, method = "pcor", iter = 10))
 }

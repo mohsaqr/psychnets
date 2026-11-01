@@ -58,15 +58,20 @@
 #'   require `native = TRUE`.
 #' @param labels Optional node labels.
 #' @return A `psychnet` object whose `$weights` is the symmetric weight matrix,
-#'   with `$thresholds` (node intercepts) and `$kkt` (the worst nodewise
-#'   stationarity residual).
+#'   with `$thresholds` (node intercepts), `$rule`, `$nodewise` (the per-node
+#'   fits used by [net_predict()]) and `$kkt` (the worst nodewise stationarity
+#'   residual, read with [certificate()]).
+#' @references van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
+#'   Boschloo, L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
+#'   constructing networks from binary data. *Scientific Reports*, 4, 5918.
+#'   \doi{10.1038/srep05918}
 #' @examples
-#' set.seed(1)
-#' z <- matrix(stats::rnorm(400 * 2), 400, 2)
-#' x <- cbind(z[, 1], z[, 1], z[, 2], z[, 2]) + matrix(stats::rnorm(400 * 4), 400)
-#' b <- (x > 0) * 1L
-#' colnames(b) <- paste0("V", 1:4)
-#' ising_fit(b)
+#' # Ising models need 0/1 data: split the five SRL construct scores at the median.
+#' b <- dichotomize(SRL_GPT)
+#' fit <- ising_fit(b)
+#' fit
+#' as.data.frame(fit)
+#' certificate(fit)
 #' @export
 ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
                       nlambda = 100L, lambda_min_ratio = 0.01, min_sum = NULL,

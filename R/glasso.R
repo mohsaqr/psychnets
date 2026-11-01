@@ -341,11 +341,21 @@
 #' @param active_tol Magnitude above which an off-diagonal entry is "active".
 #' @param penalize_diagonal Was the diagonal penalized in the fit being graded?
 #'   Default `FALSE`, matching [ebic_glasso()]'s default.
-#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+#'   `Inf` for an asymmetric or non-positive-definite `theta`.
+#' @references
+#'   Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+#'   covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
+#'   432-441. \doi{10.1093/biostatistics/kxm045}
+#' @seealso [certificate()], which reads the stored residual of a fitted network.
 #' @examples
 #' S <- 0.5^abs(outer(1:5, 1:5, "-"))
-#' fit <- ebic_glasso(cor_matrix = S, n = 200)
-#' glasso_kkt(fit$precision, S, fit$lambda)
+#' # At rho = 0 the optimum is the inverse of S, so its residual is ~0 ...
+#' glasso_kkt(solve(S), S, rho = 0)
+#' # ... and a perturbed precision matrix violates the conditions.
+#' glasso_kkt(solve(S) + diag(0.1, 5), S, rho = 0)
+#' # A fitted network reports the same residual through certificate().
+#' certificate(ebic_glasso(cor_matrix = S, n = 200))
 #' @export
 glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
                        penalize_diagonal = FALSE) {
@@ -390,10 +400,16 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
 #' @param active_tol Magnitude above which an off-support entry counts as a
 #'   nonzero violation.
 #' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+#' @seealso [certificate()], which reads the stored residual of a fitted network.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
-#' fit <- ggm_modselect(cor_matrix = S, n = 250)
-#' ggm_support_kkt(fit$precision, S, fit$support)
+#' # An AR(1) correlation has a tridiagonal inverse: the chain graph is exact.
+#' chain <- abs(row(S) - col(S)) <= 1
+#' ggm_support_kkt(solve(S), S, support = chain)
+#' # The same precision violates an empty-graph (diagonal) constraint.
+#' ggm_support_kkt(solve(S), S, support = diag(6) > 0)
+#' # A fitted network reports its residual through certificate().
+#' certificate(ggm_modselect(cor_matrix = S, n = 250))
 #' @export
 ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
   theta <- as.matrix(theta); cor_matrix <- as.matrix(cor_matrix)
@@ -476,12 +492,27 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #'   input `data` / `cor_matrix`, never sorted. With `refit = "unregularized"`
 #'   the object also carries `$support`, and `$kkt` is a [ggm_support_kkt()]
 #'   residual; with `refit = FALSE` the reported `$kkt` reflects the loose scan
-#'   tolerance (~1e-4) rather than the refit's ~1e-11.
+#'   tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
+#'   `as.data.frame()` (see [as.data.frame.psychnet()]) and the certificate
+#'   with [certificate()].
+#' @references
+#'   Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+#'   covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
+#'   432-441. \doi{10.1093/biostatistics/kxm045}
+#'
+#'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
+#'   Gaussian graphical models. *Advances in Neural Information Processing
+#'   Systems*, 23, 604-612.
+#'
+#'   Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
+#'   correlation networks. *Psychological Methods*, 23(4), 617-634.
+#'   \doi{10.1037/met0000167}
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' fit <- ebic_glasso(cor_matrix = S, n = 250)
 #' fit
 #' as.data.frame(fit)
+#' certificate(fit)
 #' @export
 ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
                         gamma = 0.5, nlambda = 100L, lambda_min_ratio = 0.01,

@@ -54,8 +54,9 @@ require \code{native = TRUE}.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the symmetric weight matrix,
-with \verb{$thresholds} (node intercepts) and \verb{$kkt} (the worst nodewise
-stationarity residual).
+with \verb{$thresholds} (node intercepts), \verb{$rule}, \verb{$nodewise} (the per-node
+fits used by \code{\link[=net_predict]{net_predict()}}) and \verb{$kkt} (the worst nodewise stationarity
+residual, read with \code{\link[=certificate]{certificate()}}).
 }
 \description{
 Estimates an Ising model by nodewise L1-penalized logistic regression with
@@ -65,10 +66,16 @@ node's regression reports its stationarity (KKT) residual (see
 \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}}).
 }
 \examples{
-set.seed(1)
-z <- matrix(stats::rnorm(400 * 2), 400, 2)
-x <- cbind(z[, 1], z[, 1], z[, 2], z[, 2]) + matrix(stats::rnorm(400 * 4), 400)
-b <- (x > 0) * 1L
-colnames(b) <- paste0("V", 1:4)
-ising_fit(b)
+# Ising models need 0/1 data: split the five SRL construct scores at the median.
+b <- dichotomize(SRL_GPT)
+fit <- ising_fit(b)
+fit
+as.data.frame(fit)
+certificate(fit)
+}
+\references{
+van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
+Boschloo, L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
+constructing networks from binary data. \emph{Scientific Reports}, 4, 5918.
+\doi{10.1038/srep05918}
 }

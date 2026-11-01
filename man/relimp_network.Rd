@@ -56,3 +56,11 @@ nodewise / \code{bootnet}'s \code{"relimp"} default, pure base R and self-certif
 S <- 0.4^abs(outer(1:5, 1:5, "-"))
 relimp_network(cor_matrix = S)
 }
+\references{
+Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980).
+\emph{Introduction to bivariate and multivariate analysis}. Scott, Foresman.
+
+Groemping, U. (2006). Relative importance for linear regression in R: The
+package relaimpo. \emph{Journal of Statistical Software}, 17(1), 1-27.
+\doi{10.18637/jss.v017.i01}
+}

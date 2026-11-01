@@ -67,8 +67,8 @@ Permutation test for whether two groups' Gaussian graphical models differ,
 on three invariants (van Borkulo et al. 2022): network structure (\code{M}, the
 largest absolute edge difference), global strength (\code{S}, the difference in
 summed absolute edge weights; with \code{abs = FALSE}, summed signed weights,
-i.e. global expected influence) and individual edges (\code{E}). Networks are EBIC graphical lassos (clean-room
-pure R). Equivalent in purpose to \code{NetworkComparisonTest::NCT()}, and equal to
+i.e. global expected influence) and individual edges (\code{E}). Networks are
+EBIC graphical lassos (clean-room pure R). Equivalent in purpose to \code{NetworkComparisonTest::NCT()}, and equal to
 it in its permutation draws: under the same seed both permute the same rows,
 so the two differ only by the glasso solver's convergence tolerance.
 }
@@ -93,10 +93,12 @@ exact. A constant variable in an observed group raises a
 }
 \examples{
 set.seed(1)
-a <- matrix(stats::rnorm(100 * 4), 100, 4)
-b <- matrix(stats::rnorm(100 * 4), 100, 4)
+# group a has a stronger chain than group b
+a <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.5^abs(outer(1:4, 1:4, "-")))
+b <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.2^abs(outer(1:4, 1:4, "-")))
 colnames(a) <- colnames(b) <- paste0("V", 1:4)
-fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
+# iter = 10 keeps the example fast (smallest p = 1/11); use iter >= 1000.
+fit <- net_compare(a, b, iter = 10)
 fit
 summary(fit)
 as.data.frame(fit)

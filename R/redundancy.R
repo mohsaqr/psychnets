@@ -97,7 +97,10 @@ redundancy <- function(data, p = 0.05, threshold = 0.25, cor_min = 0.5,
 #'
 #' @param x A `psychnet_redundancy` object.
 #' @param ... Unused.
-#' @return `x`, invisibly.
+#' @return `x`, invisibly. Prints the flagged pairs, or a note that none were
+#'   flagged.
+#' @examples
+#' print(redundancy(SRL_Claude))
 #' @export
 print.psychnet_redundancy <- function(x, ...) {
   cat(sprintf("# redundant pairs (proportion < %.2f, r > %.2f): %d found\n",

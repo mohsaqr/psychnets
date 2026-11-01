@@ -7,6 +7,16 @@
 
 #' Centrality-stability coefficient (case-dropping subset bootstrap)
 #'
+#' Asks how far the sample can shrink before the ranking of node centralities
+#' changes. For each drop proportion the network is re-estimated on `iter`
+#' random subsets without replacement, and each subset's centralities are
+#' rank-correlated (Spearman) with the full-sample centralities. The
+#' CS-coefficient of a measure is the largest drop proportion at which that
+#' correlation stays at or above `threshold` with probability at least
+#' `certainty`; Epskamp, Borsboom and Fried (2018) suggest that it should not
+#' fall below 0.25 and preferably exceed 0.5 before centrality differences are
+#' interpreted.
+#'
 #' @param data Data frame or matrix (rows = observations), resampled exactly as
 #'   given (see [net_boot()]).
 #' @param method Estimator (see [psychnet()]). Default `"glasso"`.
@@ -31,6 +41,9 @@
 #'   drop proportion. Visualise it with [plot.psychnet_stability()].
 #'   Undefined correlations count as failing the threshold in `prop_above` and
 #'   the CS-coefficient; they are omitted from `mean_cor` and `sd_cor`.
+#' @references Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+#'   psychological networks and their accuracy: A tutorial paper. *Behavior
+#'   Research Methods*, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -38,7 +51,8 @@
 #' # method = "pcor" and small iter keep this example fast; the "glasso"
 #' # default and iter = 100 are what a real analysis should use.
 #' cs <- net_stability(x, method = "pcor", drop_prop = c(0.3, 0.6), iter = 10)
-#' cs$cs
+#' cs          # the CS-coefficient of each measure
+#' plot(cs)    # mean correlation by drop proportion
 #' @export
 net_stability <- function(data, method = "glasso",
                                  measures = c("strength", "expected_influence"),
@@ -134,7 +148,13 @@ net_stability <- function(data, method = "glasso",
 #'
 #' @param x A `psychnet_stability` object.
 #' @param ... Unused.
-#' @return `x`, invisibly.
+#' @return `x`, invisibly. Prints the method, the number of subsets per drop
+#'   proportion, and the CS-coefficient of each measure.
+#' @examples
+#' set.seed(1)
+#' cs <- net_stability(SRL_GPT, method = "pcor", drop_prop = c(0.3, 0.6),
+#'                     iter = 10)
+#' print(cs)
 #' @export
 print.psychnet_stability <- function(x, ...) {
   cat(sprintf("<psychnet_stability> %s, %d subsets/proportion\n",

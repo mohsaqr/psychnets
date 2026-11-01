@@ -17,13 +17,27 @@
 \item{row.names, optional}{Ignored (S3 consistency).}
 }
 \value{
-\code{x}, invisibly (for \code{print}).
+\code{x}, invisibly (for \code{print}), after printing the numbers of actors and
+occasions and each network's node and edge counts.
 
-For \code{as.data.frame}, the two edge lists stacked with a \code{level} column.
+For \code{as.data.frame}, the two edge lists stacked with a leading
+\code{level} column (\code{"within"} or \code{"between"}): columns \code{level}, \code{from}, \code{to},
+\code{weight}, one row per edge.
 }
 \description{
 The object returned by \code{\link[=psychnet]{psychnet()}} for nested event data with
 \code{standardize = FALSE}: a pair of Gaussian graphical networks decomposing the
 actor-by-action frequency covariance into a within-actor and a between-actor
 part.
+}
+\examples{
+set.seed(1)
+ev <- data.frame(
+  Actor   = sample(paste0("s", 1:40), 1200, replace = TRUE),
+  Session = sample(1:3, 1200, replace = TRUE),
+  Action  = sample(c("read", "quiz", "note", "watch"), 1200, replace = TRUE))
+# Actions drawn at random, so neither network is expected to have edges.
+ml <- psychnet(ev, actor = "Actor", session = "Session", standardize = FALSE)
+ml
+as.data.frame(ml)
 }

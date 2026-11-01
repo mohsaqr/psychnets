@@ -34,10 +34,11 @@ difference, statistic E), \code{p_value} (permutation p, adjusted by
 }
 \examples{
 set.seed(1)
-a <- matrix(stats::rnorm(100 * 4), 100, 4)
-b <- matrix(stats::rnorm(100 * 4), 100, 4)
+# group a has a stronger chain than group b
+a <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.5^abs(outer(1:4, 1:4, "-")))
+b <- matrix(stats::rnorm(100 * 4), 100, 4) \%*\% chol(0.2^abs(outer(1:4, 1:4, "-")))
 colnames(a) <- colnames(b) <- paste0("V", 1:4)
-fit <- net_compare(a, b, iter = 10)
+fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
 summary(fit)
 as.data.frame(fit)
 }

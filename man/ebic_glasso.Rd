@@ -90,7 +90,9 @@ in \verb{$weights}, \verb{$nodes}, and \verb{$precision} is always the column or
 input \code{data} / \code{cor_matrix}, never sorted. With \code{refit = "unregularized"}
 the object also carries \verb{$support}, and \verb{$kkt} is a \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}
 residual; with \code{refit = FALSE} the reported \verb{$kkt} reflects the loose scan
-tolerance (~1e-4) rather than the refit's ~1e-11.
+tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
+\code{as.data.frame()} (see \code{\link[=as.data.frame.psychnet]{as.data.frame.psychnet()}}) and the certificate
+with \code{\link[=certificate]{certificate()}}.
 }
 \description{
 Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a
@@ -104,4 +106,18 @@ S <- 0.4^abs(outer(1:6, 1:6, "-"))
 fit <- ebic_glasso(cor_matrix = S, n = 250)
 fit
 as.data.frame(fit)
+certificate(fit)
+}
+\references{
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+covariance estimation with the graphical lasso. \emph{Biostatistics}, 9(3),
+432-441. \doi{10.1093/biostatistics/kxm045}
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
+Gaussian graphical models. \emph{Advances in Neural Information Processing
+Systems}, 23, 604-612.
+
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
+correlation networks. \emph{Psychological Methods}, 23(4), 617-634.
+\doi{10.1037/met0000167}
 }

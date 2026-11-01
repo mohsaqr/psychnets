@@ -95,6 +95,14 @@
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$support` (the selected graph), `$gamma`, `$ebic`,
 #'   `$cor_matrix`, and `$kkt`.
+#' @references Williams, D. R., Rhemtulla, M., Wysocki, A. C., & Rast, P.
+#'   (2019). On nonregularized estimation of psychological networks.
+#'   *Multivariate Behavioral Research*, 54(5), 719-750.
+#'   \doi{10.1080/00273171.2019.1575716}
+#'
+#'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
+#'   Gaussian graphical models. *Advances in Neural Information Processing
+#'   Systems*, 23, 604-612.
 #' @examples
 #' S <- 0.5^abs(outer(1:6, 1:6, "-"))
 #' ggm_modselect(cor_matrix = S, n = 250)

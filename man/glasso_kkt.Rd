@@ -25,7 +25,8 @@ glasso_kkt(
 Default \code{FALSE}, matching \code{\link[=ebic_glasso]{ebic_glasso()}}'s default.}
 }
 \value{
-Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+\code{Inf} for an asymmetric or non-positive-definite \code{theta}.
 }
 \description{
 A dependency-free correctness certificate for a fitted Gaussian graphical
@@ -49,6 +50,18 @@ flag must match the fit being tested.
 }
 \examples{
 S <- 0.5^abs(outer(1:5, 1:5, "-"))
-fit <- ebic_glasso(cor_matrix = S, n = 200)
-glasso_kkt(fit$precision, S, fit$lambda)
+# At rho = 0 the optimum is the inverse of S, so its residual is ~0 ...
+glasso_kkt(solve(S), S, rho = 0)
+# ... and a perturbed precision matrix violates the conditions.
+glasso_kkt(solve(S) + diag(0.1, 5), S, rho = 0)
+# A fitted network reports the same residual through certificate().
+certificate(ebic_glasso(cor_matrix = S, n = 200))
+}
+\references{
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+covariance estimation with the graphical lasso. \emph{Biostatistics}, 9(3),
+432-441. \doi{10.1093/biostatistics/kxm045}
+}
+\seealso{
+\code{\link[=certificate]{certificate()}}, which reads the stored residual of a fitted network.
 }

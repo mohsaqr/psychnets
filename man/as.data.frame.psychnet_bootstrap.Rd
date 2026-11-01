@@ -17,9 +17,17 @@
 excludes zero. Default \code{FALSE} (all edges).}
 }
 \value{
-The tidy \verb{$edges} data frame (one row per edge, with its percentile
-interval, inclusion proportion, and \code{significant} flag).
+A \code{data.frame} with one row per edge and columns \code{from}, \code{to},
+\code{observed}, \code{mean} (bootstrap mean), \code{lower}, \code{upper} (percentile
+interval), \code{prop_nonzero} (share of resamples in which the edge is
+nonzero) and \code{significant} (interval excludes zero).
 }
 \description{
 Tidy a network bootstrap
+}
+\examples{
+set.seed(1)
+bs <- net_boot(SRL_GPT, method = "pcor", n_boot = 50, cores = 1)
+as.data.frame(bs)
+as.data.frame(bs, significant = TRUE)
 }

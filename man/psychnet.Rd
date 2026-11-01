@@ -115,6 +115,7 @@ between-actor networks. Passing \code{actor} switches this on automatically.
 estimators. Whichever you pass in, the stored \verb{$method} is the short name.
 }
 \examples{
+set.seed(1)
 x <- matrix(stats::rnorm(200 * 5), 200, 5)
 colnames(x) <- c("joy", "fear", "calm", "anger", "trust")
 psychnet(x, method = "glasso")

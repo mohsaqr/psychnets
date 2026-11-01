@@ -68,3 +68,12 @@ x <- matrix(stats::rnorm(300 * 5), 300, 5)
 x <- exp(x \%*\% chol(0.4^abs(outer(1:5, 1:5, "-"))))   # break normality
 huge_network(x)
 }
+\references{
+Liu, H., Lafferty, J., & Wasserman, L. (2009). The
+nonparanormal: Semiparametric estimation of high dimensional undirected
+graphs. \emph{Journal of Machine Learning Research}, 10, 2295-2328.
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
+Gaussian graphical models. \emph{Advances in Neural Information Processing
+Systems}, 23, 604-612.
+}

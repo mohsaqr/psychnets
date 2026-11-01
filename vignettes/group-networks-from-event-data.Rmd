@@ -91,14 +91,16 @@ actor_net
 The fitted network contains 9 action nodes and 28 edges. The selected penalty is
 $\lambda = 0.008001$ at $\gamma = 0.5$.
 
-## Inspecting actor-level edges with `summary()`
+## Inspecting actor-level edges with `summary()` and `as.data.frame()`
 
-`summary()` prints the fitted model and returns an edge table with `from`, `to`,
-and `weight`. Each weight is a partial correlation between two action counts
-after the other seven action counts are considered.
+`summary()` prints the fitted model with the range and mean of its edge
+weights, and `as.data.frame()` returns the edge table with `from`, `to`, and
+`weight`. Each weight is a partial correlation between two action counts after
+the other seven action counts are considered.
 
 ```{r summarize-actor-network}
 summary(actor_net)
+as.data.frame(actor_net)
 ```
 
 The largest positive edge joins `consensus` and `plan` ($r = 0.434$). Students
@@ -208,7 +210,7 @@ or a random-effects model. The fitted network contains 14 edges, compared with
 28 in the actor-level network. Its selected penalty is $\lambda = 0.0288$.
 
 ```{r summarize-within-network}
-summary(within_net)
+as.data.frame(within_net)
 ```
 
 The largest person-centered edge joins `cohesion` and `emotion` ($r = 0.148$).

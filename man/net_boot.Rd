@@ -102,5 +102,12 @@ colnames(x) <- paste0("V", 1:5)
 # method = "pcor" keeps this example fast; the "glasso" default (and
 # n_boot >= 1000) is what a real analysis should use.
 bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
+bs
 as.data.frame(bs)
+as.data.frame(bs, significant = TRUE)
+}
+\references{
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper. \emph{Behavior
+Research Methods}, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
 }

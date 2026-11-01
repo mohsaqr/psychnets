@@ -58,12 +58,11 @@ MASS_ginv <- function(A, tol = sqrt(.Machine$double.eps)) {
 #'   fit; `$fit_kkt` retains the unpruned residual and `$certificate_target`
 #'   identifies it as `"pre_pruning_fit"`.
 #' @examples
-#' set.seed(1)
-#' z <- matrix(stats::rnorm(500 * 2), 500, 2)
-#' x <- cbind(z[, 1], z[, 1], z[, 2], z[, 2]) + matrix(stats::rnorm(500 * 4), 500)
-#' b <- (x > 0) * 1L
-#' colnames(b) <- paste0("V", 1:4)
-#' ising_sampler(b)
+#' b <- dichotomize(SRL_GPT)
+#' ising_sampler(b)                 # every edge, certified ML fit
+#' pruned <- ising_sampler(b, alpha = 0.05)
+#' as.data.frame(pruned)
+#' certificate(pruned)              # NA: pruning altered the ML solution
 #' @export
 ising_sampler <- function(data, rule = c("AND", "OR"), alpha = NULL,
                           adjust = "none", min_sum = NULL, weights = NULL,

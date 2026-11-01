@@ -136,6 +136,12 @@
 #'   ordinal. Default 7.
 #' @param na_method `"pairwise"` (default) or `"listwise"`.
 #' @return A correlation matrix with the variable names as dimnames.
+#' @references Olsson, U. (1979). Maximum likelihood estimation of the polychoric
+#'   correlation coefficient. *Psychometrika*, 44(4), 443-460.
+#'   \doi{10.1007/BF02296207}
+#'
+#'   Olsson, U., Drasgow, F., & Dorans, N. J. (1982). The polyserial correlation
+#'   coefficient. *Psychometrika*, 47(3), 337-347. \doi{10.1007/BF02294164}
 #' @examples
 #' set.seed(1)
 #' z <- matrix(stats::rnorm(300 * 4), 300, 4) %*% chol(0.5^abs(outer(1:4, 1:4, "-")))

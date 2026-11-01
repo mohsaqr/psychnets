@@ -12,8 +12,13 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly. Prints the method, the number of resamples, the
+interval level, and the counts of edges, significant edges and nodes.
 }
 \description{
 Print a network bootstrap
+}
+\examples{
+set.seed(1)
+print(net_boot(SRL_GPT, method = "pcor", n_boot = 50, cores = 1))
 }

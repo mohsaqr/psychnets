@@ -68,14 +68,16 @@ this small example, although several estimated edges are weak. The selected
 penalty and the observed data determine the degree of sparsity in each fitted
 network.
 
-## Inspecting edges with `summary()`
+## Inspecting edges with `summary()` and `as.data.frame()`
 
-`summary()` prints the fitted model and returns its edge table invisibly. The
-table contains the columns `from`, `to`, and `weight`. Each row identifies a
-retained pair of nodes and its estimated partial correlation.
+`summary()` prints the fitted model together with the range and mean of the
+edge weights. `as.data.frame()` returns the edge table itself, with the columns
+`from`, `to`, and `weight`. Each row identifies a retained pair of nodes and its
+estimated partial correlation.
 
 ```{r summarize-network}
 summary(net)
+as.data.frame(net)
 ```
 
 The edge weights range from -0.350 to 0.412, with a mean of 0.174 across the 10
@@ -195,7 +197,7 @@ spearman_net
 ```
 
 ```{r summarize-spearman}
-summary(spearman_net)
+as.data.frame(spearman_net)
 ```
 
 The Spearman analysis retains 9 edges and selects $\lambda = 0.01882$. The main
@@ -223,12 +225,15 @@ threshold_net
 ```
 
 ```{r summarize-threshold}
-summary(threshold_net)
+as.data.frame(threshold_net)
 ```
 
 At a threshold of 0.10, the graph contains 8 edges. The `CSU`-`TA` estimate
-(0.049) and the `SE`-`TA` estimate (0.099) are removed. The selected penalty and
-KKT residual are unchanged because thresholding occurs after estimation. A
+(0.049) and the `SE`-`TA` estimate (0.099) are removed. The selected penalty is
+unchanged because thresholding occurs after estimation. The returned graph is no
+longer the optimum of the fitted objective, so the printout reports its
+optimality as unavailable and quotes the pre-threshold residual
+($2.21 \times 10^{-10}$) instead; `certificate(threshold_net)` reports `NA`. A
 threshold can make a graph easier to read, but it must not be presented as a
 model-selection result from EBIC.
 
@@ -247,7 +252,7 @@ npn_net
 ```
 
 ```{r summarize-nonparanormal}
-summary(npn_net)
+as.data.frame(npn_net)
 ```
 
 The nonparanormal model retains all 10 edges. Its weights range from -0.343 to
@@ -406,3 +411,17 @@ $$
 `net_predict()` evaluates this identity for each node. The calculation requires
 the fitted precision and covariance matrices, so raw observations are not needed
 after a Gaussian graphical model has been fitted.
+
+## References
+
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial correlation networks. *Psychological Methods*, 23(4), 617-634. [doi:10.1037/met0000167](https://doi.org/10.1037/met0000167)
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for Gaussian graphical models. *Advances in Neural Information Processing Systems*, 23, 604-612.
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse covariance estimation with the graphical lasso. *Biostatistics*, 9(3), 432-441. [doi:10.1093/biostatistics/kxm045](https://doi.org/10.1093/biostatistics/kxm045)
+
+Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models predict observations? On the importance of predictability in network models. *Behavior Research Methods*, 50(2), 853-861. [doi:10.3758/s13428-017-0910-x](https://doi.org/10.3758/s13428-017-0910-x)
+
+Liu, H., Lafferty, J., & Wasserman, L. (2009). The nonparanormal: Semiparametric estimation of high dimensional undirected graphs. *Journal of Machine Learning Research*, 10, 2295-2328.
+
+Robinaugh, D. J., Millner, A. J., & McNally, R. J. (2016). Identifying highly influential nodes in the complicated grief network. *Journal of Abnormal Psychology*, 125(6), 747-757. [doi:10.1037/abn0000181](https://doi.org/10.1037/abn0000181)

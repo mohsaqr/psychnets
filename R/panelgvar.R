@@ -690,8 +690,10 @@
 #'   `netobject_group`, it plots as a grid with `cograph::splot()`. Read it with
 #'   `as.data.frame()`: `what = "edges"` (one row per edge with standard error,
 #'   p-value and 95% Wald interval), `what = "parameters"` (every model
-#'   parameter), or `what = "fit"` (one row of fit indices: chi-square, CFI,
-#'   TLI, RMSEA, AIC, BIC), or `what = "diagnostics"` (one row: the score
+#'   parameter), `what = "fit"` (one row of fit indices: chi-square, CFI,
+#'   TLI, RMSEA, AIC, BIC), `what = "variance"` (one row per variable: the
+#'   between-person share of its variance), or `what = "diagnostics"` (one
+#'   row: the score
 #'   certificate -- largest absolute gradient of the ML fit function on the
 #'   free parameters, or the lasso KKT residual for `select = "ebic"` --
 #'   boundary flag, SE availability, and how many of the three optimizer
@@ -720,20 +722,16 @@
 #'   and panel data. *Psychometrika*, 85(1), 206-231.
 #'   \doi{10.1007/s11336-020-09697-3}
 #' @examples
-#' # 300 persons, 3 variables, 4 waves: correlated stable traits plus a
-#' # within-person lag-1 process in which X1 drives X2.
-#' set.seed(1)
-#' n <- 300
-#' beta <- matrix(c(0.4, 0.3, 0, 0, 0.4, 0, 0, 0, 0.4), 3)
-#' trait <- matrix(rnorm(n * 3), n) + rnorm(n)
-#' states <- Reduce(function(w, t) w %*% t(beta) + matrix(rnorm(n * 3), n),
-#'                  seq_len(5), matrix(0, n, 3), accumulate = TRUE)[-(1:2)]
-#' long <- do.call(rbind, Map(function(w, t)
-#'   data.frame(id = seq_len(n), wave = t, trait + w), states, seq_len(4)))
-#' fit <- panel_gvar(long, vars = c("X1", "X2", "X3"), id = "id", wave = "wave")
+#' # srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
+#' # effort in one week drives efficacy in the next.
+#' fit <- panel_gvar(srl_panel,
+#'                   vars = c("efficacy", "planning", "effort", "enjoyment",
+#'                            "anxiety"),
+#'                   id = "student", wave = "week")
 #' fit
 #' as.data.frame(fit)
 #' as.data.frame(fit, what = "fit")
+#' as.data.frame(fit, what = "variance")
 #' @export
 panel_gvar <- function(data, vars, id = NULL, wave = NULL,
                        select = c("none", "prune", "ebic"),
@@ -1189,19 +1187,16 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
 #'   row per network (`network`, `directed`, `nodes`, `edges`, `significant`,
 #'   `mean_abs_weight`).
 #' @examples
-#' # 300 persons, 3 variables, 4 waves: correlated stable traits plus a
-#' # within-person lag-1 process in which X1 drives X2.
-#' set.seed(1)
-#' n <- 300
-#' beta <- matrix(c(0.4, 0.3, 0, 0, 0.4, 0, 0, 0, 0.4), 3)
-#' trait <- matrix(rnorm(n * 3), n) + rnorm(n)
-#' states <- Reduce(function(w, t) w %*% t(beta) + matrix(rnorm(n * 3), n),
-#'                  seq_len(5), matrix(0, n, 3), accumulate = TRUE)[-(1:2)]
-#' long <- do.call(rbind, Map(function(w, t)
-#'   data.frame(id = seq_len(n), wave = t, trait + w), states, seq_len(4)))
-#' fit <- panel_gvar(long, vars = c("X1", "X2", "X3"), id = "id", wave = "wave")
+#' # srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
+#' # effort in one week drives efficacy in the next.
+#' fit <- panel_gvar(srl_panel,
+#'                   vars = c("efficacy", "planning", "effort", "enjoyment",
+#'                            "anxiety"),
+#'                   id = "student", wave = "week")
 #' summary(fit)
 #' as.data.frame(fit, what = "parameters")
+#' as.data.frame(fit, what = "diagnostics")
+#' if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
 #' @name psychnet_panelgvar
 #' @export
 as.data.frame.psychnet_panelgvar <- function(x, row.names = NULL,

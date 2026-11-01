@@ -373,7 +373,15 @@ condition <- function(object, value, rule = NULL) {
 #'
 #' @param x A `psychnet_moderated` object.
 #' @param ... Unused.
-#' @return `x`, invisibly.
+#' @return `x`, invisibly. Prints the number of nodes, the moderator, and the
+#'   fit settings.
+#' @examples
+#' set.seed(1)
+#' x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
+#' mod <- rep(0:1, each = 200)
+#' y <- x1 * (mod == 1) + stats::rnorm(400)
+#' d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
+#' print(mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4))
 #' @export
 print.psychnet_moderated <- function(x, ...) {
   cat(sprintf("<psychnet_moderated> %d nodes, moderator = %s\n",

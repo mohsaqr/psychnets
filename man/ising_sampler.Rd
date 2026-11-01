@@ -53,10 +53,9 @@ The unregularized counterpart of \code{\link[=ising_fit]{ising_fit()}}; self-cer
 maximum-likelihood score residual (see \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} at \code{lambda = 0}).
 }
 \examples{
-set.seed(1)
-z <- matrix(stats::rnorm(500 * 2), 500, 2)
-x <- cbind(z[, 1], z[, 1], z[, 2], z[, 2]) + matrix(stats::rnorm(500 * 4), 500)
-b <- (x > 0) * 1L
-colnames(b) <- paste0("V", 1:4)
-ising_sampler(b)
+b <- dichotomize(SRL_GPT)
+ising_sampler(b)                 # every edge, certified ML fit
+pruned <- ising_sampler(b, alpha = 0.05)
+as.data.frame(pruned)
+certificate(pruned)              # NA: pruning altered the ML solution
 }

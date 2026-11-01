@@ -23,10 +23,12 @@
 \item{object}{A \code{psychnet_group} object.}
 }
 \value{
-\code{x}, invisibly (for \code{print}).
+\code{x}, invisibly (for \code{print}), after printing one row per group with
+its node and edge counts and sample size.
 
-For \code{as.data.frame}, the per-group edge lists stacked with a \code{group}
-column.
+For \code{as.data.frame}, the per-group edge lists stacked with a leading
+\code{group} column: one row per edge per group, columns \code{group}, \code{from},
+\code{to}, \code{weight}.
 
 For \code{summary}, a data frame with node/edge counts and mean absolute
 edge weight: one row per group, or per group and \code{level} when a group
@@ -41,4 +43,12 @@ grid with \code{cograph::splot()} and is consumed per level by the framework ver
 Data-based resampling and comparison require independent cross-sectional
 rows. Groups built from several occasions per actor need resampling at the
 actor level and are refused by these row-based diagnostics.
+}
+\examples{
+d <- rbind(data.frame(SRL_GPT, source = "GPT"),
+           data.frame(SRL_Claude, source = "Claude"))
+nets <- psychnet(d, method = "glasso", group = "source")
+nets
+summary(nets)
+as.data.frame(nets)
 }

@@ -56,7 +56,15 @@ Undefined correlations count as failing the threshold in \code{prop_above} and
 the CS-coefficient; they are omitted from \code{mean_cor} and \code{sd_cor}.
 }
 \description{
-Centrality-stability coefficient (case-dropping subset bootstrap)
+Asks how far the sample can shrink before the ranking of node centralities
+changes. For each drop proportion the network is re-estimated on \code{iter}
+random subsets without replacement, and each subset's centralities are
+rank-correlated (Spearman) with the full-sample centralities. The
+CS-coefficient of a measure is the largest drop proportion at which that
+correlation stays at or above \code{threshold} with probability at least
+\code{certainty}; Epskamp, Borsboom and Fried (2018) suggest that it should not
+fall below 0.25 and preferably exceed 0.5 before centrality differences are
+interpreted.
 }
 \examples{
 set.seed(1)
@@ -65,5 +73,11 @@ colnames(x) <- paste0("V", 1:5)
 # method = "pcor" and small iter keep this example fast; the "glasso"
 # default and iter = 100 are what a real analysis should use.
 cs <- net_stability(x, method = "pcor", drop_prop = c(0.3, 0.6), iter = 10)
-cs$cs
+cs          # the CS-coefficient of each measure
+plot(cs)    # mean correlation by drop proportion
+}
+\references{
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper. \emph{Behavior
+Research Methods}, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
 }

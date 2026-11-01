@@ -31,3 +31,11 @@ z <- matrix(stats::rnorm(300 * 4), 300, 4) \%*\% chol(0.5^abs(outer(1:4, 1:4, "-
 x <- apply(z, 2, function(col) as.integer(cut(col, 5)))   # 5-level Likert
 cor_auto(x)
 }
+\references{
+Olsson, U. (1979). Maximum likelihood estimation of the polychoric
+correlation coefficient. \emph{Psychometrika}, 44(4), 443-460.
+\doi{10.1007/BF02296207}
+
+Olsson, U., Drasgow, F., & Dorans, N. J. (1982). The polyserial correlation
+coefficient. \emph{Psychometrika}, 47(3), 337-347. \doi{10.1007/BF02294164}
+}

@@ -151,6 +151,9 @@ tmfg_certificate <- function(x) {
 #'   correlation matrix on the retained edges, with `$adjacency`, `$cliques`,
 #'   `$separators` (the chordal decomposition used by [logo_network()]), and
 #'   `$cor_matrix`.
+#' @references Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network
+#'   filtering for big data: Triangulated maximally filtered graph. *Journal of
+#'   Complex Networks*, 5(2), 161-178. \doi{10.1093/comnet/cnw015}
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 6), 200, 6)

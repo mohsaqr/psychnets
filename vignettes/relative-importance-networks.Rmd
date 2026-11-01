@@ -67,14 +67,16 @@ The network contains 5 nodes and 20 directed edges, one for every ordered pair
 of distinct nodes. Relative importance allocates a contribution to every
 predictor, so the raw network is complete unless a contribution is exactly zero.
 
-## Inspecting directed contributions with `summary()`
+## Inspecting directed contributions with `summary()` and `as.data.frame()`
 
-`summary()` prints the fitted network and returns an edge table with `from`,
-`to`, and `weight`. The `from` node is the predictor, the `to` node is the
-outcome, and `weight` is the predictor's share of the outcome's $R^2$.
+`summary()` prints the fitted network with the range and mean of its weights,
+and `as.data.frame()` returns the edge table with `from`, `to`, and `weight`.
+The `from` node is the predictor, the `to` node is the outcome, and `weight` is
+the predictor's share of the outcome's $R^2$.
 
 ```{r summarize-network}
 summary(importance_net)
+as.data.frame(importance_net)
 ```
 
 The weights range from 0.006 to 0.299. The largest edge runs from `CSU` to `IV`
@@ -173,7 +175,7 @@ importance_spearman
 ```
 
 ```{r summarize-spearman}
-summary(importance_spearman)
+as.data.frame(importance_spearman)
 ```
 
 The largest rank-based edge remains `CSU` to `IV` at 0.299. The learning
@@ -250,3 +252,9 @@ The directed weight matrix has $W_{kj}=\varphi_{kj}$. Column sums are incoming
 $R^2$ values reported by `net_predict()`. Row sums are outgoing contributions
 reported by `net_centralities()`. `certificate()` returns the maximum absolute
 deviation from the efficiency identity across nodes.
+
+## References
+
+Groemping, U. (2006). Relative importance for linear regression in R: The package relaimpo. *Journal of Statistical Software*, 17(1), 1-27. [doi:10.18637/jss.v017.i01](https://doi.org/10.18637/jss.v017.i01)
+
+Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980). *Introduction to bivariate and multivariate analysis*. Scott, Foresman.

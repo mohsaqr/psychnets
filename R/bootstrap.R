@@ -127,6 +127,9 @@
 #'   Optional `$predictability`, `$thresholded`, `$edge_diff_p`,
 #'   `$centrality_diff_p`, plus `$lambda_path`/`$lambda_selected` when the
 #'   estimator reports them.
+#' @references Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+#'   psychological networks and their accuracy: A tutorial paper. *Behavior
+#'   Research Methods*, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -134,7 +137,9 @@
 #' # method = "pcor" keeps this example fast; the "glasso" default (and
 #' # n_boot >= 1000) is what a real analysis should use.
 #' bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
+#' bs
 #' as.data.frame(bs)
+#' as.data.frame(bs, significant = TRUE)
 #' @export
 net_boot <- function(data, method = "glasso", n_boot = 1000L,
                      ci = 0.95, measures = c("strength", "expected_influence"),
@@ -316,6 +321,9 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
 #'   observed values, their observed difference, the percentile interval of the
 #'   bootstrap difference (`lower`, `upper`), the two-sided `p_value`, and a
 #'   logical `significant`.
+#' @references Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+#'   psychological networks and their accuracy: A tutorial paper. *Behavior
+#'   Research Methods*, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
@@ -379,8 +387,15 @@ difference_test <- function(boot, type = "edge", ci = NULL,
 #' @param ... Unused.
 #' @param significant If `TRUE`, return only the edges whose confidence interval
 #'   excludes zero. Default `FALSE` (all edges).
-#' @return The tidy `$edges` data frame (one row per edge, with its percentile
-#'   interval, inclusion proportion, and `significant` flag).
+#' @return A `data.frame` with one row per edge and columns `from`, `to`,
+#'   `observed`, `mean` (bootstrap mean), `lower`, `upper` (percentile
+#'   interval), `prop_nonzero` (share of resamples in which the edge is
+#'   nonzero) and `significant` (interval excludes zero).
+#' @examples
+#' set.seed(1)
+#' bs <- net_boot(SRL_GPT, method = "pcor", n_boot = 50, cores = 1)
+#' as.data.frame(bs)
+#' as.data.frame(bs, significant = TRUE)
 #' @export
 as.data.frame.psychnet_bootstrap <- function(x, row.names = NULL,
                                              optional = FALSE, ...,
@@ -394,7 +409,11 @@ as.data.frame.psychnet_bootstrap <- function(x, row.names = NULL,
 #'
 #' @param x A `psychnet_bootstrap` object.
 #' @param ... Unused.
-#' @return `x`, invisibly.
+#' @return `x`, invisibly. Prints the method, the number of resamples, the
+#'   interval level, and the counts of edges, significant edges and nodes.
+#' @examples
+#' set.seed(1)
+#' print(net_boot(SRL_GPT, method = "pcor", n_boot = 50, cores = 1))
 #' @export
 print.psychnet_bootstrap <- function(x, ...) {
   cat(sprintf("<psychnet_bootstrap> %s, %d resamples, %.0f%% CI\n",

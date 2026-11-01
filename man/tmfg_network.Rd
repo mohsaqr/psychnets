@@ -48,3 +48,8 @@ set.seed(1)
 x <- matrix(stats::rnorm(200 * 6), 200, 6)
 tmfg_network(x)
 }
+\references{
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network
+filtering for big data: Triangulated maximally filtered graph. \emph{Journal of
+Complex Networks}, 5(2), 161-178. \doi{10.1093/comnet/cnw015}
+}

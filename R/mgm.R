@@ -98,9 +98,10 @@
 #'
 #' Estimates a mixed graphical model by nodewise L1-penalized regression -- a
 #' gaussian (linear) lasso for continuous nodes and a logistic lasso for binary
-#' nodes -- with per-node EBIC selection, combined by the AND rule. Equivalent
-#' in purpose to `mgm::mgm()`, but pure base R and self-certified: each node's
-#' regression reports its stationarity (KKT) residual (see [glm_lasso_kkt()]).
+#' nodes -- with per-node EBIC selection, combined by the AND (default) or OR
+#' rule. Equivalent in purpose to `mgm::mgm()`, but pure base R and
+#' self-certified: each node's regression reports its stationarity (KKT)
+#' residual (see [glm_lasso_kkt()]).
 #'
 #' @param data Data frame or matrix (rows = observations). Columns are
 #'   continuous, binary, or -- with `native = FALSE` -- multi-level categorical
@@ -171,13 +172,18 @@
 #'   `mgm::mgm` closely for gaussian-gaussian, gaussian-binary, and binary-binary
 #'   edges alike; weak edges near the EBIC/threshold boundary can still differ in
 #'   support because the penalty is selected on an independent base-R path.
+#' @references Haslbeck, J. M. B., & Waldorp, L. J. (2020). mgm: Estimating
+#'   time-varying mixed graphical models in high-dimensional data. *Journal of
+#'   Statistical Software*, 93(8), 1-46. \doi{10.18637/jss.v093.i08}
 #' @examples
 #' set.seed(1)
 #' f <- stats::rnorm(400)
 #' g1 <- f + stats::rnorm(400); g2 <- f + stats::rnorm(400)
 #' b1 <- (f + stats::rnorm(400) > 0) * 1L
 #' d <- data.frame(g1 = g1, g2 = g2, b1 = b1, n = stats::rnorm(400))
-#' mgm_fit(d)
+#' fit <- mgm_fit(d)
+#' fit
+#' as.data.frame(fit)
 #' @export
 mgm_fit <- function(data, gamma = 0.25, types = NULL,
                     nlambda = 100L, lambda_min_ratio = 0.01,

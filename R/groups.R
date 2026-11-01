@@ -125,7 +125,15 @@
 #'
 #' @param x A `psychnet_group` object.
 #' @param ... Ignored.
-#' @return `x`, invisibly (for `print`).
+#' @return `x`, invisibly (for `print`), after printing one row per group with
+#'   its node and edge counts and sample size.
+#' @examples
+#' d <- rbind(data.frame(SRL_GPT, source = "GPT"),
+#'            data.frame(SRL_Claude, source = "Claude"))
+#' nets <- psychnet(d, method = "glasso", group = "source")
+#' nets
+#' summary(nets)
+#' as.data.frame(nets)
 #' @aliases psychnet_group
 #' @export
 print.psychnet_group <- function(x, ...) {
@@ -140,8 +148,9 @@ print.psychnet_group <- function(x, ...) {
 
 #' @rdname print.psychnet_group
 #' @param row.names,optional Ignored (S3 consistency).
-#' @return For `as.data.frame`, the per-group edge lists stacked with a `group`
-#'   column.
+#' @return For `as.data.frame`, the per-group edge lists stacked with a leading
+#'   `group` column: one row per edge per group, columns `group`, `from`,
+#'   `to`, `weight`.
 #' @export
 as.data.frame.psychnet_group <- function(x, row.names = NULL,
                                          optional = FALSE, ...) {
@@ -258,7 +267,15 @@ summary.psychnet_group <- function(object, ...) {
 #'
 #' @param x A `psychnet_result_group` object.
 #' @param ... Ignored.
-#' @return `x`, invisibly (for `print`).
+#' @return `x`, invisibly (for `print`), after printing each group's result
+#'   under a group heading.
+#' @examples
+#' d <- rbind(data.frame(SRL_GPT, source = "GPT"),
+#'            data.frame(SRL_Claude, source = "Claude"))
+#' nets <- psychnet(d, method = "glasso", group = "source")
+#' cent <- net_centralities(nets)
+#' cent
+#' as.data.frame(cent)
 #' @export
 print.psychnet_result_group <- function(x, ...) {
   cat(sprintf("<%s> %d groups: %s\n", class(x)[1L], length(x),

@@ -28,5 +28,8 @@ S <- 0.4^abs(outer(1:8, 1:8, "-"))
 net_smallworld(ebic_glasso(cor_matrix = S, n = 400), n_rand = 50, seed = 1)
 }
 \references{
-Humphries, M. D., & Gurney, K. (2008). \emph{PLoS ONE}, 3(4), e0002051.
+Humphries, M. D., & Gurney, K. (2008). Network
+'small-world-ness': A quantitative method for determining canonical network
+equivalence. \emph{PLoS ONE}, 3(4), e0002051.
+\doi{10.1371/journal.pone.0002051}
 }

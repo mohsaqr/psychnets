@@ -17,7 +17,8 @@
 \item{row.names, optional}{Ignored (S3 consistency).}
 }
 \value{
-\code{x}, invisibly (for \code{print}).
+\code{x}, invisibly (for \code{print}), after printing each group's result
+under a group heading.
 
 For \code{as.data.frame}, the per-group tables stacked with a \code{group}
 column.
@@ -27,4 +28,12 @@ The list returned by a framework verb (\code{\link[=net_centralities]{net_centra
 \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}}) applied to a \link{psychnet_group}: one result per
 group level, keyed by level. \code{as.data.frame()} stacks the per-group tables
 with a leading \code{group} column.
+}
+\examples{
+d <- rbind(data.frame(SRL_GPT, source = "GPT"),
+           data.frame(SRL_Claude, source = "Claude"))
+nets <- psychnet(d, method = "glasso", group = "source")
+cent <- net_centralities(nets)
+cent
+as.data.frame(cent)
 }

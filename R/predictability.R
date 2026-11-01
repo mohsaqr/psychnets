@@ -31,9 +31,16 @@
 #'   (`"gaussian"` or `"binary"`), `metric` (`"R2"` or `"nCC"`),
 #'   `predictability`, and `accuracy` (classification accuracy for binary nodes,
 #'   `NA` for Gaussian).
+#' @references Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network
+#'   models predict observations? On the importance of predictability in
+#'   network models. *Behavior Research Methods*, 50(2), 853-861.
+#'   \doi{10.3758/s13428-017-0910-x}
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' net_predict(ebic_glasso(cor_matrix = S, n = 250))
+#' # Nodewise models need the data they were fitted to.
+#' b <- dichotomize(SRL_GPT)
+#' net_predict(ising_fit(b), data = b)
 #' @export
 net_predict <- function(x, data = NULL, ...) {
   if (inherits(x, "psychnet_group")) {

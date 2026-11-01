@@ -46,6 +46,7 @@ upper half as 1.
 
 ``` r
 
+binary_data <- dichotomize(data = SRL_GPT, method = "rank")
 head(binary_data)
 #>      CSU IV SE SR TA
 #> [1,]   0  0  0  0  1
@@ -54,14 +55,18 @@ head(binary_data)
 #> [4,]   0  1  1  0  1
 #> [5,]   0  0  0  0  1
 #> [6,]   0  0  0  0  0
+colMeans(binary_data)
+#>       CSU        IV        SE        SR        TA 
+#> 0.4966667 0.5366667 0.4766667 0.4600000 0.5000000
 ```
 
-The rank rule gives each variable an endorsement rate of 0.50 in these
-data. Here, a value of 1 means that the observation falls in the upper
-half of that construct. Dichotomization discards information from the
-original scale, so it should be used only when a binary research
-question is substantively justified. Naturally binary variables can be
-analyzed directly.
+Here, a value of 1 means that the observation falls in the upper half of
+that construct. The endorsement rates lie between 0.46 and 0.54 rather
+than at exactly 0.50, because tied scores are kept on the same side of
+the split. Dichotomization discards information from the original scale,
+so it should be used only when a binary research question is
+substantively justified. Naturally binary variables can be analyzed
+directly.
 
 ## Fitting the network with `psychnet()`
 
@@ -80,16 +85,17 @@ ising_net
 #>   optimality (KKT residual): 4.90e-10
 ```
 
-The fitted network contains 5 nodes and 7 edges. Three of the ten
+The fitted network contains 5 nodes and 6 edges. Four of the ten
 possible pairs are removed by the selected model.
 
-## Inspecting interactions with `summary()`
+## Inspecting interactions with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-network and returns the edge table invisibly. The columns `from`, `to`,
-and `weight` identify the retained interactions. Positive weights
-indicate higher conditional odds of joint endorsement. Negative weights
-indicate lower conditional odds.
+network with the range and mean of its weights, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table. The columns `from`, `to`, and `weight` identify the
+retained interactions. Positive weights indicate higher conditional odds
+of joint endorsement. Negative weights indicate lower conditional odds.
 
 ``` r
 
@@ -98,18 +104,29 @@ summary(ising_net)
 #>   nodes: 5   edges: 6   (undirected)
 #>   optimality (KKT residual): 4.90e-10
 #>   edge weight: range [0.853, 2.192], mean 1.573
+as.data.frame(ising_net)
+#>   from to    weight
+#> 1  CSU IV 2.0693278
+#> 2  CSU SE 2.1915348
+#> 3   IV SE 0.9334331
+#> 4  CSU SR 0.8529154
+#> 5   IV SR 2.1108751
+#> 6   SE SR 1.2808939
 ```
 
-The six retained edges among `CSU`, `IV`, `SE`, and `SR` are positive.
-The largest is `IV`-`SR` at 2.242, followed by `CSU`-`SE` at 2.188.
-Students in the upper half of one construct have higher conditional odds
-of being in the upper half of the connected construct after the other
-binary variables are considered.
+All six retained edges join the four learning constructs `CSU`, `IV`,
+`SE`, and `SR`, and all are positive. The largest is `CSU`-`SE` at
+2.192, followed by `IV`-`SR` at 2.111 and `CSU`-`IV` at 2.069; the
+weakest is `CSU`-`SR` at 0.853. Students in the upper half of one
+construct have higher conditional odds of being in the upper half of the
+connected construct after the other binary variables are considered.
 
-The `SR`-`TA` edge is negative (-0.347). Upper-half self-regulation is
-associated with lower conditional odds of upper-half test anxiety after
-cognitive strategy use, intrinsic value, and self-efficacy are taken
-into account. Test anxiety has no other retained edge in this model.
+Test anxiety has no retained edge. After dichotomization, the selected
+model finds no conditional association between upper-half test anxiety
+and any other construct. The Gaussian graphical model of the continuous
+scores retains a negative self-regulation to test anxiety edge (-0.350;
+see the Gaussian graphical models vignette), so its absence here
+illustrates the information lost by dichotomizing.
 
 Ising weights are logistic interaction coefficients, not correlations.
 Their magnitudes should therefore be interpreted on the model’s log-odds
@@ -130,7 +147,7 @@ certificate(ising_net)
 #> 1  ising 4.895834e-10  kkt      TRUE
 ```
 
-The residual is $`3.74 \times 10^{-10}`$ and `certified` is `TRUE`. This
+The residual is $`4.90 \times 10^{-10}`$ and `certified` is `TRUE`. This
 value is close to machine precision and indicates that the penalized
 logistic fits satisfy their numerical conditions to numerical precision.
 The certificate checks optimization, not sampling stability, measurement
@@ -154,11 +171,11 @@ net_centralities(ising_net)
 #> 5   TA 0.000000           0.000000
 ```
 
-Intrinsic value has the highest strength (5.306), followed by cognitive
-strategy use (4.946). Self-regulation has strength 4.868 and expected
-influence 4.175 because its negative connection with test anxiety
-reduces the signed sum. Test anxiety has one edge, giving strength 0.347
-and expected influence -0.347.
+Cognitive strategy use and intrinsic value have the highest strength
+(5.114 each), followed by self-efficacy (4.406) and self-regulation
+(4.245). Every retained edge is positive, so expected influence equals
+strength for every node. Test anxiety has no edge, giving strength and
+expected influence of 0.
 
 These indices describe connection patterns in the estimated binary
 network. They do not show which construct should be targeted by an
@@ -185,16 +202,17 @@ net_predict(ising_net, data = binary_data)
 #> 5   TA binary    nCC      0.0000000 0.5000000
 ```
 
-Intrinsic value has the highest normalized accuracy (0.727) and a raw
-accuracy of 0.863. Cognitive strategy use, self-efficacy, and
-self-regulation have `nCC` values from 0.700 to 0.713 and raw accuracies
-near 0.85. Their neighbours provide substantial classification
-information beyond the 0.50 marginal baseline.
+Intrinsic value has the highest normalized accuracy (0.734) and a raw
+accuracy of 0.877. Cognitive strategy use and self-efficacy have `nCC`
+values of 0.711 and 0.699 with raw accuracy 0.857, and self-regulation
+has `nCC = 0.638` with raw accuracy 0.833. Their neighbours provide
+substantial classification information beyond the marginal baseline of
+about 0.50.
 
-Test anxiety has `nCC = 0` and accuracy 0.50. Its neighbour does not
-improve classification beyond the marginal baseline in the penalized
-model. These are in-sample values; assessment on new observations
-requires validation data.
+Test anxiety has `nCC = 0` and accuracy 0.50. Without neighbours, it is
+predicted no better than by always choosing its more frequent category.
+These are in-sample values; assessment on new observations requires
+validation data.
 
 ## Comparing an unregularized Ising estimator
 
@@ -216,19 +234,23 @@ unregularized_net
 
 ``` r
 
-summary(unregularized_net)
-#> <psychnet> ising_sampler network
-#>   nodes: 5   edges: 6   (undirected)
-#>   optimality: unavailable
-#>   edge weight: range [0.882, 2.345], mean 1.734
+as.data.frame(unregularized_net)
+#>   from to    weight
+#> 1  CSU IV 2.2425237
+#> 2  CSU SE 2.3454742
+#> 3   IV SE 1.1870117
+#> 4  CSU SR 0.8818853
+#> 5   IV SR 2.2882117
+#> 6   SE SR 1.4609560
 ```
 
-The unregularized model retains the same 7 edges. Its positive
-learning-cluster interactions are slightly larger, and the `SR`-`TA`
-edge is -0.769 compared with -0.347 in the penalized model. The shared
-structure provides evidence that the main qualitative pattern is not
-specific to the penalized estimator. The change in magnitude reflects
-the different estimation and pruning procedures.
+The unregularized model retains the same 6 edges, and test anxiety again
+has none. Its interactions are larger than the penalized ones (for
+example `CSU`-`SE` is 2.345 rather than 2.192, and `IV`-`SR` 2.288
+rather than 2.111) because no penalty shrinks them. The shared structure
+provides evidence that the main qualitative pattern is not specific to
+the penalized estimator. The change in magnitude reflects the different
+estimation and pruning procedures.
 
 ``` r
 
@@ -237,9 +259,12 @@ certificate(unregularized_net)
 #> 1 ising_sampler          NA  kkt        NA
 ```
 
-The residual is $`1.38 \times 10^{-8}`$ and `certified` is `TRUE`,
-indicating that the unregularized nodewise fits satisfy their score
-conditions within the default tolerance.
+The certificate is `NA`. Wald pruning set the non-significant
+coefficients to zero after the unpenalized fits, so the returned network
+is no longer the maximum-likelihood solution whose score conditions the
+certificate checks. The residual of the fits before pruning is retained
+on the object, and the penalized model above is the certified estimate
+of this network.
 
 ## Visualizing the network with `cograph::splot()`
 
@@ -270,10 +295,10 @@ a log-odds scale.
 
 The present analysis used rank dichotomization, 300 complete
 observations, the EBIC-regularized Ising estimator, and the AND rule.
-The model retained 7 edges. The largest interaction was `IV`-`SR`
-(2.242), and `SR`-`TA` was negative (-0.347). The KKT residual was
-$`3.74 \times 10^{-10}`$. An unregularized sensitivity model retained
-the same edge set.
+The model retained 6 positive edges among the four learning constructs;
+test anxiety was isolated. The largest interaction was `CSU`-`SE`
+(2.192). The KKT residual was $`4.90 \times 10^{-10}`$. An unregularized
+sensitivity model with Wald pruning at 0.05 retained the same edge set.
 
 ## How the Ising network is estimated
 
@@ -321,3 +346,15 @@ For binary predictability, normalized classification accuracy is
 
 where $`\operatorname{CC}_j`$ is classification accuracy and $`m_j`$ is
 the larger marginal class proportion.
+
+## References
+
+Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models
+predict observations? On the importance of predictability in network
+models. *Behavior Research Methods*, 50(2), 853-861.
+[doi:10.3758/s13428-017-0910-x](https://doi.org/10.3758/s13428-017-0910-x)
+
+van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F., Boschloo,
+L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
+constructing networks from binary data. *Scientific Reports*, 4, 5918.
+[doi:10.1038/srep05918](https://doi.org/10.1038/srep05918)

@@ -1,6 +1,14 @@
 # Centrality-stability coefficient (case-dropping subset bootstrap)
 
-Centrality-stability coefficient (case-dropping subset bootstrap)
+Asks how far the sample can shrink before the ranking of node
+centralities changes. For each drop proportion the network is
+re-estimated on `iter` random subsets without replacement, and each
+subset's centralities are rank-correlated (Spearman) with the
+full-sample centralities. The CS-coefficient of a measure is the largest
+drop proportion at which that correlation stays at or above `threshold`
+with probability at least `certainty`; Epskamp, Borsboom and Fried
+(2018) suggest that it should not fall below 0.25 and preferably exceed
+0.5 before centrality differences are interpreted.
 
 ## Usage
 
@@ -86,6 +94,13 @@ drop proportion. Visualise it with
 Undefined correlations count as failing the threshold in `prop_above`
 and the CS-coefficient; they are omitted from `mean_cor` and `sd_cor`.
 
+## References
+
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper. *Behavior
+Research Methods*, 50(1), 195-212.
+[doi:10.3758/s13428-017-0862-1](https://doi.org/10.3758/s13428-017-0862-1)
+
 ## Examples
 
 ``` r
@@ -95,7 +110,10 @@ colnames(x) <- paste0("V", 1:5)
 # method = "pcor" and small iter keep this example fast; the "glasso"
 # default and iter = 100 are what a real analysis should use.
 cs <- net_stability(x, method = "pcor", drop_prop = c(0.3, 0.6), iter = 10)
-cs$cs
-#>           strength expected_influence 
-#>                  0                  0 
+cs          # the CS-coefficient of each measure
+#> <psychnet_stability> pcor, 10 subsets/proportion
+#>   CS-coefficient (cor >= 0.70 with 95% certainty):
+#>     strength             0.00
+#>     expected_influence   0.00
+plot(cs)    # mean correlation by drop proportion
 ```

@@ -75,12 +75,13 @@ one of the ten possible pairs is removed. Information filtering becomes
 more selective as the number of nodes increases because the number of
 retained edges grows approximately linearly with the number of nodes.
 
-## Inspecting the TMFG edges with `summary()`
+## Inspecting the TMFG edges with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-network and returns its edge table invisibly. The columns `from`, `to`,
-and `weight` identify each retained pair and its signed Pearson
-correlation.
+network with the range and mean of its edge weights, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table. The columns `from`, `to`, and `weight` identify each
+retained pair and its signed Pearson correlation.
 
 ``` r
 
@@ -88,6 +89,17 @@ summary(tmfg_net)
 #> <psychnet> tmfg network
 #>   nodes: 5   edges: 9   (undirected)
 #>   edge weight: range [-0.302, 0.861], mean 0.486
+as.data.frame(tmfg_net)
+#>   from to     weight
+#> 1  CSU IV  0.8609975
+#> 2  CSU SE  0.8345850
+#> 3   IV SE  0.7846003
+#> 4  CSU SR  0.8474352
+#> 5   IV SR  0.8216346
+#> 6   SE SR  0.7791388
+#> 7  CSU TA -0.1385109
+#> 8   IV TA -0.1137214
+#> 9   SR TA -0.3019634
 ```
 
 The learning constructs form a strongly correlated block. Their retained
@@ -124,11 +136,17 @@ adjusted for the remaining variables.
 
 ``` r
 
-summary(logo_net)
-#> <psychnet> logo network
-#>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 6.66e-16
-#>   edge weight: range [-0.372, 0.404], mean 0.191
+as.data.frame(logo_net)
+#>   from to     weight
+#> 1  CSU IV  0.4035714
+#> 2  CSU SE  0.3934966
+#> 3   IV SE  0.1648976
+#> 4  CSU SR  0.3771675
+#> 5   IV SR  0.3300708
+#> 6   SE SR  0.1681288
+#> 7  CSU TA  0.1100782
+#> 8   IV TA  0.1463203
+#> 9   SR TA -0.3720398
 ```
 
 The largest positive partial correlation joins `CSU` and `IV`
@@ -155,8 +173,7 @@ that remains after this shared structure is accounted for.
 checks the defining properties of a fitted network and returns `method`,
 `certificate`, `kind`, and `certified`. For TMFG, the certificate is
 structural. A zero value means that the graph has the required edge
-count, is connected, and has the chordal structure required by the
-method.
+count, is connected, and is planar and chordal, as the method requires.
 
 ``` r
 
@@ -166,7 +183,7 @@ certificate(tmfg_net)
 ```
 
 The TMFG certificate is 0 and `certified` is `TRUE`. The fitted backbone
-satisfies all three structural checks. This diagnostic verifies the
+satisfies all four structural checks. This diagnostic verifies the
 construction of the graph. It does not evaluate whether the retained
 edges are stable across samples or whether the variables are measured
 adequately.
@@ -290,11 +307,17 @@ logo_spearman
 
 ``` r
 
-summary(logo_spearman)
-#> <psychnet> logo network
-#>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 1.44e-15
-#>   edge weight: range [-0.301, 0.440], mean 0.191
+as.data.frame(logo_spearman)
+#>   from to      weight
+#> 1  CSU IV  0.41199792
+#> 2  CSU SE  0.44035144
+#> 3   IV SE  0.11746132
+#> 4  CSU SR  0.34053654
+#> 5   IV SR  0.36023514
+#> 6   SE SR  0.15431277
+#> 7  CSU TA  0.07122993
+#> 8   IV TA  0.12358306
+#> 9   SR TA -0.30091058
 ```
 
 The rank-based LoGo model retains the same nine pairs. The main
@@ -419,3 +442,15 @@ R_j^2 = 1 - \frac{1}{K_{jj}S_{jj}}.
 
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
 evaluates this identity for every node in the conditional network.
+
+## References
+
+Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
+Parsimonious modeling with information filtering networks. *Physical
+Review E*, 94(6), 062306.
+[doi:10.1103/PhysRevE.94.062306](https://doi.org/10.1103/PhysRevE.94.062306)
+
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for
+big data: Triangulated maximally filtered graph. *Journal of Complex
+Networks*, 5(2), 161-178.
+[doi:10.1093/comnet/cnw015](https://doi.org/10.1093/comnet/cnw015)

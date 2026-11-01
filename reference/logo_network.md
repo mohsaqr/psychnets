@@ -65,6 +65,13 @@ A `psychnet` object whose `$weights` is the partial-correlation matrix,
 with `$precision`, `$support` (the TMFG graph), `$cor_matrix`, and
 `$kkt`.
 
+## References
+
+Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
+Parsimonious modeling with information filtering networks. *Physical
+Review E*, 94(6), 062306.
+[doi:10.1103/PhysRevE.94.062306](https://doi.org/10.1103/PhysRevE.94.062306)
+
 ## Examples
 
 ``` r

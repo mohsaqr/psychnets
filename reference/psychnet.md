@@ -151,26 +151,27 @@ which resolve to the same estimators. Whichever you pass in, the stored
 ## Examples
 
 ``` r
+set.seed(1)
 x <- matrix(stats::rnorm(200 * 5), 200, 5)
 colnames(x) <- c("joy", "fear", "calm", "anger", "trust")
 psychnet(x, method = "glasso")
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 0   (undirected)
-#>   lambda: 0.1506   gamma: 0.5
-#>   optimality (KKT residual): 0.00e+00
+#>   lambda: 0.06852   gamma: 0.5
+#>   optimality (KKT residual): 1.39e-17
 psychnet(x, method = "pcor", vars = joy:anger)     # name range
 #> <psychnet> pcor network
 #>   nodes: 4   edges: 6   (undirected)
 psychnet(x, method = "glasso", vars = 1:3)         # index range
 #> <psychnet> glasso network
 #>   nodes: 3   edges: 0   (undirected)
-#>   lambda: 0.06534   gamma: 0.5
-#>   optimality (KKT residual): 1.39e-17
+#>   lambda: 0.06817   gamma: 0.5
+#>   optimality (KKT residual): 0.00e+00
 psychnet(x, method = "EBICglasso")                 # qgraph alias, same result
 #> <psychnet> glasso network
 #>   nodes: 5   edges: 0   (undirected)
-#>   lambda: 0.1506   gamma: 0.5
-#>   optimality (KKT residual): 0.00e+00
+#>   lambda: 0.06852   gamma: 0.5
+#>   optimality (KKT residual): 1.39e-17
 
 ev <- data.frame(
   Actor  = rep(paste0("s", 1:30), each = 20),
@@ -178,8 +179,8 @@ ev <- data.frame(
 psychnet(ev, actor = "Actor", action = "Action")   # event data, auto-detected
 #> <psychnet> glasso network
 #>   nodes: 4   edges: 6   (undirected)
-#>   lambda: 0.004916   gamma: 0.5
-#>   optimality (KKT residual): 6.61e-10
+#>   lambda: 0.004501   gamma: 0.5
+#>   optimality (KKT residual): 1.07e-09
 
 d <- data.frame(g = rep(c("A", "B"), each = 100),
                 matrix(stats::rnorm(200 * 4), 200, 4,

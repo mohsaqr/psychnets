@@ -133,6 +133,13 @@ per measure). Optional `$predictability`, `$thresholded`,
 `$edge_diff_p`, `$centrality_diff_p`, plus
 `$lambda_path`/`$lambda_selected` when the estimator reports them.
 
+## References
+
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper. *Behavior
+Research Methods*, 50(1), 195-212.
+[doi:10.3758/s13428-017-0862-1](https://doi.org/10.3758/s13428-017-0862-1)
+
 ## Examples
 
 ``` r
@@ -142,6 +149,9 @@ colnames(x) <- paste0("V", 1:5)
 # method = "pcor" keeps this example fast; the "glasso" default (and
 # n_boot >= 1000) is what a real analysis should use.
 bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
+bs
+#> <psychnet_bootstrap> pcor, 50 resamples, 95% CI
+#>   10 edges (4 significant), 5 nodes, measures: strength, expected_influence
 as.data.frame(bs)
 #>    from to    observed         mean       lower      upper prop_nonzero
 #> 1    V1 V2  0.31118543  0.298237891  0.15159446 0.40899218            1
@@ -165,4 +175,10 @@ as.data.frame(bs)
 #> 8        FALSE
 #> 9        FALSE
 #> 10        TRUE
+as.data.frame(bs, significant = TRUE)
+#>    from to  observed      mean     lower     upper prop_nonzero significant
+#> 1    V1 V2 0.3111854 0.2982379 0.1515945 0.4089922            1        TRUE
+#> 3    V2 V3 0.3342644 0.3371318 0.2122220 0.4864931            1        TRUE
+#> 6    V3 V4 0.3296244 0.3381151 0.1466475 0.5032197            1        TRUE
+#> 10   V4 V5 0.3303466 0.3604165 0.2193767 0.4633247            1        TRUE
 ```

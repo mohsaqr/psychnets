@@ -60,6 +60,13 @@ correlation matrix on the retained edges, with `$adjacency`, `$cliques`,
 [`logo_network()`](https://pak.dynasite.org/psychnets/reference/logo_network.md)),
 and `$cor_matrix`.
 
+## References
+
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for
+big data: Triangulated maximally filtered graph. *Journal of Complex
+Networks*, 5(2), 161-178.
+[doi:10.1093/comnet/cnw015](https://doi.org/10.1093/comnet/cnw015)
+
 ## Examples
 
 ``` r

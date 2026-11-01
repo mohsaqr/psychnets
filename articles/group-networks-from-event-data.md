@@ -106,12 +106,14 @@ actor_net
 The fitted network contains 9 action nodes and 28 edges. The selected
 penalty is $`\lambda = 0.008001`$ at $`\gamma = 0.5`$.
 
-## Inspecting actor-level edges with `summary()`
+## Inspecting actor-level edges with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-model and returns an edge table with `from`, `to`, and `weight`. Each
-weight is a partial correlation between two action counts after the
-other seven action counts are considered.
+model with the range and mean of its edge weights, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table with `from`, `to`, and `weight`. Each weight is a partial
+correlation between two action counts after the other seven action
+counts are considered.
 
 ``` r
 
@@ -121,6 +123,36 @@ summary(actor_net)
 #>   lambda: 0.008001   gamma: 0.5
 #>   optimality (KKT residual): 3.19e-11
 #>   edge weight: range [-0.154, 0.434], mean 0.104
+as.data.frame(actor_net)
+#>          from         to       weight
+#> 1       adapt   cohesion  0.028340228
+#> 2    cohesion  consensus  0.104456298
+#> 3       adapt coregulate  0.083642924
+#> 4    cohesion coregulate  0.024349135
+#> 5   consensus coregulate  0.225910826
+#> 6       adapt    discuss  0.171392767
+#> 7    cohesion    discuss  0.027060667
+#> 8   consensus    discuss  0.329359608
+#> 9  coregulate    discuss  0.115303519
+#> 10      adapt    emotion -0.071536621
+#> 11   cohesion    emotion  0.348144853
+#> 12  consensus    emotion  0.173584152
+#> 13 coregulate    emotion  0.102035538
+#> 14    discuss    emotion  0.044301431
+#> 15      adapt    monitor  0.027444520
+#> 16 coregulate    monitor  0.063156831
+#> 17    discuss    monitor  0.157029937
+#> 18    emotion    monitor  0.037567027
+#> 19  consensus       plan  0.434452415
+#> 20 coregulate       plan -0.007036661
+#> 21    discuss       plan -0.154478241
+#> 22    emotion       plan  0.072573204
+#> 23    monitor       plan  0.146170265
+#> 24      adapt  synthesis  0.188381634
+#> 25  consensus  synthesis  0.079776529
+#> 26 coregulate  synthesis  0.007569019
+#> 27    discuss  synthesis  0.186580959
+#> 28    emotion  synthesis -0.020637713
 ```
 
 The largest positive edge joins `consensus` and `plan` ($`r = 0.434`$).
@@ -289,12 +321,22 @@ penalty is $`\lambda = 0.0288`$.
 
 ``` r
 
-summary(within_net)
-#> <psychnet> glasso network
-#>   nodes: 9   edges: 14   (undirected)
-#>   lambda: 0.0288   gamma: 0.5
-#>   optimality (KKT residual): 1.30e-12
-#>   edge weight: range [-0.074, 0.148], mean 0.042
+as.data.frame(within_net)
+#>          from         to       weight
+#> 1       adapt   cohesion  0.020792318
+#> 2    cohesion coregulate  0.004241206
+#> 3   consensus coregulate  0.057999059
+#> 4       adapt    discuss  0.033506053
+#> 5   consensus    discuss  0.058347732
+#> 6  coregulate    discuss  0.038807994
+#> 7    cohesion    emotion  0.147896226
+#> 8  coregulate    monitor  0.004845725
+#> 9       adapt       plan -0.015897821
+#> 10   cohesion       plan -0.005337637
+#> 11  consensus       plan  0.116101114
+#> 12    discuss       plan -0.073852486
+#> 13      adapt  synthesis  0.089102215
+#> 14    discuss  synthesis  0.116874946
 ```
 
 The largest person-centered edge joins `cohesion` and `emotion`

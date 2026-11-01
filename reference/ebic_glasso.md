@@ -136,7 +136,27 @@ sorted. With `refit = "unregularized"` the object also carries
 `$support`, and `$kkt` is a
 [`ggm_support_kkt()`](https://pak.dynasite.org/psychnets/reference/ggm_support_kkt.md)
 residual; with `refit = FALSE` the reported `$kkt` reflects the loose
-scan tolerance (~1e-4) rather than the refit's ~1e-11.
+scan tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge
+table with
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) (see
+[`as.data.frame.psychnet()`](https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet.md))
+and the certificate with
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md).
+
+## References
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
+432-441.
+[doi:10.1093/biostatistics/kxm045](https://doi.org/10.1093/biostatistics/kxm045)
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. *Advances in Neural Information
+Processing Systems*, 23, 604-612.
+
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
+correlation networks. *Psychological Methods*, 23(4), 617-634.
+[doi:10.1037/met0000167](https://doi.org/10.1037/met0000167)
 
 ## Examples
 
@@ -155,4 +175,7 @@ as.data.frame(fit)
 #> 3   V3 V4 0.3423189
 #> 4   V4 V5 0.3423189
 #> 5   V5 V6 0.3681824
+certificate(fit)
+#>   method certificate kind certified
+#> 1 glasso 1.10463e-10  kkt      TRUE
 ```

@@ -37,6 +37,46 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 ## Value
 
-`x`, invisibly (for `print`).
+`x`, invisibly (for `print`), after printing each group's result under a
+group heading.
 
 For `as.data.frame`, the per-group tables stacked with a `group` column.
+
+## Examples
+
+``` r
+d <- rbind(data.frame(SRL_GPT, source = "GPT"),
+           data.frame(SRL_Claude, source = "Claude"))
+nets <- psychnet(d, method = "glasso", group = "source")
+cent <- net_centralities(nets)
+cent
+#> <psychnet_centrality_group> 2 groups: GPT, Claude
+#> 
+#> --- GPT ---
+#>   node  strength expected_influence
+#> 1  CSU 1.1984512         1.19845117
+#> 2   IV 1.0012765         1.00127649
+#> 3   SE 0.8492185         0.84921854
+#> 4   SR 1.2314317         0.53172852
+#> 5   TA 0.6082238        -0.09147935
+#> 
+#> --- Claude ---
+#>   node  strength expected_influence
+#> 1  CSU 1.4794795          1.4794795
+#> 2   IV 0.9920086          0.1598207
+#> 3   SE 1.2652845         -0.3743445
+#> 4   SR 1.9520259          1.0956629
+#> 5   TA 1.3851959         -0.3340278
+as.data.frame(cent)
+#>           group node  strength expected_influence
+#> GPT.1       GPT  CSU 1.1984512         1.19845117
+#> GPT.2       GPT   IV 1.0012765         1.00127649
+#> GPT.3       GPT   SE 0.8492185         0.84921854
+#> GPT.4       GPT   SR 1.2314317         0.53172852
+#> GPT.5       GPT   TA 0.6082238        -0.09147935
+#> Claude.1 Claude  CSU 1.4794795         1.47947947
+#> Claude.2 Claude   IV 0.9920086         0.15982071
+#> Claude.3 Claude   SE 1.2652845        -0.37434447
+#> Claude.4 Claude   SR 1.9520259         1.09566294
+#> Claude.5 Claude   TA 1.3851959        -0.33402780
+```

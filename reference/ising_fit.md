@@ -86,19 +86,38 @@ ising_fit(
 ## Value
 
 A `psychnet` object whose `$weights` is the symmetric weight matrix,
-with `$thresholds` (node intercepts) and `$kkt` (the worst nodewise
-stationarity residual).
+with `$thresholds` (node intercepts), `$rule`, `$nodewise` (the per-node
+fits used by
+[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md))
+and `$kkt` (the worst nodewise stationarity residual, read with
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)).
+
+## References
+
+van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F., Boschloo,
+L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
+constructing networks from binary data. *Scientific Reports*, 4, 5918.
+[doi:10.1038/srep05918](https://doi.org/10.1038/srep05918)
 
 ## Examples
 
 ``` r
-set.seed(1)
-z <- matrix(stats::rnorm(400 * 2), 400, 2)
-x <- cbind(z[, 1], z[, 1], z[, 2], z[, 2]) + matrix(stats::rnorm(400 * 4), 400)
-b <- (x > 0) * 1L
-colnames(b) <- paste0("V", 1:4)
-ising_fit(b)
+# Ising models need 0/1 data: split the five SRL construct scores at the median.
+b <- dichotomize(SRL_GPT)
+fit <- ising_fit(b)
+fit
 #> <psychnet> ising network
-#>   nodes: 4   edges: 2   (undirected)
-#>   optimality (KKT residual): 3.77e-14
+#>   nodes: 5   edges: 6   (undirected)
+#>   optimality (KKT residual): 1.45e-09
+as.data.frame(fit)
+#>   from to    weight
+#> 1  CSU IV 2.3063761
+#> 2  CSU SE 1.8399656
+#> 3   IV SE 1.2860533
+#> 4  CSU SR 1.7394177
+#> 5   IV SR 1.9836011
+#> 6   SE SR 0.7570295
+certificate(fit)
+#>   method  certificate kind certified
+#> 1  ising 1.451526e-09  kkt      TRUE
 ```

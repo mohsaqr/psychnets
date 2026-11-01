@@ -1,5 +1,34 @@
 # Changelog
 
+## psychnets 0.6.2
+
+### Documentation
+
+- Vignettes rechecked against current output. The Ising and mixed
+  graphical model vignettes described networks from an earlier release
+  (7 edges and a self-regulation to test-anxiety edge); their prose now
+  matches the current fits (6 edges, test anxiety isolated under the AND
+  rule; the OR rule adds the negative edge). Each vignette shows the
+  edge table with
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html), which
+  [`summary()`](https://rdrr.io/r/base/summary.html) returns only
+  invisibly, and lists its method references.
+- Examples no longer reach into result objects with `$`: certificates
+  are read with
+  [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md),
+  stability with [`print()`](https://rdrr.io/r/base/print.html), and the
+  certificate helpers
+  ([`glasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glasso_kkt.md),
+  [`ggm_support_kkt()`](https://pak.dynasite.org/psychnets/reference/ggm_support_kkt.md),
+  [`glm_lasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glm_lasso_kkt.md))
+  are shown on exact closed-form optima.
+  [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
+  examples use the bundled `srl_panel`; Ising examples use
+  `dichotomize(SRL_GPT)`. Every print method has an example.
+- Method references added to the estimator, centrality, predictability
+  and resampling help pages; DESCRIPTION references now give authors and
+  years.
+
 ## psychnets 0.6.1
 
 ### Complete function-review fixes

@@ -103,71 +103,144 @@ to solid or dashed lines.
 ## Examples
 
 ``` r
-# 300 persons, 3 variables, 4 waves: correlated stable traits plus a
-# within-person lag-1 process in which X1 drives X2.
-set.seed(1)
-n <- 300
-beta <- matrix(c(0.4, 0.3, 0, 0, 0.4, 0, 0, 0, 0.4), 3)
-trait <- matrix(rnorm(n * 3), n) + rnorm(n)
-states <- Reduce(function(w, t) w %*% t(beta) + matrix(rnorm(n * 3), n),
-                 seq_len(5), matrix(0, n, 3), accumulate = TRUE)[-(1:2)]
-long <- do.call(rbind, Map(function(w, t)
-  data.frame(id = seq_len(n), wave = t, trait + w), states, seq_len(4)))
-fit <- panel_gvar(long, vars = c("X1", "X2", "X3"), id = "id", wave = "wave")
+# srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
+# effort in one week drives efficacy in the next.
+fit <- panel_gvar(srl_panel,
+                  vars = c("efficacy", "planning", "effort", "enjoyment",
+                           "anxiety"),
+                  id = "student", wave = "week")
 summary(fit)
 #>           network directed nodes edges significant mean_abs_weight
-#> 1        temporal     TRUE     3     6           1      0.07349829
-#> 2 contemporaneous    FALSE     3     3           0      0.04156320
-#> 3         between    FALSE     3     3           3      0.33740685
+#> 1        temporal     TRUE     5    20           1       0.1046718
+#> 2 contemporaneous    FALSE     5    10           5       0.1877681
+#> 3         between    FALSE     5    10           2       0.1831649
 as.data.frame(fit, what = "parameters")
-#>                matrix row  col      estimate         se             p
-#> 1                  mu  X1 <NA>  0.0004526872 0.08934372  9.959573e-01
-#> 2                  mu  X2 <NA> -0.0486728484 0.09680339  6.151041e-01
-#> 3                  mu  X3 <NA> -0.1261852806 0.09721925  1.943061e-01
-#> 4   omega_zeta_within  X2   X1 -0.0171496775 0.03937724  6.631831e-01
-#> 5   omega_zeta_within  X3   X1  0.0763290603 0.03855186  4.771409e-02
-#> 6   omega_zeta_within  X3   X2 -0.0312108475 0.03866245  4.195137e-01
-#> 7   delta_zeta_within  X1   X1  1.0148239963 0.02782219 2.728321e-291
-#> 8   delta_zeta_within  X2   X2  0.9507560159 0.02627600 1.109169e-286
-#> 9   delta_zeta_within  X3   X3  1.0224638983 0.02775088 3.597988e-297
-#> 10               beta  X1   X1  0.4827475939 0.05930052  3.930081e-16
-#> 11               beta  X2   X1  0.2352710035 0.04498760  1.697990e-07
-#> 12               beta  X3   X1  0.0055641139 0.04885089  9.093171e-01
-#> 13               beta  X1   X2 -0.0428914379 0.05061982  3.968140e-01
-#> 14               beta  X2   X2  0.3619716930 0.05546525  6.750464e-11
-#> 15               beta  X3   X2 -0.0561208438 0.05030812  2.646180e-01
-#> 16               beta  X1   X3  0.0257189751 0.04893278  5.991675e-01
-#> 17               beta  X2   X3 -0.0754233776 0.04537402  9.646086e-02
-#> 18               beta  X3   X3  0.3718081497 0.05975427  4.899623e-10
-#> 19 omega_zeta_between  X2   X1  0.4969386490 0.07628681  7.313489e-11
-#> 20 omega_zeta_between  X3   X1  0.2523622409 0.09541489  8.171661e-03
-#> 21 omega_zeta_between  X3   X2  0.2629196654 0.08703576  2.520884e-03
-#> 22 delta_zeta_between  X1   X1  1.0231153290 0.08177032  6.413739e-36
-#> 23 delta_zeta_between  X2   X2  1.1729995519 0.08042754  3.522347e-48
-#> 24 delta_zeta_between  X3   X3  1.3047968699 0.08623385  1.012794e-51
-#>         ci_lower   ci_upper fixed
-#> 1  -0.1746577954 0.17556317 FALSE
-#> 2  -0.2384040038 0.14105831 FALSE
-#> 3  -0.3167315094 0.06436095 FALSE
-#> 4  -0.0943276448 0.06002829 FALSE
-#> 5   0.0007688039 0.15188932 FALSE
-#> 6  -0.1069878542 0.04456616 FALSE
-#> 7   0.9602935050 1.06935449 FALSE
-#> 8   0.8992560014 1.00225603 FALSE
-#> 9   0.9680731767 1.07685462 FALSE
-#> 10  0.3665207066 0.59897448 FALSE
-#> 11  0.1470969198 0.32344509 FALSE
-#> 12 -0.0901818643 0.10131009 FALSE
-#> 13 -0.1421044541 0.05632158 FALSE
-#> 14  0.2532618093 0.47068158 FALSE
-#> 15 -0.1547229413 0.04248125 FALSE
-#> 16 -0.0701875069 0.12162546 FALSE
-#> 17 -0.1643548288 0.01350807 FALSE
-#> 18  0.2546919384 0.48892436 FALSE
-#> 19  0.3474192455 0.64645805 FALSE
-#> 20  0.0653524861 0.43937200 FALSE
-#> 21  0.0923327019 0.43350663 FALSE
-#> 22  0.8628484444 1.18338221 FALSE
-#> 23  1.0153644650 1.33063464 FALSE
-#> 24  1.1357816391 1.47381210 FALSE
+#>                matrix       row       col     estimate         se             p
+#> 1                  mu  efficacy      <NA> 55.419110375 0.96332583  0.000000e+00
+#> 2                  mu  planning      <NA> 58.430209254 0.98885373  0.000000e+00
+#> 3                  mu    effort      <NA> 60.027776333 1.06107488  0.000000e+00
+#> 4                  mu enjoyment      <NA> 55.313175056 0.90700581  0.000000e+00
+#> 5                  mu   anxiety      <NA> 59.159915264 1.08359273  0.000000e+00
+#> 6   omega_zeta_within  planning  efficacy  0.591106125 0.04431346  1.369209e-40
+#> 7   omega_zeta_within    effort  efficacy  0.342448405 0.06025581  1.321643e-08
+#> 8   omega_zeta_within enjoyment  efficacy -0.038177031 0.06832147  5.763083e-01
+#> 9   omega_zeta_within   anxiety  efficacy  0.028205118 0.06800858  6.783404e-01
+#> 10  omega_zeta_within    effort  planning  0.188697279 0.06478954  3.585880e-03
+#> 11  omega_zeta_within enjoyment  planning  0.255668116 0.06276252  4.629603e-05
+#> 12  omega_zeta_within   anxiety  planning -0.062045823 0.06668056  3.521157e-01
+#> 13  omega_zeta_within enjoyment    effort  0.317013534 0.06007371  1.312612e-07
+#> 14  omega_zeta_within   anxiety    effort  0.002383863 0.06667728  9.714799e-01
+#> 15  omega_zeta_within   anxiety enjoyment  0.051935419 0.06629439  4.333888e-01
+#> 16  delta_zeta_within  efficacy  efficacy  4.076518276 0.19502889  5.121317e-97
+#> 17  delta_zeta_within  planning  planning  3.926979518 0.18729931  1.331403e-97
+#> 18  delta_zeta_within    effort    effort  4.922106278 0.23282273  3.339011e-99
+#> 19  delta_zeta_within enjoyment enjoyment  5.636586719 0.26550541 5.084023e-100
+#> 20  delta_zeta_within   anxiety   anxiety  7.299608916 0.34223768 6.101839e-101
+#> 21               beta  efficacy  efficacy -0.096672635 0.13467200  4.728574e-01
+#> 22               beta  planning  efficacy -0.127621701 0.12388997  3.029530e-01
+#> 23               beta    effort  efficacy -0.185033790 0.13554948  1.722328e-01
+#> 24               beta enjoyment  efficacy -0.161261754 0.13020900  2.155367e-01
+#> 25               beta   anxiety  efficacy -0.122338773 0.13119129  3.510668e-01
+#> 26               beta  efficacy  planning  0.173937878 0.14529357  2.312490e-01
+#> 27               beta  planning  planning  0.396614715 0.15188718  9.021313e-03
+#> 28               beta    effort  planning  0.084407115 0.15504123  5.861544e-01
+#> 29               beta enjoyment  planning  0.114456276 0.14927613  4.432349e-01
+#> 30               beta   anxiety  planning  0.024730130 0.15150380  8.703365e-01
+#> 31               beta  efficacy    effort  0.352722389 0.11519665  2.199257e-03
+#> 32               beta  planning    effort  0.168996084 0.11367355  1.370996e-01
+#> 33               beta    effort    effort  0.483841150 0.13198874  2.465897e-04
+#> 34               beta enjoyment    effort  0.196809315 0.11886939  9.778725e-02
+#> 35               beta   anxiety    effort  0.087931626 0.12119415  4.681187e-01
+#> 36               beta  efficacy enjoyment  0.125084640 0.10252259  2.224387e-01
+#> 37               beta  planning enjoyment -0.015083147 0.10027960  8.804404e-01
+#> 38               beta    effort enjoyment  0.035363362 0.10913195  7.459061e-01
+#> 39               beta enjoyment enjoyment  0.325408489 0.12000699  6.696350e-03
+#> 40               beta   anxiety enjoyment  0.036854988 0.10677727  7.299759e-01
+#> 41               beta  efficacy   anxiety  0.026009263 0.08031053  7.460450e-01
+#> 42               beta  planning   anxiety  0.003375992 0.07857850  9.657308e-01
+#> 43               beta    effort   anxiety -0.014936851 0.08549642  8.613096e-01
+#> 44               beta enjoyment   anxiety  0.036480078 0.08218780  6.571420e-01
+#> 45               beta   anxiety   anxiety  0.296628278 0.10027278  3.094278e-03
+#> 46 omega_zeta_between  planning  efficacy  0.313900573 0.11991975  8.855349e-03
+#> 47 omega_zeta_between    effort  efficacy  0.069437587 0.13041944  5.944369e-01
+#> 48 omega_zeta_between enjoyment  efficacy  0.083371182 0.14572743  5.672518e-01
+#> 49 omega_zeta_between   anxiety  efficacy -0.148011468 0.12809365  2.478881e-01
+#> 50 omega_zeta_between    effort  planning  0.302598713 0.11877742  1.084632e-02
+#> 51 omega_zeta_between enjoyment  planning  0.316230825 0.13044624  1.534117e-02
+#> 52 omega_zeta_between   anxiety  planning  0.196830672 0.12719722  1.217560e-01
+#> 53 omega_zeta_between enjoyment    effort  0.344615578 0.12950101  7.788502e-03
+#> 54 omega_zeta_between   anxiety    effort -0.023216660 0.13180138  8.601770e-01
+#> 55 omega_zeta_between   anxiety enjoyment  0.033435880 0.14994682  8.235472e-01
+#> 56 delta_zeta_between  efficacy  efficacy  7.096563839 0.63845479  1.057926e-28
+#> 57 delta_zeta_between  planning  planning  6.244114798 0.58260461  8.417191e-27
+#> 58 delta_zeta_between    effort    effort  7.124688044 0.64896348  4.845572e-28
+#> 59 delta_zeta_between enjoyment enjoyment  5.680043494 0.67515497  3.998331e-17
+#> 60 delta_zeta_between   anxiety   anxiety  9.447080263 0.90290122  1.277086e-25
+#>       ci_lower    ci_upper fixed
+#> 1  53.53102645 57.30719430 FALSE
+#> 2  56.49209157 60.36832694 FALSE
+#> 3  57.94810778 62.10744489 FALSE
+#> 4  53.53547634 57.09087377 FALSE
+#> 5  57.03611254 61.28371798 FALSE
+#> 6   0.50425334  0.67795891 FALSE
+#> 7   0.22434919  0.46054762 FALSE
+#> 8  -0.17208466  0.09573060 FALSE
+#> 9  -0.10508924  0.16149948 FALSE
+#> 10  0.06171212  0.31568244 FALSE
+#> 11  0.13265584  0.37868039 FALSE
+#> 12 -0.19273733  0.06864568 FALSE
+#> 13  0.19927123  0.43475583 FALSE
+#> 14 -0.12830121  0.13306894 FALSE
+#> 15 -0.07799920  0.18187004 FALSE
+#> 16  3.69426868  4.45876787 FALSE
+#> 17  3.55987962  4.29407941 FALSE
+#> 18  4.46578211  5.37843045 FALSE
+#> 19  5.11620569  6.15696775 FALSE
+#> 20  6.62883539  7.97038244 FALSE
+#> 21 -0.36062490  0.16727963 FALSE
+#> 22 -0.37044157  0.11519817 FALSE
+#> 23 -0.45070588  0.08063830 FALSE
+#> 24 -0.41646671  0.09394320 FALSE
+#> 25 -0.37946898  0.13479144 FALSE
+#> 26 -0.11083229  0.45870805 FALSE
+#> 27  0.09892130  0.69430813 FALSE
+#> 28 -0.21946811  0.38828234 FALSE
+#> 29 -0.17811957  0.40703212 FALSE
+#> 30 -0.27221186  0.32167212 FALSE
+#> 31  0.12694110  0.57850368 FALSE
+#> 32 -0.05379998  0.39179215 FALSE
+#> 33  0.22514798  0.74253432 FALSE
+#> 34 -0.03617041  0.42978904 FALSE
+#> 35 -0.14960455  0.32546780 FALSE
+#> 36 -0.07585594  0.32602522 FALSE
+#> 37 -0.21162754  0.18146125 FALSE
+#> 38 -0.17853134  0.24925806 FALSE
+#> 39  0.09019911  0.56061787 FALSE
+#> 40 -0.17242462  0.24613460 FALSE
+#> 41 -0.13139648  0.18341501 FALSE
+#> 42 -0.15063504  0.15738703 FALSE
+#> 43 -0.18250676  0.15263306 FALSE
+#> 44 -0.12460505  0.19756521 FALSE
+#> 45  0.10009724  0.49315931 FALSE
+#> 46  0.07886218  0.54893897 FALSE
+#> 47 -0.18617981  0.32505498 FALSE
+#> 48 -0.20224933  0.36899169 FALSE
+#> 49 -0.39907040  0.10304747 FALSE
+#> 50  0.06979925  0.53539818 FALSE
+#> 51  0.06056089  0.57190076 FALSE
+#> 52 -0.05247130  0.44613265 FALSE
+#> 53  0.09079827  0.59843289 FALSE
+#> 54 -0.28154261  0.23510929 FALSE
+#> 55 -0.26045448  0.32732624 FALSE
+#> 56  5.84521544  8.34791223 FALSE
+#> 57  5.10223074  7.38599886 FALSE
+#> 58  5.85274300  8.39663309 FALSE
+#> 59  4.35676407  7.00332292 FALSE
+#> 60  7.67742639 11.21673413 FALSE
+as.data.frame(fit, what = "diagnostics")
+#>     n waves        score boundary boundary_part se_available starts_agree
+#> 1 100     4 8.159029e-13    FALSE          <NA>         TRUE            3
+#>   starts
+#> 1      3
+if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
 ```

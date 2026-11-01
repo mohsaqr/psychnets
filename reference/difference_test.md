@@ -47,6 +47,13 @@ observed values, their observed difference, the percentile interval of
 the bootstrap difference (`lower`, `upper`), the two-sided `p_value`,
 and a logical `significant`.
 
+## References
+
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper. *Behavior
+Research Methods*, 50(1), 195-212.
+[doi:10.3758/s13428-017-0862-1](https://doi.org/10.3758/s13428-017-0862-1)
+
 ## Examples
 
 ``` r

@@ -72,6 +72,15 @@ to sum to 1, `$raw_importance` holds the unscaled shares, and `$kkt`
 [`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md))
 is computed from those raw shares.
 
+## References
+
+Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980). *Introduction to
+bivariate and multivariate analysis*. Scott, Foresman.
+
+Groemping, U. (2006). Relative importance for linear regression in R:
+The package relaimpo. *Journal of Statistical Software*, 17(1), 1-27.
+[doi:10.18637/jss.v017.i01](https://doi.org/10.18637/jss.v017.i01)
+
 ## Examples
 
 ``` r

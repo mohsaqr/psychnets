@@ -21,4 +21,13 @@ print(x, ...)
 
 ## Value
 
-`x`, invisibly.
+`x`, invisibly. Prints the flagged pairs, or a note that none were
+flagged.
+
+## Examples
+
+``` r
+print(redundancy(SRL_Claude))
+#> # redundant pairs (proportion < 0.25, r > 0.50): 0 found
+#>   none
+```

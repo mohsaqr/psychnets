@@ -71,12 +71,14 @@ ordered pair of distinct nodes. Relative importance allocates a
 contribution to every predictor, so the raw network is complete unless a
 contribution is exactly zero.
 
-## Inspecting directed contributions with `summary()`
+## Inspecting directed contributions with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-network and returns an edge table with `from`, `to`, and `weight`. The
-`from` node is the predictor, the `to` node is the outcome, and `weight`
-is the predictor’s share of the outcome’s $`R^2`$.
+network with the range and mean of its weights, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table with `from`, `to`, and `weight`. The `from` node is the
+predictor, the `to` node is the outcome, and `weight` is the predictor’s
+share of the outcome’s $`R^2`$.
 
 ``` r
 
@@ -85,6 +87,28 @@ summary(importance_net)
 #>   nodes: 5   edges: 20   (directed)
 #>   optimality (KKT residual): 2.22e-16
 #>   edge weight: range [0.006, 0.299], mean 0.165
+as.data.frame(importance_net)
+#>    from  to      weight
+#> 1    IV CSU 0.288505266
+#> 2    SE CSU 0.263574096
+#> 3    SR CSU 0.274082666
+#> 4    TA CSU 0.007326148
+#> 5   CSU  IV 0.299473895
+#> 6    SE  IV 0.216286692
+#> 7    SR  IV 0.258608009
+#> 8    TA  IV 0.007032583
+#> 9   CSU  SE 0.280588934
+#> 10   IV  SE 0.219009605
+#> 11   SR  SE 0.220573037
+#> 12   TA  SE 0.006045547
+#> 13  CSU  SR 0.277393999
+#> 14   IV  SR 0.253052645
+#> 15   SE  SR 0.212824511
+#> 16   TA  SR 0.052422918
+#> 17  CSU  TA 0.014154964
+#> 18   IV  TA 0.015416846
+#> 19   SE  TA 0.012055817
+#> 20   SR  TA 0.127772080
 ```
 
 The weights range from 0.006 to 0.299. The largest edge runs from `CSU`
@@ -219,11 +243,28 @@ importance_spearman
 
 ``` r
 
-summary(importance_spearman)
-#> <psychnet> relimp network
-#>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 2.22e-16
-#>   edge weight: range [0.004, 0.299], mean 0.160
+as.data.frame(importance_spearman)
+#>    from  to      weight
+#> 1    IV CSU 0.286725129
+#> 2    SE CSU 0.270159694
+#> 3    SR CSU 0.265419989
+#> 4    TA CSU 0.005393971
+#> 5   CSU  IV 0.299066051
+#> 6    SE  IV 0.203370231
+#> 7    SR  IV 0.263749828
+#> 8    TA  IV 0.005279123
+#> 9   CSU  SE 0.292490014
+#> 10   IV  SE 0.206036816
+#> 11   SR  SE 0.209495026
+#> 12   TA  SE 0.004346020
+#> 13  CSU  SR 0.271471270
+#> 14   IV  SR 0.260383389
+#> 15   SE  SR 0.203334385
+#> 16   TA  SR 0.037126693
+#> 17  CSU  TA 0.009240756
+#> 18   IV  TA 0.011339759
+#> 19   SE  TA 0.008842802
+#> 20   SR  TA 0.086215285
 ```
 
 The largest rank-based edge remains `CSU` to `IV` at 0.299. The learning
@@ -317,3 +358,12 @@ Row sums are outgoing contributions reported by
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
 returns the maximum absolute deviation from the efficiency identity
 across nodes.
+
+## References
+
+Groemping, U. (2006). Relative importance for linear regression in R:
+The package relaimpo. *Journal of Statistical Software*, 17(1), 1-27.
+[doi:10.18637/jss.v017.i01](https://doi.org/10.18637/jss.v017.i01)
+
+Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980). *Introduction to
+bivariate and multivariate analysis*. Scott, Foresman.

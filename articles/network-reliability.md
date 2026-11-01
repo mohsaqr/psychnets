@@ -55,10 +55,12 @@ weight and every node centrality. For each edge it reports the resample
 mean, the percentile confidence interval, the proportion of resamples in
 which the edge is non-zero, and a `significant` flag that is `TRUE` when
 the interval excludes zero. The returned object has class
-`psychnet_bootstrap`; its `$edges` data frame carries the columns
-`from`, `to`, `observed`, `mean`, `lower`, `upper`, `prop_nonzero`, and
-`significant`, and its `$centrality` data frame carries the observed
-centrality of each node with a lower and upper bound per measure.
+`psychnet_bootstrap`;
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+its edge table, with the columns `from`, `to`, `observed`, `mean`,
+`lower`, `upper`, `prop_nonzero`, and `significant`, and
+`plot(type = "centrality")` draws the bootstrapped interval of each
+node’s centrality.
 
 ``` r
 
@@ -74,7 +76,7 @@ each estimate.
 
 ``` r
 
-b$edges
+as.data.frame(b)
 #>    from to     observed        mean      lower      upper prop_nonzero
 #> 1   CSU IV  0.001744267  0.02777141  0.0000000  0.1202986        0.550
 #> 2   CSU SE  0.223973564  0.22825629  0.1360369  0.3243276        1.000

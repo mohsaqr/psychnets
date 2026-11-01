@@ -1,14 +1,12 @@
 # Correctness certificate of a fitted network
 
-Regularized or constrained estimators in `psychnet` self-certify when
-the returned graph is the fitted optimization result. A graph altered by
-post-estimation thresholding, or an external fit without an available
-residual, reports `NA` rather than being presented as certified. reports
-how far the returned network sits from the unique optimum of its own
-convex objective (a KKT / stationarity residual), or – for the
-structural methods – whether the graph satisfies the identity that
-defines it. This verb returns that certificate as a tidy one-row
-`data.frame`, so correctness is read the same way for every method.
+Regularized or constrained estimators in `psychnets` self-certify: each
+fitted network carries a residual that reports how far it sits from the
+optimum of its own objective (a KKT / stationarity residual), or – for
+the structural methods (TMFG, relative importance) – whether the graph
+satisfies the identity that defines it. This verb returns that
+certificate as a tidy one-row `data.frame`, so correctness is read the
+same way for every method.
 
 ## Usage
 
@@ -40,8 +38,13 @@ made.
 
 ## Details
 
-The residual is near machine zero for a correctly solved problem. `cor`
-and `pcor` have no optimization to certify and report `NA`.
+The residual is near machine zero for a correctly solved problem. A
+graph altered after fitting (post-estimation `threshold`, Wald pruning
+in
+[`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md))
+or an external-engine fit without an available residual reports `NA`
+rather than being presented as certified. `cor` and `pcor` have no
+optimization to certify and report `NA` with kind `"none"`.
 
 ## Examples
 

@@ -103,7 +103,7 @@ cograph::splot(
   layout = "circle",
   scale_nodes_by = "strength",
   node_size_range = c(4, 12),
-  node_fill = c("#4C78A8", "#F58518", "#54A24B", "#B279A2", "#E45756"),
+  node_fill = c("#E69F00", "#56B4E9", "#009E73", "#0072B2", "#CC79A7"),
   node_border_color = "white",
   node_border_width = 2,
   label_size = 0.9,
@@ -130,8 +130,8 @@ cograph::splot(
   layout = "circle",
   threshold = 0.05,
   edge_width_range = c(0.5, 5),
-  edge_positive_color = "#2A9D8F",
-  edge_negative_color = "#E76F51",
+  edge_positive_color = "#0072B2",
+  edge_negative_color = "#D55E00",
   edge_labels = TRUE,
   edge_label_size = 0.7,
   edge_label_bg = "white",
@@ -156,7 +156,8 @@ cograph::plot_edge_weights(fit)
 ## Bootstrap diagnostics
 
 The bootstrap diagnostics are computed in `psychnets` and drawn by their
-own base-R plot methods, covered fully in the companion vignette.
+own base-R plot methods, covered fully in the “Visualizing networks”
+article on the package website (<https://pak.dynasite.org/psychnets>).
 [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
 resamples the data and refits the network on each resample, and
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on its result
@@ -227,6 +228,16 @@ collection.
 [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
 draws the collection as a grid that shares one layout, so a node sits in
 the same position in every panel and the panels are read side by side.
+The example stacks two of the bundled data sets and labels each row with
+its source.
+
+``` r
+
+grouped_srl <- rbind(
+  data.frame(SRL_GPT, source = "GPT", check.names = FALSE),
+  data.frame(SRL_Claude, source = "Claude", check.names = FALSE)
+)
+```
 
 ``` r
 

@@ -130,40 +130,42 @@ Methods*. [doi:10.1037/met0000476](https://doi.org/10.1037/met0000476)
 
 ``` r
 set.seed(1)
-a <- matrix(stats::rnorm(100 * 4), 100, 4)
-b <- matrix(stats::rnorm(100 * 4), 100, 4)
+# group a has a stronger chain than group b
+a <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.5^abs(outer(1:4, 1:4, "-")))
+b <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.2^abs(outer(1:4, 1:4, "-")))
 colnames(a) <- colnames(b) <- paste0("V", 1:4)
-fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
+# iter = 10 keeps the example fast (smallest p = 1/11); use iter >= 1000.
+fit <- net_compare(a, b, iter = 10)
 fit
 #> Network Comparison Test: a vs b
 #> 10 permutations, independent groups, n = 100 and 100
 #> 
 #>   Test                  Statistic       p
-#>   M  network structure      0.000   1.000 
-#>   S  global strength        0.000   1.000 
-#>        a 0.000 vs b 0.000
+#>   M  network structure      0.465   0.091 
+#>   S  global strength        1.194   0.091 
+#>        a 1.194 vs b 0.000
 #>   E  edges differing       0 of 6
 #> 
 #>   Edges, largest difference first
 #>   Edge          a       b  |diff|       p
-#>   V1 - V2   0.000   0.000   0.000   1.000 
-#>   V1 - V3   0.000   0.000   0.000   1.000 
+#>   V3 - V4   0.465   0.000   0.465   0.091 
+#>   V1 - V2   0.391   0.000   0.391   0.091 
+#>   V2 - V3   0.311   0.000   0.311   0.182 
+#>   V1 - V3   0.027   0.000   0.027   0.818 
 #>   V1 - V4   0.000   0.000   0.000   1.000 
-#>   V2 - V3   0.000   0.000   0.000   1.000 
 #>   V2 - V4   0.000   0.000   0.000   1.000 
-#>   V3 - V4   0.000   0.000   0.000   1.000 
 #> 
 #>   * p < 0.05
 summary(fit)
-#>                test statistic observed p_value significant
-#> 1 network structure         M        0       1       FALSE
-#> 2   global strength         S        0       1       FALSE
+#>                test statistic  observed    p_value significant
+#> 1 network structure         M 0.4649198 0.09090909       FALSE
+#> 2   global strength         S 1.1942892 0.09090909       FALSE
 as.data.frame(fit)
-#>   from to weight_1 weight_2 difference p_value significant
-#> 1   V1 V2        0        0          0       1       FALSE
-#> 2   V1 V3        0        0          0       1       FALSE
-#> 3   V2 V3        0        0          0       1       FALSE
-#> 4   V1 V4        0        0          0       1       FALSE
-#> 5   V2 V4        0        0          0       1       FALSE
-#> 6   V3 V4        0        0          0       1       FALSE
+#>   from to   weight_1 weight_2 difference    p_value significant
+#> 1   V1 V2 0.39093075        0 0.39093075 0.09090909       FALSE
+#> 2   V1 V3 0.02711333        0 0.02711333 0.81818182       FALSE
+#> 3   V2 V3 0.31132529        0 0.31132529 0.18181818       FALSE
+#> 4   V1 V4 0.00000000        0 0.00000000 1.00000000       FALSE
+#> 5   V2 V4 0.00000000        0 0.00000000 1.00000000       FALSE
+#> 6   V3 V4 0.46491980        0 0.46491980 0.09090909       FALSE
 ```

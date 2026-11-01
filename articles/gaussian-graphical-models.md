@@ -109,12 +109,14 @@ are retained in this small example, although several estimated edges are
 weak. The selected penalty and the observed data determine the degree of
 sparsity in each fitted network.
 
-## Inspecting edges with `summary()`
+## Inspecting edges with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-model and returns its edge table invisibly. The table contains the
-columns `from`, `to`, and `weight`. Each row identifies a retained pair
-of nodes and its estimated partial correlation.
+model together with the range and mean of the edge weights.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table itself, with the columns `from`, `to`, and `weight`. Each
+row identifies a retained pair of nodes and its estimated partial
+correlation.
 
 ``` r
 
@@ -124,6 +126,18 @@ summary(net)
 #>   lambda: 0.00861   gamma: 0.5
 #>   optimality (KKT residual): 2.21e-10
 #>   edge weight: range [-0.350, 0.412], mean 0.174
+as.data.frame(net)
+#>    from to      weight
+#> 1   CSU IV  0.41166866
+#> 2   CSU SE  0.38290223
+#> 3    IV SE  0.15992605
+#> 4   CSU SR  0.35481359
+#> 5    IV SR  0.31909443
+#> 6    SE SR  0.20767208
+#> 7   CSU TA  0.04906668
+#> 8    IV TA  0.11058735
+#> 9    SE TA  0.09871818
+#> 10   SR TA -0.34985157
 ```
 
 The edge weights range from -0.350 to 0.412, with a mean of 0.174 across
@@ -281,12 +295,17 @@ spearman_net
 
 ``` r
 
-summary(spearman_net)
-#> <psychnet> glasso network
-#>   nodes: 5   edges: 9   (undirected)
-#>   lambda: 0.01882   gamma: 0.5
-#>   optimality (KKT residual): 2.67e-10
-#>   edge weight: range [-0.237, 0.424], mean 0.192
+as.data.frame(spearman_net)
+#>   from to      weight
+#> 1  CSU IV  0.41037571
+#> 2  CSU SE  0.42434529
+#> 3   IV SE  0.12821527
+#> 4  CSU SR  0.32164519
+#> 5   IV SR  0.34602908
+#> 6   SE SR  0.18400655
+#> 7   IV TA  0.07280225
+#> 8   SE TA  0.07509761
+#> 9   SR TA -0.23654039
 ```
 
 The Spearman analysis retains 9 edges and selects $`\lambda = 0.01882`$.
@@ -322,19 +341,27 @@ threshold_net
 
 ``` r
 
-summary(threshold_net)
-#> <psychnet> glasso network
-#>   nodes: 5   edges: 8   (undirected)
-#>   lambda: 0.00861   gamma: 0.5
-#>   optimality: unavailable for post-threshold graph  (pre-threshold residual 2.21e-10)
-#>   edge weight: range [-0.350, 0.412], mean 0.200
+as.data.frame(threshold_net)
+#>   from to     weight
+#> 1  CSU IV  0.4116687
+#> 2  CSU SE  0.3829022
+#> 3   IV SE  0.1599260
+#> 4  CSU SR  0.3548136
+#> 5   IV SR  0.3190944
+#> 6   SE SR  0.2076721
+#> 7   IV TA  0.1105874
+#> 8   SR TA -0.3498516
 ```
 
 At a threshold of 0.10, the graph contains 8 edges. The `CSU`-`TA`
 estimate (0.049) and the `SE`-`TA` estimate (0.099) are removed. The
-selected penalty and KKT residual are unchanged because thresholding
-occurs after estimation. A threshold can make a graph easier to read,
-but it must not be presented as a model-selection result from EBIC.
+selected penalty is unchanged because thresholding occurs after
+estimation. The returned graph is no longer the optimum of the fitted
+objective, so the printout reports its optimality as unavailable and
+quotes the pre-threshold residual ($`2.21 \times 10^{-10}`$) instead;
+`certificate(threshold_net)` reports `NA`. A threshold can make a graph
+easier to read, but it must not be presented as a model-selection result
+from EBIC.
 
 ## A nonparanormal sensitivity model
 
@@ -360,12 +387,18 @@ npn_net
 
 ``` r
 
-summary(npn_net)
-#> <psychnet> huge network
-#>   nodes: 5   edges: 10   (undirected)
-#>   lambda: 0.008559   gamma: 0.5
-#>   optimality (KKT residual): 2.47e-10
-#>   edge weight: range [-0.343, 0.426], mean 0.172
+as.data.frame(npn_net)
+#>    from to      weight
+#> 1   CSU IV  0.42556520
+#> 2   CSU SE  0.40615961
+#> 3    IV SE  0.12908167
+#> 4   CSU SR  0.34672549
+#> 5    IV SR  0.31792725
+#> 6    SE SR  0.19589994
+#> 7   CSU TA  0.02390372
+#> 8    IV TA  0.12511890
+#> 9    SE TA  0.09634264
+#> 10   SR TA -0.34267471
 ```
 
 The nonparanormal model retains all 10 edges. Its weights range from
@@ -538,3 +571,32 @@ R_j^2 = 1 - \frac{1}{K_{jj}S_{jj}}.
 evaluates this identity for each node. The calculation requires the
 fitted precision and covariance matrices, so raw observations are not
 needed after a Gaussian graphical model has been fitted.
+
+## References
+
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
+correlation networks. *Psychological Methods*, 23(4), 617-634.
+[doi:10.1037/met0000167](https://doi.org/10.1037/met0000167)
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. *Advances in Neural Information
+Processing Systems*, 23, 604-612.
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
+432-441.
+[doi:10.1093/biostatistics/kxm045](https://doi.org/10.1093/biostatistics/kxm045)
+
+Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models
+predict observations? On the importance of predictability in network
+models. *Behavior Research Methods*, 50(2), 853-861.
+[doi:10.3758/s13428-017-0910-x](https://doi.org/10.3758/s13428-017-0910-x)
+
+Liu, H., Lafferty, J., & Wasserman, L. (2009). The nonparanormal:
+Semiparametric estimation of high dimensional undirected graphs.
+*Journal of Machine Learning Research*, 10, 2295-2328.
+
+Robinaugh, D. J., Millner, A. J., & McNally, R. J. (2016). Identifying
+highly influential nodes in the complicated grief network. *Journal of
+Abnormal Psychology*, 125(6), 747-757.
+[doi:10.1037/abn0000181](https://doi.org/10.1037/abn0000181)

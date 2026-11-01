@@ -50,7 +50,8 @@ glasso_kkt(
 
 ## Value
 
-Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+`Inf` for an asymmetric or non-positive-definite `theta`.
 
 ## Details
 
@@ -61,11 +62,30 @@ S\_{ii} + \rho\\. Grading a diagonally-penalized fit with the default
 would report a spurious violation of exactly \\\rho\\, so this flag must
 match the fit being tested.
 
+## References
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
+432-441.
+[doi:10.1093/biostatistics/kxm045](https://doi.org/10.1093/biostatistics/kxm045)
+
+## See also
+
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md),
+which reads the stored residual of a fitted network.
+
 ## Examples
 
 ``` r
 S <- 0.5^abs(outer(1:5, 1:5, "-"))
-fit <- ebic_glasso(cor_matrix = S, n = 200)
-glasso_kkt(fit$precision, S, fit$lambda)
-#> [1] 7.168638e-11
+# At rho = 0 the optimum is the inverse of S, so its residual is ~0 ...
+glasso_kkt(solve(S), S, rho = 0)
+#> [1] 1.110223e-16
+# ... and a perturbed precision matrix violates the conditions.
+glasso_kkt(solve(S) + diag(0.1, 5), S, rho = 0)
+#> [1] 0.135257
+# A fitted network reports the same residual through certificate().
+certificate(ebic_glasso(cor_matrix = S, n = 200))
+#>   method  certificate kind certified
+#> 1 glasso 7.168638e-11  kkt      TRUE
 ```

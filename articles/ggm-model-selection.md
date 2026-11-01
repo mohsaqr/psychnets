@@ -38,7 +38,7 @@ performs simultaneous estimation and regularization, whereas the
 stepwise approach separates model selection from parameter estimation,
 the two methods may differ in finite samples. The graphical lasso
 generally exhibits greater numerical stability in high-dimensional
-settings ((p n)) or when estimation is ill-conditioned, while the
+settings ($`p \geq n`$) or when estimation is ill-conditioned, while the
 stepwise estimator avoids the shrinkage bias inherent to penalized
 estimation by refitting the selected model using unpenalized maximum
 likelihood.
@@ -91,12 +91,14 @@ The fitted network contains 5 nodes and 9 edges. One of the 10 possible
 pairs is removed. The printed KKT residual is $`1.33 \times 10^{-15}`$,
 which will be interpreted in the numerical check below.
 
-## Inspecting the selected edges with `summary()`
+## Inspecting the selected edges with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-model and returns its edge table invisibly. The table contains `from`,
-`to`, and `weight`. Each weight is an unshrunk partial correlation
-estimated under the selected network structure.
+model with the range and mean of the edge weights, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table with `from`, `to`, and `weight`. Each weight is an
+unshrunk partial correlation estimated under the selected network
+structure.
 
 ``` r
 
@@ -105,6 +107,17 @@ summary(stepwise_net)
 #>   nodes: 5   edges: 9   (undirected)
 #>   optimality (KKT residual): 1.22e-15
 #>   edge weight: range [-0.370, 0.422], mean 0.196
+as.data.frame(stepwise_net)
+#>   from to     weight
+#> 1  CSU IV  0.4215770
+#> 2  CSU SE  0.3921754
+#> 3   IV SE  0.1416604
+#> 4  CSU SR  0.3385710
+#> 5   IV SR  0.3333520
+#> 6   SE SR  0.2173406
+#> 7   IV TA  0.1565223
+#> 8   SE TA  0.1368928
+#> 9   SR TA -0.3699703
 ```
 
 The retained weights range from -0.370 to 0.422. The largest positive
@@ -168,12 +181,18 @@ glasso_net
 
 ``` r
 
-summary(glasso_net)
-#> <psychnet> glasso network
-#>   nodes: 5   edges: 10   (undirected)
-#>   lambda: 0.00861   gamma: 0.5
-#>   optimality (KKT residual): 2.21e-10
-#>   edge weight: range [-0.350, 0.412], mean 0.174
+as.data.frame(glasso_net)
+#>    from to      weight
+#> 1   CSU IV  0.41166866
+#> 2   CSU SE  0.38290223
+#> 3    IV SE  0.15992605
+#> 4   CSU SR  0.35481359
+#> 5    IV SR  0.31909443
+#> 6    SE SR  0.20767208
+#> 7   CSU TA  0.04906668
+#> 8    IV TA  0.11058735
+#> 9    SE TA  0.09871818
+#> 10   SR TA -0.34985157
 ```
 
 The graphical lasso retains all 10 possible edges, including a weak
@@ -291,19 +310,24 @@ spearman_net
 
 ``` r
 
-summary(spearman_net)
-#> <psychnet> ggm network
-#>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 6.66e-16
-#>   edge weight: range [-0.266, 0.483], mean 0.245
+as.data.frame(spearman_net)
+#>   from to     weight
+#> 1  CSU IV  0.4626441
+#> 2  CSU SE  0.4832486
+#> 3  CSU SR  0.2856316
+#> 4   IV SR  0.3865529
+#> 5   SE SR  0.1948044
+#> 6   IV TA  0.1652304
+#> 7   SR TA -0.2664620
 ```
 
 The Spearman model contains 7 edges, compared with 9 in the Pearson
 model. The positive `CSU`-`IV`, `CSU`-`SE`, `CSU`-`SR`, `IV`-`SR`, and
-`SE`-`SR` edges remain, as does the negative `SR`-`TA` edge. The
-`IV`-`SE` and `SE`-`TA` edges are removed. The main positive learning
-cluster and negative self-regulation to test-anxiety relation persist,
-while several weaker connections depend on the correlation estimator.
+`SE`-`SR` edges remain, as do the positive `IV`-`TA` edge and the
+negative `SR`-`TA` edge. The `IV`-`SE` and `SE`-`TA` edges are removed.
+The main positive learning cluster and negative self-regulation to
+test-anxiety relation persist, while several weaker connections depend
+on the correlation estimator.
 
 ``` r
 
@@ -420,3 +444,18 @@ where $`S_{jj}`$ is the marginal variance.
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
 evaluates this identity for each node in the selected Gaussian graphical
 model.
+
+## References
+
+Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
+correlation networks. *Psychological Methods*, 23(4), 617-634.
+[doi:10.1037/met0000167](https://doi.org/10.1037/met0000167)
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. *Advances in Neural Information
+Processing Systems*, 23, 604-612.
+
+Williams, D. R., Rhemtulla, M., Wysocki, A. C., & Rast, P. (2019). On
+nonregularized estimation of psychological networks. *Multivariate
+Behavioral Research*, 54(5), 719-750.
+[doi:10.1080/00273171.2019.1575716](https://doi.org/10.1080/00273171.2019.1575716)

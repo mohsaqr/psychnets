@@ -31,8 +31,28 @@ A tidy `data.frame` (class `psychnet_clustering`), one row per node:
 
 ## References
 
-Costantini, G., & Perugini, M. (2014); Watts & Strogatz (1998); Zhang &
-Horvath (2005); Onnela et al. (2005); Barrat et al. (2004).
+Costantini, G., & Perugini, M. (2014). Generalization of clustering
+coefficients to signed correlation networks. *PLoS ONE*, 9(2), e88669.
+[doi:10.1371/journal.pone.0088669](https://doi.org/10.1371/journal.pone.0088669)
+
+Watts, D. J., & Strogatz, S. H. (1998). Collective dynamics of
+'small-world' networks. *Nature*, 393, 440-442.
+[doi:10.1038/30918](https://doi.org/10.1038/30918)
+
+Zhang, B., & Horvath, S. (2005). A general framework for weighted gene
+co-expression network analysis. *Statistical Applications in Genetics
+and Molecular Biology*, 4(1), Article 17.
+[doi:10.2202/1544-6115.1128](https://doi.org/10.2202/1544-6115.1128)
+
+Onnela, J.-P., Saramaki, J., Kertesz, J., & Kaski, K. (2005). Intensity
+and coherence of motifs in weighted complex networks. *Physical Review
+E*, 71(6), 065103.
+[doi:10.1103/PhysRevE.71.065103](https://doi.org/10.1103/PhysRevE.71.065103)
+
+Barrat, A., Barthelemy, M., Pastor-Satorras, R., & Vespignani, A.
+(2004). The architecture of complex weighted networks. *Proceedings of
+the National Academy of Sciences*, 101(11), 3747-3752.
+[doi:10.1073/pnas.0400087101](https://doi.org/10.1073/pnas.0400087101)
 
 ## Examples
 

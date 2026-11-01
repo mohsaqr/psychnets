@@ -31,6 +31,10 @@ below them.
 
 ``` r
 
+mixed_data <- transform(SRL_GPT,
+                        SR_hi = as.integer(SR >= median(SR)),
+                        TA_hi = as.integer(TA >= median(TA)),
+                        SR = NULL, TA = NULL)
 head(mixed_data)
 #>        CSU       IV       SE SR_hi TA_hi
 #> 1 5.307692 5.666667 5.777778     0     1
@@ -50,9 +54,16 @@ coding only when the two states have a meaningful interpretation.
 ## Fitting the network with `psychnet()`
 
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-estimates a mixed graphical model when `method = "mgm"`. It detects 0/1
-columns as binary and other numeric columns as Gaussian. The default AND
-rule retains an edge when both nodewise models select the relation.
+estimates a mixed graphical model when `method = "mgm"`. Node types are
+detected with the rule of
+[`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html): factor and
+character columns, and numeric columns with at most 10 distinct integer
+values, are categorical, and other numeric columns are Gaussian. Here
+the two 0/1 indicators are binary and the three scale scores are
+Gaussian. A numeric column that the integer rule turns into a
+categorical node is named in a warning, because that changes the model;
+supply `types` to override the detection. The default AND rule retains
+an edge when both nodewise models select the relation.
 
 ``` r
 
@@ -63,15 +74,17 @@ mixed_net
 #>   optimality (KKT residual): 7.58e-08
 ```
 
-The fitted network contains 5 nodes and 7 edges. The printed KKT
+The fitted network contains 5 nodes and 6 edges. The printed KKT
 residual is $`7.58 \times 10^{-8}`$.
 
-## Inspecting mixed edges with `summary()`
+## Inspecting mixed edges with `summary()` and `as.data.frame()`
 
 [`summary()`](https://rdrr.io/r/base/summary.html) prints the fitted
-model and returns a table with `from`, `to`, and `weight`. The weights
-are standardized nodewise interaction estimates combined into an
-undirected network.
+model with the range and mean of its weights, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the edge table with `from`, `to`, and `weight`. The weights are
+standardized nodewise interaction estimates combined into an undirected
+network.
 
 ``` r
 
@@ -80,6 +93,14 @@ summary(mixed_net)
 #>   nodes: 5   edges: 6   (undirected)
 #>   optimality (KKT residual): 7.58e-08
 #>   edge weight: range [0.196, 0.632], mean 0.413
+as.data.frame(mixed_net)
+#>   from    to    weight
+#> 1  CSU    IV 0.5179204
+#> 2  CSU    SE 0.4850679
+#> 3   IV    SE 0.1970362
+#> 4  CSU SR_hi 0.4509658
+#> 5   IV SR_hi 0.6323682
+#> 6   SE SR_hi 0.1956634
 ```
 
 The largest edge joins intrinsic value and high self-regulation
@@ -88,10 +109,10 @@ conditional odds of belonging to the high self-regulation group after
 the other nodes have been taken into account. The `CSU`-`IV` and
 `CSU`-`SE` edges are also positive, at 0.518 and 0.485.
 
-The `SR_hi`-`TA_hi` edge is negative (-0.168). High self-regulation is
-associated with lower conditional odds of high test anxiety after the
-continuous learning constructs are considered. Test anxiety has no other
-retained edge.
+High test anxiety has no retained edge under the AND rule. The two
+nodewise regressions disagree about the `SR_hi`-`TA_hi` pair: only one
+of them selects it, so the AND rule removes it. The OR-rule sensitivity
+analysis below shows this edge.
 
 Edge scales depend on the types of the connected nodes, so magnitudes
 should be compared cautiously across Gaussian-Gaussian, Gaussian-binary,
@@ -137,11 +158,11 @@ net_centralities(mixed_net)
 #> 5 TA_hi 0.0000000          0.0000000
 ```
 
-Cognitive strategy use has the largest strength (1.454), closely
-followed by high self-regulation (1.447). High self-regulation has
-expected influence 1.111 because its negative edge with high test
-anxiety reduces the signed total. High test anxiety has strength 0.168
-and expected influence -0.168.
+Cognitive strategy use has the largest strength (1.454), followed by
+intrinsic value (1.347) and high self-regulation (1.279). Every retained
+edge is positive, so expected influence equals strength for every node.
+High test anxiety has no edge, giving strength and expected influence of
+0.
 
 Centrality summarizes the fitted edge pattern. It does not place
 continuous and binary variables on an identical substantive scale and
@@ -173,8 +194,8 @@ proportion of each continuous construct’s in-sample variance.
 
 High self-regulation has `nCC = 0.739` and raw accuracy 0.880, which is
 a large improvement over its marginal classification baseline. High test
-anxiety has `nCC = 0.147` and accuracy 0.573. Its neighbours add little
-classification information beyond the base rate. Validation on excluded
+anxiety has `nCC = 0` and accuracy 0.50: without neighbours it is
+classified no better than by its base rate. Validation on excluded
 observations is needed for claims about performance on new data.
 
 ## Sensitivity to the edge-combination rule
@@ -195,17 +216,24 @@ mixed_or
 
 ``` r
 
-summary(mixed_or)
-#> <psychnet> mgm network
-#>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 7.58e-08
-#>   edge weight: range [-0.168, 0.632], mean 0.330
+as.data.frame(mixed_or)
+#>    from    to     weight
+#> 1   CSU    IV  0.5179204
+#> 2   CSU    SE  0.4850679
+#> 3    IV    SE  0.1970362
+#> 4   CSU SR_hi  0.4509658
+#> 5    IV SR_hi  0.6323682
+#> 6    SE SR_hi  0.1956634
+#> 7 SR_hi TA_hi -0.1681336
 ```
 
-The OR analysis returns the same 7 edges and weights in this example.
-The agreement shows that every retained pair satisfies both combination
-rules. In other samples, pairs selected in only one direction would
-appear under OR and be removed under AND.
+The OR analysis returns 7 edges: the six AND-rule edges with unchanged
+weights, plus a negative `SR_hi`-`TA_hi` edge (-0.168). High
+self-regulation is associated with lower conditional odds of high test
+anxiety after the continuous learning constructs are considered, but
+only one of the two nodewise regressions supports this, so it should be
+reported as rule-dependent. The other six pairs satisfy both combination
+rules.
 
 ## Visualizing the network with `cograph::splot()`
 
@@ -234,10 +262,11 @@ weights numerically. Predictability must be reported with the correct
 metric for each node type.
 
 The present analysis used 300 complete observations, three Gaussian
-nodes, two binary nodes, and the default AND rule. The model retained 7
-edges. The largest edge was `IV`-`SR_hi` (0.632), and `SR_hi`-`TA_hi`
-was negative (-0.168). The KKT residual was $`7.58 \times 10^{-8}`$. The
-OR sensitivity analysis returned the same network.
+nodes, two binary nodes, and the default AND rule. The model retained 6
+edges, all positive; high test anxiety was isolated. The largest edge
+was `IV`-`SR_hi` (0.632). The KKT residual was $`7.58 \times 10^{-8}`$.
+The OR sensitivity analysis added one negative edge, `SR_hi`-`TA_hi`
+(-0.168).
 
 ## How the mixed network is estimated
 
@@ -252,9 +281,12 @@ estimates are averaged to produce an undirected weight. Continuous
 variables are standardized during estimation so their arbitrary units do
 not determine the Gaussian coefficients.
 
-The current implementation supports Gaussian and binary 0/1 nodes.
-Numeric variables with more than two integer levels require an explicit
-binary recoding or one-hot encoding before fitting.
+The default pure-R solver supports Gaussian and binary nodes. A
+categorical node with more than two levels requires `native = FALSE`,
+which fits a multinomial lasso through the optional `glmnet` package and
+keeps the k-level variable as one node. One-hot encoding is not an
+equivalent workaround, because it turns one k-level node into k separate
+nodes.
 
 ## Mathematical foundations
 
@@ -288,3 +320,15 @@ $`j`$,
 ```
 
 where $`m_j`$ is the larger marginal class proportion.
+
+## References
+
+Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models
+predict observations? On the importance of predictability in network
+models. *Behavior Research Methods*, 50(2), 853-861.
+[doi:10.3758/s13428-017-0910-x](https://doi.org/10.3758/s13428-017-0910-x)
+
+Haslbeck, J. M. B., & Waldorp, L. J. (2020). mgm: Estimating
+time-varying mixed graphical models in high-dimensional data. *Journal
+of Statistical Software*, 93(8), 1-46.
+[doi:10.18637/jss.v093.i08](https://doi.org/10.18637/jss.v093.i08)

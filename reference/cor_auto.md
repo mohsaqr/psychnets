@@ -34,6 +34,16 @@ cor_auto(data, ordinal_max_levels = 7L, na_method = c("pairwise", "listwise"))
 
 A correlation matrix with the variable names as dimnames.
 
+## References
+
+Olsson, U. (1979). Maximum likelihood estimation of the polychoric
+correlation coefficient. *Psychometrika*, 44(4), 443-460.
+[doi:10.1007/BF02296207](https://doi.org/10.1007/BF02296207)
+
+Olsson, U., Drasgow, F., & Dorans, N. J. (1982). The polyserial
+correlation coefficient. *Psychometrika*, 47(3), 337-347.
+[doi:10.1007/BF02294164](https://doi.org/10.1007/BF02294164)
+
 ## Examples
 
 ``` r

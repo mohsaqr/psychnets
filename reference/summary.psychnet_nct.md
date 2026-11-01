@@ -51,20 +51,21 @@ frame with one row per node pair, columns `from`, `to`, `weight_1`,
 
 ``` r
 set.seed(1)
-a <- matrix(stats::rnorm(100 * 4), 100, 4)
-b <- matrix(stats::rnorm(100 * 4), 100, 4)
+# group a has a stronger chain than group b
+a <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.5^abs(outer(1:4, 1:4, "-")))
+b <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.2^abs(outer(1:4, 1:4, "-")))
 colnames(a) <- colnames(b) <- paste0("V", 1:4)
-fit <- net_compare(a, b, iter = 10)
+fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
 summary(fit)
-#>                test statistic observed p_value significant
-#> 1 network structure         M        0       1       FALSE
-#> 2   global strength         S        0       1       FALSE
+#>                test statistic  observed    p_value significant
+#> 1 network structure         M 0.4649198 0.09090909       FALSE
+#> 2   global strength         S 1.1942892 0.09090909       FALSE
 as.data.frame(fit)
-#>   from to weight_1 weight_2 difference p_value significant
-#> 1   V1 V2        0        0          0       1       FALSE
-#> 2   V1 V3        0        0          0       1       FALSE
-#> 3   V2 V3        0        0          0       1       FALSE
-#> 4   V1 V4        0        0          0       1       FALSE
-#> 5   V2 V4        0        0          0       1       FALSE
-#> 6   V3 V4        0        0          0       1       FALSE
+#>   from to   weight_1 weight_2 difference    p_value significant
+#> 1   V1 V2 0.39093075        0 0.39093075 0.09090909       FALSE
+#> 2   V1 V3 0.02711333        0 0.02711333 0.81818182       FALSE
+#> 3   V2 V3 0.31132529        0 0.31132529 0.18181818       FALSE
+#> 4   V1 V4 0.00000000        0 0.00000000 1.00000000       FALSE
+#> 5   V2 V4 0.00000000        0 0.00000000 1.00000000       FALSE
+#> 6   V3 V4 0.46491980        0 0.46491980 0.09090909       FALSE
 ```

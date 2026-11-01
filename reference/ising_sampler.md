@@ -79,13 +79,21 @@ unpruned residual and `$certificate_target` identifies it as
 ## Examples
 
 ``` r
-set.seed(1)
-z <- matrix(stats::rnorm(500 * 2), 500, 2)
-x <- cbind(z[, 1], z[, 1], z[, 2], z[, 2]) + matrix(stats::rnorm(500 * 4), 500)
-b <- (x > 0) * 1L
-colnames(b) <- paste0("V", 1:4)
-ising_sampler(b)
+b <- dichotomize(SRL_GPT)
+ising_sampler(b)                 # every edge, certified ML fit
 #> <psychnet> ising_sampler network
-#>   nodes: 4   edges: 6   (undirected)
-#>   optimality (KKT residual): 7.03e-10
+#>   nodes: 5   edges: 10   (undirected)
+#>   optimality (KKT residual): 1.07e-08
+pruned <- ising_sampler(b, alpha = 0.05)
+as.data.frame(pruned)
+#>   from to    weight
+#> 1  CSU IV 2.4336970
+#> 2  CSU SE 1.9776719
+#> 3   IV SE 1.5285878
+#> 4  CSU SR 1.7964616
+#> 5   IV SR 2.0903313
+#> 6   SE SR 0.9333181
+certificate(pruned)              # NA: pruning altered the ML solution
+#>          method certificate kind certified
+#> 1 ising_sampler          NA  kkt        NA
 ```

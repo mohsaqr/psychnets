@@ -35,7 +35,10 @@ A tidy one-row `data.frame` (class `psychnet_smallworld`):
 
 ## References
 
-Humphries, M. D., & Gurney, K. (2008). *PLoS ONE*, 3(4), e0002051.
+Humphries, M. D., & Gurney, K. (2008). Network 'small-world-ness': A
+quantitative method for determining canonical network equivalence. *PLoS
+ONE*, 3(4), e0002051.
+[doi:10.1371/journal.pone.0002051](https://doi.org/10.1371/journal.pone.0002051)
 
 ## Examples
 

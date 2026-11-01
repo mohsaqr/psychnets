@@ -70,7 +70,11 @@ the fit is at the penalized-likelihood optimum.
 set.seed(1)
 x <- scale(matrix(stats::rnorm(200 * 3), 200, 3))
 y <- as.numeric(x %*% c(0.5, 0, -0.3) + stats::rnorm(200))
-fit <- stats::lm.fit(cbind(1, x), y)
-glm_lasso_kkt(x, y, fit$coefficients[1], fit$coefficients[-1], lambda = 0)
-#> [1] 1.053324e-16
+# x has centred columns, so the least-squares intercept is mean(y) and the
+# slopes are qr.solve(x, y): the unpenalized optimum, residual ~0.
+glm_lasso_kkt(x, y, b0 = mean(y), beta = qr.solve(x, y), lambda = 0)
+#> [1] 1.854072e-16
+# The generating coefficients are not the sample optimum.
+glm_lasso_kkt(x, y, b0 = mean(y), beta = c(0.5, 0, -0.3), lambda = 0)
+#> [1] 0.07437882
 ```

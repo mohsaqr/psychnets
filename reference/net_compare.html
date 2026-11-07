@@ -21,7 +21,7 @@ so the two differ only by the glasso solver's convergence tolerance."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,7 +111,10 @@ e.g. <code>c(1, 4)</code> for weeks 1 and 4 (default: its two levels when there 
 exactly two); the group's node <code>labels</code> name the edges, and the group's
 <code>gamma</code> and <code>na_method</code> are used unless you supply <code>gamma</code> / <code>na_method</code>,
 which then win (with a <code>psychnet_estimator_mismatch</code> warning when they
-differ from the group's).</p></dd>
+differ from the group's). Two networks of one such group can also be
+passed directly, <code>net_compare(nets$A, nets$B)</code>: each keeps its rows (and
+persons), so this is the same test as <code>net_compare(nets, c("A", "B"))</code>. A
+network fitted on its own keeps no data and is refused.</p></dd>
 
 
 <dt id="arg-iter">iter<a class="anchor" aria-label="anchor" href="#arg-iter"></a></dt>

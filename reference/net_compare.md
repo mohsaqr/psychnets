@@ -52,7 +52,11 @@ plot(x, type = c("strength", "structure", "edges"), alpha = 0.05, ...)
   there are exactly two); the group's node `labels` name the edges, and
   the group's `gamma` and `na_method` are used unless you supply `gamma`
   / `na_method`, which then win (with a `psychnet_estimator_mismatch`
-  warning when they differ from the group's).
+  warning when they differ from the group's). Two networks of one such
+  group can also be passed directly, `net_compare(nets$A, nets$B)`: each
+  keeps its rows (and persons), so this is the same test as
+  `net_compare(nets, c("A", "B"))`. A network fitted on its own keeps no
+  data and is refused.
 
 - iter:
 

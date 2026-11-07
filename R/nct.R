@@ -261,6 +261,37 @@
   res
 }
 
+# net_compare(nets$A, nets$B): two networks of one psychnet(..., group = )
+# result. They carry their rows (and persons) from the group, so they are
+# compared exactly as net_compare(nets, c("A", "B")) would compare them.
+#' @noRd
+.nct_members <- function(data1, data2, ...) {
+  member <- function(x) if (inherits(x, "psychnet")) attr(x, "group_member")
+  m1 <- member(data1)
+  m2 <- member(data2)
+  if (is.null(m1) || is.null(m2))
+    .nct_bad_input(paste0(
+      "net_compare() permutes the rows behind each network, and a network ",
+      "fitted on its own does not keep them. Pass the two data sets, or two ",
+      "networks of one psychnet(..., group = ) result (e.g. nets$A, nets$B)."))
+  if (!identical(m1$call, m2$call) || !identical(m1$within, m2$within))
+    .nct_bad_input(paste0(
+      "The two networks come from different psychnet() calls; compare their ",
+      "data with net_compare(data1, data2), or fit both in one call with `group`."))
+  if (identical(m1$level, m2$level))
+    .nct_bad_input(sprintf("Both networks are the same group level ('%s').", m1$level))
+  levs <- c(m1$level, m2$level)
+  pair <- .new_psychnet_group(stats::setNames(list(data1, data2), levs),
+                              group_col = NA_character_, source = "data",
+                              subsets = stats::setNames(list(m1$rows, m2$rows), levs),
+                              call = m1$call)
+  if (!is.null(m1$persons) && !is.null(m2$persons)) {
+    attr(pair, "persons") <- stats::setNames(list(m1$persons, m2$persons), levs)
+    attr(pair, "within") <- m1$within
+  }
+  .nct_group(pair, NULL, ...)
+}
+
 # Display name of a group: the argument's name when it is a plain variable
 # (as t.test() reports "data: x and y"), otherwise "group 1" / "group 2".
 #' @noRd
@@ -305,7 +336,10 @@
 #'   exactly two); the group's node `labels` name the edges, and the group's
 #'   `gamma` and `na_method` are used unless you supply `gamma` / `na_method`,
 #'   which then win (with a `psychnet_estimator_mismatch` warning when they
-#'   differ from the group's).
+#'   differ from the group's). Two networks of one such group can also be
+#'   passed directly, `net_compare(nets$A, nets$B)`: each keeps its rows (and
+#'   persons), so this is the same test as `net_compare(nets, c("A", "B"))`. A
+#'   network fitted on its own keeps no data and is refused.
 #' @param iter Number of permutations. Default 1000.
 #' @param gamma EBIC hyperparameter. Default 0.5.
 #' @param paired Logical; within-row swapping for paired designs (row `i` of
@@ -393,6 +427,13 @@ net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
   na_method <- .psn_match_arg(na_method)
   groups <- c(.nct_label(substitute(data1), "group 1"),
               .nct_label(substitute(data2), "group 2"))
+  if (inherits(data1, "psychnet") || inherits(data2, "psychnet")) {
+    return(.nct_members(data1, data2, iter = iter, gamma = gamma, paired = paired,
+                        abs = abs, weighted = weighted, p_adjust = p_adjust,
+                        na_method = na_method, gamma_supplied = !missing(gamma),
+                        na_method_supplied = na_method_supplied,
+                        paired_supplied = !missing(paired)))
+  }
   if (inherits(data1, "psychnet_group")) {
     return(.nct_group(data1, data2, iter = iter, gamma = gamma, paired = paired,
                       abs = abs, weighted = weighted, p_adjust = p_adjust,

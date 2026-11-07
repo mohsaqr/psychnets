@@ -1,3 +1,13 @@
+# psychnets 0.7.2
+
+* `net_compare()` accepts two networks of one `psychnet(..., group = )`
+  result directly: `net_compare(nets$model1, nets$model2)` is the same test as
+  `net_compare(nets, c("model1", "model2"))`. Each grouped network keeps its
+  rows, persons (with `within =`) and fitting settings, so pairing, labels and
+  settings follow the group. A network fitted on its own keeps no data to
+  permute and is refused with a `psychnet_bad_input` error, as are the same
+  level twice and networks from two different `psychnet()` calls.
+
 # psychnets 0.7.1
 
 * Tests: the frozen network-comparison baseline is compared to a tolerance of

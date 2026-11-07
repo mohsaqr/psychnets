@@ -168,3 +168,26 @@ test_that("a within group is compared paired by person by default", {
   set.seed(1)
   expect_false(net_compare(psychnet(d, group = "src"), iter = 10)$paired)
 })
+
+test_that("two networks of one group can be compared directly", {
+  nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
+                   within = "student")
+  set.seed(1); by_level <- net_compare(nets, c(1, 4), iter = 10)
+  set.seed(1); by_fit <- net_compare(nets$`1`, nets$`4`, iter = 10)
+  expect_identical(as.data.frame(by_fit), as.data.frame(by_level))
+  expect_identical(summary(by_fit), summary(by_level))
+  expect_true(by_fit$paired)                         # within group: paired
+  expect_identical(by_fit$groups, c("1", "4"))
+  # an ordinary two-level group
+  d <- rbind(data.frame(SRL_GPT, src = "GPT"), data.frame(SRL_Claude, src = "Claude"))
+  g <- psychnet(d, group = "src")
+  set.seed(2); a <- net_compare(g$GPT, g$Claude, iter = 10)
+  set.seed(2); b <- net_compare(g, iter = 10)
+  expect_identical(as.data.frame(a), as.data.frame(b))
+  # refusals: a standalone fit, the same level twice, two different calls
+  expect_error(net_compare(ebic_glasso(SRL_GPT), ebic_glasso(SRL_Claude), iter = 5),
+               class = "psychnet_bad_input")
+  expect_error(net_compare(nets$`1`, nets$`1`, iter = 5), class = "psychnet_bad_input")
+  other <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week")
+  expect_error(net_compare(nets$`1`, other$`4`, iter = 5), class = "psychnet_bad_input")
+})

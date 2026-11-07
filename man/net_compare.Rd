@@ -37,7 +37,10 @@ e.g. \code{c(1, 4)} for weeks 1 and 4 (default: its two levels when there are
 exactly two); the group's node \code{labels} name the edges, and the group's
 \code{gamma} and \code{na_method} are used unless you supply \code{gamma} / \code{na_method},
 which then win (with a \code{psychnet_estimator_mismatch} warning when they
-differ from the group's).}
+differ from the group's). Two networks of one such group can also be
+passed directly, \code{net_compare(nets$A, nets$B)}: each keeps its rows (and
+persons), so this is the same test as \code{net_compare(nets, c("A", "B"))}. A
+network fitted on its own keeps no data and is refused.}
 
 \item{iter}{Number of permutations. Default 1000.}
 

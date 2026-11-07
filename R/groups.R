@@ -130,6 +130,15 @@
                                gamma = gamma, labels = labels), dots)))
     src <- "data"
   }
+  if (source != "eventdata") {
+    # Each network remembers its level, rows, persons and fitting settings, so
+    # net_compare(nets$A, nets$B) can compare two members directly.
+    nets <- lapply(seq_along(levs), function(k)
+      structure(nets[[k]], group_member = list(
+        level = levs[k], rows = subsets[[k]],
+        persons = if (is.null(within)) NULL else persons[[k]],
+        within = within, call = cl)))
+  }
   names(nets) <- levs
   names(subsets) <- levs
   out <- .new_psychnet_group(nets, group_col = group, source = src,

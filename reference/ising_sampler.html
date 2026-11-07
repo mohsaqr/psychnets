@@ -13,7 +13,7 @@ maximum-likelihood score residual (see glm_lasso_kkt() at lambda = 0)."></head><
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,8 @@ maximum-likelihood score residual (see <code><a href="glm_lasso_kkt.html">glm_la
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Binary (0/1) data frame or matrix (rows = observations).</p></dd>
+<dd><p>Binary data frame or matrix (rows = observations): numeric 0/1,
+logical, or two-level factor columns, as in <code><a href="ising_fit.html">ising_fit()</a></code>.</p></dd>
 
 
 <dt id="arg-rule">rule<a class="anchor" aria-label="anchor" href="#arg-rule"></a></dt>
@@ -103,7 +104,8 @@ fitting. <code>NULL</code> (default) keeps every row.</p></dd>
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>Optional non-negative observation weights, one per input row
 after missing-data preparation. When <code>min_sum</code> is used, weights are filtered
-alongside their corresponding rows. <code>NULL</code> (default) is unweighted.</p></dd>
+alongside their corresponding rows. Rescaled to a maximum of 1, so only
+relative sizes matter (see <code><a href="ising_fit.html">ising_fit()</a></code>). <code>NULL</code> (default) is unweighted.</p></dd>
 
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
@@ -112,7 +114,7 @@ alongside their corresponding rows. <code>NULL</code> (default) is unweighted.</
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels: one per node, or one per input column.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -123,6 +125,16 @@ with <code>$thresholds</code> (node intercepts), <code>$rule</code>, <code>$p_va
 If Wald pruning changes any coefficient, <code>$kkt</code> is <code>NA</code> for the altered
 fit; <code>$fit_kkt</code> retains the unpruned residual and <code>$certificate_target</code>
 identifies it as <code>"pre_pruning_fit"</code>.</p>
+<p>Under (quasi-)complete separation – a node perfectly predicted by the
+others – the unpenalized maximum-likelihood estimate does not exist: the
+coefficients grow without bound and the score tends to zero, so a small
+residual would certify nothing. The fit then raises a
+<code>psychnet_separation</code> warning naming the nodes, <code>$kkt</code> is <code>NA</code> and
+<code>$certificate_target</code> is <code>"nonconverged_fit"</code>; use the penalized
+<code><a href="ising_fit.html">ising_fit()</a></code> instead. Any other failure to converge raises
+<code>psychnet_no_converge</code> with the same certificate treatment. A singular
+Fisher information raises <code>psychnet_singular_information</code>. Input errors
+are of class <code>psychnet_bad_input</code>.</p>
     </div>
 
     <div class="section level2">

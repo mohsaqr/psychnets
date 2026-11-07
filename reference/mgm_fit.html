@@ -17,7 +17,7 @@ residual (see glm_lasso_kkt())."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,10 +133,11 @@ default for compatibility; an explicitly supplied value is honored.</p></dd>
 
 
 <dt id="arg-moderators">moderators<a class="anchor" aria-label="anchor" href="#arg-moderators"></a></dt>
-<dd><p>Optional single column index of a moderator variable. When
+<dd><p>Optional moderator variable: a single column index (a
+whole number) or a single column name. When
 supplied, fits a <em>moderated</em> MGM (that variable moderates every pairwise
 edge) and returns a <code>psychnet_moderated</code> object to be read with
-<code><a href="condition.html">condition()</a></code>. Honours <code>native</code> like the unmoderated path: the default base
+<code><a href="condition.html">condition()</a></code> and <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>. Honours <code>native</code> like the unmoderated path: the default base
 kernel is pure R and KKT-certified, and covers gaussian and binary nodes;
 <code>native = FALSE</code> uses <code>glmnet</code> and additionally allows multi-level
 categorical nodes. <code>weights</code> are not supported in this mode.</p></dd>
@@ -144,7 +145,10 @@ categorical nodes. <code>weights</code> are not supported in this mode.</p></dd>
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>Optional non-negative observation weights, one per row of the
-(NA-prepared) data. <code>NULL</code> (default) is unweighted.</p></dd>
+(NA-prepared) data. Weights are rescaled to a maximum of 1, as in
+<code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> (<code>weights / max(weights)</code>, effective sample size
+<code>sum(weights)</code>), so only their relative sizes matter. <code>NULL</code> (default) is
+unweighted.</p></dd>
 
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
@@ -173,14 +177,25 @@ one-coefficient-per-variable representation.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels: one per node, or one per input column
+(labels of dropped constant columns are then discarded).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the symmetric standardized
 weight matrix, with <code>$types</code>, <code>$levels</code> (number of levels per node, 1 for
-gaussian) and <code>$kkt</code> (the worst nodewise residual). Node order in
+gaussian), <code>$fit_kkt</code> (the worst nodewise stationarity residual of the
+penalized fits) and <code>$kkt</code>. The <code>"LW"</code>/<code>"HW"</code> threshold zeroes
+coefficients AFTER the penalized fit, so a thresholded network is no longer
+the optimum the residual certifies: when the threshold removed any
+coefficient, <code>$kkt</code> is <code>NA</code> (read with <code><a href="certificate.html">certificate()</a></code>) and
+<code>$certificate_target</code> is <code>"pre_threshold_fit"</code>, exactly as for a
+thresholded <code><a href="ebic_glasso.html">ebic_glasso()</a></code>; otherwise <code>$kkt</code> equals <code>$fit_kkt</code> and the
+target is <code>"returned_network"</code>. Use <code>threshold = "none"</code> for a certified
+network. A nodewise fit that does not reach its optimum raises a
+<code>psychnet_no_converge</code> warning naming the node; invalid arguments raise
+<code>psychnet_bad_input</code>. Node order in
 <code>$weights</code> and <code>$nodes</code> is always the column order of the input <code>data</code>,
 never sorted, and a k-level categorical stays ONE node. A
 binary-binary edge carries the sign of its nodewise-logistic coefficient;
@@ -212,10 +227,10 @@ Statistical Software</em>, 93(8), 1-46. <a href="https://doi.org/10.18637/jss.v0
 <span class="r-in"><span><span class="va">fit</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; mgm network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 4   edges: 3   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 6.84e-09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 1.01e-10</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   from to    weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   g1 g2 0.3421963</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   g1 g2 0.3421962</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   g1 b1 0.3288350</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3   g2 b1 0.3589604</span>
 </code></pre></div>

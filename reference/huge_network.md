@@ -40,7 +40,8 @@ huge_network(
 
 - n:
 
-  Sample size (required when `cor_matrix` is supplied).
+  Sample size (required when `cor_matrix` is supplied): a single finite
+  number \>= 1.
 
 - npn:
 
@@ -61,9 +62,10 @@ huge_network(
 
 - threshold:
 
-  Partial correlations with absolute value below this are zeroed.
-  Default 0. With a positive value `$kkt` is `NA` for the returned graph
-  and the pre-threshold residual is stored as `$fit_kkt`.
+  Partial correlations with absolute value below this are zeroed: a
+  single number \>= 0, default 0. With a positive value `$kkt` is `NA`
+  for the returned graph and the pre-threshold residual is stored as
+  `$fit_kkt`.
 
 - na_method:
 
@@ -81,7 +83,7 @@ huge_network(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node.
 
 ## Value
 

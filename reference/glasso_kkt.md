@@ -35,7 +35,7 @@ glasso_kkt(
 
 - rho:
 
-  Scalar penalty.
+  Scalar penalty, a single finite number \>= 0.
 
 - active_tol:
 
@@ -51,7 +51,9 @@ glasso_kkt(
 ## Value
 
 Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-`Inf` for an asymmetric or non-positive-definite `theta`.
+`Inf` for an asymmetric or non-positive-definite `theta`. Malformed
+input (non-square or non-finite matrices, a negative or missing `rho`)
+is an error of class `psychnet_bad_input`.
 
 ## Details
 

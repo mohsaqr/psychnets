@@ -21,7 +21,7 @@ reference solver."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,9 @@ reference solver.</p>
 
 
 <dt id="arg-support">support<a class="anchor" aria-label="anchor" href="#arg-support"></a></dt>
-<dd><p>Logical p x p matrix; <code>TRUE</code> where an edge is allowed.</p></dd>
+<dd><p>Logical p x p matrix; <code>TRUE</code> where an edge is allowed. It is
+symmetrized (<code>support | t(support)</code>), so an upper- or lower-triangular
+support describes the same undirected graph; the diagonal is ignored.</p></dd>
 
 
 <dt id="arg-active-tol">active_tol<a class="anchor" aria-label="anchor" href="#arg-active-tol"></a></dt>
@@ -99,7 +101,10 @@ nonzero violation.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Maximum absolute stationarity violation (scalar); 0 = exact optimum.</p>
+    <p>Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+<code>Inf</code> for an asymmetric or non-positive-definite <code>theta</code>. A <code>support</code> that
+is not a logical matrix of the right size, or contains <code>NA</code>, is an error
+of class <code>psychnet_bad_input</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -5,13 +5,13 @@ absolute edge weights) and expected influence (the signed sum, so negative
 edges offset positive ones; Robinaugh, Millner &amp;amp; McNally 2016). Betweenness
 and closeness follow Opsahl, Agneessens and Skvoretz (2010) on the
 inverted absolute weights. For a directed network (e.g. relimp_network())
-the measures sum the outgoing edges."><meta property="og:description" content="Summarizes each node's position in a fitted network as a tidy table. For
+strength and expected influence sum the outgoing edges."><meta property="og:description" content="Summarizes each node's position in a fitted network as a tidy table. For
 psychometric networks the recommended measures are strength (the sum of
 absolute edge weights) and expected influence (the signed sum, so negative
 edges offset positive ones; Robinaugh, Millner &amp;amp; McNally 2016). Betweenness
 and closeness follow Opsahl, Agneessens and Skvoretz (2010) on the
 inverted absolute weights. For a directed network (e.g. relimp_network())
-the measures sum the outgoing edges."></head><body>
+strength and expected influence sum the outgoing edges."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +19,7 @@ the measures sum the outgoing edges."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ the measures sum the outgoing edges."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Node centrality</h1>
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/R/centrality.R" class="external-link"><code>R/centrality.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/R/centrality.R" class="external-link"><code>R/centrality.R</code></a>, <a href="https://github.com/mohsaqr/psychnets/blob/main/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
       <div class="d-none name"><code>net_centralities.Rd</code></div>
     </div>
 
@@ -65,7 +65,7 @@ absolute edge weights) and expected influence (the signed sum, so negative
 edges offset positive ones; Robinaugh, Millner &amp; McNally 2016). Betweenness
 and closeness follow Opsahl, Agneessens and Skvoretz (2010) on the
 inverted absolute weights. For a directed network (e.g. <code><a href="relimp_network.html">relimp_network()</a></code>)
-the measures sum the outgoing edges.</p>
+strength and expected influence sum the outgoing edges.</p>
     </div>
 
     <div class="section level2">
@@ -75,6 +75,15 @@ the measures sum the outgoing edges.</p>
 <span>  measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strength"</span>, <span class="st">"expected_influence"</span><span class="op">)</span>,</span>
 <span>  centrality_fn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_centrality'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bar"</span>, <span class="st">"line"</span><span class="op">)</span>,</span>
+<span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw"</span>, <span class="st">"z"</span>, <span class="st">"relative"</span><span class="op">)</span>,</span>
+<span>  measures <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -83,11 +92,13 @@ the measures sum the outgoing edges.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A <a href="psychnet.html">psychnet</a> object or a weighted adjacency matrix.</p></dd>
+<dd><p>A <a href="psychnet.html">psychnet</a> object or a weighted adjacency matrix. For <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>,
+the <code>psychnet_centrality</code> table returned by <code>net_centralities()</code>.</p></dd>
 
 
 <dt id="arg-measures">measures<a class="anchor" aria-label="anchor" href="#arg-measures"></a></dt>
-<dd><p>Character vector of measures to return. Any of <code>"strength"</code>,
+<dd><p>Character vector of measures to return (for <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>: which
+of the returned measure columns to draw; default all). Any of <code>"strength"</code>,
 <code>"expected_influence"</code> (the defaults, recommended for psychometric
 networks), <code>"expected_influence_2step"</code> (a node's one-step expected
 influence plus the one-step expected influence it transmits through its
@@ -99,22 +110,58 @@ request them only when a downstream comparison needs them.</p></dd>
 
 <dt id="arg-centrality-fn">centrality_fn<a class="anchor" aria-label="anchor" href="#arg-centrality-fn"></a></dt>
 <dd><p>Optional function taking the weighted adjacency matrix
-and returning a named list of node-centrality vectors, used to supply any
-<code>measures</code> not built in.</p></dd>
+(with node-label dimnames) and returning a named list of node-centrality
+vectors, used to supply any <code>measures</code> not built in. Each vector must have
+one numeric value per node. A <em>named</em> vector is aligned to the nodes by
+label (its names must be exactly the node labels, in any order); an
+unnamed vector is taken in node order. A wrong length, missing or extra
+names, or a non-numeric value is an error of class <code>psychnet_bad_input</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Unused.</p></dd>
+
+
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>: <code>"bar"</code> (default; one sorted lollipop panel per
+measure) or <code>"line"</code> (the qgraph/bootnet centrality plot: one panel per
+measure, nodes on a shared vertical axis).</p></dd>
+
+
+<dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
+<dd><p>For <code>plot(type = "line")</code>: the per-measure transform, <code>"raw"</code>
+(default; each panel keeps its own axis), <code>"z"</code> (z-score per measure) or
+<code>"relative"</code> (min-max scaled to [0, 1]). <code>type = "bar"</code> always shows
+raw values.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tidy <code>data.frame</code> of class <code>c("psychnet_centrality", "data.frame")</code>, one row per node, with a <code>node</code> column and one column per
 requested measure (<code>strength</code> = sum of absolute edge weights,
-<code>expected_influence</code> = sum of signed edge weights, by default). Plot it
-with <code><a href="plot.psychnet_centrality.html">plot.psychnet_centrality()</a></code>. For a <a href="print.psychnet_group.html">psychnet_group</a> the result is a
-per-group list (see <code><a href="print.psychnet_result_group.html">print.psychnet_result_group()</a></code>).</p>
+<code>expected_influence</code> = sum of signed edge weights, by default;
+<code>betweenness</code> and <code>closeness</code> are normalized, see Details); <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>
+draws it and returns it invisibly. For a <a href="psychnet_group.html">psychnet_group</a> the result is a
+per-group list (see <a href="psychnet_result_group.html">psychnet_result_group</a>).</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><strong>Scaling of betweenness and closeness.</strong> Both are <em>normalized</em>, as igraph's
+<code>betweenness(normalized = TRUE)</code> / <code>closeness(normalized = TRUE)</code>:
+betweenness is divided by the number of node pairs not involving the node,
+<code>(p - 1)(p - 2) / 2</code>, and closeness is the number of reachable nodes over
+the sum of distances to them (the inverse mean distance). They therefore
+differ from <code><a href="https://rdrr.io/pkg/qgraph/man/centrality_auto.html" class="external-link">qgraph::centrality_auto()</a></code>, which reports raw betweenness
+(path counts) and closeness as <code>1 / sum(distances)</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+
+<ul><li><p><code>plot(psychnet_centrality)</code>: One panel per measure (see <code>type</code>, <code>scale</code>).
+Raises <code>psychnet_bad_input</code> for a <code>measures</code> entry that is not a measure
+column, skips a column with no finite value with a <code>psychnet_plot_skipped</code>
+warning, and errors (<code>psychnet_nothing_to_plot</code>) when none has one.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Robinaugh, D. J., Millner, A. J., &amp; McNally, R. J. (2016).
@@ -129,7 +176,8 @@ Networks</em>, 32(3), 245-251. <a href="https://doi.org/10.1016/j.socnet.2010.03
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">S</span> <span class="op">&lt;-</span> <span class="fl">0.4</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="st">"-"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">net_centralities</span><span class="op">(</span><span class="fu"><a href="ebic_glasso.html">ebic_glasso</a></span><span class="op">(</span>cor_matrix <span class="op">=</span> <span class="va">S</span>, n <span class="op">=</span> <span class="fl">250</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cent</span> <span class="op">&lt;-</span> <span class="fu">net_centralities</span><span class="op">(</span><span class="fu"><a href="ebic_glasso.html">ebic_glasso</a></span><span class="op">(</span>cor_matrix <span class="op">=</span> <span class="va">S</span>, n <span class="op">=</span> <span class="fl">250</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cent</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   node  strength expected_influence</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   V1 0.3681824          0.3681824</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   V2 0.7105013          0.7105013</span>
@@ -137,6 +185,10 @@ Networks</em>, 32(3), 245-251. <a href="https://doi.org/10.1016/j.socnet.2010.03
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4   V4 0.6846378          0.6846378</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5   V5 0.7105013          0.7105013</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6   V6 0.3681824          0.3681824</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cent</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="net_centralities-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cent</span>, type <span class="op">=</span> <span class="st">"line"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="net_centralities-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

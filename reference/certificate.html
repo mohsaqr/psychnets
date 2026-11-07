@@ -19,7 +19,7 @@ every method."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,8 +82,9 @@ every method.</p>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>Tolerance below which the fit is flagged <code>certified = TRUE</code>.
-Default <code>1e-6</code>.</p></dd>
+<dd><p>Tolerance below which the fit is flagged <code>certified = TRUE</code>: a
+single finite number &gt;= 0. Default <code>1e-6</code>. Anything else is an error of
+class <code>psychnet_bad_input</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -35,7 +35,8 @@ logo_network(
 
 - n:
 
-  Sample size (recorded on the result; required with `cor_matrix`).
+  Sample size (recorded on the result; required with `cor_matrix`): a
+  single finite number \>= 1.
 
 - cor_method:
 
@@ -45,9 +46,10 @@ logo_network(
 
 - threshold:
 
-  Partial correlations with absolute value below this are zeroed.
-  Default 0. With a positive value `$kkt` is `NA` for the returned graph
-  and the pre-threshold residual is stored as `$fit_kkt`.
+  Partial correlations with absolute value below this are zeroed: a
+  single number \>= 0, default 0. With a positive value `$kkt` is `NA`
+  for the returned graph and the pre-threshold residual is stored as
+  `$fit_kkt`.
 
 - na_method:
 
@@ -57,13 +59,17 @@ logo_network(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node.
 
 ## Value
 
 A `psychnet` object whose `$weights` is the partial-correlation matrix,
 with `$precision`, `$support` (the TMFG graph), `$cor_matrix`, and
-`$kkt`.
+`$kkt`. A clique or separator block that is singular or nearly so
+(reciprocal condition number below 1e-10, e.g. a duplicate column), or a
+precision whose certificate exceeds 1e-6, is refused with an error of
+class `psychnet_singular` rather than returned as an uncertified
+network.
 
 ## References
 

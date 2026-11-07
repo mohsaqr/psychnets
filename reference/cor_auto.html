@@ -17,7 +17,7 @@ bootnet/qgraph use by default for Likert data."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@ base-R counterpart of <code><a href="https://rdrr.io/pkg/qgraph/man/cor_auto.htm
 
 <dt id="arg-ordinal-max-levels">ordinal_max_levels<a class="anchor" aria-label="anchor" href="#arg-ordinal-max-levels"></a></dt>
 <dd><p>Maximum distinct values for a variable to count as
-ordinal. Default 7.</p></dd>
+ordinal: a whole number &gt;= 2. Default 7.</p></dd>
 
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
@@ -89,7 +89,26 @@ ordinal. Default 7.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A correlation matrix with the variable names as dimnames.</p>
+    <p>A correlation matrix with the variable names as dimnames. An invalid
+<code>ordinal_max_levels</code> is an error of class <code>psychnet_bad_input</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The polychoric correlation is the two-step estimator of Olsson (1979):
+thresholds fixed at the marginal normal quantiles, then the contingency-table
+likelihood maximised over the correlation; it matches <code>psych</code>/<code>qgraph</code> to
+about 1e-5. The polyserial correlation is the Olsson, Drasgow &amp; Dorans
+(1982) <em>ad-hoc</em> estimator (the closed form
+\(r_{xy}\,\sigma_y / \sum_k \phi(\tau_k)\)), not the two-step
+maximum-likelihood polyserial that <code><a href="https://rdrr.io/pkg/qgraph/man/cor_auto.html" class="external-link">qgraph::cor_auto()</a></code> obtains through
+<code>lavaan</code>. Both are consistent; on finite samples they differ by up to about
+0.006, so a mixed ordinal / continuous correlation matrix will not
+reproduce <code><a href="https://rdrr.io/pkg/qgraph/man/cor_auto.html" class="external-link">qgraph::cor_auto()</a></code> exactly.</p>
+<p>An ordered-factor column of a data frame enters as its integer level codes
+and is then ordinal whenever it has at most <code>ordinal_max_levels</code> levels.
+Unordered factors, character and logical columns are dropped with a
+<code>psychnet_dropped_columns</code> message; constant columns with a
+<code>psychnet_constant_variable</code> warning.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

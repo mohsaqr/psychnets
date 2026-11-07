@@ -71,7 +71,7 @@ mixed_net <- psychnet(data = mixed_data, method = "mgm")
 mixed_net
 #> <psychnet> mgm network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 7.58e-08
+#>   optimality (KKT residual): 5.00e-11
 ```
 
 The fitted network contains 5 nodes and 6 edges. The printed KKT
@@ -91,16 +91,16 @@ network.
 summary(mixed_net)
 #> <psychnet> mgm network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 7.58e-08
+#>   optimality (KKT residual): 5.00e-11
 #>   edge weight: range [0.196, 0.632], mean 0.413
 as.data.frame(mixed_net)
 #>   from    to    weight
-#> 1  CSU    IV 0.5179204
+#> 1  CSU    IV 0.5179205
 #> 2  CSU    SE 0.4850679
 #> 3   IV    SE 0.1970362
 #> 4  CSU SR_hi 0.4509658
-#> 5   IV SR_hi 0.6323682
-#> 6   SE SR_hi 0.1956634
+#> 5   IV SR_hi 0.6323683
+#> 6   SE SR_hi 0.1956633
 ```
 
 The largest edge joins intrinsic value and high self-regulation
@@ -131,7 +131,7 @@ returns `method`, `certificate`, `kind`, and `certified`.
 
 certificate(mixed_net)
 #>   method  certificate kind certified
-#> 1    mgm 7.581922e-08  kkt      TRUE
+#> 1    mgm 4.997067e-11  kkt      TRUE
 ```
 
 The residual is $`7.58 \times 10^{-8}`$ and `certified` is `TRUE`. It is
@@ -151,10 +151,10 @@ the signed sum.
 
 net_centralities(mixed_net)
 #>    node  strength expected_influence
-#> 1   CSU 1.4539541          1.4539541
+#> 1   CSU 1.4539542          1.4539542
 #> 2    IV 1.3473249          1.3473249
-#> 3    SE 0.8777675          0.8777675
-#> 4 SR_hi 1.2789975          1.2789975
+#> 3    SE 0.8777674          0.8777674
+#> 4 SR_hi 1.2789974          1.2789974
 #> 5 TA_hi 0.0000000          0.0000000
 ```
 
@@ -211,19 +211,19 @@ mixed_or <- psychnet(data = mixed_data, method = "mgm", rule = "OR")
 mixed_or
 #> <psychnet> mgm network
 #>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 7.58e-08
+#>   optimality (KKT residual): 5.00e-11
 ```
 
 ``` r
 
 as.data.frame(mixed_or)
 #>    from    to     weight
-#> 1   CSU    IV  0.5179204
+#> 1   CSU    IV  0.5179205
 #> 2   CSU    SE  0.4850679
 #> 3    IV    SE  0.1970362
 #> 4   CSU SR_hi  0.4509658
-#> 5    IV SR_hi  0.6323682
-#> 6    SE SR_hi  0.1956634
+#> 5    IV SR_hi  0.6323683
+#> 6    SE SR_hi  0.1956633
 #> 7 SR_hi TA_hi -0.1681336
 ```
 

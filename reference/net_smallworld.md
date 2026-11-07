@@ -31,7 +31,9 @@ net_smallworld(x, n_rand = 100L, seed = NULL)
 
 A tidy one-row `data.frame` (class `psychnet_smallworld`):
 `smallworldness`, `transitivity`, `aspl`, `transitivity_rand`,
-`aspl_rand`.
+`aspl_rand`. When the random reference graphs have no triangles or no
+finite paths the index is undefined: `smallworldness` is `NA` and a
+warning of class `psychnet_undefined_statistic` is raised.
 
 ## References
 

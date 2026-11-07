@@ -81,10 +81,12 @@ mgm_fit(
 
 - moderators:
 
-  Optional single column index of a moderator variable. When supplied,
-  fits a *moderated* MGM (that variable moderates every pairwise edge)
-  and returns a `psychnet_moderated` object to be read with
-  [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md).
+  Optional moderator variable: a single column index (a whole number) or
+  a single column name. When supplied, fits a *moderated* MGM (that
+  variable moderates every pairwise edge) and returns a
+  `psychnet_moderated` object to be read with
+  [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md)
+  and [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html).
   Honours `native` like the unmoderated path: the default base kernel is
   pure R and KKT-certified, and covers gaussian and binary nodes;
   `native = FALSE` uses `glmnet` and additionally allows multi-level
@@ -93,7 +95,10 @@ mgm_fit(
 - weights:
 
   Optional non-negative observation weights, one per row of the
-  (NA-prepared) data. `NULL` (default) is unweighted.
+  (NA-prepared) data. Weights are rescaled to a maximum of 1, as in
+  [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html)
+  (`weights / max(weights)`, effective sample size `sum(weights)`), so
+  only their relative sizes matter. `NULL` (default) is unweighted.
 
 - na_method:
 
@@ -126,16 +131,30 @@ mgm_fit(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels: one per node, or one per input column (labels of
+  dropped constant columns are then discarded).
 
 ## Value
 
 A `psychnet` object whose `$weights` is the symmetric standardized
 weight matrix, with `$types`, `$levels` (number of levels per node, 1
-for gaussian) and `$kkt` (the worst nodewise residual). Node order in
-`$weights` and `$nodes` is always the column order of the input `data`,
-never sorted, and a k-level categorical stays ONE node. A binary-binary
-edge carries the sign of its nodewise-logistic coefficient;
+for gaussian), `$fit_kkt` (the worst nodewise stationarity residual of
+the penalized fits) and `$kkt`. The `"LW"`/`"HW"` threshold zeroes
+coefficients AFTER the penalized fit, so a thresholded network is no
+longer the optimum the residual certifies: when the threshold removed
+any coefficient, `$kkt` is `NA` (read with
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md))
+and `$certificate_target` is `"pre_threshold_fit"`, exactly as for a
+thresholded
+[`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md);
+otherwise `$kkt` equals `$fit_kkt` and the target is
+`"returned_network"`. Use `threshold = "none"` for a certified network.
+A nodewise fit that does not reach its optimum raises a
+`psychnet_no_converge` warning naming the node; invalid arguments raise
+`psychnet_bad_input`. Node order in `$weights` and `$nodes` is always
+the column order of the input `data`, never sorted, and a k-level
+categorical stays ONE node. A binary-binary edge carries the sign of its
+nodewise-logistic coefficient;
 [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) reports the same
 edge as a magnitude only (its sign is undefined for a
 categorical-categorical interaction), so compare such edges on
@@ -168,10 +187,10 @@ fit <- mgm_fit(d)
 fit
 #> <psychnet> mgm network
 #>   nodes: 4   edges: 3   (undirected)
-#>   optimality (KKT residual): 6.84e-09
+#>   optimality (KKT residual): 1.01e-10
 as.data.frame(fit)
 #>   from to    weight
-#> 1   g1 g2 0.3421963
+#> 1   g1 g2 0.3421962
 #> 2   g1 b1 0.3288350
 #> 3   g2 b1 0.3589604
 ```

@@ -82,26 +82,26 @@ net_crosswalk("EBICglasso")
 #> 17    psychnet only
 #> 18    psychnet only
 #> 19    psychnet only
-#>                                                                  note
-#> 1               correlation matrix in; psychnet also accepts raw data
-#> 2                                                                    
-#> 3                                            EBIC tuning, default 0.5
-#> 4                                                         default 100
-#> 5                                                   same default 0.01
-#> 6           qgraph: logical sig-rule; psychnet: numeric weight cutoff
-#> 7                                    same default FALSE (W_ii = S_ii)
-#> 8  qgraph: logical; psychnet also takes "unregularized" (support MLE)
-#> 9                      psychnet always validates/PD-checks cor_matrix
-#> 10                  per-edge penalty matrix; psychnet uses scalar rho
-#> 11                 EBIC df toggle; psychnet never counts the diagonal
-#> 12                          psychnet always stores $kkt, $lambda, ...
-#> 13                                                 psychnet is silent
-#> 14                                    estimate straight from raw data
-#> 15                                      pearson/spearman/kendall/auto
-#> 16                                     pairwise/listwise missing data
-#> 17                      native solver (TRUE) / glasso Fortran (FALSE)
-#> 18                                                        node labels
-#> 19                         fixed penalty grid, for resampling callers
+#>                                                                                                                                                                                       note
+#> 1                                                                                                                                    correlation matrix in; psychnet also accepts raw data
+#> 2                                                                                                                                                                                         
+#> 3                                                                                                                                                                 EBIC tuning, default 0.5
+#> 4                                                                                                                                                                              default 100
+#> 5                                                                                                                                                                        same default 0.01
+#> 6                                                                                                    qgraph: logical sig-rule; psychnet: numeric weight cutoff >= 0 (a logical is refused)
+#> 7                                                                                                                                                         same default FALSE (W_ii = S_ii)
+#> 8  qgraph refit = TRUE (unpenalized refit of the selected graph) is psychnet refit = "unregularized"; psychnet refit = TRUE (default) re-solves the penalized optimum to machine precision
+#> 9                                                                                                                                           psychnet always validates/PD-checks cor_matrix
+#> 10                                                                                                                                       per-edge penalty matrix; psychnet uses scalar rho
+#> 11                                                                                                                                      EBIC df toggle; psychnet never counts the diagonal
+#> 12                                                                                                                                               psychnet always stores $kkt, $lambda, ...
+#> 13                                                                                                                                                                      psychnet is silent
+#> 14                                                                                                                                                         estimate straight from raw data
+#> 15                                                                                                                                                           pearson/spearman/kendall/auto
+#> 16                                                                                                                                                          pairwise/listwise missing data
+#> 17                                                                                                                                           native solver (TRUE) / glasso Fortran (FALSE)
+#> 18                                                                                                                                                                             node labels
+#> 19                                                                                                                                              fixed penalty grid, for resampling callers
 net_crosswalk("IsingFit")
 #>             reference  psychnet           ref_arg     psychnet_arg
 #> 1  IsingFit::IsingFit ising_fit                 x             data

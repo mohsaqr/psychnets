@@ -11,7 +11,7 @@ picks the right one automatically (source = &quot;auto&quot;):"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,7 @@ picks the right one automatically (<code>source = "auto"</code>):</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  within <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"data"</span>, <span class="st">"eventdata"</span><span class="op">)</span>,</span>
 <span>  actor <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  action <span class="op">=</span> <span class="st">"Action"</span>,</span>
@@ -90,25 +91,29 @@ event log when <code>actor</code> is supplied.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Estimator. One of <code>"glasso"</code> (default), <code>"ggm"</code>, <code>"tmfg"</code>,
-<code>"logo"</code>, <code>"relimp"</code>, <code>"ising"</code>, <code>"ising_sampler"</code>, <code>"huge"</code>, <code>"mgm"</code>,
-<code>"cor"</code>, <code>"pcor"</code>. The <code>qgraph</code>/<code>bootnet</code> names are accepted as aliases
+<dd><p>Estimator, a single name. One of <code>"glasso"</code> (default),
+<code>"ggm"</code>, <code>"tmfg"</code>, <code>"logo"</code>, <code>"relimp"</code>, <code>"ising"</code>, <code>"ising_sampler"</code>,
+<code>"huge"</code>, <code>"mgm"</code>, <code>"cor"</code>, <code>"pcor"</code>; several names at once are an error
+(<code>psychnet_bad_input</code>). The <code>qgraph</code>/<code>bootnet</code> names are accepted as aliases
 (e.g. <code>"EBICglasso"</code> -&gt; <code>"glasso"</code>, <code>"ggmModSelect"</code> -&gt; <code>"ggm"</code>).
 Event data is restricted to the Gaussian graphical methods.</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>Absolute-weight threshold below which edges are zeroed for
-<code>cor</code>, <code>pcor</code>, <code>glasso</code>, <code>huge</code>, <code>ggm</code>, and <code>logo</code>. For <code>mgm</code>, supply its
-character rule (<code>"LW"</code>, <code>"HW"</code>, or <code>"none"</code>); the numeric default leaves
-<code><a href="mgm_fit.html">mgm_fit()</a></code>'s own default unchanged.</p></dd>
+<code>cor</code>, <code>pcor</code>, <code>glasso</code>, <code>huge</code>, <code>ggm</code>, and <code>logo</code>: a single number &gt;= 0
+(validated by the estimator). For <code>mgm</code>, supply its character rule
+(<code>"LW"</code>, <code>"HW"</code>, or <code>"none"</code>); the numeric default leaves <code><a href="mgm_fit.html">mgm_fit()</a></code>'s
+own default unchanged. A non-zero value for any other method is ignored
+with a <code>psychnet_ignored_argument</code> warning.</p></dd>
 
 
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
 <dd><p>EBIC hyperparameter. <code>NULL</code> (default) keeps each method's own
 default (0.5 for the regularized Gaussian graphical models, 0 for <code>ggm</code>,
 0.25 for <code>ising</code>/<code>mgm</code>); set it to override. Forwarded only to the
-regularized methods.</p></dd>
+regularized methods; a value given for another method is ignored with a
+<code>psychnet_ignored_argument</code> warning.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
@@ -129,6 +134,17 @@ selects feature columns only when <code>data</code> is already a numeric table.)
 estimated per level of <code>group</code> and a <code>psychnet_group</code> (a named list of
 networks) is returned, which plots as a grid and is iterated per level by
 the framework verbs.</p></dd>
+
+
+<dt id="arg-within">within<a class="anchor" aria-label="anchor" href="#arg-within"></a></dt>
+<dd><p>Optional name of a person-identifier column. When supplied,
+every network variable is centered and scaled <em>within persons</em> first (see
+<code><a href="scale_within.html">scale_within()</a></code>; mlVAR's <code>scaleWithin</code>), over all rows – so with <code>group</code>
+(e.g. occasions) the person means and SDs use every occasion – and the
+person column is not a node. With <code>group</code>, the result remembers which
+person each row is, so <code>net_compare(x, levels, paired = TRUE)</code> pairs the
+two levels by person. Without <code>group</code>, rows of the same person are pooled
+and are not independent. Cross-sectional data only.</p></dd>
 
 
 <dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>
@@ -235,6 +251,43 @@ estimators. Whichever you pass in, the stored <code>$method</code> is the short 
 <span class="r-out co"><span class="r-pr">#&gt;</span>  group nodes edges   n</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      A     4     0 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      B     4     0 100</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Within-person networks, one per week, scaled within each student over all</span></span></span>
+<span class="r-in"><span><span class="co"># four weeks; compare two weeks (paired by student automatically).</span></span></span>
+<span class="r-in"><span><span class="va">nets</span> <span class="op">&lt;-</span> <span class="fu">psychnet</span><span class="op">(</span><span class="va">srl_panel</span>, vars <span class="op">=</span> <span class="va">efficacy</span><span class="op">:</span><span class="va">anxiety</span>, group <span class="op">=</span> <span class="st">"week"</span>,</span></span>
+<span class="r-in"><span>                 within <span class="op">=</span> <span class="st">"student"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">nets</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet_group&gt; 4 networks by week (method: glasso)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  group nodes edges   n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      1     5     6 100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      2     5     6 100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      3     5     7 100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      4     5     7 100</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="net_compare.html">net_compare</a></span><span class="op">(</span><span class="va">nets</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">)</span>, iter <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>  <span class="co"># iter &gt;= 1000 in practice</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Network Comparison Test: 1 vs 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 permutations, paired groups, n = 100 and 100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Test                  Statistic       p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   M  network structure      0.084   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   S  global strength        0.006   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        1 1.516 vs 4 1.510</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   E  edges differing      0 of 10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Edges, largest difference first</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Edge                       1       4  |diff|       p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   planning - effort      0.115   0.199   0.084   0.250 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   effort - enjoyment     0.382   0.314   0.068   0.750 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   efficacy - anxiety     0.000   0.064   0.064   0.250 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   efficacy - planning    0.503   0.440   0.063   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   efficacy - effort      0.312   0.358   0.046   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   planning - enjoyment   0.165   0.125   0.040   0.500 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   efficacy - enjoyment   0.039   0.011   0.029   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   effort - anxiety       0.000   0.000   0.000   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   enjoyment - anxiety    0.000   0.000   0.000   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   planning - anxiety     0.000   0.000   0.000   1.000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   * p &lt; 0.05</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

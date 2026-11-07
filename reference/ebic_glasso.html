@@ -15,7 +15,7 @@ default, but pure base R and self-certified (see glasso_kkt())."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,8 @@ default, but pure base R and self-certified (see <code><a href="glasso_kkt.html"
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Sample size (required when <code>cor_matrix</code> is supplied).</p></dd>
+<dd><p>Sample size (required when <code>cor_matrix</code> is supplied): a single
+finite number &gt;= 1.</p></dd>
 
 
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
@@ -115,7 +116,8 @@ Default 0.01.</p></dd>
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>Partial correlations with absolute value below this are set
-to zero. Default 0. A positive value is post-estimation processing, so the
+to zero: a single number &gt;= 0, default 0 (qgraph's logical
+<code>threshold = TRUE</code> rule is refused). A positive value is post-estimation processing, so the
 returned graph has <code>$kkt = NA</code>; the fitted precision's residual remains in
 <code>$fit_kkt</code>.</p></dd>
 
@@ -171,7 +173,8 @@ optimum and is therefore certified by <code><a href="ggm_support_kkt.html">ggm_s
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels, one unique label per network node (the
+columns that survive constant / non-numeric column removal).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -184,7 +187,7 @@ input <code>data</code> / <code>cor_matrix</code>, never sorted. With <code>refi
 the object also carries <code>$support</code>, and <code>$kkt</code> is a <code><a href="ggm_support_kkt.html">ggm_support_kkt()</a></code>
 residual; with <code>refit = FALSE</code> the reported <code>$kkt</code> reflects the loose scan
 tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
-<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> (see <code><a href="as.data.frame.psychnet.html">as.data.frame.psychnet()</a></code>) and the certificate
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> (see <a href="psychnet-class.html">psychnet</a>) and the certificate
 with <code><a href="certificate.html">certificate()</a></code>.</p>
     </div>
     <div class="section level2">

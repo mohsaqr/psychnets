@@ -13,7 +13,7 @@ deviation - a psychometric reliability view of the estimated structure."></head>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,13 @@ deviation - a psychometric reliability view of the estimated structure.</p>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  estimator_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_reliability'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_reliability'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -104,32 +110,61 @@ given (see <code><a href="net_boot.html">net_boot()</a></code>), or a <code>psyc
 
 
 <dt id="arg-estimator-args">estimator_args<a class="anchor" aria-label="anchor" href="#arg-estimator-args"></a></dt>
-<dd><p>Named list of estimator arguments. Use this for names
-consumed by the diagnostic itself, such as estimator <code>threshold</code>.</p></dd>
+<dd><p>Named list of estimator arguments. <code>cor_method</code>,
+<code>iter</code> and <code>split</code> are arguments of this diagnostic (the between-halves
+comparison), so an estimator's own <code>cor_method</code> or <code>threshold</code> must go
+here, e.g. <code>estimator_args = list(cor_method = "spearman")</code>; values in
+<code>...</code> with those names never reach the estimator.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to the estimator.</p></dd>
+<dd><p>Passed to the estimator by <code>net_split_reliability()</code>; ignored by
+the methods.</p></dd>
+
+
+<dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>A <code>psychnet_reliability</code> object.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tidy <code>data.frame</code> (class <code>psychnet_reliability</code>), one row per metric
-with columns <code>metric</code>, <code>mean</code>, <code>sd</code>, <code>lower</code>, <code>upper</code>. The per-split draws
-are carried in <code>attr(x, "iterations")</code> for <code><a href="plot.psychnet_reliability.html">plot.psychnet_reliability()</a></code>.</p>
+with columns <code>metric</code>, <code>mean</code>, <code>sd</code>, <code>lower</code>, <code>upper</code> (2.5% and 97.5%
+percentiles across splits) and <code>n_valid</code> (splits in which the metric was
+defined). The edge correlation is 0 for a split in which exactly one half
+has a constant edge vector (for example an empty network against a
+non-empty one, as in bootnet's <code>cor0()</code>), and undefined when both halves
+are constant (they agree, but no correlation exists) or fewer than two
+edges are available; undefined splits are excluded from the summary, counted out of
+<code>n_valid</code>, and announced by a <code>psychnet_undefined_statistic</code> warning. A
+metric defined in no split has <code>NA</code> summaries. A failed split fit raises a
+<code>psychnet_resample_failed</code> warning carrying the first error; a failed
+full-sample fit raises a <code>psychnet_estimation_failed</code> error with the
+estimator's message. The per-split draws are stored with the result for
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>, which draws a histogram of each metric across splits with its
+mean marked. <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> return <code>x</code> invisibly.</p>
     </div>
+    <div class="section level2">
+    <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+
+<ul><li><p><code>print(psychnet_reliability)</code>: The between-halves metric table.</p></li>
+<li><p><code>plot(psychnet_reliability)</code>: Histograms of the metrics across splits.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># `method` and `iter` are chosen so the example runs quickly; the defaults</span></span></span>
 <span class="r-in"><span><span class="co"># (method = "glasso", iter = 100) are what a real assessment should use.</span></span></span>
-<span class="r-in"><span><span class="fu">net_split_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, iter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sh</span> <span class="op">&lt;-</span> <span class="fu">net_split_reliability</span><span class="op">(</span><span class="va">SRL_Claude</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, iter <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sh</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # split-half reliability: pcor | 10 iterations (50/50 split)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           metric       mean         sd      lower      upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev 0.07808955 0.02457258 0.03846060 0.10963050</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 median_abs_dev 0.06588545 0.02220565 0.02991325 0.09716984</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    correlation 0.97498013 0.01592382 0.94570362 0.99516211</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    max_abs_dev 0.19047875 0.07735301 0.07527392 0.32270329</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           metric       mean         sd      lower      upper n_valid</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   mean_abs_dev 0.07808955 0.02457258 0.03846060 0.10963050      10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 median_abs_dev 0.06588545 0.02220565 0.02991325 0.09716984      10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    correlation 0.97498013 0.01592382 0.94570362 0.99516211      10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    max_abs_dev 0.19047875 0.07735301 0.07527392 0.32270329      10</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sh</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="net_split_reliability-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

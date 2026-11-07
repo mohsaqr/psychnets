@@ -17,6 +17,9 @@ redundancy(
   cor_min = 0.5,
   cor_method = c("auto", "pearson", "spearman", "kendall")
 )
+
+# S3 method for class 'psychnet_redundancy'
+print(x, ...)
 ```
 
 ## Arguments
@@ -46,13 +49,37 @@ redundancy(
   polychoric/polyserial as appropriate, matching goldbricker),
   `"pearson"`, `"spearman"`, or `"kendall"`.
 
+- x:
+
+  A `psychnet_redundancy` object.
+
+- ...:
+
+  Unused.
+
 ## Value
 
 A tidy `data.frame` (class `psychnet_redundancy`), one row per flagged
 pair (sorted most-redundant first), with columns `item1`, `item2`,
 `proportion` (share of significantly different correlations) and
 `correlation`. Zero rows when nothing is flagged. The full proportion
-matrix is in `attr(x, "proportion_matrix")`.
+matrix is stored with the result (attribute `proportion_matrix`).
+[`print()`](https://rdrr.io/r/base/print.html) shows the flagged pairs,
+or a note that none were flagged, and returns `x` invisibly.
+
+## Details
+
+**Data handling.** Non-numeric columns are dropped, and so is any column
+that is constant once incomplete rows are removed. Rows with a missing
+value in any numeric column are dropped (listwise deletion, as
+`goldbricker` does), with a warning of class `psychnet_rows_dropped`
+giving the count; the remaining number of rows is the `n` of every
+correlation-difference test.
+
+## Functions
+
+- `print(psychnet_redundancy)`: The flagged pairs with the thresholds
+  used.
 
 ## References
 

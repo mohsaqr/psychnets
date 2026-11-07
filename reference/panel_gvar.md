@@ -54,8 +54,12 @@ panel_gvar(
 - id, wave:
 
   Long data only: names of the person-identifier and wave columns.
-  Person identifiers must be non-missing. Waves are ordered by
-  [`sort()`](https://rdrr.io/r/base/sort.html) (or factor level order).
+  Person identifiers and waves must be non-missing, and neither column
+  may be one of `vars`. Waves are put in time order: a factor by its
+  level order; numeric, date or time waves by value; character waves
+  that are all numbers (`"1"`, `"2"`, `"10"`) numerically; any other
+  character waves alphabetically, with a `psychnet_wave_order` warning
+  naming the order used (pass a factor to set it).
 
 - select:
 
@@ -85,7 +89,10 @@ panel_gvar(
   [stats::p.adjust.methods](https://rdrr.io/r/stats/p.adjust.html).
   Default `"none"`
   ([`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html)'s
-  default).
+  default). Used only with `select = "prune"` (a
+  `psychnet_ignored_argument` warning says so otherwise); the p-values
+  and `significant` flags reported in the edge and parameter tables are
+  always unadjusted.
 
 - recursive:
 
@@ -158,42 +165,48 @@ panel_gvar(
 An object of class `c("psychnet_panelgvar", "netobject_group")`: a named
 list of three
 [psychnet](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-networks, `temporal` (directed; edge `from -> to` weight
-`beta[to, from]`, autoregressive effects kept in `$beta`),
-`contemporaneous`, and `between` (undirected partial correlations; the
-innovation / between covariance in `$sigma`). Being a `netobject_group`,
-it plots as a grid with
+networks, `temporal` (directed; edge `from -> to` is the lag-1 effect of
+`from` on `to`), `contemporaneous`, and `between` (undirected partial
+correlations). Being a `netobject_group`, it plots as a grid with
 [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html).
 Read it with
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html):
 `what = "edges"` (one row per edge with standard error, p-value and 95%
-Wald interval), `what = "parameters"` (every model parameter),
-`what = "fit"` (one row of fit indices: chi-square, CFI, TLI, RMSEA,
-AIC, BIC), `what = "variance"` (one row per variable: the between-person
-share of its variance), or `what = "diagnostics"` (one row: the score
-certificate – largest absolute gradient of the ML fit function on the
-free parameters, or the lasso KKT residual for `select = "ebic"` –
-boundary flag, SE availability, and how many of the three optimizer
-starts reached the best optimum). Fitting, inference and the certificate
-run on standardized variables (pooled SD per variable), so they are
-unit-free and the certificate does not depend on the variables' units;
-the model is scale-equivariant, so estimates and standard errors map
-back exactly and are returned on the data scale.
+Wald interval; the temporal autoregressive effects are the `from == to`
+rows), `what = "parameters"` (every model parameter), `what = "fit"`
+(one row of fit indices: chi-square, CFI, TLI, RMSEA, AIC, BIC),
+`what = "variance"` (one row per variable: the between-person share of
+its variance), `what = "covariance"` (the innovation and between-person
+covariance matrices, one row per entry), `what = "path"` (for
+`select = "ebic"`: one row per penalty value on the lambda path), or
+`what = "diagnostics"` (one row: the score certificate – largest
+absolute gradient of the ML fit function on the free parameters, or the
+lasso KKT residual for `select = "ebic"` – boundary flag, SE
+availability, and how many of the optimizer starts reached the best
+optimum). Fitting, inference and the certificate run on standardized
+variables (pooled SD per variable), so they are unit-free and the
+certificate does not depend on the variables' units; the model is
+scale-equivariant, so estimates and standard errors map back exactly and
+are returned on the data scale.
 
 Errors are classed: `psychnet_bad_input` for unusable input (fewer than
-three waves, too few persons, non-numeric or missing columns, a
-requested `"pairwise"`), `psychnet_no_converge` if the optimizer ends at
-an infeasible point. Warnings are classed too: `psychnet_no_converge`
-(score above `1e-6` at an interior solution), `psychnet_boundary` (the
-final contemporaneous or between covariance is near-singular, i.e.
-partial correlations near +/-1 – common with three waves; those
-estimates are unreliable, and the score, which need not vanish there, is
-quoted in the message), `psychnet_singular_information` (some parameters
-are not identified at the returned estimate: their standard errors are
-NA, the others exact), `psychnet_approximate_se` (the fit being pruned
-had a singular information; the parameters it does not identify were
-treated as having infinite standard errors, so pruning removes them),
-and `psychnet_listwise_drop` (persons removed for missing values).
+three waves, too few persons, non-numeric, missing or duplicated
+columns, duplicated or missing labels, an argument outside its allowed
+values, a requested `"pairwise"`), `psychnet_no_converge` if the
+optimizer ends at an infeasible point. Warnings are classed too:
+`psychnet_no_converge` (score above `1e-6` at an interior solution),
+`psychnet_boundary` (the final contemporaneous or between covariance is
+near-singular, i.e. partial correlations near +/-1 – common with three
+waves; those estimates are unreliable, and the score, which need not
+vanish there, is quoted in the message), `psychnet_singular_information`
+(some parameters are not identified at the returned estimate: their
+standard errors are NA, the others exact), `psychnet_approximate_se`
+(the fit being pruned had a singular information; the parameters it does
+not identify were treated as having infinite standard errors, so pruning
+removes them), and `psychnet_listwise_drop` (persons removed for missing
+values), `psychnet_wave_order` (non-numeric character waves ordered
+alphabetically) and `psychnet_ignored_argument` (`adjust` without
+pruning).
 
 ## Details
 

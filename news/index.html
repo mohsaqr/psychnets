@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,6 +45,85 @@
       <small>Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.0" id="psychnets-070">psychnets 0.7.0<a class="anchor" aria-label="anchor" href="#psychnets-070"></a></h2>
+<p>This release follows a full function-by-function review of the package. Most changes are input validation and conditions that were silent before; the ones marked <strong>(numbers change)</strong> alter returned values, as the numerical-stability policy requires for a minor version.</p>
+<div class="section level3">
+<h3 id="changes-to-returned-numbers-0-7-0">Changes to returned numbers<a class="anchor" aria-label="anchor" href="#changes-to-returned-numbers-0-7-0"></a></h3>
+<ul><li>
+<strong>(numbers change)</strong> <code><a href="../reference/net_stability.html">net_stability()</a></code> computes the CS-coefficient with the rule of <code>bootnet::corStability()</code>, the source of the 0.25/0.5 guidance: Pearson correlations (<code>cor0</code>: 0 when one side is constant) and strict <code>&gt;</code> for both <code>threshold</code> and <code>certainty</code>. New <code>cor_method = c("pearson", "spearman")</code>; Spearman was the only option before. Undefined correlations still count as failing (bootnet drops them). <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code> uses the same rule and its <code>cor_method</code> default changes from <code>"spearman"</code> to <code>"pearson"</code>. <code>threshold</code> and <code>certainty</code> must lie in (0, 1).</li>
+<li>
+<strong>(numbers change)</strong> <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code>: gaussian nodes are solved to optimality (coordinate descent on the Gram matrix plus an exact active-set solve) instead of stopping after 100 sweeps. On collinear items the residual falls from about 5e-5 (uncertified) to about 1e-15, and the fit is faster. Default edge weights move by up to about 1e-7 (3.4e-8 on the golden data, no edge added or removed); the golden fixture was regenerated. A fit that still misses its optimum warns <code>psychnet_no_converge</code>.</li>
+<li>
+<strong>(numbers change for weighted fits)</strong> <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code>, <code><a href="../reference/ising_fit.html">ising_fit()</a></code> and <code><a href="../reference/ising_sampler.html">ising_sampler()</a></code> rescale <code>weights</code> to a maximum of 1, as <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> does, so only relative weights matter (weights summing to 1 used to return an empty network). With <code>min_sum</code>, the rescaling uses the retained rows only.</li>
+<li>
+<strong>(numbers change)</strong> <code>net_bridge(normalize = TRUE)</code>: the 2-step bridge expected influence is normalized by the number of nodes, as in <code><a href="https://rdrr.io/pkg/networktools/man/bridge.html" class="external-link">networktools::bridge()</a></code>, not the number of communities.</li>
+<li>
+<code><a href="../reference/condition.html">condition()</a></code> reads <code>value</code> in the moderator’s own coding: a level of a categorical moderator (1/2, <code>"treat"</code>, …) or the raw scale of a continuous one. It used an internal 0-based code or a z value, and a value that is not a level silently returned the reference group; that is now an error.</li>
+<li>
+<code><a href="../reference/panel_gvar.html">panel_gvar()</a></code>: character waves that are all numbers are ordered numerically (“10” used to sort before “2”, fitting the waves out of time order); other character waves warn <code>psychnet_wave_order</code>. The Fisher-scoring polish halves its step instead of stopping, removing spurious <code>psychnet_no_converge</code> warnings.</li>
+<li>
+<code><a href="../reference/net_boot.html">net_boot()</a></code> and the case-dropping verbs catch a failing resample inside its own draw, so results are identical for any <code>cores</code> (one failing draw used to void a whole forked chunk).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="certificates-0-7-0">Certificates<a class="anchor" aria-label="anchor" href="#certificates-0-7-0"></a></h3>
+<ul><li>
+<code><a href="../reference/mgm_fit.html">mgm_fit()</a></code>: when the LW/HW threshold removes a coefficient, <code>$kkt</code> is <code>NA</code> with the pre-threshold residual in <code>$fit_kkt</code>, as for every other post-thresholded estimator (it reported the pre-threshold residual as certified).</li>
+<li>
+<code><a href="../reference/ising_sampler.html">ising_sampler()</a></code> warns <code>psychnet_separation</code> under (quasi-)complete separation and no longer certifies such a fit. Separation is detected by a drift test (the objective still rising along the direction the fit moves), so an extreme but finite fit is still certified.</li>
+<li>A binary node left constant by <code>min_sum</code> filtering or zero weights is degenerate (no finite intercept): <code>psychnet_degenerate_sample</code> warning and no certificate, instead of a certified fit with a huge threshold.</li>
+<li>
+<code><a href="../reference/lmg_certificate.html">lmg_certificate()</a></code> also checks each node’s full-model R^2 against its closed form (the efficiency identity alone holds for any set function).</li>
+<li>
+<code><a href="../reference/logo_network.html">logo_network()</a></code> refuses ill-conditioned clique blocks (<code>psychnet_singular</code>) instead of returning a network that fails its own certificate.</li>
+<li>
+<code><a href="../reference/ggm_modselect.html">ggm_modselect()</a></code> reports failed candidate fits (<code>psychnet_fit_failed</code>) and uncertified results (<code>psychnet_no_converge</code>); <code><a href="../reference/ggm_support_kkt.html">ggm_support_kkt()</a></code> symmetrizes a triangular support; <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> labels the TMFG and relimp certificates as structural.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="input-handling-0-7-0">Input handling<a class="anchor" aria-label="anchor" href="#input-handling-0-7-0"></a></h3>
+<ul><li>Every input-contract error is a classed condition (<code>psychnet_bad_input</code>, subclass of <code>psychnet_error</code>), and <code>threshold</code>, <code>alpha</code>, <code>n</code>, <code>labels</code>, <code>gamma</code>, <code>nlambda</code>, <code>lambda_min_ratio</code>, <code>ci</code>, <code>cores</code>, <code>iter</code>, <code>drop_prop</code>, <code>moderators</code> and the certificate helpers’ arguments are validated. <code>threshold = TRUE</code> (qgraph’s logical form) and other non-numeric thresholds used to return an empty network.</li>
+<li>Data frames: ordered factors are kept as ordinal items (so <code>cor_method = "auto"</code> treats them like <code><a href="https://rdrr.io/pkg/qgraph/man/cor_auto.html" class="external-link">qgraph::cor_auto()</a></code>); other non-numeric columns are dropped with a <code>psychnet_dropped_columns</code> message and constant columns with a <code>psychnet_constant_variable</code> warning. <code><a href="../reference/ising_fit.html">ising_fit()</a></code> codes logical and two-level factor columns 0/1 instead of dropping them, and <code><a href="../reference/net_predict.html">net_predict()</a></code> encodes new data with the same training coding.</li>
+<li>Significance thresholding with too few observations (df &lt;= 0) errors (<code>psychnet_degenerate_sample</code>) instead of deleting every edge; <code><a href="../reference/pcor_network.html">pcor_network()</a></code> warns <code>psychnet_singular</code> for a singular correlation matrix.</li>
+<li>
+<code><a href="../reference/psychnet.html">psychnet()</a></code> warns <code>psychnet_ignored_argument</code> when <code>threshold</code> or <code>gamma</code> is given to a method that does not use it, and refuses several methods.</li>
+<li>Resampling verbs report the estimator’s own error (<code>psychnet_estimation_failed</code>) instead of “estimation failed”, and a failed draw’s message (<code>psychnet_resample_failed</code>).</li>
+<li>
+<code><a href="../reference/net_compare.html">net_compare()</a></code>: the edge table gains <code>p_raw</code>, the unadjusted permutation p-value, next to <code>p_value</code> (adjusted by <code>p_adjust</code>; <code>significant</code> uses it). Previously the unadjusted values were discarded once an adjustment was requested. The global M and S tests are never adjusted.</li>
+<li>
+<code><a href="../reference/net_compare.html">net_compare()</a></code> refuses infinite values, lets a <code>gamma</code>/<code>na_method</code> you supply override a group’s (warning <code>psychnet_estimator_mismatch</code>), and labels group-mode edges with the group’s <code>labels</code>.</li>
+<li>Group mode follows factor level order, refuses empty-string levels and levels with fewer than 3 rows, and warns for small levels and for rows with a missing group. Event data refuse missing actors or sessions.</li>
+<li>
+<code>net_centralities(centrality_fn =)</code> aligns a named result by node label; <code><a href="../reference/net_edge_betweenness.html">net_edge_betweenness()</a></code> treats an asymmetric matrix as directed; <code><a href="../reference/net_bridge.html">net_bridge()</a></code>/<code><a href="../reference/net_aggregate.html">net_aggregate()</a></code> refuse duplicated or unknown community labels; <code><a href="../reference/net_aggregate.html">net_aggregate()</a></code>/<code><a href="../reference/redundancy.html">redundancy()</a></code> report listwise-dropped rows. <code><a href="../reference/net_aggregate.html">net_aggregate()</a></code> leaves out a column whose community is <code>NA</code> (e.g. an ID) before any preprocessing, and orders numeric communities numerically (<code>"2"</code> before <code>"10"</code>); character communities stay alphabetical.</li>
+<li>
+<code><a href="../reference/relimp_network.html">relimp_network()</a></code> gains an ignored <code>n</code> argument (as <code><a href="../reference/tmfg_network.html">tmfg_network()</a></code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-verbs-0-7-0">New verbs<a class="anchor" aria-label="anchor" href="#new-verbs-0-7-0"></a></h3>
+<ul><li>
+<code><a href="../reference/scale_within.html">scale_within()</a></code> centers each variable within persons and, by default, divides by the person’s own SD (the within-person standardization of <code>mlVAR::mlVAR(scaleWithin = TRUE)</code>, which it reproduces exactly), as a data step before any analysis – e.g. a paired <code><a href="../reference/net_compare.html">net_compare()</a></code> of two occasions’ within-person networks. It warns (<code>psychnet_mirror_deviations</code>) when no person has more than two observations, where the occasions’ deviations are mirror images and their networks identical by construction, and sets values without within-person variation to <code>NA</code> (<code>psychnet_constant_within</code>).</li>
+<li>
+<code>psychnet(within = "person")</code> applies the same scaling inside the front door (over all rows, before <code>group</code> splits them), drops the person column from the nodes, and records each row’s person, so <code>net_compare(nets, c(1, 4))</code> compares two occasions paired by person, by default (independent of row order; persons seen in one level only are left out with a <code>psychnet_rows_dropped</code> warning; <code>paired = FALSE</code> overrides). Other groups keep the independent-groups default.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-accessors-0-7-0">New accessors<a class="anchor" aria-label="anchor" href="#new-accessors-0-7-0"></a></h3>
+<ul><li>
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> for <code><a href="../reference/net_stability.html">net_stability()</a></code> results (<code>what = c("table", "cs", "correlations")</code>) and for moderated MGM fits; <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> on a bootstrap gains <code>what = c("edges", "centrality", "predictability", "thresholded")</code>; on a panel GVAR, <code>what = "path"</code> (EBIC lambda path) and <code>what = "covariance"</code>. <code>psychnet_multilevel</code> gains <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>.</li>
+<li>
+<strong>(numbers change)</strong> <code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code>: a split in which one half network is empty and the other is not has edge correlation 0 (bootnet’s <code>cor0()</code>); such splits used to be dropped, inflating the mean correlation. Only splits where both halves are constant are undefined.</li>
+<li>
+<code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code> gains <code>n_valid</code> and reports NA rather than NaN; stability and case-drop tables gain <code>actual_drop</code> and <code>n_valid</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plots-0-7-0">Plots<a class="anchor" aria-label="anchor" href="#plots-0-7-0"></a></h3>
+<ul><li>All plots use the Okabe-Ito palette. Significance is shown by filled vs open points and solid vs dashed segments, series by line type and point shape as well as colour, box-matrix cells print the sign, and the bridge plot styles nodes by community. Every plot restores <code><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-7-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-7-0"></a></h3>
+<ul><li>S3 methods are documented on the page of the verb that creates the object (<code><a href="../reference/net_boot.html">?net_boot</a></code> covers its <code>print</code>, <code>plot</code> and <code>as.data.frame</code> methods); the <code>psychnet</code> object has its own page, <code><a href="../reference/psychnet-class.html">?"psychnet-class"</a></code>. The manual shrinks from 69 to 48 topics.</li>
+<li>
+<code><a href="../reference/cor_auto.html">cor_auto()</a></code> documents that its polyserial is the Olsson ad-hoc estimator; <code><a href="../reference/net_edge_betweenness.html">net_edge_betweenness()</a></code> returns path counts; <code><a href="../reference/net_centralities.html">net_centralities()</a></code> betweenness and closeness are normalized (as igraph, unlike <code><a href="https://rdrr.io/pkg/qgraph/man/centrality_auto.html" class="external-link">qgraph::centrality_auto()</a></code>); the crosswalk maps qgraph’s <code>EBICglasso(refit = TRUE)</code> to <code>refit = "unregularized"</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.2" id="psychnets-062">psychnets 0.6.2<a class="anchor" aria-label="anchor" href="#psychnets-062"></a></h2>
 <div class="section level3">

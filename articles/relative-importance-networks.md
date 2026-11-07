@@ -63,7 +63,7 @@ importance_net <- psychnet(data = SRL_GPT, method = "relimp")
 importance_net
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 2.22e-16
+#>   structural certificate (decomposition residual): 2.22e-16
 ```
 
 The network contains 5 nodes and 20 directed edges, one for every
@@ -85,7 +85,7 @@ share of the outcome’s $`R^2`$.
 summary(importance_net)
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 2.22e-16
+#>   structural certificate (decomposition residual): 2.22e-16
 #>   edge weight: range [0.006, 0.299], mean 0.165
 as.data.frame(importance_net)
 #>    from  to      weight
@@ -238,7 +238,7 @@ importance_spearman <- psychnet(data = SRL_GPT, method = "relimp", cor_method = 
 importance_spearman
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 2.22e-16
+#>   structural certificate (decomposition residual): 2.22e-16
 ```
 
 ``` r

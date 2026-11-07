@@ -61,8 +61,13 @@ event_frequencies(
 
 ## Value
 
-A `data.frame` with an `actor` column, a `session` index, and one
-integer count column per action (one row per occasion).
+A `data.frame` with one row per occasion: an `actor` column (character),
+a `session` column (character occasion label: the actor and session
+values joined by `"."`, followed by the computed session number when
+`compute_sessions` splits by `time`), and one numeric (double) count
+column per action. Errors of class `psychnet_bad_input` when a column is
+missing, `actor` or `session` has missing values, or `time` cannot be
+parsed.
 
 ## Examples
 

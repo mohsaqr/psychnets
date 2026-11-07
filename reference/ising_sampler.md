@@ -27,7 +27,9 @@ ising_sampler(
 
 - data:
 
-  Binary (0/1) data frame or matrix (rows = observations).
+  Binary data frame or matrix (rows = observations): numeric 0/1,
+  logical, or two-level factor columns, as in
+  [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md).
 
 - rule:
 
@@ -53,7 +55,10 @@ ising_sampler(
 
   Optional non-negative observation weights, one per input row after
   missing-data preparation. When `min_sum` is used, weights are filtered
-  alongside their corresponding rows. `NULL` (default) is unweighted.
+  alongside their corresponding rows. Rescaled to a maximum of 1, so
+  only relative sizes matter (see
+  [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)).
+  `NULL` (default) is unweighted.
 
 - na_method:
 
@@ -63,7 +68,7 @@ ising_sampler(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels: one per node, or one per input column.
 
 ## Value
 
@@ -75,6 +80,18 @@ and `$kkt` (worst nodewise score residual). If Wald pruning changes any
 coefficient, `$kkt` is `NA` for the altered fit; `$fit_kkt` retains the
 unpruned residual and `$certificate_target` identifies it as
 `"pre_pruning_fit"`.
+
+Under (quasi-)complete separation – a node perfectly predicted by the
+others – the unpenalized maximum-likelihood estimate does not exist: the
+coefficients grow without bound and the score tends to zero, so a small
+residual would certify nothing. The fit then raises a
+`psychnet_separation` warning naming the nodes, `$kkt` is `NA` and
+`$certificate_target` is `"nonconverged_fit"`; use the penalized
+[`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)
+instead. Any other failure to converge raises `psychnet_no_converge`
+with the same certificate treatment. A singular Fisher information
+raises `psychnet_singular_information`. Input errors are of class
+`psychnet_bad_input`.
 
 ## Examples
 

@@ -44,7 +44,8 @@ ebic_glasso(
 
 - n:
 
-  Sample size (required when `cor_matrix` is supplied).
+  Sample size (required when `cor_matrix` is supplied): a single finite
+  number \>= 1.
 
 - gamma:
 
@@ -60,9 +61,10 @@ ebic_glasso(
 
 - threshold:
 
-  Partial correlations with absolute value below this are set to zero.
-  Default 0. A positive value is post-estimation processing, so the
-  returned graph has `$kkt = NA`; the fitted precision's residual
+  Partial correlations with absolute value below this are set to zero: a
+  single number \>= 0, default 0 (qgraph's logical `threshold = TRUE`
+  rule is refused). A positive value is post-estimation processing, so
+  the returned graph has `$kkt = NA`; the fitted precision's residual
   remains in `$fit_kkt`.
 
 - cor_method:
@@ -123,7 +125,8 @@ ebic_glasso(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node (the columns
+  that survive constant / non-numeric column removal).
 
 ## Value
 
@@ -139,7 +142,7 @@ residual; with `refit = FALSE` the reported `$kkt` reflects the loose
 scan tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge
 table with
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) (see
-[`as.data.frame.psychnet()`](https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet.md))
+[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md))
 and the certificate with
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md).
 

@@ -13,7 +13,7 @@ ordinal/continuous data, which require binary input."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,13 +85,20 @@ midpoint. Tied values always remain together, so the split may be
 unbalanced rather than depending on row order.</p></dd>
 
 
-</dl></dd>
+</dl><p>On a floor- or ceiling-heavy item the median can equal the column minimum,
+so <code>"median"</code> (<code>&gt;=</code>) puts every observation in the upper group and the
+output column is constant. Such columns are reported by a
+<code>psychnet_constant_variable</code> warning (an Ising fit would drop them);
+<code>method = "mean"</code> or <code>"rank"</code> splits them.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An integer matrix of <code>0</code>/<code>1</code> values with the same dimensions and
-dimnames as <code>data</code>.</p>
+dimnames as <code>data</code>. Missing values stay <code>NA</code> in the output (they are not
+assigned to either group). A non-numeric <code>data</code>, an empty one, or a
+constant / all-missing input column is an error of class
+<code>psychnet_bad_input</code>.</p>
     </div>
 
     <div class="section level2">

@@ -304,15 +304,11 @@ technical report.
   [`SRL_LLaMa`](https://pak.dynasite.org/psychnets/reference/SRL.md) :
   Self-regulated-learning (MSLQ) construct scores simulated by large
   language models
-- [`as.data.frame(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet.md)
-  : Tidy edge list for a psychnet network
-- [`as.data.frame(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/as.data.frame.psychnet_bootstrap.md)
-  : Tidy a network bootstrap
-- [`` `$`( ``*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/cash-.psychnet.md)
-  : Back-compatible field access for a psychnet object
 - [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
   : Correctness certificate of a fitted network
 - [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md)
+  [`as.data.frame(`*`<psychnet_moderated>`*`)`](https://pak.dynasite.org/psychnets/reference/condition.md)
+  [`print(`*`<psychnet_moderated>`*`)`](https://pak.dynasite.org/psychnets/reference/condition.md)
   : Condition a moderated network at a moderator value
 - [`cor_auto()`](https://pak.dynasite.org/psychnets/reference/cor_auto.md)
   : Automatic correlation matrix (polychoric / polyserial / Pearson)
@@ -321,6 +317,7 @@ technical report.
 - [`dichotomize()`](https://pak.dynasite.org/psychnets/reference/dichotomize.md)
   : Dichotomize numeric columns to 0/1
 - [`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md)
+  [`plot(`*`<psychnet_difference>`*`)`](https://pak.dynasite.org/psychnets/reference/difference_test.md)
   : Bootstrapped difference test for edges or centralities
 - [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
   : EBIC-regularized Gaussian graphical model (graphical lasso)
@@ -350,16 +347,27 @@ technical report.
 - [`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md)
   : Aggregate a network's communities into super-nodes
 - [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
+  [`as.data.frame(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
+  [`print(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
+  [`plot(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
   : Bootstrap a psychometric network
 - [`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md)
+  [`plot(`*`<psychnet_bridge>`*`)`](https://pak.dynasite.org/psychnets/reference/net_bridge.md)
   : Bridge centrality
 - [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
+  [`print(`*`<psychnet_casedrop>`*`)`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
+  [`plot(`*`<psychnet_casedrop>`*`)`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
   : Edge-weight stability coefficient (case-dropping subset bootstrap)
 - [`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
+  [`plot(`*`<psychnet_centrality>`*`)`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
   : Node centrality
 - [`net_clustering()`](https://pak.dynasite.org/psychnets/reference/net_clustering.md)
   : Weighted clustering coefficients
 - [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  [`summary(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  [`as.data.frame(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  [`print(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  [`plot(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
   : Network Comparison Test
 - [`net_crosswalk()`](https://pak.dynasite.org/psychnets/reference/net_crosswalk.md)
   : Argument crosswalk: psychnet as a substitute for qgraph / IsingFit /
@@ -371,8 +379,13 @@ technical report.
 - [`net_smallworld()`](https://pak.dynasite.org/psychnets/reference/net_smallworld.md)
   : Small-world index
 - [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
+  [`print(`*`<psychnet_reliability>`*`)`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
+  [`plot(`*`<psychnet_reliability>`*`)`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
   : Split-half reliability of the network edge structure
-- [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+- [`plot(`*`<psychnet_stability>`*`)`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+  [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+  [`print(`*`<psychnet_stability>`*`)`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+  [`as.data.frame(`*`<psychnet_stability>`*`)`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
   : Centrality-stability coefficient (case-dropping subset bootstrap)
 - [`node_predictability()`](https://pak.dynasite.org/psychnets/reference/node_predictability.md)
   : Node predictability as a plotting vector
@@ -380,68 +393,40 @@ technical report.
   : Panel graphical VAR network (panel-GVAR)
 - [`pcor_network()`](https://pak.dynasite.org/psychnets/reference/pcor_network.md)
   : Partial correlation network
-- [`plot(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet.md)
-  : Plot a psychnet network
-- [`plot(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_bootstrap.md)
-  : Plot a network bootstrap
-- [`plot(`*`<psychnet_bridge>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_bridge.md)
-  : Plot bridge centrality
-- [`plot(`*`<psychnet_casedrop>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_casedrop.md)
-  : Plot edge-weight case-dropping stability
-- [`plot(`*`<psychnet_centrality>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_centrality.md)
-  : Plot node centralities
-- [`plot(`*`<psychnet_difference>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_difference.md)
-  : Plot a bootstrapped difference test
-- [`plot(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_nct.md)
-  : Plot a Network Comparison Test
-- [`plot(`*`<psychnet_reliability>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_reliability.md)
-  : Plot split-half reliability
-- [`plot(`*`<psychnet_stability>`*`)`](https://pak.dynasite.org/psychnets/reference/plot.psychnet_stability.md)
-  : Plot centrality stability (case-dropping)
-- [`print(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet.md)
-  : Print a psychnet network
-- [`print(`*`<psychnet_bootstrap>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_bootstrap.md)
-  : Print a network bootstrap
-- [`print(`*`<psychnet_casedrop>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_casedrop.md)
-  : Print an edge-weight stability result
-- [`print(`*`<psychnet_group>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_group.md)
-  [`as.data.frame(`*`<psychnet_group>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_group.md)
-  [`summary(`*`<psychnet_group>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_group.md)
-  : Per-group psychometric networks
-- [`print(`*`<psychnet_moderated>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_moderated.md)
-  : Print a moderated MGM fit
-- [`print(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_multilevel.md)
-  [`as.data.frame(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_multilevel.md)
-  : Within / between event-data networks
-- [`print(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_nct.md)
-  : Print a Network Comparison Test
-- [`print(`*`<psychnet_redundancy>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_redundancy.md)
-  : Print a redundancy result
-- [`print(`*`<psychnet_reliability>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_reliability.md)
-  : Print a split-half reliability result
-- [`print(`*`<psychnet_result_group>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_result_group.md)
-  [`as.data.frame(`*`<psychnet_result_group>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_result_group.md)
-  : Per-group framework results
-- [`print(`*`<psychnet_stability>`*`)`](https://pak.dynasite.org/psychnets/reference/print.psychnet_stability.md)
-  : Print a centrality-stability result
+- [`plot(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+  [`` `$`( ``*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+  [`print(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+  [`as.data.frame(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+  [`summary(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+  : Psychometric network objects
 - [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
   : Estimate a psychometric network
+- [`print(`*`<psychnet_group>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
+  [`as.data.frame(`*`<psychnet_group>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
+  [`summary(`*`<psychnet_group>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
+  : Per-group psychometric networks
+- [`print(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
+  [`as.data.frame(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
+  [`summary(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
+  [`plot(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
+  : Within / between event-data networks
 - [`as.data.frame(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
   [`print(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
   [`summary(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
   [`plot(`*`<psychnet_panelgvar>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
   : Read a panel graphical VAR fit
+- [`print(`*`<psychnet_result_group>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_result_group.md)
+  [`as.data.frame(`*`<psychnet_result_group>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_result_group.md)
+  : Per-group framework results
 - [`redundancy()`](https://pak.dynasite.org/psychnets/reference/redundancy.md)
+  [`print(`*`<psychnet_redundancy>`*`)`](https://pak.dynasite.org/psychnets/reference/redundancy.md)
   : Detect redundant node pairs ("goldbricker")
 - [`relimp_network()`](https://pak.dynasite.org/psychnets/reference/relimp_network.md)
   : Relative-importance network (LMG / Shapley)
+- [`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md)
+  : Center and scale variables within persons
 - [`srl_panel`](https://pak.dynasite.org/psychnets/reference/srl_panel.md)
   : Synthetic weekly self-regulated-learning panel
-- [`summary(`*`<psychnet>`*`)`](https://pak.dynasite.org/psychnets/reference/summary.psychnet.md)
-  : Summarize a psychnet network
-- [`summary(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/summary.psychnet_nct.md)
-  [`as.data.frame(`*`<psychnet_nct>`*`)`](https://pak.dynasite.org/psychnets/reference/summary.psychnet_nct.md)
-  : Tables of a Network Comparison Test
 - [`tmfg_certificate()`](https://pak.dynasite.org/psychnets/reference/tmfg_certificate.md)
   : Structural certificate for a TMFG network
 - [`tmfg_network()`](https://pak.dynasite.org/psychnets/reference/tmfg_network.md)

@@ -16,6 +16,7 @@ psychnet(
   labels = NULL,
   vars = NULL,
   group = NULL,
+  within = NULL,
   source = c("auto", "data", "eventdata"),
   actor = NULL,
   action = "Action",
@@ -38,27 +39,31 @@ psychnet(
 
 - method:
 
-  Estimator. One of `"glasso"` (default), `"ggm"`, `"tmfg"`, `"logo"`,
-  `"relimp"`, `"ising"`, `"ising_sampler"`, `"huge"`, `"mgm"`, `"cor"`,
-  `"pcor"`. The `qgraph`/`bootnet` names are accepted as aliases (e.g.
-  `"EBICglasso"` -\> `"glasso"`, `"ggmModSelect"` -\> `"ggm"`). Event
-  data is restricted to the Gaussian graphical methods.
+  Estimator, a single name. One of `"glasso"` (default), `"ggm"`,
+  `"tmfg"`, `"logo"`, `"relimp"`, `"ising"`, `"ising_sampler"`,
+  `"huge"`, `"mgm"`, `"cor"`, `"pcor"`; several names at once are an
+  error (`psychnet_bad_input`). The `qgraph`/`bootnet` names are
+  accepted as aliases (e.g. `"EBICglasso"` -\> `"glasso"`,
+  `"ggmModSelect"` -\> `"ggm"`). Event data is restricted to the
+  Gaussian graphical methods.
 
 - threshold:
 
   Absolute-weight threshold below which edges are zeroed for `cor`,
-  `pcor`, `glasso`, `huge`, `ggm`, and `logo`. For `mgm`, supply its
-  character rule (`"LW"`, `"HW"`, or `"none"`); the numeric default
-  leaves
+  `pcor`, `glasso`, `huge`, `ggm`, and `logo`: a single number \>= 0
+  (validated by the estimator). For `mgm`, supply its character rule
+  (`"LW"`, `"HW"`, or `"none"`); the numeric default leaves
   [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)'s
-  own default unchanged.
+  own default unchanged. A non-zero value for any other method is
+  ignored with a `psychnet_ignored_argument` warning.
 
 - gamma:
 
   EBIC hyperparameter. `NULL` (default) keeps each method's own default
   (0.5 for the regularized Gaussian graphical models, 0 for `ggm`, 0.25
   for `ising`/`mgm`); set it to override. Forwarded only to the
-  regularized methods.
+  regularized methods; a value given for another method is ignored with
+  a `psychnet_ignored_argument` warning.
 
 - labels:
 
@@ -80,6 +85,18 @@ psychnet(
   per level of `group` and a `psychnet_group` (a named list of networks)
   is returned, which plots as a grid and is iterated per level by the
   framework verbs.
+
+- within:
+
+  Optional name of a person-identifier column. When supplied, every
+  network variable is centered and scaled *within persons* first (see
+  [`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md);
+  mlVAR's `scaleWithin`), over all rows – so with `group` (e.g.
+  occasions) the person means and SDs use every occasion – and the
+  person column is not a node. With `group`, the result remembers which
+  person each row is, so `net_compare(x, levels, paired = TRUE)` pairs
+  the two levels by person. Without `group`, rows of the same person are
+  pooled and are not independent. Cross-sectional data only.
 
 - source:
 
@@ -190,4 +207,41 @@ psychnet(d, method = "glasso", group = "g")         # one network per level
 #>  group nodes edges   n
 #>      A     4     0 100
 #>      B     4     0 100
+
+# Within-person networks, one per week, scaled within each student over all
+# four weeks; compare two weeks (paired by student automatically).
+nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
+                 within = "student")
+nets
+#> <psychnet_group> 4 networks by week (method: glasso)
+#>  group nodes edges   n
+#>      1     5     6 100
+#>      2     5     6 100
+#>      3     5     7 100
+#>      4     5     7 100
+set.seed(1)
+net_compare(nets, c(1, 4), iter = 3)  # iter >= 1000 in practice
+#> Network Comparison Test: 1 vs 4
+#> 3 permutations, paired groups, n = 100 and 100
+#> 
+#>   Test                  Statistic       p
+#>   M  network structure      0.084   1.000 
+#>   S  global strength        0.006   1.000 
+#>        1 1.516 vs 4 1.510
+#>   E  edges differing      0 of 10
+#> 
+#>   Edges, largest difference first
+#>   Edge                       1       4  |diff|       p
+#>   planning - effort      0.115   0.199   0.084   0.250 
+#>   effort - enjoyment     0.382   0.314   0.068   0.750 
+#>   efficacy - anxiety     0.000   0.064   0.064   0.250 
+#>   efficacy - planning    0.503   0.440   0.063   1.000 
+#>   efficacy - effort      0.312   0.358   0.046   1.000 
+#>   planning - enjoyment   0.165   0.125   0.040   0.500 
+#>   efficacy - enjoyment   0.039   0.011   0.029   1.000 
+#>   effort - anxiety       0.000   0.000   0.000   1.000 
+#>   enjoyment - anxiety    0.000   0.000   0.000   1.000 
+#>   planning - anxiety     0.000   0.000   0.000   1.000 
+#> 
+#>   * p < 0.05
 ```

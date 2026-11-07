@@ -23,7 +23,7 @@ maximum likelihood in base R."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,8 +115,12 @@ wave (the <code>psychonetrics</code> <code>vars</code> design); its row names be
 
 <dt id="arg-id-wave">id, wave<a class="anchor" aria-label="anchor" href="#arg-id-wave"></a></dt>
 <dd><p>Long data only: names of the person-identifier and wave
-columns. Person identifiers must be non-missing. Waves are ordered by
-<code><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort()</a></code> (or factor level order).</p></dd>
+columns. Person identifiers and waves must be non-missing, and neither
+column may be one of <code>vars</code>. Waves are put in time order: a factor by its
+level order; numeric, date or time waves by value; character waves that
+are all numbers (<code>"1"</code>, <code>"2"</code>, <code>"10"</code>) numerically; any other character
+waves alphabetically, with a <code>psychnet_wave_order</code> warning naming the
+order used (pass a factor to set it).</p></dd>
 
 
 <dt id="arg-select">select<a class="anchor" aria-label="anchor" href="#arg-select"></a></dt>
@@ -139,7 +143,10 @@ edges of <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="ext
 <dt id="arg-adjust">adjust<a class="anchor" aria-label="anchor" href="#arg-adjust"></a></dt>
 <dd><p>Multiplicity correction applied to the edge p-values before
 pruning, one of <a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust.methods</a>. Default <code>"none"</code>
-(<code><a href="https://rdrr.io/pkg/psychonetrics/man/prune.html" class="external-link">psychonetrics::prune()</a></code>'s default).</p></dd>
+(<code><a href="https://rdrr.io/pkg/psychonetrics/man/prune.html" class="external-link">psychonetrics::prune()</a></code>'s default). Used only with <code>select = "prune"</code>
+(a <code>psychnet_ignored_argument</code> warning says so otherwise); the p-values
+and <code>significant</code> flags reported in the edge and parameter tables are
+always unadjusted.</p></dd>
 
 
 <dt id="arg-recursive">recursive<a class="anchor" aria-label="anchor" href="#arg-recursive"></a></dt>
@@ -205,27 +212,31 @@ information ML is not yet implemented, so <code>"pairwise"</code> is refused.</p
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>c("psychnet_panelgvar", "netobject_group")</code>: a
 named list of three <a href="psychnet.html">psychnet</a> networks, <code>temporal</code> (directed; edge
-<code>from -&gt; to</code> weight <code>beta[to, from]</code>, autoregressive effects kept in
-<code>$beta</code>), <code>contemporaneous</code>, and <code>between</code> (undirected partial
-correlations; the innovation / between covariance in <code>$sigma</code>). Being a
+<code>from -&gt; to</code> is the lag-1 effect of <code>from</code> on <code>to</code>), <code>contemporaneous</code>,
+and <code>between</code> (undirected partial correlations). Being a
 <code>netobject_group</code>, it plots as a grid with <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code>. Read it with
 <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>: <code>what = "edges"</code> (one row per edge with standard error,
-p-value and 95% Wald interval), <code>what = "parameters"</code> (every model
+p-value and 95% Wald interval; the temporal autoregressive effects are the
+<code>from == to</code> rows), <code>what = "parameters"</code> (every model
 parameter), <code>what = "fit"</code> (one row of fit indices: chi-square, CFI,
 TLI, RMSEA, AIC, BIC), <code>what = "variance"</code> (one row per variable: the
-between-person share of its variance), or <code>what = "diagnostics"</code> (one
+between-person share of its variance), <code>what = "covariance"</code> (the
+innovation and between-person covariance matrices, one row per entry),
+<code>what = "path"</code> (for <code>select = "ebic"</code>: one row per penalty value on the
+lambda path), or <code>what = "diagnostics"</code> (one
 row: the score
 certificate – largest absolute gradient of the ML fit function on the
 free parameters, or the lasso KKT residual for <code>select = "ebic"</code> –
-boundary flag, SE availability, and how many of the three optimizer
+boundary flag, SE availability, and how many of the optimizer
 starts reached the best optimum). Fitting, inference and the certificate
 run on standardized variables (pooled SD per variable), so they are
 unit-free and the certificate does not depend on the variables' units;
 the model is scale-equivariant, so estimates and standard errors map back
 exactly and are returned on the data scale.</p>
 <p>Errors are classed: <code>psychnet_bad_input</code> for unusable input (fewer than
-three waves, too few persons, non-numeric or missing columns, a requested
-<code>"pairwise"</code>), <code>psychnet_no_converge</code> if the optimizer ends at an
+three waves, too few persons, non-numeric, missing or duplicated columns,
+duplicated or missing labels, an argument outside its allowed values, a
+requested <code>"pairwise"</code>), <code>psychnet_no_converge</code> if the optimizer ends at an
 infeasible point. Warnings are classed too: <code>psychnet_no_converge</code> (score
 above <code>1e-6</code> at an interior solution), <code>psychnet_boundary</code> (the final
 contemporaneous or between covariance is near-singular, i.e. partial
@@ -237,7 +248,10 @@ the returned estimate: their standard errors are NA, the others exact),
 <code>psychnet_approximate_se</code> (the fit being pruned had a singular information;
 the parameters it does not identify were treated as having infinite
 standard errors, so pruning removes them), and
-<code>psychnet_listwise_drop</code> (persons removed for missing values).</p>
+<code>psychnet_listwise_drop</code> (persons removed for missing values),
+<code>psychnet_wave_order</code> (non-numeric character waves ordered
+alphabetically) and <code>psychnet_ignored_argument</code> (<code>adjust</code> without
+pruning).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

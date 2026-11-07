@@ -12,7 +12,7 @@ as.data.frame(
   row.names = NULL,
   optional = FALSE,
   ...,
-  what = c("edges", "parameters", "fit", "diagnostics", "variance"),
+  what = c("edges", "parameters", "fit", "diagnostics", "variance", "covariance", "path"),
   include_zero = FALSE
 )
 
@@ -54,11 +54,22 @@ plot(x, edge_labels = TRUE, ...)
   `delta`s, and fixed/pruned entries), `"fit"` (one row of fit indices),
   or `"diagnostics"` (one row: persons `n`, `waves`, the ML `score`
   certificate, `boundary` / `boundary_part`, `se_available`, and
-  `starts_agree` of `starts` optimizer starts reaching the best
-  saturated optimum), or `"variance"` (one row per variable: the
-  model-implied `between`-person variance, the stationary
-  `within`-person variance, and `share_between`, their ratio to the
-  total – an intraclass correlation).
+  `starts_agree` of `starts` optimizer starts reaching the best optimum
+  – of the saturated fit, or with `select = "ebic"` of the penalized
+  solve at the selected lambda, or of its refit when `refit = TRUE`;
+  agreement is judged on the unit-free standardized objective),
+  `"variance"` (one row per variable: the model-implied `between`-person
+  variance, the stationary `within`-person variance, and
+  `share_between`, their ratio to the total – an intraclass
+  correlation), `"covariance"` (one row per entry of the lower triangle,
+  diagonal included, of the innovation (contemporaneous) and
+  between-person covariance matrices on the data scale: columns `matrix`
+  (`"innovation"` or `"between"`), `row`, `col`, `value`), or `"path"`
+  (`select = "ebic"` only, else a `psychnet_bad_input` error: one row
+  per lambda on the penalty path, columns `lambda` (data-scale penalty),
+  `ebic`, `edges` (non-zero penalized parameters), `kkt` (lasso KKT
+  residual), `final` (re-solved to certification) and `selected` (the
+  lambda returned)).
 
 - include_zero:
 
@@ -242,5 +253,37 @@ as.data.frame(fit, what = "diagnostics")
 #> 1 100     4 8.159029e-13    FALSE          <NA>         TRUE            3
 #>   starts
 #> 1      3
+as.data.frame(fit, what = "covariance")
+#>        matrix       row       col      value
+#> 1  innovation  efficacy  efficacy 49.6136340
+#> 2  innovation  planning  efficacy 38.0933880
+#> 3  innovation    effort  efficacy 36.3172720
+#> 4  innovation enjoyment  efficacy 24.5401922
+#> 5  innovation   anxiety  efficacy -0.1087362
+#> 6  innovation  planning  planning 47.3507353
+#> 7  innovation    effort  planning 34.6682469
+#> 8  innovation enjoyment  planning 27.8895140
+#> 9  innovation   anxiety  planning -1.5388082
+#> 10 innovation    effort    effort 56.0710903
+#> 11 innovation enjoyment    effort 31.1659563
+#> 12 innovation   anxiety    effort  0.1302321
+#> 13 innovation enjoyment enjoyment 52.0902198
+#> 14 innovation   anxiety enjoyment  1.6365233
+#> 15 innovation   anxiety   anxiety 53.5668044
+#> 16    between  efficacy  efficacy 65.3981717
+#> 17    between  planning  efficacy 30.7569773
+#> 18    between    effort  efficacy 23.7383902
+#> 19    between enjoyment  efficacy 19.6659164
+#> 20    between   anxiety  efficacy -3.3635915
+#> 21    between  planning  planning 72.9244738
+#> 22    between    effort  planning 42.1386807
+#> 23    between enjoyment  planning 34.9349982
+#> 24    between   anxiety  planning 16.3019718
+#> 25    between    effort    effort 82.6392242
+#> 26    between enjoyment    effort 36.5580315
+#> 27    between   anxiety    effort  7.3604551
+#> 28    between enjoyment enjoyment 53.8374614
+#> 29    between   anxiety enjoyment  8.3971532
+#> 30    between   anxiety   anxiety 95.0051265
 if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
 ```

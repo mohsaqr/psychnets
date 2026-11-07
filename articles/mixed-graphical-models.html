@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,7 +139,7 @@ models select the relation.</p>
 <span><span class="va">mixed_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 7.58e-08</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span></code></pre></div>
 <p>The fitted network contains 5 nodes and 6 edges. The printed KKT
 residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>7.58</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">7.58 \times 10^{-8}</annotation></semantics></math>.</p>
@@ -157,16 +157,16 @@ into an undirected network.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 7.58e-08</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span>
 <span><span class="co">#&gt;   edge weight: range [0.196, 0.632], mean 0.413</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from    to    weight</span></span>
-<span><span class="co">#&gt; 1  CSU    IV 0.5179204</span></span>
+<span><span class="co">#&gt; 1  CSU    IV 0.5179205</span></span>
 <span><span class="co">#&gt; 2  CSU    SE 0.4850679</span></span>
 <span><span class="co">#&gt; 3   IV    SE 0.1970362</span></span>
 <span><span class="co">#&gt; 4  CSU SR_hi 0.4509658</span></span>
-<span><span class="co">#&gt; 5   IV SR_hi 0.6323682</span></span>
-<span><span class="co">#&gt; 6   SE SR_hi 0.1956634</span></span></code></pre></div>
+<span><span class="co">#&gt; 5   IV SR_hi 0.6323683</span></span>
+<span><span class="co">#&gt; 6   SE SR_hi 0.1956633</span></span></code></pre></div>
 <p>The largest edge joins intrinsic value and high self-regulation
 (<code>IV</code>-<code>SR_hi</code>, 0.632). Higher intrinsic value is
 associated with higher conditional odds of belonging to the high
@@ -196,7 +196,7 @@ among the nodewise models. It returns <code>method</code>,
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    mgm 7.581922e-08  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    mgm 4.997067e-11  kkt      TRUE</span></span></code></pre></div>
 <p>The residual is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>7.58</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">7.58 \times 10^{-8}</annotation></semantics></math>
 and <code>certified</code> is <code>TRUE</code>. It is below the default
@@ -216,10 +216,10 @@ the signed sum.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    node  strength expected_influence</span></span>
-<span><span class="co">#&gt; 1   CSU 1.4539541          1.4539541</span></span>
+<span><span class="co">#&gt; 1   CSU 1.4539542          1.4539542</span></span>
 <span><span class="co">#&gt; 2    IV 1.3473249          1.3473249</span></span>
-<span><span class="co">#&gt; 3    SE 0.8777675          0.8777675</span></span>
-<span><span class="co">#&gt; 4 SR_hi 1.2789975          1.2789975</span></span>
+<span><span class="co">#&gt; 3    SE 0.8777674          0.8777674</span></span>
+<span><span class="co">#&gt; 4 SR_hi 1.2789974          1.2789974</span></span>
 <span><span class="co">#&gt; 5 TA_hi 0.0000000          0.0000000</span></span></code></pre></div>
 <p>Cognitive strategy use has the largest strength (1.454), followed by
 intrinsic value (1.347) and high self-regulation (1.279). Every retained
@@ -273,16 +273,16 @@ disagree.</p>
 <span><span class="va">mixed_or</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 7.58e-08</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixed_or</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from    to     weight</span></span>
-<span><span class="co">#&gt; 1   CSU    IV  0.5179204</span></span>
+<span><span class="co">#&gt; 1   CSU    IV  0.5179205</span></span>
 <span><span class="co">#&gt; 2   CSU    SE  0.4850679</span></span>
 <span><span class="co">#&gt; 3    IV    SE  0.1970362</span></span>
 <span><span class="co">#&gt; 4   CSU SR_hi  0.4509658</span></span>
-<span><span class="co">#&gt; 5    IV SR_hi  0.6323682</span></span>
-<span><span class="co">#&gt; 6    SE SR_hi  0.1956634</span></span>
+<span><span class="co">#&gt; 5    IV SR_hi  0.6323683</span></span>
+<span><span class="co">#&gt; 6    SE SR_hi  0.1956633</span></span>
 <span><span class="co">#&gt; 7 SR_hi TA_hi -0.1681336</span></span></code></pre></div>
 <p>The OR analysis returns 7 edges: the six AND-rule edges with
 unchanged weights, plus a negative <code>SR_hi</code>-<code>TA_hi</code>

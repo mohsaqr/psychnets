@@ -17,7 +17,7 @@ ggm_support_kkt()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,8 @@ graphical lasso, retained edges are not shrunk. Equivalent in purpose to
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Sample size (required when <code>cor_matrix</code> is supplied).</p></dd>
+<dd><p>Sample size (required when <code>cor_matrix</code> is supplied): a single
+finite number &gt;= 1.</p></dd>
 
 
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
@@ -114,16 +115,18 @@ greedy single-edge add/drop search.</p></dd>
 
 
 <dt id="arg-nlambda">nlambda<a class="anchor" aria-label="anchor" href="#arg-nlambda"></a></dt>
-<dd><p>Number of glasso penalties scanned for candidate graphs.</p></dd>
+<dd><p>Number of glasso penalties scanned for candidate graphs (a
+whole number &gt;= 2).</p></dd>
 
 
 <dt id="arg-lambda-min-ratio">lambda_min_ratio<a class="anchor" aria-label="anchor" href="#arg-lambda-min-ratio"></a></dt>
-<dd><p>Smallest penalty as a fraction of the largest.</p></dd>
+<dd><p>Smallest penalty as a fraction of the largest, in
+(0, 1).</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>Partial correlations with absolute value below this are
-zeroed. Default 0. With a positive value <code>$kkt</code> is <code>NA</code> for the returned
+zeroed: a single number &gt;= 0, default 0. With a positive value <code>$kkt</code> is <code>NA</code> for the returned
 graph and the pre-threshold residual is stored as <code>$fit_kkt</code>.</p></dd>
 
 
@@ -146,14 +149,18 @@ either way. See <code><a href="ebic_glasso.html">ebic_glasso()</a></code>.</p></
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels, one unique label per network node.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the partial-correlation matrix,
 with <code>$precision</code>, <code>$support</code> (the selected graph), <code>$gamma</code>, <code>$ebic</code>,
-<code>$cor_matrix</code>, and <code>$kkt</code>.</p>
+<code>$cor_matrix</code>, and <code>$kkt</code>. Invalid arguments raise <code>psychnet_bad_input</code>.
+A candidate or stepwise fit that errors is skipped and reported by one
+<code>psychnet_fit_failed</code> warning; a selected fit whose certificate exceeds
+<code>1e-6</code> raises a <code>psychnet_no_converge</code> warning; if no candidate can be
+fitted at all the call errors (<code>psychnet_no_converge</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

@@ -68,6 +68,7 @@ tmfg_net <- psychnet(data = SRL_GPT, method = "tmfg")
 tmfg_net
 #> <psychnet> tmfg network
 #>   nodes: 5   edges: 9   (undirected)
+#>   structural certificate (violated TMFG invariants): 0
 ```
 
 The fitted backbone contains 5 nodes and 9 edges. With five nodes, only
@@ -88,6 +89,7 @@ retained pair and its signed Pearson correlation.
 summary(tmfg_net)
 #> <psychnet> tmfg network
 #>   nodes: 5   edges: 9   (undirected)
+#>   structural certificate (violated TMFG invariants): 0
 #>   edge weight: range [-0.302, 0.861], mean 0.486
 as.data.frame(tmfg_net)
 #>   from to     weight

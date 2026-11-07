@@ -28,6 +28,27 @@ net_boot(
   estimator_args = list(),
   ...
 )
+
+# S3 method for class 'psychnet_bootstrap'
+as.data.frame(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  ...,
+  what = c("edges", "centrality", "predictability", "thresholded"),
+  significant = FALSE
+)
+
+# S3 method for class 'psychnet_bootstrap'
+print(x, ...)
+
+# S3 method for class 'psychnet_bootstrap'
+plot(
+  x,
+  type = c("edges", "centrality", "edge_diff", "centrality_diff", "predictability"),
+  measure = NULL,
+  ...
+)
 ```
 
 ## Arguments
@@ -53,7 +74,8 @@ net_boot(
 
 - ci:
 
-  Confidence level for percentile intervals. Default 0.95.
+  Confidence level for percentile intervals: a single number in (0, 1).
+  Default 0.95.
 
 - measures:
 
@@ -71,20 +93,23 @@ net_boot(
 - predictability:
 
   Logical; if `TRUE` and the estimator returns a precision matrix (GGM
-  family), bootstrap node predictability (R^2) and report its interval.
-  Default `FALSE`.
+  family), bootstrap node predictability (R^2) and report its interval
+  (`as.data.frame(x, what = "predictability")`). Default `FALSE`.
 
 - threshold:
 
   Logical; if `TRUE`, also return the observed network with every edge
-  whose bootstrap interval includes zero set to zero (`$thresholded`).
-  Default `FALSE`.
+  whose bootstrap interval includes zero set to zero
+  (`as.data.frame(x, what = "thresholded")`). Default `FALSE`.
 
 - diff_test:
 
-  Logical; if `TRUE`, also return two-sided bootstrap difference p-value
-  matrices for edges (`$edge_diff_p`, `NULL` past 500 edges) and for
-  each centrality measure (`$centrality_diff_p`). Default `FALSE`.
+  Logical; if `TRUE`, also store two-sided bootstrap difference p-value
+  matrices for edges (`NULL` past 500 edges) and for each centrality
+  measure, drawn by `plot(x, type = "edge_diff")` / `"centrality_diff"`.
+  For the tidy pairwise table use
+  [`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md).
+  Default `FALSE`.
 
 - p_adjust:
 
@@ -98,13 +123,14 @@ net_boot(
 
 - cores:
 
-  Number of CPU cores for the resample loop. `NULL` (default) uses two
-  thirds of the detected cores; `1` forces a serial run. Parallelism
-  uses forking
+  Number of CPU cores for the resample loop: `NULL` (default) uses two
+  thirds of the detected cores; a whole number `>= 1` sets it (`1`
+  forces a serial run). Parallelism uses forking
   ([`parallel::mclapply`](https://rdrr.io/r/parallel/mclapply.html)) and
   falls back to serial on Windows. Because every resample index is drawn
-  in the parent process before any fitting, the result is identical for
-  any number of cores and reproducible from
+  in the parent process before any fitting, and a failing resample is
+  caught inside its own worker, the result is identical for any number
+  of cores and reproducible from
   [`set.seed()`](https://rdrr.io/r/base/Random.html).
 
 - engine:
@@ -115,23 +141,120 @@ net_boot(
 
 - estimator_args:
 
-  Named list of estimator arguments. Use this for names consumed by the
-  bootstrap itself, such as an estimator's `threshold`. Values here
-  override matching arguments in `...`.
+  Named list of estimator arguments. `threshold`, `ci`, `measures` and
+  `labels` are arguments of the bootstrap itself, so an estimator's own
+  `threshold` must go here, e.g.
+  `estimator_args = list(threshold = TRUE)`. Values here override
+  matching arguments in `...`.
 
 - ...:
 
-  Passed to the estimator.
+  Passed to the estimator by `net_boot()`; ignored by the methods.
+
+- x:
+
+  A `psychnet_bootstrap` object.
+
+- row.names, optional:
+
+  Ignored (S3 consistency).
+
+- what:
+
+  For [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html):
+  which table to return – `"edges"` (default), `"centrality"`,
+  `"predictability"` (needs `predictability = TRUE`) or `"thresholded"`
+  (needs `threshold = TRUE`).
+
+- significant:
+
+  For [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
+  with `what = "edges"`: if `TRUE`, return only the edges whose
+  confidence interval excludes zero. Default `FALSE` (all edges).
+
+- type:
+
+  For [`plot()`](https://rdrr.io/r/graphics/plot.default.html): one of
+  `"edges"` (default; the edge-weight intervals sorted by observed
+  weight, bootnet's edge-accuracy plot), `"centrality"` (one sorted
+  interval panel per measure), `"edge_diff"` and `"centrality_diff"`
+  (the bootstrapped difference "significance box" matrix for edges or
+  for one centrality), or `"predictability"` (node predictability
+  intervals; needs `predictability = TRUE`).
+
+- measure:
+
+  For [`plot()`](https://rdrr.io/r/graphics/plot.default.html) with
+  `type = "centrality"` or `"centrality_diff"`: which measure(s) to
+  draw. Default: all bootstrapped measures (`"centrality"`) or the first
+  (`"centrality_diff"`).
 
 ## Value
 
-An object of class `psychnet_bootstrap`: tidy `$edges` (with a
-`significant` flag) and `$centrality` data frames, the observed network
-in `$observed`, raw resample draws in `$edge_boot`, `$str_boot`,
-`$ei_boot`, and the general `$centrality_boot` (named list, one matrix
-per measure). Optional `$predictability`, `$thresholded`,
-`$edge_diff_p`, `$centrality_diff_p`, plus
-`$lambda_path`/`$lambda_selected` when the estimator reports them.
+`net_boot()` returns an object of class `psychnet_bootstrap`, read with
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html),
+[`print()`](https://rdrr.io/r/base/print.html),
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) and
+[`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md).
+
+`as.data.frame(x)` (`what = "edges"`) returns one row per edge with
+columns `from`, `to`, `observed`, `mean` (bootstrap mean), `lower`,
+`upper` (percentile interval), `prop_nonzero` (share of resamples in
+which the edge is nonzero) and `significant` (interval excludes zero).
+For a directed estimator each ordered pair is its own row.
+
+`what = "centrality"` returns one row per node: `node`, then for each
+bootstrapped measure its observed value and the `<measure>_lower` /
+`<measure>_upper` percentile interval.
+
+`what = "predictability"` returns one row per node: `node`, `value`
+(observed R^2), `lower`, `upper`.
+
+`what = "thresholded"` returns one row per edge: `from`, `to`,
+`observed`, `weight` (the observed weight, or 0 when its interval
+includes zero) and `retained`.
+
+Asking for a table that was not computed is a `psychnet_bad_input`
+error. [`print()`](https://rdrr.io/r/base/print.html) returns `x`
+invisibly after printing the method, the number of resamples, the
+interval level, and the counts of edges, significant edges and nodes.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) returns `x`
+invisibly.
+
+## Details
+
+For an estimator whose edge weights are non-negative by construction
+(`method = "relimp"`, whose weights are R^2 shares) a percentile
+interval excludes zero almost surely, so `significant` is `TRUE` for
+every edge and carries no information; `threshold = TRUE` then removes
+nothing. Both `threshold = TRUE` and
+`as.data.frame(x, significant = TRUE)` raise a
+`psychnet_uninformative_test` warning in that case. Pairwise difference
+tests
+([`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md),
+`diff_test = TRUE`) remain meaningful.
+
+A resample whose fit (or centrality, or predictability) errors is
+recorded as failed inside its worker, so the result is the same for any
+number of cores; failures raise one `psychnet_resample_failed` warning
+that carries the first error message, and fewer than two successful
+resamples is a `psychnet_resample_failed` error. An error in the
+observed fit is raised as a `psychnet_estimation_failed` error with the
+estimator's own message.
+
+## Functions
+
+- `as.data.frame(psychnet_bootstrap)`: A tidy table: the edges
+  (default), the centrality intervals, the predictability intervals, or
+  the thresholded network (see `what`).
+
+- `print(psychnet_bootstrap)`: Method, resamples, interval level and
+  edge counts.
+
+- `plot(psychnet_bootstrap)`: Edge, centrality, difference or
+  predictability intervals (see `type`). Significant edges are filled
+  points on solid segments, non-significant ones open points on dashed
+  segments.
 
 ## References
 
@@ -176,9 +299,25 @@ as.data.frame(bs)
 #> 9        FALSE
 #> 10        TRUE
 as.data.frame(bs, significant = TRUE)
-#>    from to  observed      mean     lower     upper prop_nonzero significant
-#> 1    V1 V2 0.3111854 0.2982379 0.1515945 0.4089922            1        TRUE
-#> 3    V2 V3 0.3342644 0.3371318 0.2122220 0.4864931            1        TRUE
-#> 6    V3 V4 0.3296244 0.3381151 0.1466475 0.5032197            1        TRUE
-#> 10   V4 V5 0.3303466 0.3604165 0.2193767 0.4633247            1        TRUE
+#>   from to  observed      mean     lower     upper prop_nonzero significant
+#> 1   V1 V2 0.3111854 0.2982379 0.1515945 0.4089922            1        TRUE
+#> 2   V2 V3 0.3342644 0.3371318 0.2122220 0.4864931            1        TRUE
+#> 3   V3 V4 0.3296244 0.3381151 0.1466475 0.5032197            1        TRUE
+#> 4   V4 V5 0.3303466 0.3604165 0.2193767 0.4633247            1        TRUE
+as.data.frame(bs, what = "centrality")
+#>   node  strength strength_lower strength_upper expected_influence
+#> 1   V1 0.4706062      0.3089894       0.907735          0.2841675
+#> 2   V2 0.7016822      0.5439371       1.001855          0.6786194
+#> 3   V3 0.7057560      0.6049353       1.116255          0.6857222
+#> 4   V4 0.7978913      0.6316038       1.182999          0.6114526
+#> 5   V5 0.3862460      0.4024386       0.854440          0.3431495
+#>   expected_influence_lower expected_influence_upper
+#> 1               0.05695078                0.4525569
+#> 2               0.48748685                0.8893284
+#> 3               0.48989974                0.9386692
+#> 4               0.48030709                0.9109487
+#> 5               0.08638032                0.6981966
+plot(bs)                       # edge-weight CIs
+
+plot(bs, type = "centrality")  # centrality CIs
 ```

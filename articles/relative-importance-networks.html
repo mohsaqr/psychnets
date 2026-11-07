@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,7 +139,7 @@ for every node.</p>
 <span><span class="va">importance_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;   structural certificate (decomposition residual): 2.22e-16</span></span></code></pre></div>
 <p>The network contains 5 nodes and 20 directed edges, one for every
 ordered pair of distinct nodes. Relative importance allocates a
 contribution to every predictor, so the raw network is complete unless a
@@ -160,7 +160,7 @@ outcome’s
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span>
+<span><span class="co">#&gt;   structural certificate (decomposition residual): 2.22e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [0.006, 0.299], mean 0.165</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from  to      weight</span></span>
@@ -306,7 +306,7 @@ based on monotonic rank associations.</p>
 <span><span class="va">importance_spearman</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; relimp network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 2.22e-16</span></span></code></pre></div>
+<span><span class="co">#&gt;   structural certificate (decomposition residual): 2.22e-16</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">importance_spearman</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from  to      weight</span></span>

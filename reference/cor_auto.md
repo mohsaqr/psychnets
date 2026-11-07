@@ -24,7 +24,8 @@ cor_auto(data, ordinal_max_levels = 7L, na_method = c("pairwise", "listwise"))
 
 - ordinal_max_levels:
 
-  Maximum distinct values for a variable to count as ordinal. Default 7.
+  Maximum distinct values for a variable to count as ordinal: a whole
+  number \>= 2. Default 7.
 
 - na_method:
 
@@ -32,7 +33,30 @@ cor_auto(data, ordinal_max_levels = 7L, na_method = c("pairwise", "listwise"))
 
 ## Value
 
-A correlation matrix with the variable names as dimnames.
+A correlation matrix with the variable names as dimnames. An invalid
+`ordinal_max_levels` is an error of class `psychnet_bad_input`.
+
+## Details
+
+The polychoric correlation is the two-step estimator of Olsson (1979):
+thresholds fixed at the marginal normal quantiles, then the
+contingency-table likelihood maximised over the correlation; it matches
+`psych`/`qgraph` to about 1e-5. The polyserial correlation is the
+Olsson, Drasgow & Dorans (1982) *ad-hoc* estimator (the closed form
+\\r\_{xy}\\\sigma_y / \sum_k \phi(\tau_k)\\), not the two-step
+maximum-likelihood polyserial that
+[`qgraph::cor_auto()`](https://rdrr.io/pkg/qgraph/man/cor_auto.html)
+obtains through `lavaan`. Both are consistent; on finite samples they
+differ by up to about 0.006, so a mixed ordinal / continuous correlation
+matrix will not reproduce
+[`qgraph::cor_auto()`](https://rdrr.io/pkg/qgraph/man/cor_auto.html)
+exactly.
+
+An ordered-factor column of a data frame enters as its integer level
+codes and is then ordinal whenever it has at most `ordinal_max_levels`
+levels. Unordered factors, character and logical columns are dropped
+with a `psychnet_dropped_columns` message; constant columns with a
+`psychnet_constant_variable` warning.
 
 ## References
 

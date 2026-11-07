@@ -15,7 +15,7 @@ glm_lasso_kkt())."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,12 @@ node's regression reports its stationarity (KKT) residual (see
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Binary (0/1) data frame or matrix (rows = observations).</p></dd>
+<dd><p>Binary data frame or matrix (rows = observations). Columns may
+be numeric 0/1, logical, or two-level factors (the first level is coded 0).
+Any other column – a numeric column not coded 0/1 (e.g. 1/2), a factor
+with more than two levels, a character column – is an error naming it,
+never a silently dropped node. A constant column carries no information
+and is dropped.</p></dd>
 
 
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
@@ -112,7 +117,10 @@ it are dropped before fitting. <code>NULL</code> (default) keeps every row.</p><
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>Optional non-negative observation weights, one per input row
 after missing-data preparation. When <code>min_sum</code> is used, weights are filtered
-alongside their corresponding rows. <code>NULL</code> (default) is unweighted.</p></dd>
+alongside their corresponding rows. Weights are rescaled to a maximum of 1
+(the <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> convention), so only their relative sizes matter:
+<code>weights = w</code> and <code>weights = 7 * w</code> give the same network. <code>NULL</code>
+(default) is unweighted.</p></dd>
 
 
 <dt id="arg-na-method">na_method<a class="anchor" aria-label="anchor" href="#arg-na-method"></a></dt>
@@ -133,7 +141,8 @@ require <code>native = TRUE</code>.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels: one per node, or one per input column
+(labels of dropped constant columns are then discarded).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -142,6 +151,10 @@ require <code>native = TRUE</code>.</p></dd>
 with <code>$thresholds</code> (node intercepts), <code>$rule</code>, <code>$nodewise</code> (the per-node
 fits used by <code><a href="net_predict.html">net_predict()</a></code>) and <code>$kkt</code> (the worst nodewise stationarity
 residual, read with <code><a href="certificate.html">certificate()</a></code>).</p>
+<p>Errors of class <code>psychnet_bad_input</code> for non-binary columns, invalid
+<code>gamma</code>/<code>nlambda</code>/<code>lambda_min_ratio</code>/<code>weights</code>, or mislengthed <code>labels</code>.
+A nodewise fit that does not reach its optimum raises a
+<code>psychnet_no_converge</code> warning naming the node.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

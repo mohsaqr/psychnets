@@ -11,7 +11,7 @@ community membership; psychnets does not detect it."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,10 @@ community membership; psychnets does not detect it.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">net_bridge</span><span class="op">(</span><span class="va">x</span>, <span class="va">communities</span>, normalize <span class="op">=</span> <span class="cn">FALSE</span>, labels <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">net_bridge</span><span class="op">(</span><span class="va">x</span>, <span class="va">communities</span>, normalize <span class="op">=</span> <span class="cn">FALSE</span>, labels <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_bridge'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, measures <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,31 +69,63 @@ community membership; psychnets does not detect it.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A <code>psychnet</code> object or a square weighted adjacency matrix.</p></dd>
+<dd><p>A <code>psychnet</code> object or a square weighted adjacency matrix. For
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>, the <code>psychnet_bridge</code> table returned by <code>net_bridge()</code>.</p></dd>
 
 
 <dt id="arg-communities">communities<a class="anchor" aria-label="anchor" href="#arg-communities"></a></dt>
-<dd><p>Community membership, one entry per node: a vector aligned
-to the node order, or a named vector / list keyed by node label.</p></dd>
+<dd><p>Community membership, in one of three forms: an unnamed
+vector with one entry per node, in node order; a vector named by node
+label (every node named exactly once); or a list of node-label vectors,
+one element per community (the element names are the community names),
+e.g. <code>list(anxiety = c("A1", "A2"), mood = c("M1", "M2"))</code>. Every node
+must belong to exactly one community: a label listed twice, a label that
+is not a node, or a node left without a community is an error of class
+<code>psychnet_bad_input</code>.</p></dd>
 
 
 <dt id="arg-normalize">normalize<a class="anchor" aria-label="anchor" href="#arg-normalize"></a></dt>
-<dd><p>If <code>TRUE</code>, divide each metric by the number of available
-other-community nodes (comparable across differently sized networks).
-Default <code>FALSE</code>.</p></dd>
+<dd><p>If <code>TRUE</code>, rescale each metric as
+<code>networktools::bridge(normalize = TRUE)</code> does: bridge strength and
+1-step bridge expected influence are divided by the node's number of
+other-community nodes <code>q</code>, bridge betweenness by <code>(p - 1) q</code>, and 2-step
+bridge expected influence by <code>q + (p - 1)(q - q / (p - 1))</code>, where <code>p</code> is
+the number of nodes. Bridge closeness is already a mean and is left
+unchanged. Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels (used when <code>x</code> is a bare matrix).</p></dd>
+<dd><p>Optional node labels (used when <code>x</code> is a bare matrix): one
+unique label per node.</p></dd>
+
+
+<dt id="arg-measures">measures<a class="anchor" aria-label="anchor" href="#arg-measures"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>: which bridge columns to draw. Default: all
+five.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Unused.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tidy <code>data.frame</code> (class <code>psychnet_bridge</code>), one row per node, with
 columns <code>node</code>, <code>community</code>, <code>bridge_strength</code>, <code>bridge_betweenness</code>,
-<code>bridge_closeness</code>, <code>bridge_ei1</code>, <code>bridge_ei2</code>. Visualise with
-<code><a href="plot.psychnet_bridge.html">plot.psychnet_bridge()</a></code>.</p>
+<code>bridge_closeness</code>, <code>bridge_ei1</code>, <code>bridge_ei2</code>. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws one sorted
+horizontal panel per bridge measure, each node's point coloured (Okabe-Ito)
+<strong>and</strong> shaped by its community with a community legend, and returns <code>x</code>
+invisibly. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> raises <code>psychnet_bad_input</code> for a <code>measures</code> entry
+that is not a bridge column, skips a column with no finite value with a
+<code>psychnet_plot_skipped</code> warning, and errors (<code>psychnet_bad_input</code>) when no
+requested column has a finite value.</p>
     </div>
+    <div class="section level2">
+    <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+
+<ul><li><p><code>plot(psychnet_bridge)</code>: One sorted panel per bridge measure, points coloured
+and shaped by community.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Jones, P. J., Ma, R., &amp; McNally, R. J. (2021). Bridge centrality.
@@ -101,7 +136,8 @@ columns <code>node</code>, <code>community</code>, <code>bridge_strength</code>,
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">S</span> <span class="op">&lt;-</span> <span class="fl">0.3</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/outer.html" class="external-link">outer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="st">"-"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="ebic_glasso.html">ebic_glasso</a></span><span class="op">(</span>cor_matrix <span class="op">=</span> <span class="va">S</span>, n <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">net_bridge</span><span class="op">(</span><span class="va">fit</span>, communities <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">br</span> <span class="op">&lt;-</span> <span class="fu">net_bridge</span><span class="op">(</span><span class="va">fit</span>, communities <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">br</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   node community bridge_strength bridge_betweenness bridge_closeness bridge_ei1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   V1         1       0.0000000                  0       0.06918582  0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   V2         1       0.0000000                  3       0.09139545  0.0000000</span>
@@ -116,6 +152,8 @@ columns <code>node</code>, <code>community</code>, <code>bridge_strength</code>,
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 0.34741385</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 0.07448834</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 0.00000000</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">br</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="net_bridge-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

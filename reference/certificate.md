@@ -23,8 +23,9 @@ certificate(x, tol = 1e-06)
 
 - tol:
 
-  Tolerance below which the fit is flagged `certified = TRUE`. Default
-  `1e-6`.
+  Tolerance below which the fit is flagged `certified = TRUE`: a single
+  finite number \>= 0. Default `1e-6`. Anything else is an error of
+  class `psychnet_bad_input`.
 
 ## Value
 

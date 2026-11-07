@@ -15,7 +15,7 @@ return the macro network as a psychnet."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,18 +85,30 @@ items).</p></dd>
 
 
 <dt id="arg-communities">communities<a class="anchor" aria-label="anchor" href="#arg-communities"></a></dt>
-<dd><p>Community membership, one entry per item (column): a vector
-aligned to the columns, or a named vector / list keyed by item label.</p></dd>
+<dd><p>Community membership of the columns of <code>data</code>, in one of
+three forms: an unnamed vector with one entry per column of <code>data</code>, in
+column order (<code>NA</code> for a column to leave out, e.g. an ID column); a vector
+named by item label; or a list of item-label vectors, one element per
+community (the element names are the community names). Every retained item
+must belong to exactly one community: a label listed twice, a label that is
+not a column, or a retained item without a community is an error of class
+<code>psychnet_bad_input</code>. Output communities are ordered by list order, factor
+level, numeric value, or (character labels) alphabetically. A column
+whose community is <code>NA</code> is left out before any preprocessing.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>Aggregation method. Score (return reduced data): <code>"mean"</code>
 (default), <code>"median"</code>, <code>"sum"</code>, <code>"pca"</code> (first principal component),
-<code>"factor"</code> (1-factor score, falls back to PCA for communities of &lt; 3
-items), <code>"loadings"</code> (within-community connectivity-weighted mean).
+<code>"factor"</code> (1-factor regression score; a community of fewer than 3 items
+uses its first principal component, since one factor is not identified
+there, and a community where <code><a href="https://rdrr.io/r/stats/factanal.html" class="external-link">stats::factanal()</a></code> fails also falls back to
+its first principal component with a <code>psychnet_fit_failed</code> warning naming
+it), <code>"loadings"</code> (within-community connectivity-weighted mean).
 Association (return macro network): <code>"average"</code> (mean signed edge weight
 between communities), <code>"rv"</code> (Escoufier RV coefficient), <code>"canonical"</code>
-(first canonical correlation).</p></dd>
+(first canonical correlation; a pair where <code><a href="https://rdrr.io/r/stats/cancor.html" class="external-link">stats::cancor()</a></code> fails gets
+weight 0 with a <code>psychnet_fit_failed</code> warning naming it).</p></dd>
 
 
 <dt id="arg-estimator">estimator<a class="anchor" aria-label="anchor" href="#arg-estimator"></a></dt>
@@ -110,7 +122,8 @@ and <code>"average"</code> need (see <code><a href="psychnet.html">psychnet()</a
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional item labels (used when <code>data</code> has no column names).</p></dd>
+<dd><p>Optional item labels, one per column of <code>data</code>, used in place
+of its column names (and matched by a named <code>communities</code>).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -120,8 +133,18 @@ and <code>"average"</code> need (see <code><a href="psychnet.html">psychnet()</a
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>For a score <code>method</code>, a <code>data.frame</code> with one column per community
-(one row per observation). For an association <code>method</code>, a <code>psychnet</code> macro
-network among communities.</p>
+(one row per retained observation). For an association <code>method</code>, a
+<code>psychnet</code> macro network among communities.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><strong>Data handling.</strong> Non-numeric columns are dropped, and so is any column
+that is constant once incomplete rows are removed. Rows with a missing value
+in any numeric column are dropped (listwise deletion), with a warning of
+class <code>psychnet_rows_dropped</code> giving the count. <code>communities</code> is matched to
+the columns of <code>data</code> <em>before</em> anything is dropped, so a dropped column must
+not carry a community (give it <code>NA</code>, or leave it out of a named vector or
+list): one that does is an error naming it.</p>
     </div>
 
     <div class="section level2">

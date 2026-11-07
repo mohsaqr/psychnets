@@ -50,15 +50,29 @@ tmfg_network(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node.
 
 ## Value
 
 A `psychnet` object whose `$weights` is the filtered (signed)
-correlation matrix on the retained edges, with `$adjacency`, `$cliques`,
-`$separators` (the chordal decomposition used by
+correlation matrix on the retained edges, with `$adjacency` (the
+`3(p - 2)`-edge TMFG graph, including any retained edge of weight 0),
+`$cliques`, `$separators` (the chordal decomposition used by
 [`logo_network()`](https://pak.dynasite.org/psychnets/reference/logo_network.md)),
 and `$cor_matrix`.
+
+## Details
+
+The graph always has exactly `3(p - 2)` edges in `$adjacency` (that is
+what
+[`tmfg_certificate()`](https://pak.dynasite.org/psychnets/reference/tmfg_certificate.md)
+checks). `$weights` carries the signed correlation on each retained
+edge, so a retained edge whose correlation is exactly zero is in
+`$adjacency` but has weight 0 and therefore does not appear in `$edges`,
+in [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html), or in
+the printed edge count. With continuous data this happens only for a
+correlation matrix that has exact zeros (for example a hand-built or
+block-diagonal `cor_matrix`).
 
 ## References
 
@@ -75,4 +89,5 @@ x <- matrix(stats::rnorm(200 * 6), 200, 6)
 tmfg_network(x)
 #> <psychnet> tmfg network
 #>   nodes: 6   edges: 12   (undirected)
+#>   structural certificate (violated TMFG invariants): 0
 ```

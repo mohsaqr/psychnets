@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,7 +136,8 @@ edges.</p>
 <code class="sourceCode R"><span><span class="va">tmfg_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"tmfg"</span><span class="op">)</span></span>
 <span><span class="va">tmfg_net</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; tmfg network</span></span>
-<span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span></code></pre></div>
+<span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
+<span><span class="co">#&gt;   structural certificate (violated TMFG invariants): 0</span></span></code></pre></div>
 <p>The fitted backbone contains 5 nodes and 9 edges. With five nodes,
 only one of the ten possible pairs is removed. Information filtering
 becomes more selective as the number of nodes increases because the
@@ -156,6 +157,7 @@ correlation.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tmfg_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; tmfg network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
+<span><span class="co">#&gt;   structural certificate (violated TMFG invariants): 0</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.302, 0.861], mean 0.486</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">tmfg_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to     weight</span></span>

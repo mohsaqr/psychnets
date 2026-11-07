@@ -41,7 +41,8 @@ ggm_modselect(
 
 - n:
 
-  Sample size (required when `cor_matrix` is supplied).
+  Sample size (required when `cor_matrix` is supplied): a single finite
+  number \>= 1.
 
 - gamma:
 
@@ -62,17 +63,19 @@ ggm_modselect(
 
 - nlambda:
 
-  Number of glasso penalties scanned for candidate graphs.
+  Number of glasso penalties scanned for candidate graphs (a whole
+  number \>= 2).
 
 - lambda_min_ratio:
 
-  Smallest penalty as a fraction of the largest.
+  Smallest penalty as a fraction of the largest, in (0, 1).
 
 - threshold:
 
-  Partial correlations with absolute value below this are zeroed.
-  Default 0. With a positive value `$kkt` is `NA` for the returned graph
-  and the pre-threshold residual is stored as `$fit_kkt`.
+  Partial correlations with absolute value below this are zeroed: a
+  single number \>= 0, default 0. With a positive value `$kkt` is `NA`
+  for the returned graph and the pre-threshold residual is stored as
+  `$fit_kkt`.
 
 - cor_method:
 
@@ -97,13 +100,17 @@ ggm_modselect(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node.
 
 ## Value
 
 A `psychnet` object whose `$weights` is the partial-correlation matrix,
 with `$precision`, `$support` (the selected graph), `$gamma`, `$ebic`,
-`$cor_matrix`, and `$kkt`.
+`$cor_matrix`, and `$kkt`. Invalid arguments raise `psychnet_bad_input`.
+A candidate or stepwise fit that errors is skipped and reported by one
+`psychnet_fit_failed` warning; a selected fit whose certificate exceeds
+`1e-6` raises a `psychnet_no_converge` warning; if no candidate can be
+fitted at all the call errors (`psychnet_no_converge`).
 
 ## References
 

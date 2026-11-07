@@ -13,7 +13,7 @@ Computed on the binarised network. Ported from qgraph::smallworldness."></head><
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,10 @@ Computed on the binarised network. Ported from <code><a href="https://rdrr.io/pk
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tidy one-row <code>data.frame</code> (class <code>psychnet_smallworld</code>):
-<code>smallworldness</code>, <code>transitivity</code>, <code>aspl</code>, <code>transitivity_rand</code>, <code>aspl_rand</code>.</p>
+<code>smallworldness</code>, <code>transitivity</code>, <code>aspl</code>, <code>transitivity_rand</code>, <code>aspl_rand</code>.
+When the random reference graphs have no triangles or no finite paths the
+index is undefined: <code>smallworldness</code> is <code>NA</code> and a warning of class
+<code>psychnet_undefined_statistic</code> is raised.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

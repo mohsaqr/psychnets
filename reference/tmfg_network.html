@@ -13,7 +13,7 @@ R; correctness is certified structurally by tmfg_certificate()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,15 +101,26 @@ shared with the other estimators does not partial-match <code>na_method</code>.<
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels, one unique label per network node.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the filtered (signed)
-correlation matrix on the retained edges, with <code>$adjacency</code>, <code>$cliques</code>,
-<code>$separators</code> (the chordal decomposition used by <code><a href="logo_network.html">logo_network()</a></code>), and
-<code>$cor_matrix</code>.</p>
+correlation matrix on the retained edges, with <code>$adjacency</code> (the
+<code>3(p - 2)</code>-edge TMFG graph, including any retained edge of weight 0),
+<code>$cliques</code>, <code>$separators</code> (the chordal decomposition used by
+<code><a href="logo_network.html">logo_network()</a></code>), and <code>$cor_matrix</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The graph always has exactly <code>3(p - 2)</code> edges in <code>$adjacency</code>
+(that is what <code><a href="tmfg_certificate.html">tmfg_certificate()</a></code> checks). <code>$weights</code> carries the signed
+correlation on each retained edge, so a retained edge whose correlation is
+exactly zero is in <code>$adjacency</code> but has weight 0 and therefore does not
+appear in <code>$edges</code>, in <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>, or in the printed edge count.
+With continuous data this happens only for a correlation matrix that has
+exact zeros (for example a hand-built or block-diagonal <code>cor_matrix</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -125,6 +136,7 @@ Complex Networks</em>, 5(2), 161-178. <a href="https://doi.org/10.1093/comnet/cn
 <span class="r-in"><span><span class="fu">tmfg_network</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; tmfg network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 6   edges: 12   (undirected)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   structural certificate (violated TMFG invariants): 0</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

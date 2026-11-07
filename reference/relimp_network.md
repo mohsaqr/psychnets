@@ -13,6 +13,7 @@ R-squared. Equivalent in purpose to
 relimp_network(
   data = NULL,
   cor_matrix = NULL,
+  n = NULL,
   cor_method = c("pearson", "spearman", "kendall", "auto"),
   max_nodes = 21L,
   normalized = FALSE,
@@ -32,6 +33,12 @@ relimp_network(
 
   Optional correlation matrix.
 
+- n:
+
+  Accepted and ignored. The decomposition is computed from the
+  correlation matrix alone; the argument exists so a uniform
+  `(cor_matrix =, n =)` call shared with the other estimators works.
+
 - cor_method:
 
   Correlation when `data` is supplied: `"pearson"` (default),
@@ -41,7 +48,7 @@ relimp_network(
 - max_nodes:
 
   Refuse to run above this many nodes (the cost grows as `2^(p-1)` per
-  node). Default 21.
+  node): a whole number \>= 2. Default 21.
 
 - normalized:
 
@@ -57,18 +64,19 @@ relimp_network(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node.
 
 ## Value
 
 A `psychnet` object whose `$weights` is the directed importance matrix
 (`weights[k, j]` = importance of `k` for outcome `j`), with `$r2`
 (per-node full-model R-squared), `$cor_matrix`, and `$kkt` (the
-decomposition residual). With `normalized = FALSE` (default) each
-outcome's incoming shares sum to its R-squared
-(`colSums($weights) == $r2`); with `normalized = TRUE` they are rescaled
-to sum to 1, `$raw_importance` holds the unscaled shares, and `$kkt`
-(like
+decomposition residual, see
+[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md)).
+With `normalized = FALSE` (default) each outcome's incoming shares sum
+to its R-squared (`colSums($weights) == $r2`); with `normalized = TRUE`
+they are rescaled to sum to 1, `$raw_importance` holds the unscaled
+shares, and `$kkt` (like
 [`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md))
 is computed from those raw shares.
 
@@ -88,5 +96,5 @@ S <- 0.4^abs(outer(1:5, 1:5, "-"))
 relimp_network(cor_matrix = S)
 #> <psychnet> relimp network
 #>   nodes: 5   edges: 20   (directed)
-#>   optimality (KKT residual): 5.55e-17
+#>   structural certificate (decomposition residual): 5.55e-17
 ```

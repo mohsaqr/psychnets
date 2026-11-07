@@ -29,18 +29,34 @@ net_aggregate(
 
 - communities:
 
-  Community membership, one entry per item (column): a vector aligned to
-  the columns, or a named vector / list keyed by item label.
+  Community membership of the columns of `data`, in one of three forms:
+  an unnamed vector with one entry per column of `data`, in column order
+  (`NA` for a column to leave out, e.g. an ID column); a vector named by
+  item label; or a list of item-label vectors, one element per community
+  (the element names are the community names). Every retained item must
+  belong to exactly one community: a label listed twice, a label that is
+  not a column, or a retained item without a community is an error of
+  class `psychnet_bad_input`. Output communities are ordered by list
+  order, factor level, numeric value, or (character labels)
+  alphabetically. A column whose community is `NA` is left out before
+  any preprocessing.
 
 - method:
 
   Aggregation method. Score (return reduced data): `"mean"` (default),
   `"median"`, `"sum"`, `"pca"` (first principal component), `"factor"`
-  (1-factor score, falls back to PCA for communities of \< 3 items),
-  `"loadings"` (within-community connectivity-weighted mean).
-  Association (return macro network): `"average"` (mean signed edge
-  weight between communities), `"rv"` (Escoufier RV coefficient),
-  `"canonical"` (first canonical correlation).
+  (1-factor regression score; a community of fewer than 3 items uses its
+  first principal component, since one factor is not identified there,
+  and a community where
+  [`stats::factanal()`](https://rdrr.io/r/stats/factanal.html) fails
+  also falls back to its first principal component with a
+  `psychnet_fit_failed` warning naming it), `"loadings"`
+  (within-community connectivity-weighted mean). Association (return
+  macro network): `"average"` (mean signed edge weight between
+  communities), `"rv"` (Escoufier RV coefficient), `"canonical"` (first
+  canonical correlation; a pair where
+  [`stats::cancor()`](https://rdrr.io/r/stats/cancor.html) fails gets
+  weight 0 with a `psychnet_fit_failed` warning naming it).
 
 - estimator:
 
@@ -55,7 +71,8 @@ net_aggregate(
 
 - labels:
 
-  Optional item labels (used when `data` has no column names).
+  Optional item labels, one per column of `data`, used in place of its
+  column names (and matched by a named `communities`).
 
 - ...:
 
@@ -64,8 +81,18 @@ net_aggregate(
 ## Value
 
 For a score `method`, a `data.frame` with one column per community (one
-row per observation). For an association `method`, a `psychnet` macro
-network among communities.
+row per retained observation). For an association `method`, a `psychnet`
+macro network among communities.
+
+## Details
+
+**Data handling.** Non-numeric columns are dropped, and so is any column
+that is constant once incomplete rows are removed. Rows with a missing
+value in any numeric column are dropped (listwise deletion), with a
+warning of class `psychnet_rows_dropped` giving the count. `communities`
+is matched to the columns of `data` *before* anything is dropped, so a
+dropped column must not carry a community (give it `NA`, or leave it out
+of a named vector or list): one that does is an error naming it.
 
 ## Examples
 

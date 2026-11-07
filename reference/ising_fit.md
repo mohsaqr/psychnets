@@ -29,7 +29,12 @@ ising_fit(
 
 - data:
 
-  Binary (0/1) data frame or matrix (rows = observations).
+  Binary data frame or matrix (rows = observations). Columns may be
+  numeric 0/1, logical, or two-level factors (the first level is coded
+  0). Any other column – a numeric column not coded 0/1 (e.g. 1/2), a
+  factor with more than two levels, a character column – is an error
+  naming it, never a silently dropped node. A constant column carries no
+  information and is dropped.
 
 - gamma:
 
@@ -58,7 +63,11 @@ ising_fit(
 
   Optional non-negative observation weights, one per input row after
   missing-data preparation. When `min_sum` is used, weights are filtered
-  alongside their corresponding rows. `NULL` (default) is unweighted.
+  alongside their corresponding rows. Weights are rescaled to a maximum
+  of 1 (the [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html)
+  convention), so only their relative sizes matter: `weights = w` and
+  `weights = 7 * w` give the same network. `NULL` (default) is
+  unweighted.
 
 - na_method:
 
@@ -81,7 +90,8 @@ ising_fit(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels: one per node, or one per input column (labels of
+  dropped constant columns are then discarded).
 
 ## Value
 
@@ -91,6 +101,11 @@ fits used by
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md))
 and `$kkt` (the worst nodewise stationarity residual, read with
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)).
+
+Errors of class `psychnet_bad_input` for non-binary columns, invalid
+`gamma`/`nlambda`/`lambda_min_ratio`/`weights`, or mislengthed `labels`.
+A nodewise fit that does not reach its optimum raises a
+`psychnet_no_converge` warning naming the node.
 
 ## References
 

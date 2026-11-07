@@ -21,7 +21,7 @@ so the two differ only by the glasso solver's convergence tolerance."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ so the two differ only by the glasso solver's convergence tolerance."></head><bo
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Network Comparison Test</h1>
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/R/nct.R" class="external-link"><code>R/nct.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/R/nct.R" class="external-link"><code>R/nct.R</code></a>, <a href="https://github.com/mohsaqr/psychnets/blob/main/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
       <div class="d-none name"><code>net_compare.Rd</code></div>
     </div>
 
@@ -83,7 +83,19 @@ so the two differ only by the glasso solver's convergence tolerance.</p>
 <span>  weighted <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  p_adjust <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  na_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pairwise"</span>, <span class="st">"listwise"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_nct'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, alpha <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_nct'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">x</span>, row.names <span class="op">=</span> <span class="cn">NULL</span>, optional <span class="op">=</span> <span class="cn">FALSE</span>, alpha <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_nct'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, n <span class="op">=</span> <span class="cn">Inf</span>, alpha <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_nct'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strength"</span>, <span class="st">"structure"</span>, <span class="st">"edges"</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -91,9 +103,15 @@ so the two differ only by the glasso solver's convergence tolerance.</p>
 
 
 <dl><dt id="arg-data-data-">data1, data2<a class="anchor" aria-label="anchor" href="#arg-data-data-"></a></dt>
-<dd><p>Numeric data frames/matrices with the same variables. When
-<code>data1</code> is a <a href="print.psychnet_group.html">psychnet_group</a>, <code>data2</code> names the two levels to compare
-(defaulting to its two levels when there are exactly two).</p></dd>
+<dd><p>Numeric data frames/matrices with the same variables,
+holding finite values or <code>NA</code> (an infinite value is a
+<code>psychnet_bad_input</code> error). When <code>data1</code> is a <a href="psychnet_group.html">psychnet_group</a>, <code>data2</code>
+gives the two levels to compare as they appear in the grouping column,
+e.g. <code>c(1, 4)</code> for weeks 1 and 4 (default: its two levels when there are
+exactly two); the group's node <code>labels</code> name the edges, and the group's
+<code>gamma</code> and <code>na_method</code> are used unless you supply <code>gamma</code> / <code>na_method</code>,
+which then win (with a <code>psychnet_estimator_mismatch</code> warning when they
+differ from the group's).</p></dd>
 
 
 <dt id="arg-iter">iter<a class="anchor" aria-label="anchor" href="#arg-iter"></a></dt>
@@ -106,7 +124,11 @@ so the two differ only by the glasso solver's convergence tolerance.</p>
 
 <dt id="arg-paired">paired<a class="anchor" aria-label="anchor" href="#arg-paired"></a></dt>
 <dd><p>Logical; within-row swapping for paired designs (row <code>i</code> of
-<code>data1</code> and of <code>data2</code> are the same unit). Default FALSE.</p></dd>
+<code>data1</code> and of <code>data2</code> are the same unit). Default <code>FALSE</code>, except for a
+group built by <code>psychnet(..., within = )</code>: its levels hold the same
+persons, so they are compared paired by person unless <code>paired = FALSE</code>
+(persons seen in only one level are left out, with a
+<code>psychnet_rows_dropped</code> warning).</p></dd>
 
 
 <dt id="arg-abs">abs<a class="anchor" aria-label="anchor" href="#arg-abs"></a></dt>
@@ -126,6 +148,35 @@ so the two differ only by the glasso solver's convergence tolerance.</p>
 <dd><p><code>"pairwise"</code> (default) or <code>"listwise"</code> handling of missing
 values; see Details.</p></dd>
 
+
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
+<dd><p>For the methods: significance level for the <code>significant</code>
+column, the <code>*</code> marks and the edge colouring. Default 0.05.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Unused.</p></dd>
+
+
+<dt id="arg-x-object">x, object<a class="anchor" aria-label="anchor" href="#arg-x-object"></a></dt>
+<dd><p>A <code>psychnet_nct</code> object.</p></dd>
+
+
+<dt id="arg-row-names-optional">row.names, optional<a class="anchor" aria-label="anchor" href="#arg-row-names-optional"></a></dt>
+<dd><p>Ignored (S3 consistency).</p></dd>
+
+
+<dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>: number of edges to list, largest difference first.
+Default <code>Inf</code> (all).</p></dd>
+
+
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>: <code>"strength"</code> (default) or <code>"structure"</code> draw the
+permutation null of S or M with the observed value and p-value marked;
+<code>"edges"</code> draws the observed per-edge absolute differences, significant
+ones coloured and marked <code>*</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -140,16 +191,28 @@ strength) and <code>$E</code> (per-edge absolute differences; also <code>edge_na
 the group levels), <code>paired</code> and <code>params</code>. The letters follow van
 Borkulo et al. (2022) and <code>NetworkComparisonTest</code>; <code>$M</code> and <code>$S</code> (which
 before psychnets 0.6.0 held the two global tests the other way round) raise
-a <code>psychnet_renamed</code> error. Printing the object shows every result; as
-tables, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> gives the M and S tests and <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> one row
-per edge (see <code><a href="summary.psychnet_nct.html">summary.psychnet_nct()</a></code>).</p>
+a <code>psychnet_renamed</code> error.</p>
+<p><code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows every result: the two global tests, each group's global
+strength, the number of differing edges and every edge, largest
+difference first. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns a data frame with one row per
+global test, columns <code>test</code> (<code>"network structure"</code>; <code>"global strength"</code>,
+or <code>"global expected influence"</code> when <code>abs = FALSE</code>), <code>statistic</code> (<code>"M"</code>,
+<code>"S"</code>), <code>observed</code>, <code>p_value</code> and <code>significant</code> (<code>p_value &lt; alpha</code>).
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> returns one row per node pair, columns <code>from</code>, <code>to</code>,
+<code>weight_1</code>, <code>weight_2</code> (the edge in each group's network; 0/1 when
+<code>weighted = FALSE</code>), <code>difference</code> (absolute difference, statistic E),
+<code>p_value</code> (permutation p, adjusted by <code>p_adjust</code>), <code>p_raw</code> (the same
+permutation p before adjustment; equal to <code>p_value</code> when <code>p_adjust = "none"</code>) and <code>significant</code> (<code>p_value &lt; alpha</code>, i.e. on the adjusted p).
+The global M and S tests are never adjusted.
+<code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> return <code>x</code> invisibly.</p>
 <p>Errors of class <code>psychnet_bad_input</code> for malformed arguments or groups
 whose columns differ (in name or order); of class
 <code>psychnet_degenerate_sample</code> when (pairwise) a variable pair shares fewer
 than two observed rows in a group or a permuted split. Warnings of class
 <code>psychnet_constant_variable</code> (a constant variable in an observed group) and
 <code>psychnet_estimator_mismatch</code> (a group object built with an estimator or
-settings other than EBIC glasso).</p>
+settings other than EBIC glasso, or compared with a <code>gamma</code> / <code>na_method</code>
+other than the group's own).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -169,6 +232,16 @@ The statistic is then defined on every split, so the permutation test stays
 exact. A constant variable in an observed group raises a
 <code>psychnet_constant_variable</code> warning.</p>
     </div>
+    <div class="section level2">
+    <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+
+<ul><li><p><code>summary(psychnet_nct)</code>: The M and S tests as a table.</p></li>
+<li><p><code>as.data.frame(psychnet_nct)</code>: The per-edge tests, one row per node pair.</p></li>
+<li><p><code>print(psychnet_nct)</code>: Every result, edges largest difference first.</p></li>
+<li><p><code>plot(psychnet_nct)</code>: Permutation null of S or M, or the per-edge
+differences (see <code>type</code>); significant edges are labelled <code>*</code> as well as
+coloured.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski,
@@ -206,18 +279,39 @@ Comparing network structures on three aspects: A permutation test.
 <span class="r-out co"><span class="r-pr">#&gt;</span>   V2 - V4   0.000   0.000   0.000   1.000 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   * p &lt; 0.05</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>          <span class="co"># the three largest edge differences</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Network Comparison Test: a vs b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 permutations, independent groups, n = 100 and 100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Test                  Statistic       p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   M  network structure      0.465   0.091 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   S  global strength        1.194   0.091 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        a 1.194 vs b 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   E  edges differing       0 of 6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Largest edge differences (3 of 6)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Edge          a       b  |diff|       p</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   V3 - V4   0.465   0.000   0.465   0.091 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   V1 - V2   0.391   0.000   0.391   0.091 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   V2 - V3   0.311   0.000   0.311   0.182 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   * p &lt; 0.05</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                test statistic  observed    p_value significant</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 network structure         M 0.4649198 0.09090909       FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   global strength         S 1.1942892 0.09090909       FALSE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   from to   weight_1 weight_2 difference    p_value significant</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   V1 V2 0.39093075        0 0.39093075 0.09090909       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   V1 V3 0.02711333        0 0.02711333 0.81818182       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   V2 V3 0.31132529        0 0.31132529 0.18181818       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   V1 V4 0.00000000        0 0.00000000 1.00000000       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   V2 V4 0.00000000        0 0.00000000 1.00000000       FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   V3 V4 0.46491980        0 0.46491980 0.09090909       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   from to   weight_1 weight_2 difference    p_value      p_raw significant</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   V1 V2 0.39093075        0 0.39093075 0.09090909 0.09090909       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   V1 V3 0.02711333        0 0.02711333 0.81818182 0.81818182       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   V2 V3 0.31132529        0 0.31132529 0.18181818 0.18181818       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   V1 V4 0.00000000        0 0.00000000 1.00000000 1.00000000       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   V2 V4 0.00000000        0 0.00000000 1.00000000 1.00000000       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   V3 V4 0.46491980        0 0.46491980 0.09090909 0.09090909       FALSE</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>                  <span class="co"># global strength permutation null</span></span></span>
+<span class="r-plt img"><img src="net_compare-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"edges"</span><span class="op">)</span>  <span class="co"># per-edge differences</span></span></span>
+<span class="r-plt img"><img src="net_compare-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

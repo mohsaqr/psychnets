@@ -17,7 +17,7 @@ exactly on the TMFG support)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,8 @@ exactly on the TMFG support).</p>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Sample size (recorded on the result; required with <code>cor_matrix</code>).</p></dd>
+<dd><p>Sample size (recorded on the result; required with <code>cor_matrix</code>): a
+single finite number &gt;= 1.</p></dd>
 
 
 <dt id="arg-cor-method">cor_method<a class="anchor" aria-label="anchor" href="#arg-cor-method"></a></dt>
@@ -102,7 +103,7 @@ exactly on the TMFG support).</p>
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>Partial correlations with absolute value below this are
-zeroed. Default 0. With a positive value <code>$kkt</code> is <code>NA</code> for the returned
+zeroed: a single number &gt;= 0, default 0. With a positive value <code>$kkt</code> is <code>NA</code> for the returned
 graph and the pre-threshold residual is stored as <code>$fit_kkt</code>.</p></dd>
 
 
@@ -112,13 +113,17 @@ graph and the pre-threshold residual is stored as <code>$fit_kkt</code>.</p></dd
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels, one unique label per network node.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>psychnet</code> object whose <code>$weights</code> is the partial-correlation matrix,
-with <code>$precision</code>, <code>$support</code> (the TMFG graph), <code>$cor_matrix</code>, and <code>$kkt</code>.</p>
+with <code>$precision</code>, <code>$support</code> (the TMFG graph), <code>$cor_matrix</code>, and <code>$kkt</code>.
+A clique or separator block that is singular or nearly so (reciprocal
+condition number below 1e-10, e.g. a duplicate column), or a precision
+whose certificate exceeds 1e-6, is refused with an error of class
+<code>psychnet_singular</code> rather than returned as an uncertified network.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

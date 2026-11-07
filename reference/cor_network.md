@@ -1,8 +1,8 @@
 # Correlation network
 
-Marginal (zero-order) association network: the Pearson correlation
-matrix with the diagonal removed. Equivalent to `bootnet`'s `"cor"`
-default.
+Marginal (zero-order) association network: the correlation matrix of the
+chosen `cor_method` (Pearson by default) with the diagonal removed.
+Equivalent to `bootnet`'s `"cor"` default.
 
 ## Usage
 
@@ -25,7 +25,10 @@ cor_network(
 - data:
 
   Numeric data frame or matrix (rows = observations). Optional if
-  `cor_matrix` is supplied.
+  `cor_matrix` is supplied. Ordered-factor columns enter as their
+  integer level codes; other non-numeric columns are dropped with a
+  `psychnet_dropped_columns` message, and constant / all-missing columns
+  with a `psychnet_constant_variable` warning.
 
 - cor_matrix:
 
@@ -35,7 +38,8 @@ cor_network(
 - n:
 
   Sample size (needed for significance testing when `cor_matrix` is
-  supplied).
+  supplied): a single number \>= 1, and a whole number of at least 3
+  when `alpha` is set.
 
 - cor_method:
 
@@ -47,16 +51,19 @@ cor_network(
 
 - threshold:
 
-  Correlations with absolute value below this are set to zero. Default
-  0.
+  Correlations with absolute value below this are set to zero. A single
+  number \>= 0; default 0. (qgraph's logical `threshold = TRUE` is
+  refused – use `alpha` for a significance rule.)
 
 - alpha:
 
-  Significance level; if set, correlations not significant at `alpha`
-  are zeroed. `NULL` (default) keeps every edge. Kendall marginal
-  correlations use a tie-corrected asymptotic test and require raw data.
-  Significance testing of full-order partial Kendall correlations is not
-  supported.
+  Significance level in (0, 1); if set, correlations not significant at
+  `alpha` are zeroed. `NULL` (default) keeps every edge. Kendall
+  marginal correlations use a tie-corrected asymptotic test and require
+  raw data. Significance testing of full-order partial Kendall
+  correlations is not supported. A sample too small for the test (df =
+  n - 2 - k \<= 0, with k the number of variables partialled out) is an
+  error of class `psychnet_degenerate_sample`, never an empty network.
 
 - adjust:
 
@@ -73,15 +80,17 @@ cor_network(
 
 - labels:
 
-  Optional node labels.
+  Optional node labels, one unique label per network node.
 
 ## Value
 
 A `psychnet` object whose `$weights` is the thresholded correlation
-matrix, with `$cor_matrix`, `$n_eff`, `$n_pair`, `$na_method` (and
-`$p_values` when `alpha` is used). Node order in `$weights` and `$nodes`
-is always the column order of the input `data` / `cor_matrix`, never
-sorted.
+matrix, with `$cor_matrix`, `$n_eff`, `$na_method` (and `$p_values` when
+`alpha` is used). `$n_pair` (the pairwise co-observation counts) is
+present only when the network is estimated from `data`. Node order in
+`$weights` and `$nodes` is always the column order of the input `data` /
+`cor_matrix`, never sorted. Invalid arguments raise errors of class
+`psychnet_bad_input`.
 
 ## Examples
 

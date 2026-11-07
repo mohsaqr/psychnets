@@ -15,7 +15,7 @@ base R and self-certified via glasso_kkt() on the transformed correlation."></he
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,8 @@ is required, <code>data</code> and <code>npn</code> are ignored.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Sample size (required when <code>cor_matrix</code> is supplied).</p></dd>
+<dd><p>Sample size (required when <code>cor_matrix</code> is supplied): a single
+finite number &gt;= 1.</p></dd>
 
 
 <dt id="arg-npn">npn<a class="anchor" aria-label="anchor" href="#arg-npn"></a></dt>
@@ -116,7 +117,7 @@ or <code>"skeptic"</code> (Spearman).</p></dd>
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>Partial correlations with absolute value below this are
-zeroed. Default 0. With a positive value <code>$kkt</code> is <code>NA</code> for the returned
+zeroed: a single number &gt;= 0, default 0. With a positive value <code>$kkt</code> is <code>NA</code> for the returned
 graph and the pre-threshold residual is stored as <code>$fit_kkt</code>.</p></dd>
 
 
@@ -133,7 +134,7 @@ pure-R solver; <code>FALSE</code> delegates to the <code>glasso</code> Fortran p
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
-<dd><p>Optional node labels.</p></dd>
+<dd><p>Optional node labels, one unique label per network node.</p></dd>
 
 </dl></div>
     <div class="section level2">

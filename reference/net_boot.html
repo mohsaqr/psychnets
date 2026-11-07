@@ -17,7 +17,7 @@ for use by difference_test()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@ for use by difference_test()."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Bootstrap a psychometric network</h1>
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/R/bootstrap.R" class="external-link"><code>R/bootstrap.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/R/bootstrap.R" class="external-link"><code>R/bootstrap.R</code></a>, <a href="https://github.com/mohsaqr/psychnets/blob/main/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
       <div class="d-none name"><code>net_boot.Rd</code></div>
     </div>
 
@@ -83,6 +83,27 @@ for use by <code><a href="difference_test.html">difference_test()</a></code>.</p
 <span>  engine <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  estimator_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_bootstrap'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  row.names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  optional <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"edges"</span>, <span class="st">"centrality"</span>, <span class="st">"predictability"</span>, <span class="st">"thresholded"</span><span class="op">)</span>,</span>
+<span>  significant <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_bootstrap'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'psychnet_bootstrap'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"edges"</span>, <span class="st">"centrality"</span>, <span class="st">"edge_diff"</span>, <span class="st">"centrality_diff"</span>, <span class="st">"predictability"</span><span class="op">)</span>,</span>
+<span>  measure <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,7 +128,8 @@ types are decided once on the full data and pinned for every draw.</p></dd>
 
 
 <dt id="arg-ci">ci<a class="anchor" aria-label="anchor" href="#arg-ci"></a></dt>
-<dd><p>Confidence level for percentile intervals. Default 0.95.</p></dd>
+<dd><p>Confidence level for percentile intervals: a single number in
+(0, 1). Default 0.95.</p></dd>
 
 
 <dt id="arg-measures">measures<a class="anchor" aria-label="anchor" href="#arg-measures"></a></dt>
@@ -125,20 +147,22 @@ recommended for psychometric networks (<code>"strength"</code>,
 <dt id="arg-predictability">predictability<a class="anchor" aria-label="anchor" href="#arg-predictability"></a></dt>
 <dd><p>Logical; if <code>TRUE</code> and the estimator returns a
 precision matrix (GGM family), bootstrap node predictability (R^2) and
-report its interval. Default <code>FALSE</code>.</p></dd>
+report its interval (<code>as.data.frame(x, what = "predictability")</code>).
+Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, also return the observed network with
 every edge whose bootstrap interval includes zero set to zero
-(<code>$thresholded</code>). Default <code>FALSE</code>.</p></dd>
+(<code>as.data.frame(x, what = "thresholded")</code>). Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-diff-test">diff_test<a class="anchor" aria-label="anchor" href="#arg-diff-test"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, also return two-sided bootstrap
-difference p-value matrices for edges (<code>$edge_diff_p</code>, <code>NULL</code> past 500
-edges) and for each centrality measure (<code>$centrality_diff_p</code>). Default
-<code>FALSE</code>.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, also store two-sided bootstrap
+difference p-value matrices for edges (<code>NULL</code> past 500 edges) and for each
+centrality measure, drawn by <code>plot(x, type = "edge_diff")</code> /
+<code>"centrality_diff"</code>. For the tidy pairwise table use <code><a href="difference_test.html">difference_test()</a></code>.
+Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-p-adjust">p_adjust<a class="anchor" aria-label="anchor" href="#arg-p-adjust"></a></dt>
@@ -151,12 +175,13 @@ p-value matrices (any <a href="https://rdrr.io/r/stats/p.adjust.html" class="ext
 
 
 <dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
-<dd><p>Number of CPU cores for the resample loop. <code>NULL</code> (default) uses
-two thirds of the detected cores; <code>1</code> forces a serial run. Parallelism uses
-forking (<code><a href="https://rdrr.io/r/parallel/mclapply.html" class="external-link">parallel::mclapply</a></code>) and falls back to serial on Windows. Because
-every resample index is drawn in the parent process before any fitting, the
-result is identical for any number of cores and reproducible from
-<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code>.</p></dd>
+<dd><p>Number of CPU cores for the resample loop: <code>NULL</code> (default)
+uses two thirds of the detected cores; a whole number <code>&gt;= 1</code> sets it (<code>1</code>
+forces a serial run). Parallelism uses forking (<code><a href="https://rdrr.io/r/parallel/mclapply.html" class="external-link">parallel::mclapply</a></code>) and
+falls back to serial on Windows. Because every resample index is drawn in
+the parent process before any fitting, and a failing resample is caught
+inside its own worker, the result is identical for any number of cores and
+reproducible from <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code>.</p></dd>
 
 
 <dt id="arg-engine">engine<a class="anchor" aria-label="anchor" href="#arg-engine"></a></dt>
@@ -166,25 +191,101 @@ result is identical for any number of cores and reproducible from
 
 
 <dt id="arg-estimator-args">estimator_args<a class="anchor" aria-label="anchor" href="#arg-estimator-args"></a></dt>
-<dd><p>Named list of estimator arguments. Use this for names
-consumed by the bootstrap itself, such as an estimator's <code>threshold</code>.
-Values here override matching arguments in <code>...</code>.</p></dd>
+<dd><p>Named list of estimator arguments. <code>threshold</code>, <code>ci</code>,
+<code>measures</code> and <code>labels</code> are arguments of the bootstrap itself, so an
+estimator's own <code>threshold</code> must go here, e.g.
+<code>estimator_args = list(threshold = TRUE)</code>. Values here override matching
+arguments in <code>...</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to the estimator.</p></dd>
+<dd><p>Passed to the estimator by <code>net_boot()</code>; ignored by the methods.</p></dd>
+
+
+<dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>A <code>psychnet_bootstrap</code> object.</p></dd>
+
+
+<dt id="arg-row-names-optional">row.names, optional<a class="anchor" aria-label="anchor" href="#arg-row-names-optional"></a></dt>
+<dd><p>Ignored (S3 consistency).</p></dd>
+
+
+<dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>: which table to return – <code>"edges"</code>
+(default), <code>"centrality"</code>, <code>"predictability"</code> (needs
+<code>predictability = TRUE</code>) or <code>"thresholded"</code> (needs <code>threshold = TRUE</code>).</p></dd>
+
+
+<dt id="arg-significant">significant<a class="anchor" aria-label="anchor" href="#arg-significant"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> with <code>what = "edges"</code>: if <code>TRUE</code>,
+return only the edges whose confidence interval excludes zero. Default
+<code>FALSE</code> (all edges).</p></dd>
+
+
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>: one of <code>"edges"</code> (default; the edge-weight
+intervals sorted by observed weight, bootnet's edge-accuracy plot),
+<code>"centrality"</code> (one sorted interval panel per measure), <code>"edge_diff"</code> and
+<code>"centrality_diff"</code> (the bootstrapped difference "significance box" matrix
+for edges or for one centrality), or <code>"predictability"</code> (node
+predictability intervals; needs <code>predictability = TRUE</code>).</p></dd>
+
+
+<dt id="arg-measure">measure<a class="anchor" aria-label="anchor" href="#arg-measure"></a></dt>
+<dd><p>For <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> with <code>type = "centrality"</code> or
+<code>"centrality_diff"</code>: which measure(s) to draw. Default: all bootstrapped
+measures (<code>"centrality"</code>) or the first (<code>"centrality_diff"</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>psychnet_bootstrap</code>: tidy <code>$edges</code> (with a
-<code>significant</code> flag) and <code>$centrality</code> data frames, the observed network in
-<code>$observed</code>, raw resample draws in <code>$edge_boot</code>, <code>$str_boot</code>, <code>$ei_boot</code>,
-and the general <code>$centrality_boot</code> (named list, one matrix per measure).
-Optional <code>$predictability</code>, <code>$thresholded</code>, <code>$edge_diff_p</code>,
-<code>$centrality_diff_p</code>, plus <code>$lambda_path</code>/<code>$lambda_selected</code> when the
-estimator reports them.</p>
+    <p><code>net_boot()</code> returns an object of class <code>psychnet_bootstrap</code>, read
+with <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>, <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> and <code><a href="difference_test.html">difference_test()</a></code>.</p>
+<p><code>as.data.frame(x)</code> (<code>what = "edges"</code>) returns one row per edge with
+columns <code>from</code>, <code>to</code>, <code>observed</code>, <code>mean</code> (bootstrap mean), <code>lower</code>,
+<code>upper</code> (percentile interval), <code>prop_nonzero</code> (share of resamples in which
+the edge is nonzero) and <code>significant</code> (interval excludes zero). For a
+directed estimator each ordered pair is its own row.</p>
+<p><code>what = "centrality"</code> returns one row per node: <code>node</code>, then for each
+bootstrapped measure its observed value and the <code>&lt;measure&gt;_lower</code> /
+<code>&lt;measure&gt;_upper</code> percentile interval.</p>
+<p><code>what = "predictability"</code> returns one row per node: <code>node</code>, <code>value</code>
+(observed R^2), <code>lower</code>, <code>upper</code>.</p>
+<p><code>what = "thresholded"</code> returns one row per edge: <code>from</code>, <code>to</code>,
+<code>observed</code>, <code>weight</code> (the observed weight, or 0 when its interval includes
+zero) and <code>retained</code>.</p>
+<p>Asking for a table that was not computed is a <code>psychnet_bad_input</code> error.
+<code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> returns <code>x</code> invisibly after printing the method, the number of
+resamples, the interval level, and the counts of edges, significant edges
+and nodes. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> returns <code>x</code> invisibly.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For an estimator whose edge weights are non-negative by construction
+(<code>method = "relimp"</code>, whose weights are R^2 shares) a percentile interval
+excludes zero almost surely, so <code>significant</code> is <code>TRUE</code> for every edge and
+carries no information; <code>threshold = TRUE</code> then removes nothing. Both
+<code>threshold = TRUE</code> and <code>as.data.frame(x, significant = TRUE)</code> raise a
+<code>psychnet_uninformative_test</code> warning in that case. Pairwise difference
+tests (<code><a href="difference_test.html">difference_test()</a></code>, <code>diff_test = TRUE</code>) remain meaningful.</p>
+<p>A resample whose fit (or centrality, or predictability) errors is recorded
+as failed inside its worker, so the result is the same for any number of
+cores; failures raise one <code>psychnet_resample_failed</code> warning that carries
+the first error message, and fewer than two successful resamples is a
+<code>psychnet_resample_failed</code> error. An error in the observed fit is raised as
+a <code>psychnet_estimation_failed</code> error with the estimator's own message.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
+
+<ul><li><p><code>as.data.frame(psychnet_bootstrap)</code>: A tidy table: the edges (default), the centrality
+intervals, the predictability intervals, or the thresholded network (see
+<code>what</code>).</p></li>
+<li><p><code>print(psychnet_bootstrap)</code>: Method, resamples, interval level and edge counts.</p></li>
+<li><p><code>plot(psychnet_bootstrap)</code>: Edge, centrality, difference or predictability
+intervals (see <code>type</code>). Significant edges are filled points on solid
+segments, non-significant ones open points on dashed segments.</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Epskamp, S., Borsboom, D., &amp; Fried, E. I. (2018). Estimating
@@ -227,11 +328,28 @@ Research Methods</em>, 50(1), 195-212. <a href="https://doi.org/10.3758/s13428-0
 <span class="r-out co"><span class="r-pr">#&gt;</span> 9        FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 10        TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">bs</span>, significant <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    from to  observed      mean     lower     upper prop_nonzero significant</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    V1 V2 0.3111854 0.2982379 0.1515945 0.4089922            1        TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    V2 V3 0.3342644 0.3371318 0.2122220 0.4864931            1        TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6    V3 V4 0.3296244 0.3381151 0.1466475 0.5032197            1        TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10   V4 V5 0.3303466 0.3604165 0.2193767 0.4633247            1        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   from to  observed      mean     lower     upper prop_nonzero significant</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   V1 V2 0.3111854 0.2982379 0.1515945 0.4089922            1        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   V2 V3 0.3342644 0.3371318 0.2122220 0.4864931            1        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   V3 V4 0.3296244 0.3381151 0.1466475 0.5032197            1        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   V4 V5 0.3303466 0.3604165 0.2193767 0.4633247            1        TRUE</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">bs</span>, what <span class="op">=</span> <span class="st">"centrality"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   node  strength strength_lower strength_upper expected_influence</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   V1 0.4706062      0.3089894       0.907735          0.2841675</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   V2 0.7016822      0.5439371       1.001855          0.6786194</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   V3 0.7057560      0.6049353       1.116255          0.6857222</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   V4 0.7978913      0.6316038       1.182999          0.6114526</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   V5 0.3862460      0.4024386       0.854440          0.3431495</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   expected_influence_lower expected_influence_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1               0.05695078                0.4525569</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2               0.48748685                0.8893284</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3               0.48989974                0.9386692</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4               0.48030709                0.9109487</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5               0.08638032                0.6981966</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span><span class="op">)</span>                       <span class="co"># edge-weight CIs</span></span></span>
+<span class="r-plt img"><img src="net_boot-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"centrality"</span><span class="op">)</span>  <span class="co"># centrality CIs</span></span></span>
+<span class="r-plt img"><img src="net_boot-2.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

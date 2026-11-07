@@ -30,7 +30,9 @@ ggm_support_kkt(theta, cor_matrix, support, active_tol = 1e-08)
 
 - support:
 
-  Logical p x p matrix; `TRUE` where an edge is allowed.
+  Logical p x p matrix; `TRUE` where an edge is allowed. It is
+  symmetrized (`support | t(support)`), so an upper- or lower-triangular
+  support describes the same undirected graph; the diagonal is ignored.
 
 - active_tol:
 
@@ -39,7 +41,10 @@ ggm_support_kkt(theta, cor_matrix, support, active_tol = 1e-08)
 
 ## Value
 
-Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+`Inf` for an asymmetric or non-positive-definite `theta`. A `support`
+that is not a logical matrix of the right size, or contains `NA`, is an
+error of class `psychnet_bad_input`.
 
 ## See also
 

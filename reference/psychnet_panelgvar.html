@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@
 <span>  row.names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  optional <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span>,</span>
-<span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"edges"</span>, <span class="st">"parameters"</span>, <span class="st">"fit"</span>, <span class="st">"diagnostics"</span>, <span class="st">"variance"</span><span class="op">)</span>,</span>
+<span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"edges"</span>, <span class="st">"parameters"</span>, <span class="st">"fit"</span>, <span class="st">"diagnostics"</span>, <span class="st">"variance"</span>, <span class="st">"covariance"</span>, <span class="st">"path"</span><span class="op">)</span>,</span>
 <span>  include_zero <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -98,10 +98,21 @@ effects), <code>"parameters"</code> (every model parameter, including means, sca
 <code>delta</code>s, and fixed/pruned entries), <code>"fit"</code> (one row of fit indices), or
 <code>"diagnostics"</code> (one row: persons <code>n</code>, <code>waves</code>, the ML <code>score</code>
 certificate, <code>boundary</code> / <code>boundary_part</code>, <code>se_available</code>, and
-<code>starts_agree</code> of <code>starts</code> optimizer starts reaching the best saturated
-optimum), or <code>"variance"</code> (one row per variable: the model-implied
+<code>starts_agree</code> of <code>starts</code> optimizer starts reaching the best optimum –
+of the saturated fit, or with <code>select = "ebic"</code> of the penalized solve at
+the selected lambda, or of its refit when <code>refit = TRUE</code>; agreement is
+judged on the unit-free standardized objective), <code>"variance"</code> (one row
+per variable: the model-implied
 <code>between</code>-person variance, the stationary <code>within</code>-person variance, and
-<code>share_between</code>, their ratio to the total – an intraclass correlation).</p></dd>
+<code>share_between</code>, their ratio to the total – an intraclass correlation),
+<code>"covariance"</code> (one row per entry of the lower triangle, diagonal
+included, of the innovation (contemporaneous) and between-person
+covariance matrices on the data scale: columns <code>matrix</code> (<code>"innovation"</code>
+or <code>"between"</code>), <code>row</code>, <code>col</code>, <code>value</code>), or <code>"path"</code> (<code>select = "ebic"</code>
+only, else a <code>psychnet_bad_input</code> error: one row per lambda on the
+penalty path, columns <code>lambda</code> (data-scale penalty), <code>ebic</code>, <code>edges</code>
+(non-zero penalized parameters), <code>kkt</code> (lasso KKT residual), <code>final</code>
+(re-solved to certification) and <code>selected</code> (the lambda returned)).</p></dd>
 
 
 <dt id="arg-include-zero">include_zero<a class="anchor" aria-label="anchor" href="#arg-include-zero"></a></dt>
@@ -283,6 +294,38 @@ assigns significance to solid or dashed lines.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 100     4 8.159029e-13    FALSE          &lt;NA&gt;         TRUE            3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   starts</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1      3</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"covariance"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        matrix       row       col      value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  innovation  efficacy  efficacy 49.6136340</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  innovation  planning  efficacy 38.0933880</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  innovation    effort  efficacy 36.3172720</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  innovation enjoyment  efficacy 24.5401922</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  innovation   anxiety  efficacy -0.1087362</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  innovation  planning  planning 47.3507353</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  innovation    effort  planning 34.6682469</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  innovation enjoyment  planning 27.8895140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  innovation   anxiety  planning -1.5388082</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 innovation    effort    effort 56.0710903</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 innovation enjoyment    effort 31.1659563</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 innovation   anxiety    effort  0.1302321</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 innovation enjoyment enjoyment 52.0902198</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 innovation   anxiety enjoyment  1.6365233</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 innovation   anxiety   anxiety 53.5668044</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16    between  efficacy  efficacy 65.3981717</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17    between  planning  efficacy 30.7569773</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18    between    effort  efficacy 23.7383902</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19    between enjoyment  efficacy 19.6659164</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20    between   anxiety  efficacy -3.3635915</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21    between  planning  planning 72.9244738</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22    between    effort  planning 42.1386807</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23    between enjoyment  planning 34.9349982</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24    between   anxiety  planning 16.3019718</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25    between    effort    effort 82.6392242</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26    between enjoyment    effort 36.5580315</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27    between   anxiety    effort  7.3604551</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28    between enjoyment enjoyment 53.8374614</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29    between   anxiety enjoyment  8.3971532</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30    between   anxiety   anxiety 95.0051265</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"cograph"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="psychnet_panelgvar-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>

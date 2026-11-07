@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -364,7 +364,7 @@ when the analysis uses monotonic rank associations.</p>
 <span><span class="va">logo_spearman</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; logo network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.44e-15</span></span></code></pre></div>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.67e-15</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to      weight</span></span>
@@ -386,8 +386,8 @@ relations also persist. The <code>CSU</code>-<code>IV</code> and
 correlation estimators, while some edge magnitudes remain sensitive.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   method certificate kind certified</span></span>
-<span><span class="co">#&gt; 1   logo 1.44329e-15  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt;   method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1   logo 1.665335e-15  kkt      TRUE</span></span></code></pre></div>
 <p>The rank-based LoGo model has a residual of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.67</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.67 \times 10^{-15}</annotation></semantics></math>
 and is certified, indicating numerical agreement with its defining

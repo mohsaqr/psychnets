@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,6 +45,10 @@
       <small>Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.1" id="psychnets-071">psychnets 0.7.1<a class="anchor" aria-label="anchor" href="#psychnets-071"></a></h2>
+<ul><li>Tests: the frozen network-comparison baseline is compared to a tolerance of 1e-10 instead of exact identity. It was frozen on macOS, and other platforms’ floating-point arithmetic differs in the last bits (~1e-15), which failed the check on Linux and Windows. No code or returned number changed.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="psychnets-070">psychnets 0.7.0<a class="anchor" aria-label="anchor" href="#psychnets-070"></a></h2>
 <p>This release follows a full function-by-function review of the package. Most changes are input validation and conditions that were silent before; the ones marked <strong>(numbers change)</strong> alter returned values, as the numerical-stability policy requires for a minor version.</p>

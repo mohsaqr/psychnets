@@ -144,7 +144,7 @@ its first-order conditions to the requested tolerance.
 
 certificate(ising_net)
 #>   method  certificate kind certified
-#> 1  ising 4.895834e-10  kkt      TRUE
+#> 1  ising 4.895833e-10  kkt      TRUE
 ```
 
 The residual is $`4.90 \times 10^{-10}`$ and `certified` is `TRUE`. This

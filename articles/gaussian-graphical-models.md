@@ -169,7 +169,7 @@ requested tolerance of $`10^{-6}`$ by default.
 
 certificate(net)
 #>   method  certificate kind certified
-#> 1 glasso 2.213401e-10  kkt      TRUE
+#> 1 glasso 2.213389e-10  kkt      TRUE
 ```
 
 The KKT residual is $`2.21 \times 10^{-10}`$ and `certified` is `TRUE`.
@@ -411,7 +411,7 @@ to the correlation model.
 
 certificate(npn_net)
 #>   method  certificate kind certified
-#> 1   huge 2.471425e-10  kkt      TRUE
+#> 1   huge 2.471392e-10  kkt      TRUE
 ```
 
 The KKT residual is $`2.47 \times 10^{-10}`$ and `certified` is `TRUE`.

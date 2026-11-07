@@ -262,7 +262,7 @@ fit
 #>   edges (significant/estimated, p < 0.01): temporal 1/20 (+4/5 autoregressive)   contemporaneous 5/10   between 2/10
 #>   selection: none (full model)
 #>   fit: chisq(170) = 207.19, p = 0.0273   CFI = 0.957   TLI = 0.946   RMSEA = 0.047
-#>   optimality (ML score): 8.16e-13
+#>   optimality (ML score): 5.91e-13
 #>   starts: 3 of 3 reached the best saturated optimum
 as.data.frame(fit)
 #>            network      from        to       weight         se            p

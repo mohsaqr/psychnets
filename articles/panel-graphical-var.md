@@ -57,7 +57,7 @@ fit
 #>   edges (significant/estimated, p < 0.01): temporal 1/20 (+4/5 autoregressive)   contemporaneous 5/10   between 2/10
 #>   selection: none (full model)
 #>   fit: chisq(170) = 207.19, p = 0.0273   CFI = 0.957   TLI = 0.946   RMSEA = 0.047
-#>   optimality (ML score): 8.16e-13
+#>   optimality (ML score): 5.91e-13
 #>   starts: 3 of 3 reached the best saturated optimum
 ```
 
@@ -150,7 +150,7 @@ pruned
 #>   edges (significant/estimated, p < 0.01): temporal 2/2 (+4/4 autoregressive)   contemporaneous 5/5   between 4/4
 #>   selection: prune (alpha = 0.01, adjust = none; stepup (bic) re-added 3)
 #>   fit: chisq(200) = 227.13, p = 0.0913   CFI = 0.969   TLI = 0.966   RMSEA = 0.037
-#>   optimality (ML score): 5.41e-13
+#>   optimality (ML score): 3.71e-13
 #>   starts: 3 of 3 reached the best saturated optimum
 ```
 
@@ -231,7 +231,7 @@ best optimum:
 
 as.data.frame(fit, what = "diagnostics")
 #>     n waves        score boundary boundary_part se_available starts_agree
-#> 1 100     4 8.159029e-13    FALSE          <NA>         TRUE            3
+#> 1 100     4 5.906386e-13    FALSE          <NA>         TRUE            3
 #>   starts
 #> 1      3
 ```

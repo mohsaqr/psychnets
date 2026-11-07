@@ -1,5 +1,13 @@
 # Changelog
 
+## psychnets 0.7.1
+
+- Tests: the frozen network-comparison baseline is compared to a
+  tolerance of 1e-10 instead of exact identity. It was frozen on macOS,
+  and other platforms’ floating-point arithmetic differs in the last
+  bits (~1e-15), which failed the check on Linux and Windows. No code or
+  returned number changed.
+
 ## psychnets 0.7.0
 
 This release follows a full function-by-function review of the package.

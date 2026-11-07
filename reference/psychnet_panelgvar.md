@@ -250,7 +250,7 @@ as.data.frame(fit, what = "parameters")
 #> 60  7.67742639 11.21673413 FALSE
 as.data.frame(fit, what = "diagnostics")
 #>     n waves        score boundary boundary_part se_available starts_agree
-#> 1 100     4 8.159029e-13    FALSE          <NA>         TRUE            3
+#> 1 100     4 5.906386e-13    FALSE          <NA>         TRUE            3
 #>   starts
 #> 1      3
 as.data.frame(fit, what = "covariance")

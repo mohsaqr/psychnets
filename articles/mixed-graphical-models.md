@@ -131,7 +131,7 @@ returns `method`, `certificate`, `kind`, and `certified`.
 
 certificate(mixed_net)
 #>   method  certificate kind certified
-#> 1    mgm 4.997067e-11  kkt      TRUE
+#> 1    mgm 4.997066e-11  kkt      TRUE
 ```
 
 The residual is $`7.58 \times 10^{-8}`$ and `certified` is `TRUE`. It is

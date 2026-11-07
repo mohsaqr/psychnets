@@ -13,7 +13,11 @@ test_that("complete-data output is frozen (input handling moves no number)", {
   skip_slow()
   base <- readRDS(test_path("fixtures", "nct-baseline.rds"))
   invisible(lapply(seq_len(nrow(nct_configs)), function(i)
-    expect_identical(nct_numbers(nct_fit(i)), base[[i]], label = sprintf("config %d", i))))
+    # frozen on macOS; other platforms' BLAS/libm differ in the last bits
+    # (~1e-15), so compare to a tolerance far below any real change (a moved
+    # permutation p-value shifts by 1 / (iter + 1))
+    expect_equal(nct_numbers(nct_fit(i)), base[[i]], tolerance = 1e-10,
+                 label = sprintf("config %d", i))))
 })
 
 test_that("permutation p-values equal NetworkComparisonTest::NCT under the same seed", {

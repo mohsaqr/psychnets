@@ -20,23 +20,28 @@ logo_network(
 
 \item{cor_matrix}{Optional correlation matrix; if given, \code{n} is required.}
 
-\item{n}{Sample size (recorded on the result; required with \code{cor_matrix}).}
+\item{n}{Sample size (recorded on the result; required with \code{cor_matrix}): a
+single finite number >= 1.}
 
 \item{cor_method}{Correlation when \code{data} is supplied: \code{"pearson"} (default),
 \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial; see \code{\link[=cor_auto]{cor_auto()}}).}
 
 \item{threshold}{Partial correlations with absolute value below this are
-zeroed. Default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
+zeroed: a single number >= 0, default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
 graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
 
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one unique label per network node.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
 with \verb{$precision}, \verb{$support} (the TMFG graph), \verb{$cor_matrix}, and \verb{$kkt}.
+A clique or separator block that is singular or nearly so (reciprocal
+condition number below 1e-10, e.g. a duplicate column), or a precision
+whose certificate exceeds 1e-6, is refused with an error of class
+\code{psychnet_singular} rather than returned as an uncertified network.
 }
 \description{
 Estimates a sparse Gaussian graphical model whose conditional-independence

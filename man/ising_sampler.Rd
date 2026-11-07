@@ -16,7 +16,8 @@ ising_sampler(
 )
 }
 \arguments{
-\item{data}{Binary (0/1) data frame or matrix (rows = observations).}
+\item{data}{Binary data frame or matrix (rows = observations): numeric 0/1,
+logical, or two-level factor columns, as in \code{\link[=ising_fit]{ising_fit()}}.}
 
 \item{rule}{Edge-combination rule: \code{"AND"} (default) or \code{"OR"}.}
 
@@ -31,12 +32,13 @@ fitting. \code{NULL} (default) keeps every row.}
 
 \item{weights}{Optional non-negative observation weights, one per input row
 after missing-data preparation. When \code{min_sum} is used, weights are filtered
-alongside their corresponding rows. \code{NULL} (default) is unweighted.}
+alongside their corresponding rows. Rescaled to a maximum of 1, so only
+relative sizes matter (see \code{\link[=ising_fit]{ising_fit()}}). \code{NULL} (default) is unweighted.}
 
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default, mode-impute) or
 \code{"listwise"}. See \code{\link[=ising_fit]{ising_fit()}}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels: one per node, or one per input column.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the symmetric weight matrix,
@@ -45,6 +47,17 @@ with \verb{$thresholds} (node intercepts), \verb{$rule}, \verb{$p_values}, \verb
 If Wald pruning changes any coefficient, \verb{$kkt} is \code{NA} for the altered
 fit; \verb{$fit_kkt} retains the unpruned residual and \verb{$certificate_target}
 identifies it as \code{"pre_pruning_fit"}.
+
+Under (quasi-)complete separation -- a node perfectly predicted by the
+others -- the unpenalized maximum-likelihood estimate does not exist: the
+coefficients grow without bound and the score tends to zero, so a small
+residual would certify nothing. The fit then raises a
+\code{psychnet_separation} warning naming the nodes, \verb{$kkt} is \code{NA} and
+\verb{$certificate_target} is \code{"nonconverged_fit"}; use the penalized
+\code{\link[=ising_fit]{ising_fit()}} instead. Any other failure to converge raises
+\code{psychnet_no_converge} with the same certificate treatment. A singular
+Fisher information raises \code{psychnet_singular_information}. Input errors
+are of class \code{psychnet_bad_input}.
 }
 \description{
 Estimates an Ising model by \emph{unpenalized} nodewise logistic regression, with

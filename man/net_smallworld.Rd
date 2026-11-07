@@ -16,6 +16,9 @@ net_smallworld(x, n_rand = 100L, seed = NULL)
 \value{
 A tidy one-row \code{data.frame} (class \code{psychnet_smallworld}):
 \code{smallworldness}, \code{transitivity}, \code{aspl}, \code{transitivity_rand}, \code{aspl_rand}.
+When the random reference graphs have no triangles or no finite paths the
+index is undefined: \code{smallworldness} is \code{NA} and a warning of class
+\code{psychnet_undefined_statistic} is raised.
 }
 \description{
 The Humphries & Gurney (2008) small-world index \code{sigma}: observed transitivity

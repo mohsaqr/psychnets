@@ -241,6 +241,14 @@ test_that("net_bridge matches networktools::bridge (undirected)", {
   expect_lt(max(abs(ob$bridge_closeness   - rb[["Bridge Closeness"]])), 1e-8)
   expect_lt(max(abs(ob$bridge_ei1 - rb[["Bridge Expected Influence (1-step)"]])), 1e-8)
   expect_lt(max(abs(ob$bridge_ei2 - rb[["Bridge Expected Influence (2-step)"]])), 1e-8)
+  # normalize = TRUE: all five columns (the 2-step divisor uses the node count)
+  on <- net_bridge(fit, communities = comm, normalize = TRUE)
+  rn <- networktools::bridge(W, communities = comm, normalize = TRUE)
+  expect_lt(max(abs(on$bridge_strength    - rn[["Bridge Strength"]])), 1e-8)
+  expect_lt(max(abs(on$bridge_betweenness - rn[["Bridge Betweenness"]])), 1e-8)
+  expect_lt(max(abs(on$bridge_closeness   - rn[["Bridge Closeness"]])), 1e-8)
+  expect_lt(max(abs(on$bridge_ei1 - rn[["Bridge Expected Influence (1-step)"]])), 1e-8)
+  expect_lt(max(abs(on$bridge_ei2 - rn[["Bridge Expected Influence (2-step)"]])), 1e-8)
 })
 
 test_that("2-step expected influence matches networktools::expectedInf", {

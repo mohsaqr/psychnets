@@ -67,8 +67,12 @@
   stats::optimize(negll, c(-0.999, 0.999), tol = 1e-6)$minimum
 }
 
-# Two-step polyserial correlation of a continuous vector and an integer-coded
-# ordinal vector (Olsson, Drasgow & Dorans 1982).
+# Polyserial correlation of a continuous vector and an integer-coded ordinal
+# vector by the Olsson, Drasgow & Dorans (1982) ad-hoc (moment) estimator:
+# rho = r_{x,y} * sd(y) / sum(dnorm(tau)), thresholds tau at the marginal normal
+# quantiles. It is closed-form, NOT the two-step maximum-likelihood estimator
+# qgraph::cor_auto (via lavaan) uses; the two differ by up to ~0.006 in
+# simulations (documented in cor_auto()'s details).
 #' @noRd
 .polyserial <- function(cont, ord) {
   # A pair carrying no estimable association (the ordinal collapsed to one level,
@@ -107,7 +111,7 @@
     ok <- !is.na(mat[, i]) & !is.na(mat[, j])
     a <- mat[ok, i]; b <- mat[ok, j]
     if (length(a) < 2L) {
-      stop(sprintf(
+      .psn_stop(sprintf(
         "Automatic correlation is undefined: variables '%s' and '%s' have fewer than two joint observations.",
         colnames(mat)[i], colnames(mat)[j]), call. = FALSE)
     }
@@ -131,11 +135,29 @@
 #' base-R counterpart of `qgraph::cor_auto()`; this is the correlation
 #' `bootnet`/`qgraph` use by default for Likert data.
 #'
+#' The polychoric correlation is the two-step estimator of Olsson (1979):
+#' thresholds fixed at the marginal normal quantiles, then the contingency-table
+#' likelihood maximised over the correlation; it matches `psych`/`qgraph` to
+#' about 1e-5. The polyserial correlation is the Olsson, Drasgow & Dorans
+#' (1982) *ad-hoc* estimator (the closed form
+#' \eqn{r_{xy}\,\sigma_y / \sum_k \phi(\tau_k)}), not the two-step
+#' maximum-likelihood polyserial that `qgraph::cor_auto()` obtains through
+#' `lavaan`. Both are consistent; on finite samples they differ by up to about
+#' 0.006, so a mixed ordinal / continuous correlation matrix will not
+#' reproduce `qgraph::cor_auto()` exactly.
+#'
+#' An ordered-factor column of a data frame enters as its integer level codes
+#' and is then ordinal whenever it has at most `ordinal_max_levels` levels.
+#' Unordered factors, character and logical columns are dropped with a
+#' `psychnet_dropped_columns` message; constant columns with a
+#' `psychnet_constant_variable` warning.
+#'
 #' @param data Numeric data frame or matrix (rows = observations).
 #' @param ordinal_max_levels Maximum distinct values for a variable to count as
-#'   ordinal. Default 7.
+#'   ordinal: a whole number >= 2. Default 7.
 #' @param na_method `"pairwise"` (default) or `"listwise"`.
-#' @return A correlation matrix with the variable names as dimnames.
+#' @return A correlation matrix with the variable names as dimnames. An invalid
+#'   `ordinal_max_levels` is an error of class `psychnet_bad_input`.
 #' @references Olsson, U. (1979). Maximum likelihood estimation of the polychoric
 #'   correlation coefficient. *Psychometrika*, 44(4), 443-460.
 #'   \doi{10.1007/BF02296207}
@@ -150,7 +172,9 @@
 #' @export
 cor_auto <- function(data, ordinal_max_levels = 7L,
                      na_method = c("pairwise", "listwise")) {
-  na_method <- match.arg(na_method)
+  na_method <- .psn_match_arg(na_method)
+  .psn_check_number(ordinal_max_levels, "ordinal_max_levels", lower = 2,
+                    whole = TRUE)
   mat <- .as_numeric_matrix(data, drop_na = (na_method == "listwise"))
   .cor_auto_matrix(mat, ordinal_max_levels)
 }

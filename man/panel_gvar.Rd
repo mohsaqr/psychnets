@@ -34,8 +34,12 @@ character matrix of column names, one row per variable and one column per
 wave (the \code{psychonetrics} \code{vars} design); its row names become the labels.}
 
 \item{id, wave}{Long data only: names of the person-identifier and wave
-columns. Person identifiers must be non-missing. Waves are ordered by
-\code{sort()} (or factor level order).}
+columns. Person identifiers and waves must be non-missing, and neither
+column may be one of \code{vars}. Waves are put in time order: a factor by its
+level order; numeric, date or time waves by value; character waves that
+are all numbers (\code{"1"}, \code{"2"}, \code{"10"}) numerically; any other character
+waves alphabetically, with a \code{psychnet_wave_order} warning naming the
+order used (pass a factor to set it).}
 
 \item{select}{Edge selection. \code{"none"} (default): every edge is estimated
 and reported with its standard error and p-value -- significance is shown,
@@ -52,7 +56,10 @@ edges of \code{plot()}, and \code{select = "prune"}. Default \code{0.01}
 
 \item{adjust}{Multiplicity correction applied to the edge p-values before
 pruning, one of \link[stats:p.adjust]{stats::p.adjust.methods}. Default \code{"none"}
-(\code{psychonetrics::prune()}'s default).}
+(\code{psychonetrics::prune()}'s default). Used only with \code{select = "prune"}
+(a \code{psychnet_ignored_argument} warning says so otherwise); the p-values
+and \code{significant} flags reported in the edge and parameter tables are
+always unadjusted.}
 
 \item{recursive}{Logical; repeat pruning until no edge has \code{p > alpha}.
 Default \code{FALSE}.}
@@ -100,19 +107,22 @@ information ML is not yet implemented, so \code{"pairwise"} is refused.}
 \value{
 An object of class \code{c("psychnet_panelgvar", "netobject_group")}: a
 named list of three \link{psychnet} networks, \code{temporal} (directed; edge
-\code{from -> to} weight \code{beta[to, from]}, autoregressive effects kept in
-\verb{$beta}), \code{contemporaneous}, and \code{between} (undirected partial
-correlations; the innovation / between covariance in \verb{$sigma}). Being a
+\code{from -> to} is the lag-1 effect of \code{from} on \code{to}), \code{contemporaneous},
+and \code{between} (undirected partial correlations). Being a
 \code{netobject_group}, it plots as a grid with \code{cograph::splot()}. Read it with
 \code{as.data.frame()}: \code{what = "edges"} (one row per edge with standard error,
-p-value and 95\% Wald interval), \code{what = "parameters"} (every model
+p-value and 95\% Wald interval; the temporal autoregressive effects are the
+\code{from == to} rows), \code{what = "parameters"} (every model
 parameter), \code{what = "fit"} (one row of fit indices: chi-square, CFI,
 TLI, RMSEA, AIC, BIC), \code{what = "variance"} (one row per variable: the
-between-person share of its variance), or \code{what = "diagnostics"} (one
+between-person share of its variance), \code{what = "covariance"} (the
+innovation and between-person covariance matrices, one row per entry),
+\code{what = "path"} (for \code{select = "ebic"}: one row per penalty value on the
+lambda path), or \code{what = "diagnostics"} (one
 row: the score
 certificate -- largest absolute gradient of the ML fit function on the
 free parameters, or the lasso KKT residual for \code{select = "ebic"} --
-boundary flag, SE availability, and how many of the three optimizer
+boundary flag, SE availability, and how many of the optimizer
 starts reached the best optimum). Fitting, inference and the certificate
 run on standardized variables (pooled SD per variable), so they are
 unit-free and the certificate does not depend on the variables' units;
@@ -120,8 +130,9 @@ the model is scale-equivariant, so estimates and standard errors map back
 exactly and are returned on the data scale.
 
 Errors are classed: \code{psychnet_bad_input} for unusable input (fewer than
-three waves, too few persons, non-numeric or missing columns, a requested
-\code{"pairwise"}), \code{psychnet_no_converge} if the optimizer ends at an
+three waves, too few persons, non-numeric, missing or duplicated columns,
+duplicated or missing labels, an argument outside its allowed values, a
+requested \code{"pairwise"}), \code{psychnet_no_converge} if the optimizer ends at an
 infeasible point. Warnings are classed too: \code{psychnet_no_converge} (score
 above \code{1e-6} at an interior solution), \code{psychnet_boundary} (the final
 contemporaneous or between covariance is near-singular, i.e. partial
@@ -133,7 +144,10 @@ the returned estimate: their standard errors are NA, the others exact),
 \code{psychnet_approximate_se} (the fit being pruned had a singular information;
 the parameters it does not identify were treated as having infinite
 standard errors, so pruning removes them), and
-\code{psychnet_listwise_drop} (persons removed for missing values).
+\code{psychnet_listwise_drop} (persons removed for missing values),
+\code{psychnet_wave_order} (non-numeric character waves ordered
+alphabetically) and \code{psychnet_ignored_argument} (\code{adjust} without
+pruning).
 }
 \description{
 Estimates the three networks of the panel graphical vector-autoregressive

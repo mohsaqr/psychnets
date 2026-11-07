@@ -51,16 +51,20 @@ default for compatibility; an explicitly supplied value is honored.}
 
 \item{rule}{Edge-combination rule: \code{"AND"} (default) or \code{"OR"}.}
 
-\item{moderators}{Optional single column index of a moderator variable. When
+\item{moderators}{Optional moderator variable: a single column index (a
+whole number) or a single column name. When
 supplied, fits a \emph{moderated} MGM (that variable moderates every pairwise
 edge) and returns a \code{psychnet_moderated} object to be read with
-\code{\link[=condition]{condition()}}. Honours \code{native} like the unmoderated path: the default base
+\code{\link[=condition]{condition()}} and \code{as.data.frame()}. Honours \code{native} like the unmoderated path: the default base
 kernel is pure R and KKT-certified, and covers gaussian and binary nodes;
 \code{native = FALSE} uses \code{glmnet} and additionally allows multi-level
 categorical nodes. \code{weights} are not supported in this mode.}
 
 \item{weights}{Optional non-negative observation weights, one per row of the
-(NA-prepared) data. \code{NULL} (default) is unweighted.}
+(NA-prepared) data. Weights are rescaled to a maximum of 1, as in
+\code{mgm::mgm()} (\code{weights / max(weights)}, effective sample size
+\code{sum(weights)}), so only their relative sizes matter. \code{NULL} (default) is
+unweighted.}
 
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
 each column over its observed values (mean for continuous, modal level for
@@ -84,12 +88,23 @@ network containing a multi-level node cannot be passed to \code{\link[=net_predi
 because a k-level predictor occupies k-1 design columns and so has no
 one-coefficient-per-variable representation.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels: one per node, or one per input column
+(labels of dropped constant columns are then discarded).}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the symmetric standardized
 weight matrix, with \verb{$types}, \verb{$levels} (number of levels per node, 1 for
-gaussian) and \verb{$kkt} (the worst nodewise residual). Node order in
+gaussian), \verb{$fit_kkt} (the worst nodewise stationarity residual of the
+penalized fits) and \verb{$kkt}. The \code{"LW"}/\code{"HW"} threshold zeroes
+coefficients AFTER the penalized fit, so a thresholded network is no longer
+the optimum the residual certifies: when the threshold removed any
+coefficient, \verb{$kkt} is \code{NA} (read with \code{\link[=certificate]{certificate()}}) and
+\verb{$certificate_target} is \code{"pre_threshold_fit"}, exactly as for a
+thresholded \code{\link[=ebic_glasso]{ebic_glasso()}}; otherwise \verb{$kkt} equals \verb{$fit_kkt} and the
+target is \code{"returned_network"}. Use \code{threshold = "none"} for a certified
+network. A nodewise fit that does not reach its optimum raises a
+\code{psychnet_no_converge} warning naming the node; invalid arguments raise
+\code{psychnet_bad_input}. Node order in
 \verb{$weights} and \verb{$nodes} is always the column order of the input \code{data},
 never sorted, and a k-level categorical stays ONE node. A
 binary-binary edge carries the sign of its nodewise-logistic coefficient;

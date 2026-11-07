@@ -2,6 +2,7 @@
 % Please edit documentation in R/redundancy.R
 \name{redundancy}
 \alias{redundancy}
+\alias{print.psychnet_redundancy}
 \title{Detect redundant node pairs ("goldbricker")}
 \usage{
 redundancy(
@@ -11,6 +12,8 @@ redundancy(
   cor_min = 0.5,
   cor_method = c("auto", "pearson", "spearman", "kendall")
 )
+
+\method{print}{psychnet_redundancy}(x, ...)
 }
 \arguments{
 \item{data}{A numeric data frame or matrix (rows = observations).}
@@ -27,13 +30,19 @@ for a pair to be flagged redundant. Default 0.25.}
 \item{cor_method}{Correlation type: \code{"auto"} (default, \code{\link[=cor_auto]{cor_auto()}} -
 polychoric/polyserial as appropriate, matching goldbricker), \code{"pearson"},
 \code{"spearman"}, or \code{"kendall"}.}
+
+\item{x}{A \code{psychnet_redundancy} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A tidy \code{data.frame} (class \code{psychnet_redundancy}), one row per flagged
 pair (sorted most-redundant first), with columns \code{item1}, \code{item2},
 \code{proportion} (share of significantly different correlations) and
 \code{correlation}. Zero rows when nothing is flagged. The full proportion matrix
-is in \code{attr(x, "proportion_matrix")}.
+is stored with the result (attribute \code{proportion_matrix}). \code{print()}
+shows the flagged pairs, or a note that none were flagged, and returns \code{x}
+invisibly.
 }
 \description{
 Flags pairs of items that behave redundantly in a network: their correlations
@@ -41,6 +50,18 @@ with all other items are mostly statistically indistinguishable (a small
 proportion of significantly different correlations) and the two items are
 themselves strongly correlated. Ported from \code{networktools::goldbricker}.
 }
+\details{
+\strong{Data handling.} Non-numeric columns are dropped, and so is any column
+that is constant once incomplete rows are removed. Rows with a missing value
+in any numeric column are dropped (listwise deletion, as \code{goldbricker}
+does), with a warning of class \code{psychnet_rows_dropped} giving the count; the
+remaining number of rows is the \code{n} of every correlation-difference test.
+}
+\section{Functions}{
+\itemize{
+\item \code{print(psychnet_redundancy)}: The flagged pairs with the thresholds used.
+
+}}
 \examples{
 redundancy(SRL_Claude)
 }

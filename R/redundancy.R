@@ -32,6 +32,12 @@
 #' proportion of significantly different correlations) and the two items are
 #' themselves strongly correlated. Ported from `networktools::goldbricker`.
 #'
+#' **Data handling.** Non-numeric columns are dropped, and so is any column
+#' that is constant once incomplete rows are removed. Rows with a missing value
+#' in any numeric column are dropped (listwise deletion, as `goldbricker`
+#' does), with a warning of class `psychnet_rows_dropped` giving the count; the
+#' remaining number of rows is the `n` of every correlation-difference test.
+#'
 #' @param data A numeric data frame or matrix (rows = observations).
 #' @param p Significance level for each pairwise correlation-difference test.
 #'   Default 0.05.
@@ -46,7 +52,11 @@
 #'   pair (sorted most-redundant first), with columns `item1`, `item2`,
 #'   `proportion` (share of significantly different correlations) and
 #'   `correlation`. Zero rows when nothing is flagged. The full proportion matrix
-#'   is in `attr(x, "proportion_matrix")`.
+#'   is stored with the result (attribute `proportion_matrix`). `print()`
+#'   shows the flagged pairs, or a note that none were flagged, and returns `x`
+#'   invisibly.
+#' @param x A `psychnet_redundancy` object.
+#' @param ... Unused.
 #' @references Hallquist, M. N., Wright, A. G. C., & Molenaar, P. C. M. (2021).
 #'   Problems with centrality measures in psychopathology networks.
 #'   *Multivariate Behavioral Research*, 56(2), 199-223.
@@ -55,26 +65,33 @@
 #' @export
 redundancy <- function(data, p = 0.05, threshold = 0.25, cor_min = 0.5,
                        cor_method = c("auto", "pearson", "spearman", "kendall")) {
-  cor_method <- match.arg(cor_method)
-  mat <- .as_numeric_matrix(data)
+  cor_method <- .psn_match_arg(cor_method)
+  .psn_check_number(p, "p", lower = 0, upper = 1, open = TRUE)
+  .psn_check_number(threshold, "threshold", lower = 0, upper = 1)
+  .psn_check_number(cor_min, "cor_min", lower = -1, upper = 1)
+  mat <- .psn_item_data(data, NULL, "redundancy")$mat
   n <- nrow(mat)
+  if (n < 4L)
+    .psn_stop(sprintf(
+      "redundancy() needs at least 4 complete rows (the test uses n - 3); got %d.", n),
+      class = c("psychnet_degenerate_sample", "psychnet_bad_input"))
   labs <- colnames(mat)
-  if (is.null(labs)) labs <- paste0("V", seq_len(ncol(mat)))
   R <- if (cor_method == "auto") cor_auto(mat) else stats::cor(mat, method = cor_method)
   d <- ncol(R)
-  if (d < 3L) stop("Need at least three items to assess redundancy.", call. = FALSE)
+  if (d < 3L) .psn_stop("Need at least three items to assess redundancy.", call. = FALSE)
 
   # proportion[i,j]: share of items k whose correlation with i differs
   # significantly from its correlation with j.
+  # (The comparisons of i and j with themselves give |r| = 1 -> NA and are
+  # excluded, exactly as goldbricker excludes them.)
   prop <- matrix(NA_real_, d, d, dimnames = list(labs, labs))
-  for (i in seq_len(d)) {
-    for (j in seq_len(d)) {
-      if (i == j) next
-      pv <- .psn_hittner2003(R[, i], R[, j], R[i, j], n)
-      pv <- pv[is.finite(pv)]
-      prop[i, j] <- if (length(pv)) mean(pv < p) else NA_real_
-    }
-  }
+  ij_all <- which(row(prop) != col(prop), arr.ind = TRUE)
+  prop[ij_all] <- vapply(seq_len(nrow(ij_all)), function(r) {
+    i <- ij_all[r, 1L]; j <- ij_all[r, 2L]
+    pv <- .psn_hittner2003(R[, i], R[, j], R[i, j], n)
+    pv <- pv[is.finite(pv)]
+    if (length(pv)) mean(pv < p) else NA_real_
+  }, numeric(1))
 
   ut <- upper.tri(prop)
   ij <- which(ut, arr.ind = TRUE)
@@ -93,14 +110,7 @@ redundancy <- function(data, p = 0.05, threshold = 0.25, cor_min = 0.5,
   out
 }
 
-#' Print a redundancy result
-#'
-#' @param x A `psychnet_redundancy` object.
-#' @param ... Unused.
-#' @return `x`, invisibly. Prints the flagged pairs, or a note that none were
-#'   flagged.
-#' @examples
-#' print(redundancy(SRL_Claude))
+#' @describeIn redundancy The flagged pairs with the thresholds used.
 #' @export
 print.psychnet_redundancy <- function(x, ...) {
   cat(sprintf("# redundant pairs (proportion < %.2f, r > %.2f): %d found\n",

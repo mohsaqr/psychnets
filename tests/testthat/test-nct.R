@@ -149,7 +149,7 @@ test_that("summary() gives the tests, as.data.frame() the edges", {
   fit <- nct_fit(1)
   ed <- as.data.frame(fit)
   expect_named(ed, c("from", "to", "weight_1", "weight_2", "difference", "p_value",
-                     "significant"))
+                     "p_raw", "significant"))
   expect_identical(nrow(ed), 10L)                   # 5 nodes -> 10 pairs
   expect_equal(ed$difference, abs(ed$weight_1 - ed$weight_2))
   expect_true(all(ed$p_value >= 1 / (nct_iter + 1) & ed$p_value <= 1))

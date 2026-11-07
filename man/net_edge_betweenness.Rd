@@ -7,21 +7,31 @@
 net_edge_betweenness(x, invert = TRUE, labels = NULL)
 }
 \arguments{
-\item{x}{A \code{psychnet} object or a square weighted adjacency matrix.}
+\item{x}{A \code{psychnet} object or a square weighted adjacency matrix. A
+\code{psychnet} is directed when its \code{directed} field says so; a bare matrix is
+treated as directed when it is not symmetric (\code{isSymmetric()}), with
+\code{x[i, j]} the edge \code{i -> j}.}
 
 \item{invert}{If \code{TRUE} (default) edge weights are inverted to distances
 (strong association = short path). Set \code{FALSE} to treat weights as distances.}
 
-\item{labels}{Optional node labels (used when \code{x} is a bare matrix).}
+\item{labels}{Optional node labels (used when \code{x} is a bare matrix): one
+unique label per node.}
 }
 \value{
 A tidy \code{data.frame}, one row per edge: \code{from}, \code{to},
-\code{edge_betweenness}. Undirected networks give one row per unordered edge.
+\code{edge_betweenness} (count of shortest paths through the edge). Undirected
+networks give one row per unordered edge (counting each unordered node
+pair once); directed networks one row per arc, counting ordered pairs.
 }
 \description{
-For each edge, the share of weighted shortest paths (across all node pairs)
-that pass through it - a high value marks an edge that bridges otherwise
-distant parts of the network. Geodesics are computed on inverse absolute
+For each edge, the number of weighted shortest paths (across all node
+pairs) that pass through it - a high value marks an edge that bridges
+otherwise distant parts of the network. When a pair is joined by several
+equally short paths each counts as its share (\verb{1 / number of geodesics}), so
+the value is the raw, unnormalized edge betweenness (igraph's
+\code{edge_betweenness()}), not a proportion: on the path \code{a-b-c-d-e} the four
+edges score 4, 6, 6, 4. Geodesics are computed on inverse absolute
 weights, so strong edges count as short, matching \code{\link[=net_centralities]{net_centralities()}}'s node
 betweenness/closeness.
 }

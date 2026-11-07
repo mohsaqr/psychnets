@@ -59,8 +59,9 @@
   stats::setNames(btw, rownames(W))
 }
 
-# Edge betweenness: for each present edge a->b, the fraction of shortest paths
-# (over all source/target pairs) that traverse it. Geodesics use inverse
+# Edge betweenness: for each present edge a->b, the number of shortest paths
+# (over all ordered source/target pairs, each pair's sigma(s,t) geodesics
+# weighted 1/sigma(s,t)) that traverse it. Geodesics use inverse
 # absolute weights (strong edges = short distance), matching the node measures.
 .psn_edge_betweenness <- function(W, invert = TRUE) {
   n <- nrow(W)
@@ -86,18 +87,28 @@
 
 #' Edge betweenness centrality
 #'
-#' For each edge, the share of weighted shortest paths (across all node pairs)
-#' that pass through it - a high value marks an edge that bridges otherwise
-#' distant parts of the network. Geodesics are computed on inverse absolute
+#' For each edge, the number of weighted shortest paths (across all node
+#' pairs) that pass through it - a high value marks an edge that bridges
+#' otherwise distant parts of the network. When a pair is joined by several
+#' equally short paths each counts as its share (`1 / number of geodesics`), so
+#' the value is the raw, unnormalized edge betweenness (igraph's
+#' `edge_betweenness()`), not a proportion: on the path `a-b-c-d-e` the four
+#' edges score 4, 6, 6, 4. Geodesics are computed on inverse absolute
 #' weights, so strong edges count as short, matching [net_centralities()]'s node
 #' betweenness/closeness.
 #'
-#' @param x A `psychnet` object or a square weighted adjacency matrix.
+#' @param x A `psychnet` object or a square weighted adjacency matrix. A
+#'   `psychnet` is directed when its `directed` field says so; a bare matrix is
+#'   treated as directed when it is not symmetric (`isSymmetric()`), with
+#'   `x[i, j]` the edge `i -> j`.
 #' @param invert If `TRUE` (default) edge weights are inverted to distances
 #'   (strong association = short path). Set `FALSE` to treat weights as distances.
-#' @param labels Optional node labels (used when `x` is a bare matrix).
+#' @param labels Optional node labels (used when `x` is a bare matrix): one
+#'   unique label per node.
 #' @return A tidy `data.frame`, one row per edge: `from`, `to`,
-#'   `edge_betweenness`. Undirected networks give one row per unordered edge.
+#'   `edge_betweenness` (count of shortest paths through the edge). Undirected
+#'   networks give one row per unordered edge (counting each unordered node
+#'   pair once); directed networks one row per arc, counting ordered pairs.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' net_edge_betweenness(ebic_glasso(cor_matrix = S, n = 400))
@@ -107,15 +118,20 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
     g <- x$weights; labs <- x$nodes$label; directed <- isTRUE(x$directed)
   } else {
     if (!is.matrix(x) && !is.data.frame(x))
-      stop("`x` must be a psychnet object or a square weighted matrix.",
+      .psn_stop("`x` must be a psychnet object or a square weighted matrix.",
            call. = FALSE)
     g <- as.matrix(x)
     if (!is.numeric(g) || nrow(g) != ncol(g))
-      stop("`x` must be a square numeric weighted adjacency matrix.",
+      .psn_stop("`x` must be a square numeric weighted adjacency matrix.",
            call. = FALSE)
-    labs <- if (!is.null(labels)) labels else colnames(g)
+    .psn_check_labels(labels, ncol(g))
+    labs <- if (!is.null(labels)) as.character(labels) else colnames(g)
     if (is.null(labs)) labs <- paste0("V", seq_len(ncol(g)))
-    directed <- FALSE
+    if (any(!is.finite(g)))
+      .psn_stop("`x` must contain only finite edge weights.")
+    # A bare matrix carries no `directed` flag: an asymmetric one is a directed
+    # network (reporting only its upper triangle would drop half the arcs).
+    directed <- !isSymmetric(unname(g))
   }
   W <- abs(g); diag(W) <- 0
   rownames(W) <- colnames(W) <- labs
@@ -141,6 +157,31 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
   stats::setNames(cl, rownames(W))
 }
 
+# Align one `centrality_fn` result to the node labels: a named vector by name
+# (exactly the node labels, any order), an unnamed one by position. Anything
+# else would silently attach values to the wrong nodes.
+#' @noRd
+.psn_align_custom <- function(v, m, labs) {
+  if (!is.numeric(v) && !is.logical(v))
+    .psn_stop(sprintf("`centrality_fn` measure '%s' must be numeric.", m))
+  if (length(v) != length(labs))
+    .psn_stop(sprintf(
+      "`centrality_fn` measure '%s' has %d values but the network has %d nodes.",
+      m, length(v), length(labs)))
+  nm <- names(v)
+  if (is.null(nm)) return(stats::setNames(as.numeric(v), labs))
+  missing_n <- setdiff(labs, nm)
+  extra_n   <- setdiff(nm, labs)
+  if (length(missing_n) || length(extra_n) || anyDuplicated(nm))
+    .psn_stop(sprintf(paste0(
+      "`centrality_fn` measure '%s' is named but its names are not the node ",
+      "labels (missing: %s; unknown: %s%s)."), m,
+      if (length(missing_n)) paste(missing_n, collapse = ", ") else "none",
+      if (length(extra_n)) paste(extra_n, collapse = ", ") else "none",
+      if (anyDuplicated(nm)) "; duplicated names" else ""))
+  stats::setNames(as.numeric(v[labs]), labs)
+}
+
 #' Node centrality
 #'
 #' Summarizes each node's position in a fitted network as a tidy table. For
@@ -149,10 +190,20 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
 #' edges offset positive ones; Robinaugh, Millner & McNally 2016). Betweenness
 #' and closeness follow Opsahl, Agneessens and Skvoretz (2010) on the
 #' inverted absolute weights. For a directed network (e.g. [relimp_network()])
-#' the measures sum the outgoing edges.
+#' strength and expected influence sum the outgoing edges.
 #'
-#' @param x A [psychnet] object or a weighted adjacency matrix.
-#' @param measures Character vector of measures to return. Any of `"strength"`,
+#' **Scaling of betweenness and closeness.** Both are *normalized*, as igraph's
+#' `betweenness(normalized = TRUE)` / `closeness(normalized = TRUE)`:
+#' betweenness is divided by the number of node pairs not involving the node,
+#' `(p - 1)(p - 2) / 2`, and closeness is the number of reachable nodes over
+#' the sum of distances to them (the inverse mean distance). They therefore
+#' differ from `qgraph::centrality_auto()`, which reports raw betweenness
+#' (path counts) and closeness as `1 / sum(distances)`.
+#'
+#' @param x A [psychnet] object or a weighted adjacency matrix. For `plot()`,
+#'   the `psychnet_centrality` table returned by `net_centralities()`.
+#' @param measures Character vector of measures to return (for `plot()`: which
+#'   of the returned measure columns to draw; default all). Any of `"strength"`,
 #'   `"expected_influence"` (the defaults, recommended for psychometric
 #'   networks), `"expected_influence_2step"` (a node's one-step expected
 #'   influence plus the one-step expected influence it transmits through its
@@ -161,15 +212,27 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
 #'   inverted-weight graph and are not generally meaningful on signed networks --
 #'   request them only when a downstream comparison needs them.
 #' @param centrality_fn Optional function taking the weighted adjacency matrix
-#'   and returning a named list of node-centrality vectors, used to supply any
-#'   `measures` not built in.
+#'   (with node-label dimnames) and returning a named list of node-centrality
+#'   vectors, used to supply any `measures` not built in. Each vector must have
+#'   one numeric value per node. A *named* vector is aligned to the nodes by
+#'   label (its names must be exactly the node labels, in any order); an
+#'   unnamed vector is taken in node order. A wrong length, missing or extra
+#'   names, or a non-numeric value is an error of class `psychnet_bad_input`.
+#' @param type For `plot()`: `"bar"` (default; one sorted lollipop panel per
+#'   measure) or `"line"` (the qgraph/bootnet centrality plot: one panel per
+#'   measure, nodes on a shared vertical axis).
+#' @param scale For `plot(type = "line")`: the per-measure transform, `"raw"`
+#'   (default; each panel keeps its own axis), `"z"` (z-score per measure) or
+#'   `"relative"` (min-max scaled to \[0, 1\]). `type = "bar"` always shows
+#'   raw values.
 #' @param ... Unused.
 #' @return A tidy `data.frame` of class `c("psychnet_centrality",
 #'   "data.frame")`, one row per node, with a `node` column and one column per
 #'   requested measure (`strength` = sum of absolute edge weights,
-#'   `expected_influence` = sum of signed edge weights, by default). Plot it
-#'   with [plot.psychnet_centrality()]. For a [psychnet_group] the result is a
-#'   per-group list (see [print.psychnet_result_group()]).
+#'   `expected_influence` = sum of signed edge weights, by default;
+#'   `betweenness` and `closeness` are normalized, see Details); `plot()`
+#'   draws it and returns it invisibly. For a [psychnet_group] the result is a
+#'   per-group list (see [psychnet_result_group]).
 #' @references Robinaugh, D. J., Millner, A. J., & McNally, R. J. (2016).
 #'   Identifying highly influential nodes in the complicated grief network.
 #'   *Journal of Abnormal Psychology*, 125(6), 747-757.
@@ -180,7 +243,10 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
 #'   Networks*, 32(3), 245-251. \doi{10.1016/j.socnet.2010.03.006}
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
-#' net_centralities(ebic_glasso(cor_matrix = S, n = 250))
+#' cent <- net_centralities(ebic_glasso(cor_matrix = S, n = 250))
+#' cent
+#' plot(cent)
+#' plot(cent, type = "line")
 #' @export
 net_centralities <- function(x, measures = c("strength", "expected_influence"),
                              centrality_fn = NULL, ...) {
@@ -195,12 +261,12 @@ net_centralities <- function(x, measures = c("strength", "expected_influence"),
     labs <- x$nodes$label
   } else {
     if (!is.matrix(x) && !is.data.frame(x)) {
-      stop("`x` must be a psychnet object or a square weighted matrix.",
+      .psn_stop("`x` must be a psychnet object or a square weighted matrix.",
            call. = FALSE)
     }
     g <- as.matrix(x)
     if (!is.numeric(g) || nrow(g) != ncol(g)) {
-      stop("`x` must be a square numeric weighted adjacency matrix.",
+      .psn_stop("`x` must be a square numeric weighted adjacency matrix.",
            call. = FALSE)
     }
     labs <- colnames(g)
@@ -213,13 +279,15 @@ net_centralities <- function(x, measures = c("strength", "expected_influence"),
                "betweenness", "closeness")
   external <- setdiff(measures, builtin)
   if (length(external) && is.null(centrality_fn)) {
-    stop("`centrality_fn` is required for measures: ",
+    .psn_stop("`centrality_fn` is required for measures: ",
          paste(external, collapse = ", "), ".", call. = FALSE)
   }
   custom <- if (length(external)) {
+    if (!is.function(centrality_fn))
+      .psn_stop("`centrality_fn` must be a function.")
     cv <- centrality_fn(g)
-    if (!is.list(cv)) stop("`centrality_fn` must return a named list.",
-                           call. = FALSE)
+    if (!is.list(cv) || is.null(names(cv)))
+      .psn_stop("`centrality_fn` must return a named list.", call. = FALSE)
     cv
   } else NULL
 
@@ -234,9 +302,9 @@ net_centralities <- function(x, measures = c("strength", "expected_influence"),
       closeness           = .psn_closeness(g),
       {
         v <- custom[[m]]
-        if (is.null(v)) stop("`centrality_fn` did not return '", m, "'.",
+        if (is.null(v)) .psn_stop("`centrality_fn` did not return '", m, "'.",
                              call. = FALSE)
-        stats::setNames(as.numeric(v), labs)
+        .psn_align_custom(v, m, labs)
       })
   }
   cols <- lapply(measures, one)

@@ -25,7 +25,8 @@ ggm_modselect(
 
 \item{cor_matrix}{Optional correlation matrix; if given, \code{n} is required.}
 
-\item{n}{Sample size (required when \code{cor_matrix} is supplied).}
+\item{n}{Sample size (required when \code{cor_matrix} is supplied): a single
+finite number >= 1.}
 
 \item{gamma}{EBIC hyperparameter. Default \code{0}, matching
 \code{qgraph::ggmModSelect()}: because the selected graph is refit with the
@@ -36,12 +37,14 @@ regularized GGMs \code{\link[=ebic_glasso]{ebic_glasso()}} and \code{\link[=huge
 \item{stepwise}{If \code{TRUE} (default), refine the best glasso-path graph by a
 greedy single-edge add/drop search.}
 
-\item{nlambda}{Number of glasso penalties scanned for candidate graphs.}
+\item{nlambda}{Number of glasso penalties scanned for candidate graphs (a
+whole number >= 2).}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
+(0, 1).}
 
 \item{threshold}{Partial correlations with absolute value below this are
-zeroed. Default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
+zeroed: a single number >= 0, default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
 graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
 
 \item{cor_method}{Correlation used when \code{data} is supplied: \code{"pearson"}
@@ -56,12 +59,16 @@ the \code{qgraph}/\code{bootnet} default for ordinal items). See \code{\link[=co
 package (in \code{Suggests}). The reported precision is the unregularized refit
 either way. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one unique label per network node.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
 with \verb{$precision}, \verb{$support} (the selected graph), \verb{$gamma}, \verb{$ebic},
-\verb{$cor_matrix}, and \verb{$kkt}.
+\verb{$cor_matrix}, and \verb{$kkt}. Invalid arguments raise \code{psychnet_bad_input}.
+A candidate or stepwise fit that errors is skipped and reported by one
+\code{psychnet_fit_failed} warning; a selected fit whose certificate exceeds
+\code{1e-6} raises a \code{psychnet_no_converge} warning; if no candidate can be
+fitted at all the call errors (\code{psychnet_no_converge}).
 }
 \description{
 Selects a GGM by extended-BIC model search over edge sets generated from the

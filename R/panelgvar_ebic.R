@@ -284,13 +284,10 @@
                                            path[[i]]$lambda)
       crit <- ebic_of(best)
     }
-    objective <- obj + log_jacobian
     list(fit = best, ebic = crit$ebic, edges = crit$edges,
-         starts = data.frame(
-           start = names(starts), objective = objective,
-           best = abs(objective - min(objective)) <=
-             1e-6 * max(1, abs(min(objective))),
-           row.names = NULL, stringsAsFactors = FALSE))
+         starts = .pgv_starts_table(
+           data.frame(start = names(starts), objective = obj,
+                      stringsAsFactors = FALSE), log_jacobian))
   }
   ebic <- vapply(path, `[[`, numeric(1), "ebic")
   edges <- vapply(path, `[[`, numeric(1), "edges")

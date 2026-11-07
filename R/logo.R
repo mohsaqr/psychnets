@@ -14,16 +14,31 @@
   # defined when every clique and separator covariance block is invertible. A
   # pseudo-inverse does NOT give the Gaussian decomposable MLE, so a singular
   # block (duplicate or collinear columns) is a hard error rather than a guess.
-  inv <- function(B) tryCatch(solve(B), error = function(e)
-    stop("LoGo: a clique or separator covariance block is singular (collinear ",
-         "or duplicate variables); cannot form the chordal precision.",
-         call. = FALSE))
+  # A block that solve() can still invert but whose reciprocal condition number
+  # is below 1e-10 is refused too: its inverse has lost most of its digits, and
+  # the resulting precision fails its own certificate (a near-duplicate column
+  # gave a residual of 0.14 with no condition before this check).
+  inv_block <- function(idx) {
+    B <- S[idx, idx, drop = FALSE]
+    rc <- rcond(B)
+    out <- if (rc >= 1e-10) tryCatch(solve(B), error = function(e) NULL)
+    if (is.null(out)) {
+      nm <- if (is.null(colnames(S))) as.character(idx) else colnames(S)[idx]
+      .psn_stop(sprintf(paste0(
+        "LoGo: the covariance block of variables {%s} is singular or nearly ",
+        "so (reciprocal condition number %.1e): collinear or duplicate ",
+        "variables. Remove one of them; the chordal precision cannot be ",
+        "formed."), paste(nm, collapse = ", "), rc),
+        class = c("psychnet_singular", "psychnet_bad_input"))
+    }
+    out
+  }
   Theta <- matrix(0, p, p)
   for (cl in cliques) {
-    Theta[cl, cl] <- Theta[cl, cl] + inv(S[cl, cl, drop = FALSE])
+    Theta[cl, cl] <- Theta[cl, cl] + inv_block(cl)
   }
   for (sp in separators) {
-    Theta[sp, sp] <- Theta[sp, sp] - inv(S[sp, sp, drop = FALSE])
+    Theta[sp, sp] <- Theta[sp, sp] - inv_block(sp)
   }
   (Theta + t(Theta)) / 2
 }
@@ -40,17 +55,22 @@
 #' @param data Numeric data frame or matrix (rows = observations). Optional if
 #'   `cor_matrix` is supplied.
 #' @param cor_matrix Optional correlation matrix; if given, `n` is required.
-#' @param n Sample size (recorded on the result; required with `cor_matrix`).
+#' @param n Sample size (recorded on the result; required with `cor_matrix`): a
+#'   single finite number >= 1.
 #' @param cor_method Correlation when `data` is supplied: `"pearson"` (default),
 #'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see [cor_auto()]).
 #' @param threshold Partial correlations with absolute value below this are
-#'   zeroed. Default 0. With a positive value `$kkt` is `NA` for the returned
+#'   zeroed: a single number >= 0, default 0. With a positive value `$kkt` is `NA` for the returned
 #'   graph and the pre-threshold residual is stored as `$fit_kkt`.
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
-#' @param labels Optional node labels.
+#' @param labels Optional node labels, one unique label per network node.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$support` (the TMFG graph), `$cor_matrix`, and `$kkt`.
+#'   A clique or separator block that is singular or nearly so (reciprocal
+#'   condition number below 1e-10, e.g. a duplicate column), or a precision
+#'   whose certificate exceeds 1e-6, is refused with an error of class
+#'   `psychnet_singular` rather than returned as an uncertified network.
 #' @references Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 #'   Parsimonious modeling with information filtering networks. *Physical
 #'   Review E*, 94(6), 062306. \doi{10.1103/PhysRevE.94.062306}
@@ -63,23 +83,14 @@ logo_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          cor_method = c("pearson", "spearman", "kendall", "auto"),
                          threshold = 0, na_method = c("pairwise", "listwise"),
                          labels = NULL) {
-  cor_method <- match.arg(cor_method)
-  na_method <- match.arg(na_method)
-  if (is.null(cor_matrix)) {
-    ci <- .cor_input(data, method = cor_method, na_method = na_method)
-    S <- ci$S; n <- ci$n
-    if (is.null(labels)) labels <- ci$labels
-  } else {
-    S <- .check_cor_matrix(cor_matrix)
-    if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
-                         call. = FALSE)
-    if (is.null(labels)) {
-      labels <- colnames(S)
-      if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))
-    }
-  }
+  cor_method <- .psn_match_arg(cor_method)
+  na_method <- .psn_match_arg(na_method)
+  .check_threshold(threshold)
+  inp <- .network_input(data, cor_matrix, n, cor_method, na_method, labels,
+                        n_role = "required")
+  S <- inp$S; n <- inp$n; labels <- inp$labels
   p <- ncol(S)
-  if (p < 4L) stop("LoGo requires at least 4 variables.", call. = FALSE)
+  if (p < 4L) .psn_stop("LoGo requires at least 4 variables.", call. = FALSE)
 
   built <- .tmfg_build(abs(S))
   theta <- .logo_precision(S, built$cliques, built$separators)
@@ -90,6 +101,16 @@ logo_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
   pcor[abs(pcor) < threshold] <- 0
   dimnames(pcor) <- list(labels, labels)
   fit_kkt <- ggm_support_kkt(theta, S, support)
+  # Refuse rather than approximate: the closed form is exact on a chordal
+  # graph, so a residual this large means the blocks were too ill-conditioned
+  # for the inverse to be trusted even though each passed the rcond check.
+  if (!is.finite(fit_kkt) || fit_kkt > 1e-6) {
+    .psn_stop(sprintf(paste0(
+      "LoGo: the chordal precision fails its own certificate (residual %.2e > ",
+      "1e-6); the correlation matrix is too ill-conditioned (collinear or ",
+      "near-duplicate variables) for the closed-form inverse."), fit_kkt),
+      class = c("psychnet_singular", "psychnet_bad_input"))
+  }
 
   .new_psychnet(
     graph = pcor, labels = labels, method = "logo",

@@ -2,37 +2,70 @@
 % Please edit documentation in R/bridge.R
 \name{net_bridge}
 \alias{net_bridge}
+\alias{plot.psychnet_bridge}
 \title{Bridge centrality}
 \usage{
 net_bridge(x, communities, normalize = FALSE, labels = NULL)
+
+\method{plot}{psychnet_bridge}(x, measures = NULL, ...)
 }
 \arguments{
-\item{x}{A \code{psychnet} object or a square weighted adjacency matrix.}
+\item{x}{A \code{psychnet} object or a square weighted adjacency matrix. For
+\code{plot()}, the \code{psychnet_bridge} table returned by \code{net_bridge()}.}
 
-\item{communities}{Community membership, one entry per node: a vector aligned
-to the node order, or a named vector / list keyed by node label.}
+\item{communities}{Community membership, in one of three forms: an unnamed
+vector with one entry per node, in node order; a vector named by node
+label (every node named exactly once); or a list of node-label vectors,
+one element per community (the element names are the community names),
+e.g. \code{list(anxiety = c("A1", "A2"), mood = c("M1", "M2"))}. Every node
+must belong to exactly one community: a label listed twice, a label that
+is not a node, or a node left without a community is an error of class
+\code{psychnet_bad_input}.}
 
-\item{normalize}{If \code{TRUE}, divide each metric by the number of available
-other-community nodes (comparable across differently sized networks).
-Default \code{FALSE}.}
+\item{normalize}{If \code{TRUE}, rescale each metric as
+\code{networktools::bridge(normalize = TRUE)} does: bridge strength and
+1-step bridge expected influence are divided by the node's number of
+other-community nodes \code{q}, bridge betweenness by \verb{(p - 1) q}, and 2-step
+bridge expected influence by \code{q + (p - 1)(q - q / (p - 1))}, where \code{p} is
+the number of nodes. Bridge closeness is already a mean and is left
+unchanged. Default \code{FALSE}.}
 
-\item{labels}{Optional node labels (used when \code{x} is a bare matrix).}
+\item{labels}{Optional node labels (used when \code{x} is a bare matrix): one
+unique label per node.}
+
+\item{measures}{For \code{plot()}: which bridge columns to draw. Default: all
+five.}
+
+\item{...}{Unused.}
 }
 \value{
 A tidy \code{data.frame} (class \code{psychnet_bridge}), one row per node, with
 columns \code{node}, \code{community}, \code{bridge_strength}, \code{bridge_betweenness},
-\code{bridge_closeness}, \code{bridge_ei1}, \code{bridge_ei2}. Visualise with
-\code{\link[=plot.psychnet_bridge]{plot.psychnet_bridge()}}.
+\code{bridge_closeness}, \code{bridge_ei1}, \code{bridge_ei2}. \code{plot()} draws one sorted
+horizontal panel per bridge measure, each node's point coloured (Okabe-Ito)
+\strong{and} shaped by its community with a community legend, and returns \code{x}
+invisibly. \code{plot()} raises \code{psychnet_bad_input} for a \code{measures} entry
+that is not a bridge column, skips a column with no finite value with a
+\code{psychnet_plot_skipped} warning, and errors (\code{psychnet_bad_input}) when no
+requested column has a finite value.
 }
 \description{
 Computes bridge centrality for an undirected weighted network: how strongly
 each node connects to communities other than its own. You supply the
 community membership; psychnets does not detect it.
 }
+\section{Functions}{
+\itemize{
+\item \code{plot(psychnet_bridge)}: One sorted panel per bridge measure, points coloured
+and shaped by community.
+
+}}
 \examples{
 S <- 0.3^abs(outer(1:6, 1:6, "-"))
 fit <- ebic_glasso(cor_matrix = S, n = 400)
-net_bridge(fit, communities = c(1, 1, 1, 2, 2, 2))
+br <- net_bridge(fit, communities = c(1, 1, 1, 2, 2, 2))
+br
+plot(br)
 }
 \references{
 Jones, P. J., Ma, R., & McNally, R. J. (2021). Bridge centrality.

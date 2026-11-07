@@ -11,13 +11,18 @@ ggm_support_kkt(theta, cor_matrix, support, active_tol = 1e-08)
 
 \item{cor_matrix}{Correlation / covariance the model was fit to.}
 
-\item{support}{Logical p x p matrix; \code{TRUE} where an edge is allowed.}
+\item{support}{Logical p x p matrix; \code{TRUE} where an edge is allowed. It is
+symmetrized (\code{support | t(support)}), so an upper- or lower-triangular
+support describes the same undirected graph; the diagonal is ignored.}
 
 \item{active_tol}{Magnitude above which an off-support entry counts as a
 nonzero violation.}
 }
 \value{
-Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+\code{Inf} for an asymmetric or non-positive-definite \code{theta}. A \code{support} that
+is not a logical matrix of the right size, or contains \code{NA}, is an error
+of class \code{psychnet_bad_input}.
 }
 \description{
 Certificate for an \emph{unregularized} Gaussian graphical model whose precision

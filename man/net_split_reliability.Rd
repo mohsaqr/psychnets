@@ -2,6 +2,8 @@
 % Please edit documentation in R/reliability.R
 \name{net_split_reliability}
 \alias{net_split_reliability}
+\alias{print.psychnet_reliability}
+\alias{plot.psychnet_reliability}
 \title{Split-half reliability of the network edge structure}
 \usage{
 net_split_reliability(
@@ -14,6 +16,10 @@ net_split_reliability(
   estimator_args = list(),
   ...
 )
+
+\method{print}{psychnet_reliability}(x, ...)
+
+\method{plot}{psychnet_reliability}(x, ...)
 }
 \arguments{
 \item{data}{Data frame or matrix (rows = observations), resampled exactly as
@@ -30,15 +36,33 @@ given (see \code{\link[=net_boot]{net_boot()}}), or a \code{psychnet_group} (spl
 
 \item{labels}{Optional node labels.}
 
-\item{estimator_args}{Named list of estimator arguments. Use this for names
-consumed by the diagnostic itself, such as estimator \code{threshold}.}
+\item{estimator_args}{Named list of estimator arguments. \code{cor_method},
+\code{iter} and \code{split} are arguments of this diagnostic (the between-halves
+comparison), so an estimator's own \code{cor_method} or \code{threshold} must go
+here, e.g. \code{estimator_args = list(cor_method = "spearman")}; values in
+\code{...} with those names never reach the estimator.}
 
-\item{...}{Passed to the estimator.}
+\item{...}{Passed to the estimator by \code{net_split_reliability()}; ignored by
+the methods.}
+
+\item{x}{A \code{psychnet_reliability} object.}
 }
 \value{
 A tidy \code{data.frame} (class \code{psychnet_reliability}), one row per metric
-with columns \code{metric}, \code{mean}, \code{sd}, \code{lower}, \code{upper}. The per-split draws
-are carried in \code{attr(x, "iterations")} for \code{\link[=plot.psychnet_reliability]{plot.psychnet_reliability()}}.
+with columns \code{metric}, \code{mean}, \code{sd}, \code{lower}, \code{upper} (2.5\% and 97.5\%
+percentiles across splits) and \code{n_valid} (splits in which the metric was
+defined). The edge correlation is 0 for a split in which exactly one half
+has a constant edge vector (for example an empty network against a
+non-empty one, as in bootnet's \code{cor0()}), and undefined when both halves
+are constant (they agree, but no correlation exists) or fewer than two
+edges are available; undefined splits are excluded from the summary, counted out of
+\code{n_valid}, and announced by a \code{psychnet_undefined_statistic} warning. A
+metric defined in no split has \code{NA} summaries. A failed split fit raises a
+\code{psychnet_resample_failed} warning carrying the first error; a failed
+full-sample fit raises a \code{psychnet_estimation_failed} error with the
+estimator's message. The per-split draws are stored with the result for
+\code{plot()}, which draws a histogram of each metric across splits with its
+mean marked. \code{print()} and \code{plot()} return \code{x} invisibly.
 }
 \description{
 Repeatedly splits the sample into two halves, estimates a network on each, and
@@ -46,8 +70,17 @@ compares their edge-weight vectors. Reports, across splits, the edge-weight
 correlation between halves plus the mean/median/maximum absolute edge
 deviation - a psychometric reliability view of the estimated structure.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(psychnet_reliability)}: The between-halves metric table.
+
+\item \code{plot(psychnet_reliability)}: Histograms of the metrics across splits.
+
+}}
 \examples{
 # `method` and `iter` are chosen so the example runs quickly; the defaults
 # (method = "glasso", iter = 100) are what a real assessment should use.
-net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
+sh <- net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
+sh
+plot(sh)
 }

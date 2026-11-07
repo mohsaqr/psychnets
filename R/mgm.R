@@ -37,18 +37,19 @@
   # class multinomial. An explicit factor() is the caller saying "I mean it".
   id_like <- vapply(cols, is.character, logical(1)) & n_lev > 10L
   if (any(id_like)) {
-    stop(sprintf(
+    .psn_stop(sprintf(
       "Column(s) %s are character with more than 10 distinct values and look like identifiers, not nodes. Drop them, or convert to factor() to model them as categorical.",
       paste(nms[id_like], collapse = ", ")), call. = FALSE)
   }
 
   # Warn only for numeric columns promoted by the integer rule, and only when
-  # they are not the plain 0/1 binaries that were always categorical.
+  # they have more than two values: a two-valued column is a binary node
+  # however it is coded (0/1, 1/2, ...) -- it is recoded to its 0/1 level index
+  # downstream, so treating it as categorical changes nothing.
   promoted <- vapply(seq_along(cols), function(j) {
     x <- cols[[j]]
     if (!is_cat[j] || is.factor(x) || is.character(x)) return(FALSE)
-    u <- unique(x[!is.na(x)])
-    !(length(u) == 2L && all(u %in% c(0, 1)))
+    length(unique(x[!is.na(x)])) > 2L
   }, logical(1))
   if (warn && any(promoted)) {
     warning(structure(
@@ -82,6 +83,25 @@
   cat_ix <- which(types == "c")
   for (j in cat_ix) df[[j]] <- droplevels(as.factor(df[[j]]))
   df
+}
+
+# Resolve `moderators` (a column index or a column name) to a single column
+# index of `data`, refusing anything else by class.
+#' @noRd
+.mgm_moderator_index <- function(moderators, data) {
+  nms <- colnames(data)
+  if (is.character(moderators)) {
+    if (length(moderators) != 1L || is.na(moderators) ||
+        !(moderators %in% nms)) {
+      .psn_stop(sprintf(
+        "`moderators` must name one column of `data`; '%s' is not one.",
+        paste(moderators, collapse = "', '")))
+    }
+    return(match(moderators, nms))
+  }
+  .psn_check_number(moderators, "moderators", lower = 1, upper = ncol(data),
+                    whole = TRUE)
+  as.integer(round(moderators))
 }
 
 # Numeric view of that frame: a factor becomes its 0-based level index, which
@@ -127,15 +147,19 @@
 #' @param threshold Post-selection coefficient threshold: `"LW"` (default),
 #'   `"HW"`, or `"none"`, matching `mgm::mgm()`.
 #' @param rule Edge-combination rule: `"AND"` (default) or `"OR"`.
-#' @param moderators Optional single column index of a moderator variable. When
+#' @param moderators Optional moderator variable: a single column index (a
+#'   whole number) or a single column name. When
 #'   supplied, fits a *moderated* MGM (that variable moderates every pairwise
 #'   edge) and returns a `psychnet_moderated` object to be read with
-#'   [condition()]. Honours `native` like the unmoderated path: the default base
+#'   [condition()] and `as.data.frame()`. Honours `native` like the unmoderated path: the default base
 #'   kernel is pure R and KKT-certified, and covers gaussian and binary nodes;
 #'   `native = FALSE` uses `glmnet` and additionally allows multi-level
 #'   categorical nodes. `weights` are not supported in this mode.
 #' @param weights Optional non-negative observation weights, one per row of the
-#'   (NA-prepared) data. `NULL` (default) is unweighted.
+#'   (NA-prepared) data. Weights are rescaled to a maximum of 1, as in
+#'   `mgm::mgm()` (`weights / max(weights)`, effective sample size
+#'   `sum(weights)`), so only their relative sizes matter. `NULL` (default) is
+#'   unweighted.
 #' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
 #'   each column over its observed values (mean for continuous, modal level for
 #'   binary and multi-level categorical), keeping the full sample; `"listwise"`
@@ -156,10 +180,21 @@
 #'   network containing a multi-level node cannot be passed to [net_predict()],
 #'   because a k-level predictor occupies k-1 design columns and so has no
 #'   one-coefficient-per-variable representation.
-#' @param labels Optional node labels.
+#' @param labels Optional node labels: one per node, or one per input column
+#'   (labels of dropped constant columns are then discarded).
 #' @return A `psychnet` object whose `$weights` is the symmetric standardized
 #'   weight matrix, with `$types`, `$levels` (number of levels per node, 1 for
-#'   gaussian) and `$kkt` (the worst nodewise residual). Node order in
+#'   gaussian), `$fit_kkt` (the worst nodewise stationarity residual of the
+#'   penalized fits) and `$kkt`. The `"LW"`/`"HW"` threshold zeroes
+#'   coefficients AFTER the penalized fit, so a thresholded network is no longer
+#'   the optimum the residual certifies: when the threshold removed any
+#'   coefficient, `$kkt` is `NA` (read with [certificate()]) and
+#'   `$certificate_target` is `"pre_threshold_fit"`, exactly as for a
+#'   thresholded [ebic_glasso()]; otherwise `$kkt` equals `$fit_kkt` and the
+#'   target is `"returned_network"`. Use `threshold = "none"` for a certified
+#'   network. A nodewise fit that does not reach its optimum raises a
+#'   `psychnet_no_converge` warning naming the node; invalid arguments raise
+#'   `psychnet_bad_input`. Node order in
 #'   `$weights` and `$nodes` is always the column order of the input `data`,
 #'   never sorted, and a k-level categorical stays ONE node. A
 #'   binary-binary edge carries the sign of its nodewise-logistic coefficient;
@@ -192,12 +227,22 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                     na_method = c("pairwise", "listwise"),
                     native = TRUE, labels = NULL) {
   ratio_missing <- missing(lambda_min_ratio)
-  threshold <- match.arg(threshold)
-  rule <- match.arg(rule)
-  na_method <- match.arg(na_method)
+  threshold <- .psn_match_arg(threshold)
+  rule <- .psn_match_arg(rule)
+  na_method <- .psn_match_arg(na_method)
   engine <- .resolve_native(native, "glmnet")
-  stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
-            nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
+  .check_nodewise_args(gamma, nlambda, lambda_min_ratio)
+  if (!is.data.frame(data) && !is.matrix(data)) {
+    .psn_stop("`data` must be a data frame or matrix.")
+  }
+  if (!is.null(moderators)) moderators <- .mgm_moderator_index(moderators, data)
+  if (!is.null(types) &&
+      (!is.character(types) || length(types) != ncol(data) ||
+       !all(types %in% c("g", "c")))) {
+    .psn_stop(sprintf(
+      "`types` must be a character vector of \"g\"/\"c\", one per column of `data` (%d).",
+      ncol(data)))
+  }
   # Listwise deletion happens FIRST, on the original data, so that column
   # usability, type detection and level counts describe the rows that are
   # actually modelled: a level seen only in an incomplete row is not a level,
@@ -211,7 +256,6 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # `.as_numeric_matrix()` anyway), so everything derived from `data` below --
   # `types`, `levels_v`, the frame and the numeric matrix -- stays aligned.
   usable <- .usable_columns(data)
-  if (!is.null(types)) stopifnot(length(types) == length(usable))
   if (!all(usable)) {
     orig_nms <- if (is.data.frame(data)) names(data) else colnames(data)
     # Everything indexed against the ORIGINAL columns must follow the drop:
@@ -222,10 +266,8 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     if (!is.null(types)) types <- types[usable]
     if (!is.null(labels) && length(labels) == length(usable)) labels <- labels[usable]
     if (!is.null(moderators)) {
-      stopifnot(is.numeric(moderators), length(moderators) == 1L,
-                moderators >= 1, moderators <= length(usable))
       if (!usable[moderators]) {
-        stop(sprintf(
+        .psn_stop(sprintf(
           "moderators = %d refers to column '%s', which has fewer than two distinct values and was dropped.",
           as.integer(moderators), orig_nms[moderators]), call. = FALSE)
       }
@@ -240,7 +282,6 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # the call; an explicit `types` means nothing is being decided silently.
   det <- .detect_types(data, warn = is.null(types))
   if (is.null(types)) types <- det$type
-  stopifnot(length(types) == length(det$type), all(types %in% c("g", "c")))
   levels_v <- ifelse(types == "c", det$level, 1L)
 
   # A NON-factor column declared categorical via `types` but carrying more than
@@ -254,7 +295,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     rep(FALSE, ncol(data))
   too_many <- types == "c" & levels_v > 10L & !is_fac
   if (any(too_many)) {
-    stop(sprintf(
+    .psn_stop(sprintf(
       "types declares column(s) %s as categorical ('c'), but they have more than 10 distinct values and are not coded as levels; declare them 'g' (gaussian) or recode them.",
       paste(nms[too_many], collapse = ", ")), call. = FALSE)
   }
@@ -264,7 +305,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # letting a k-level column reach a logistic fit that diverges silently.
   multi <- types == "c" & levels_v > 2L
   if (any(multi) && engine != "glmnet") {
-    stop(sprintf(
+    .psn_stop(sprintf(
       "Column(s) %s are categorical with more than 2 levels; the base kernel is a binomial solver and supports gaussian and binary (0/1) nodes only. Pass native = FALSE to use the multinomial glmnet engine.",
       paste(nms[multi], collapse = ", ")), call. = FALSE)
   }
@@ -273,7 +314,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   if (is.data.frame(data)) {
     nonnum <- !vapply(data, is.numeric, logical(1))
     if (any(nonnum) && engine != "glmnet") {
-      stop(sprintf(
+      .psn_stop(sprintf(
         "mgm_fit() requires numeric columns when native = TRUE; column(s) %s are non-numeric. Recode a binary column to 0/1, or pass native = FALSE to model it as a categorical node.",
         paste(names(data)[nonnum], collapse = ", ")), call. = FALSE)
     }
@@ -296,9 +337,9 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     na_method, categorical = types == "c")
   df <- .mgm_as_frame(mat, types, levels_v)
   p <- ncol(mat)
-  if (!is.null(labels)) stopifnot(length(labels) == p)
-  if (is.null(labels)) labels <- colnames(mat)
-  stopifnot(length(types) == p)
+  .psn_check_labels(labels, p)
+  labels <- if (is.null(labels)) colnames(mat) else as.character(labels)
+  stopifnot("internal: one type per node" = length(types) == p)
 
   # Moderated MGM: a chosen variable moderates every edge. Dispatched before the
   # binary 0/1 enforcement because the moderated path treats every categorical as
@@ -308,13 +349,14 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   # read via condition().
   if (!is.null(moderators)) {
     if (!is.null(weights)) {
-      stop("moderated MGM does not support `weights`.", call. = FALSE)
+      .psn_stop("moderated MGM does not support `weights`.", call. = FALSE)
     }
     return(.mmg_estimate(mat, types, moderators, gamma = gamma, rule = rule,
                          threshold = threshold, labels = labels,
                          engine = engine, nlambda = nlambda,
                          lambda_min_ratio = if (engine == "glmnet" && ratio_missing)
-                           NULL else lambda_min_ratio))
+                           NULL else lambda_min_ratio,
+                         moderator_levels = category_levels[[moderators]]))
   }
 
   # A user-declared binary ('c') column must actually be 0/1 on the base path,
@@ -325,7 +367,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   if (length(cbin) && engine != "glmnet") {
     bad <- cbin[!vapply(cbin, function(j) all(mat[, j] %in% c(0, 1)), logical(1))]
     if (length(bad)) {
-      stop(sprintf(
+      .psn_stop(sprintf(
         "types declares column(s) %s as binary ('c'), but they are not coded 0/1.",
         paste(labels[bad], collapse = ", ")), call. = FALSE)
     }
@@ -334,7 +376,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
 
   if (engine == "glmnet") {
     if (!is.null(weights)) {
-      stop("native = FALSE does not support `weights`; use native = TRUE.",
+      .psn_stop("native = FALSE does not support `weights`; use native = TRUE.",
            call. = FALSE)
     }
     return(.mgm_fit_glmnet(df, types, gamma, threshold, rule, nlambda,
@@ -374,6 +416,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     .nodewise_ebic(mat[, -i, drop = FALSE], mat[, i], fam,
                    gamma, nlambda, lambda_min_ratio, weights = weights)
   })
+  .warn_nodewise_convergence(fits, labels, "mgm_fit")
 
   # Asymmetric graph weights follow mgm::mgm's reported coefficient convention:
   # coefficients are on the model-matrix scale (binary predictors are unscaled
@@ -406,6 +449,9 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
   B_std_t[Bt == 0] <- 0
   intercepts <- vapply(fits, function(f) f$b0, numeric(1))
   worst_kkt <- max(vapply(fits, function(f) f$kkt, numeric(1)))
+  # The threshold edits the penalized solution after the fact; when it removed
+  # anything the returned graph is not the certified optimum (glasso/huge rule).
+  thresholded <- any(B != 0 & Bt == 0)
   # Weighted centers/scales, matching the nodewise fits' standardization, so the
   # composite back-transform below is coherent under non-uniform `weights`.
   std <- .standardize(mat, weights)
@@ -425,7 +471,11 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                 n_obs = nrow(mat), data = raw_mat,
                 extra = list(types = stats::setNames(types, labels),
                              levels = stats::setNames(as.integer(levels_v), labels),
-                             kkt = worst_kkt, native = native,
+                             kkt = if (thresholded) NA_real_ else worst_kkt,
+                             fit_kkt = worst_kkt,
+                             certificate_target = if (thresholded)
+                               "pre_threshold_fit" else "returned_network",
+                             native = native,
                              threshold = threshold,
                              nlambda = nlambda,
                              lambda_min_ratio = lambda_min_ratio,

@@ -31,7 +31,7 @@
 # data matrix, honouring `na_method` (see .cor_input).
 #' @noRd
 .npn_cor <- function(mat, npn, na_method = c("pairwise", "listwise")) {
-  na_method <- match.arg(na_method)
+  na_method <- .psn_match_arg(na_method)
   if (anyNA(mat) && na_method == "listwise") {
     mat <- mat[stats::complete.cases(mat), , drop = FALSE]
   }
@@ -44,7 +44,7 @@
     S <- stats::cor(.npn_scores(mat, npn), use = use)
   }
   if (anyNA(S)) {
-    stop("Pairwise nonparanormal correlation is undefined: a pair is never co-observed.",
+    .psn_stop("Pairwise nonparanormal correlation is undefined: a pair is never co-observed.",
          call. = FALSE)
   }
   if (has_na) S <- .nearest_pd_cor(S)
@@ -66,14 +66,15 @@
 #'   `cor_matrix` is supplied (then the transform is skipped).
 #' @param cor_matrix Optional pre-transformed correlation matrix; if given, `n`
 #'   is required, `data` and `npn` are ignored.
-#' @param n Sample size (required when `cor_matrix` is supplied).
+#' @param n Sample size (required when `cor_matrix` is supplied): a single
+#'   finite number >= 1.
 #' @param npn Nonparanormal transform: `"shrinkage"` (default), `"truncation"`,
 #'   or `"skeptic"` (Spearman).
 #' @param gamma EBIC hyperparameter. Default 0.5.
 #' @param nlambda Number of penalties on the path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #' @param threshold Partial correlations with absolute value below this are
-#'   zeroed. Default 0. With a positive value `$kkt` is `NA` for the returned
+#'   zeroed: a single number >= 0, default 0. With a positive value `$kkt` is `NA` for the returned
 #'   graph and the pre-threshold residual is stored as `$fit_kkt`.
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default, with the nonparanormal transform applied per column over observed
@@ -81,7 +82,7 @@
 #' @param native Solver switch for the glasso path: `TRUE` (default) uses the
 #'   pure-R solver; `FALSE` delegates to the `glasso` Fortran package (in
 #'   `Suggests`). See [ebic_glasso()].
-#' @param labels Optional node labels.
+#' @param labels Optional node labels, one unique label per network node.
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix` (the transformed
 #'   correlation), `$npn`, `$ebic`, and `$kkt`.
@@ -103,26 +104,21 @@ huge_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          gamma = 0.5, nlambda = 100L, lambda_min_ratio = 0.01,
                          threshold = 0, na_method = c("pairwise", "listwise"),
                          native = TRUE, labels = NULL) {
-  npn <- match.arg(npn)
-  na_method <- match.arg(na_method)
+  npn <- .psn_match_arg(npn)
+  na_method <- .psn_match_arg(na_method)
   engine <- .resolve_native(native, "glasso")
+  .check_ebic_args(gamma, nlambda, lambda_min_ratio, threshold)
   if (is.null(cor_matrix)) {
     mat <- .as_numeric_matrix(data, drop_na = FALSE)
+    .psn_check_labels(labels, ncol(mat))
     if (is.null(labels)) labels <- colnames(mat)
     nc  <- .npn_cor(mat, npn, na_method); S <- nc$S; n <- nc$n
   } else {
-    S <- .check_cor_matrix(cor_matrix)
-    if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
-                         call. = FALSE)
-    stopifnot(is.numeric(n), length(n) == 1L, is.finite(n), n > 0)
-    if (is.null(labels)) {
-      labels <- colnames(S)
-      if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))
-    }
+    inp <- .network_input(NULL, cor_matrix, n, "pearson", na_method, labels,
+                          n_role = "required")
+    S <- inp$S; n <- inp$n; labels <- inp$labels
     npn <- "precomputed"
   }
-  stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
-            nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1)
 
   # The skeptic correlation is not guaranteed positive definite; project it.
   if (min(eigen(S, symmetric = TRUE, only.values = TRUE)$values) < 1e-8) {

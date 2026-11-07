@@ -17,7 +17,8 @@ test_that("net_casedrop_reliability returns a tidy data.frame", {
   cd <- net_casedrop_reliability(mk(), drop_prop = c(0.3, 0.5, 0.7), iter = 20)
   expect_s3_class(cd, "psychnet_casedrop")
   expect_s3_class(cd, "data.frame")
-  expect_named(cd, c("metric", "drop_prop", "mean", "sd"))
+  expect_named(cd, c("metric", "drop_prop", "actual_drop", "mean", "sd",
+                     "n_valid"))
   expect_equal(nrow(cd), 4L * 3L)                       # 4 metrics x 3 props
   expect_true(all(c("correlation", "mean_abs_dev", "median_abs_dev",
                     "max_abs_dev") %in% cd$metric))
@@ -38,7 +39,7 @@ test_that("net_split_reliability returns a tidy per-metric data.frame", {
   rel <- net_split_reliability(mk(), iter = 40)
   expect_s3_class(rel, "psychnet_reliability")
   expect_s3_class(rel, "data.frame")
-  expect_named(rel, c("metric", "mean", "sd", "lower", "upper"))
+  expect_named(rel, c("metric", "mean", "sd", "lower", "upper", "n_valid"))
   expect_true(all(c("correlation", "mean_abs_dev") %in% rel$metric))
   expect_equal(nrow(attr(rel, "iterations")), 40L)      # raw draws in attr
 })

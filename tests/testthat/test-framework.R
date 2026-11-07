@@ -84,7 +84,8 @@ test_that("net_stability returns CS-coefficients in [0,1]", {
   expect_s3_class(cs, "psychnet_stability")
   expect_true(all(cs$cs >= 0 & cs$cs <= 1))
   expect_named(cs$table,
-               c("measure", "drop_prop", "mean_cor", "sd_cor", "prop_above"))
+               c("measure", "drop_prop", "actual_drop", "mean_cor", "sd_cor",
+                 "prop_above", "n_valid"))
   # larger drop proportions never increase stability
   str_tab <- cs$table[cs$table$measure == "strength", ]
   expect_true(str_tab$mean_cor[1] + 1e-9 >= str_tab$mean_cor[nrow(str_tab)])
@@ -154,8 +155,12 @@ test_that("a factor node survives every resampling verb for mgm, and is dropped 
   expect_s3_class(cd, "psychnet_casedrop")
   sp <- net_split_reliability(d, method = "mgm", iter = 2, native = FALSE)
   expect_s3_class(sp, "psychnet_reliability")
-  # ... while glasso drops it, silently, exactly as ebic_glasso(d) does.
-  expect_silent(bs_g <- net_boot(d, method = "glasso", n_boot = 2, cores = 1))
+  # ... while glasso drops it, exactly as ebic_glasso(d) does: one
+  # psychnet_dropped_columns message from the observed fit, none per draw, and
+  # no warning.
+  expect_no_warning(
+    expect_message(bs_g <- net_boot(d, method = "glasso", n_boot = 2, cores = 1),
+                   class = "psychnet_dropped_columns"))
   expect_equal(bs_g$node_labels, c("g1", "g2", "b"))
   expect_equal(ebic_glasso(d)$nodes$label, c("g1", "g2", "b"))
 })

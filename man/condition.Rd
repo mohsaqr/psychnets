@@ -2,20 +2,51 @@
 % Please edit documentation in R/mgm_moderated.R
 \name{condition}
 \alias{condition}
+\alias{as.data.frame.psychnet_moderated}
+\alias{print.psychnet_moderated}
 \title{Condition a moderated network at a moderator value}
 \usage{
 condition(object, value, rule = NULL)
+
+\method{as.data.frame}{psychnet_moderated}(x, row.names = NULL, optional = FALSE, ..., value = NULL)
+
+\method{print}{psychnet_moderated}(x, ...)
 }
 \arguments{
 \item{object}{A \code{psychnet_moderated} object from \code{mgm_fit(..., moderators=)}.}
 
-\item{value}{Moderator value to condition on (e.g. \code{0} or \code{1} for a binary
-moderator, or any numeric for a continuous one).}
+\item{value}{A single moderator value to condition on: a level of a
+categorical moderator (number, label, factor or logical, as coded in the
+data), or a finite number on the raw scale of a continuous one.}
 
 \item{rule}{Symmetrization rule; defaults to the rule used at fit time.}
+
+\item{x}{A \code{psychnet_moderated} object.}
+
+\item{row.names, optional}{Standard \code{\link[=as.data.frame]{as.data.frame()}} arguments; ignored.}
+
+\item{...}{Unused.}
 }
 \value{
-A \code{psychnet} network object (the moderator node carries no edges).
+\code{condition()} returns a \code{psychnet} network object (the moderator node
+carries no edges), with \verb{$mod_value} the value conditioned on.
+
+\code{as.data.frame()} on the moderated fit returns, with \code{value = NULL}, one
+row per pair of nodes joined by a main effect or a moderation effect, with
+columns \code{from}, \code{to}, \code{main_effect} (aggregated magnitude of the pairwise
+main effect, mgm convention: mean absolute nodewise estimate, zero when the
+pair does not survive \code{rule}), \code{interaction} (aggregated magnitude of the
+moderator x pair three-way interaction, \code{NA} for a pair that includes the
+moderator itself), \code{moderated} (logical: \code{interaction > 0}) and
+\code{involves_moderator}. With a \code{value}, it returns the tidy edge list
+(\code{from}, \code{to}, \code{weight}) of \code{condition(x, value)}.
+
+\code{print()} on the moderated fit shows the number of nodes, the moderator
+and the fit settings, and returns \code{x} invisibly.
+
+Errors of class \code{psychnet_bad_input} when \code{value} is missing, not length
+one, not a level of a categorical moderator, or not a finite number for a
+continuous one.
 }
 \description{
 Extracts the effective pairwise network implied by a moderated MGM
@@ -23,13 +54,36 @@ Extracts the effective pairwise network implied by a moderated MGM
 \code{mgm::condition()}: it applies the AND-rule pre-filter, absorbs the moderator
 value into the main-effect coefficients, and re-aggregates the pairwise edges.
 }
+\details{
+\code{value} is always read on the moderator's \strong{own} scale. For a categorical
+moderator it is one of the levels observed in the data, in the coding the
+data used: \code{1}/\code{2} for a moderator coded 1/2, \code{"treat"} for a factor level
+\code{"treat"} (the internal 0-based level code is never exposed). For a
+continuous moderator it is a value on the raw scale; the moderator is
+standardized internally (mgm's \code{scale = TRUE}), and the value is mapped to
+\code{(value - mean) / sd} before conditioning, so \code{value = mean(moderator)} gives
+the network at the average moderator. (\code{mgm::condition()} instead takes the
+value on its internal standardized scale: \code{condition(fit, v)} here equals
+\code{mgm::condition(ref, list(k = (v - mean) / sd))}.)
+}
+\section{Functions}{
+\itemize{
+\item \code{as.data.frame(psychnet_moderated)}: Tidy table of the moderated fit: per-edge main and
+moderation effects, or (with \code{value}) the conditioned edge list.
+
+\item \code{print(psychnet_moderated)}: The moderated fit: nodes, moderator and settings.
+
+}}
 \examples{
 set.seed(1)
 x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
-mod <- rep(0:1, each = 200)
-y <- x1 * (mod == 1) + stats::rnorm(400)   # x1-y edge only when mod == 1
+mod <- rep(1:2, each = 200)                 # moderator coded 1/2
+y <- x1 * (mod == 2) + stats::rnorm(400)   # x1-y edge only when mod == 2
 d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
-fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
-condition(fit, value = 0)   # no x1-y edge
-condition(fit, value = 1)   # the x1-y edge appears
+fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = "mod")
+fit
+as.data.frame(fit)            # main and moderation effects per edge
+condition(fit, value = 1)     # no x1-y edge
+condition(fit, value = 2)     # the x1-y edge appears
+as.data.frame(fit, value = 2) # the same network as a tidy edge list
 }

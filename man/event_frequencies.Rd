@@ -35,8 +35,13 @@ timestamp) between consecutive events before a new session begins. Default
 \code{900} (15 minutes), as in Nestimate.}
 }
 \value{
-A \code{data.frame} with an \code{actor} column, a \code{session} index, and one
-integer count column per action (one row per occasion).
+A \code{data.frame} with one row per occasion: an \code{actor} column
+(character), a \code{session} column (character occasion label: the actor and
+session values joined by \code{"."}, followed by the computed session number
+when \code{compute_sessions} splits by \code{time}), and one numeric (double) count
+column per action. Errors of class \code{psychnet_bad_input} when a column is
+missing, \code{actor} or \code{session} has missing values, or \code{time} cannot be
+parsed.
 }
 \description{
 Converts a long event log -- one row per event, with an actor, an action, and

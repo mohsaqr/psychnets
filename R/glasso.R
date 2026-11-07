@@ -106,13 +106,25 @@
 .check_lambda_path <- function(lambda_path) {
   if (is.null(lambda_path)) return(NULL)
   if (!is.numeric(lambda_path) || length(lambda_path) < 1L) {
-    stop("`lambda_path` must be a numeric vector of length >= 1.", call. = FALSE)
+    .psn_stop("`lambda_path` must be a numeric vector of length >= 1.", call. = FALSE)
   }
   if (anyNA(lambda_path) || any(!is.finite(lambda_path)) || any(lambda_path <= 0)) {
-    stop("`lambda_path` values must be finite and strictly positive.",
+    .psn_stop("`lambda_path` values must be finite and strictly positive.",
          call. = FALSE)
   }
   as.numeric(lambda_path)
+}
+
+# The EBIC-path arguments shared by ebic_glasso(), huge_network() and
+# ggm_modselect(), plus the absolute-weight `threshold`.
+#' @noRd
+.check_ebic_args <- function(gamma, nlambda, lambda_min_ratio, threshold) {
+  .psn_check_number(gamma, "gamma", lower = 0)
+  .psn_check_number(nlambda, "nlambda", lower = 2, whole = TRUE)
+  .psn_check_number(lambda_min_ratio, "lambda_min_ratio", lower = 0, upper = 1,
+                    open = TRUE)
+  .check_threshold(threshold)
+  invisible(NULL)
 }
 
 # `refit` is TRUE / FALSE / "unregularized".
@@ -123,14 +135,14 @@
     return("unregularized")
   }
   if (is.logical(refit) && length(refit) == 1L && !is.na(refit)) return(refit)
-  stop('`refit` must be TRUE, FALSE, or "unregularized".', call. = FALSE)
+  .psn_stop('`refit` must be TRUE, FALSE, or "unregularized".', call. = FALSE)
 }
 
 # --- log-spaced lambda path --------------------------------------------------
 .compute_lambda_path <- function(S, nlambda, lambda_min_ratio) {
   lambda_max <- max(abs(S[upper.tri(S)]))
   if (lambda_max <= 0) {
-    stop("All off-diagonal correlations are zero; nothing to regularise.",
+    .psn_stop("All off-diagonal correlations are zero; nothing to regularise.",
          call. = FALSE)
   }
   exp(seq(log(lambda_max), log(lambda_max * lambda_min_ratio),
@@ -159,10 +171,10 @@
 # at the cost of that solver's looser convergence.
 #' @noRd
 .resolve_native <- function(native, ext) {
-  stopifnot(is.logical(native), length(native) == 1L, !is.na(native))
+  .psn_check_flag(native, "native")
   if (native) return("base")
   if (!requireNamespace(ext, quietly = TRUE)) {
-    stop(sprintf(paste0("native = FALSE needs the '%s' package; install it ",
+    .psn_stop(sprintf(paste0("native = FALSE needs the '%s' package; install it ",
                         "or keep native = TRUE (the default)."), ext),
          call. = FALSE)
   }
@@ -193,7 +205,10 @@
 #   FALSE           the scan fit exactly as computed at scan_tol
 #   "unregularized" the unpenalized constrained MLE on the selected support
 # A lambda whose fit is non-PD is skipped rather than raising, because
-# resampling callers hit that routinely on near-singular draws.
+# resampling callers hit that routinely on near-singular draws. The skip is
+# not silent in effect: the lambda scores EBIC = Inf, so it is visible in the
+# returned `ebic_path`, and if every lambda fails the call errors. (The
+# tryCatch below therefore deliberately catches any solver error.)
 .select_ebic <- function(S, lambda_path, n, gamma, engine = "base",
                          scan_tol = 1e-4, refit_tol = 1e-8, refit = TRUE,
                          penalize_diagonal = FALSE) {
@@ -226,7 +241,7 @@
       best_scan <- fit$wi
     }
   }
-  if (!have_best) stop("All glasso fits failed; check the input data.",
+  if (!have_best) .psn_stop("All glasso fits failed; check the input data.",
                        call. = FALSE)
 
   best_lambda <- lambda_path[best_idx]
@@ -262,7 +277,7 @@
       confirmed[cand] <- rescored
       ebic_vals[cand] <- vapply(rescored, function(r) r$ebic, numeric(1))
       if (!any(is.finite(ebic_vals)))
-        stop("All glasso refits failed; check the input data.", call. = FALSE)
+        .psn_stop("All glasso refits failed; check the input data.", call. = FALSE)
       best_idx <- which.min(ebic_vals)
       # A correction can move the minimum to an unconfirmed scan row. Confirm
       # that row too, so the returned path and selected fit agree.
@@ -306,6 +321,18 @@
        ebic_path = ebic_vals, support = support)
 }
 
+# Shared input contract of the two certificates: a finite square `theta` and a
+# finite `cor_matrix` of the same size.
+#' @noRd
+.check_kkt_matrices <- function(theta, cor_matrix) {
+  if (!is.numeric(theta) || nrow(theta) != ncol(theta) || !all(is.finite(theta)))
+    .psn_stop("`theta` must be a finite numeric square matrix.")
+  if (!is.numeric(cor_matrix) || !identical(dim(cor_matrix), dim(theta)) ||
+      !all(is.finite(cor_matrix)))
+    .psn_stop("`cor_matrix` must be a finite numeric matrix the size of `theta`.")
+  invisible(NULL)
+}
+
 # --- precision -> partial correlation ----------------------------------------
 .precision_to_pcor <- function(wi) {
   x <- -stats::cov2cor(wi)
@@ -337,12 +364,14 @@
 #'
 #' @param theta Precision matrix to test.
 #' @param cor_matrix Correlation / covariance the model was fit to.
-#' @param rho Scalar penalty.
+#' @param rho Scalar penalty, a single finite number >= 0.
 #' @param active_tol Magnitude above which an off-diagonal entry is "active".
 #' @param penalize_diagonal Was the diagonal penalized in the fit being graded?
 #'   Default `FALSE`, matching [ebic_glasso()]'s default.
 #' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-#'   `Inf` for an asymmetric or non-positive-definite `theta`.
+#'   `Inf` for an asymmetric or non-positive-definite `theta`. Malformed input
+#'   (non-square or non-finite matrices, a negative or missing `rho`) is an
+#'   error of class `psychnet_bad_input`.
 #' @references
 #'   Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
 #'   covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
@@ -360,9 +389,10 @@
 glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
                        penalize_diagonal = FALSE) {
   theta <- as.matrix(theta); cor_matrix <- as.matrix(cor_matrix)
-  stopifnot(nrow(theta) == ncol(theta), all(dim(theta) == dim(cor_matrix)),
-            all(is.finite(theta)), all(is.finite(cor_matrix)),
-            is.numeric(rho), length(rho) == 1L)
+  .check_kkt_matrices(theta, cor_matrix)
+  .psn_check_number(rho, "rho", lower = 0)
+  .psn_check_number(active_tol, "active_tol", lower = 0)
+  .psn_check_flag(penalize_diagonal, "penalize_diagonal")
   # Feasibility is part of the optimality conditions: the objective is defined
   # only on symmetric Theta > 0, so an asymmetric, indefinite, or numerically
   # non-invertible matrix is infeasible, not optimal.
@@ -396,10 +426,15 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
 #'
 #' @param theta Precision matrix to test.
 #' @param cor_matrix Correlation / covariance the model was fit to.
-#' @param support Logical p x p matrix; `TRUE` where an edge is allowed.
+#' @param support Logical p x p matrix; `TRUE` where an edge is allowed. It is
+#'   symmetrized (`support | t(support)`), so an upper- or lower-triangular
+#'   support describes the same undirected graph; the diagonal is ignored.
 #' @param active_tol Magnitude above which an off-support entry counts as a
 #'   nonzero violation.
-#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum.
+#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum,
+#'   `Inf` for an asymmetric or non-positive-definite `theta`. A `support` that
+#'   is not a logical matrix of the right size, or contains `NA`, is an error
+#'   of class `psychnet_bad_input`.
 #' @seealso [certificate()], which reads the stored residual of a fitted network.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
@@ -413,9 +448,18 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
 #' @export
 ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
   theta <- as.matrix(theta); cor_matrix <- as.matrix(cor_matrix)
-  stopifnot(nrow(theta) == ncol(theta), all(dim(theta) == dim(cor_matrix)),
-            all(dim(support) == dim(theta)), is.logical(support),
-            all(is.finite(theta)), all(is.finite(cor_matrix)))
+  .check_kkt_matrices(theta, cor_matrix)
+  .psn_check_number(active_tol, "active_tol", lower = 0)
+  support <- as.matrix(support)
+  if (!is.logical(support) || !identical(dim(support), dim(theta)) ||
+      anyNA(support)) {
+    .psn_stop(sprintf(paste0(
+      "`support` must be a logical %d x %d matrix (TRUE where an edge is ",
+      "allowed) with no missing values."), nrow(theta), ncol(theta)))
+  }
+  # An edge is a property of the unordered pair: a triangular support (only
+  # upper or only lower filled in) means the symmetric graph.
+  support <- support | t(support)
   if (max(abs(theta - t(theta))) > 1e-8) return(Inf)
   if (min(eigen(theta, symmetric = TRUE, only.values = TRUE)$values) <= 0)
     return(Inf)
@@ -443,13 +487,15 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #'   `cor_matrix` is supplied.
 #' @param cor_matrix Optional correlation matrix; if given, `n` is required and
 #'   `data` is ignored.
-#' @param n Sample size (required when `cor_matrix` is supplied).
+#' @param n Sample size (required when `cor_matrix` is supplied): a single
+#'   finite number >= 1.
 #' @param gamma EBIC hyperparameter. Default 0.5.
 #' @param nlambda Number of penalties on the path. Default 100.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
 #'   Default 0.01.
 #' @param threshold Partial correlations with absolute value below this are set
-#'   to zero. Default 0. A positive value is post-estimation processing, so the
+#'   to zero: a single number >= 0, default 0 (qgraph's logical
+#'   `threshold = TRUE` rule is refused). A positive value is post-estimation processing, so the
 #'   returned graph has `$kkt = NA`; the fitted precision's residual remains in
 #'   `$fit_kkt`.
 #' @param cor_method Correlation used when `data` is supplied: `"pearson"`
@@ -484,7 +530,8 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #'   reproduce them. `"unregularized"` keeps the selected support and refits the
 #'   *unpenalized* graph-restricted MLE on it, which is no longer a penalized
 #'   optimum and is therefore certified by [ggm_support_kkt()] instead.
-#' @param labels Optional node labels.
+#' @param labels Optional node labels, one unique label per network node (the
+#'   columns that survive constant / non-numeric column removal).
 #' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
 #'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix`, `$ebic`, `$native`,
 #'   and `$kkt` (the stationarity residual, or `NA` after thresholding). Node order
@@ -493,7 +540,7 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
 #'   the object also carries `$support`, and `$kkt` is a [ggm_support_kkt()]
 #'   residual; with `refit = FALSE` the reported `$kkt` reflects the loose scan
 #'   tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
-#'   `as.data.frame()` (see [as.data.frame.psychnet()]) and the certificate
+#'   `as.data.frame()` (see [psychnet-class]) and the certificate
 #'   with [certificate()].
 #' @references
 #'   Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
@@ -522,27 +569,14 @@ ebic_glasso <- function(data = NULL, cor_matrix = NULL, n = NULL,
                         native = TRUE, lambda_path = NULL,
                         penalize_diagonal = FALSE, refit = TRUE,
                         labels = NULL) {
-  na_method <- match.arg(na_method)
-  cor_method <- match.arg(cor_method)
+  na_method <- .psn_match_arg(na_method)
+  cor_method <- .psn_match_arg(cor_method)
   engine <- .resolve_native(native, "glasso")
-  if (is.null(cor_matrix)) {
-    ci <- .cor_input(data, method = cor_method, na_method = na_method)
-    S <- ci$S; n <- ci$n
-    if (is.null(labels)) labels <- ci$labels
-  } else {
-    S <- .check_cor_matrix(cor_matrix)
-    if (is.null(n)) stop("`n` is required when `cor_matrix` is supplied.",
-                         call. = FALSE)
-    stopifnot(is.numeric(n), length(n) == 1L, is.finite(n), n > 0)
-    if (is.null(labels)) {
-      labels <- colnames(S)
-      if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))
-    }
-  }
-  stopifnot(is.numeric(gamma), length(gamma) == 1L, gamma >= 0,
-            nlambda >= 2L, lambda_min_ratio > 0, lambda_min_ratio < 1,
-            is.logical(penalize_diagonal), length(penalize_diagonal) == 1L,
-            !is.na(penalize_diagonal))
+  .check_ebic_args(gamma, nlambda, lambda_min_ratio, threshold)
+  .psn_check_flag(penalize_diagonal, "penalize_diagonal")
+  inp <- .network_input(data, cor_matrix, n, cor_method, na_method, labels,
+                        n_role = "required")
+  S <- inp$S; n <- inp$n; labels <- inp$labels
   refit <- .check_refit(refit)
   lambda_path <- .check_lambda_path(lambda_path)
 

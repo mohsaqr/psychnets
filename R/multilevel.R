@@ -22,9 +22,18 @@
 .as_time_numeric <- function(x) {
   if (is.numeric(x)) return(as.numeric(x))
   if (inherits(x, c("POSIXct", "POSIXt", "Date"))) return(as.numeric(x))
-  parsed <- suppressWarnings(as.numeric(as.POSIXct(as.character(x), tz = "UTC")))
-  if (all(is.na(parsed))) {
-    stop("`time` could not be parsed as numeric or a timestamp.", call. = FALSE)
+  # as.POSIXct() signals an unparseable string as an error, and a string that
+  # does not fit the format it guessed as NA; both are reported, never dropped.
+  parsed <- tryCatch(as.numeric(as.POSIXct(as.character(x), tz = "UTC")),
+    error = function(e) .psn_stop(sprintf(
+      "`time` could not be parsed as numeric or a timestamp (%s).",
+      conditionMessage(e))))
+  bad <- is.na(parsed) & !is.na(x)
+  if (any(bad)) {
+    .psn_stop(sprintf(paste0(
+      "`time` could not be parsed as numeric or a timestamp: %d value(s) do ",
+      "not match the timestamp format, e.g. \"%s\"."),
+      sum(bad), as.character(x[bad][1L])))
   }
   parsed
 }
@@ -41,8 +50,18 @@
   data <- data[keep, , drop = FALSE]; acts <- acts[keep]
   levels_a <- sort(unique(acts))
   if (length(levels_a) < 2L) {
-    stop("`action` has fewer than 2 distinct values; nothing to relate.",
+    .psn_stop("`action` has fewer than 2 distinct values; nothing to relate.",
          call. = FALSE)
+  }
+  # An event without an actor (or session) belongs to no occasion; table()
+  # would drop it silently, so it is refused, as missing person identifiers
+  # are everywhere else.
+  missing_id <- vapply(data[c(actor, session)], anyNA, logical(1))
+  if (any(missing_id)) {
+    .psn_stop(sprintf(paste0(
+      "%s must not contain missing values: an event without an actor or ",
+      "session cannot be assigned to an occasion. Drop or label those rows."),
+      paste(sprintf("`%s`", c(actor, session)[missing_id]), collapse = ", ")))
   }
   base_group <- .tuple_factor(data, c(actor, session))
 
@@ -97,8 +116,13 @@
 #' @param time_threshold Maximum gap (in the units of `time`, seconds for a
 #'   timestamp) between consecutive events before a new session begins. Default
 #'   `900` (15 minutes), as in Nestimate.
-#' @return A `data.frame` with an `actor` column, a `session` index, and one
-#'   integer count column per action (one row per occasion).
+#' @return A `data.frame` with one row per occasion: an `actor` column
+#'   (character), a `session` column (character occasion label: the actor and
+#'   session values joined by `"."`, followed by the computed session number
+#'   when `compute_sessions` splits by `time`), and one numeric (double) count
+#'   column per action. Errors of class `psychnet_bad_input` when a column is
+#'   missing, `actor` or `session` has missing values, or `time` cannot be
+#'   parsed.
 #' @examples
 #' ev <- data.frame(
 #'   Actor   = rep(c("a", "b"), each = 6),
@@ -110,10 +134,13 @@
 event_frequencies <- function(data, actor = "Actor", action = "Action",
                               session = NULL, time = NULL,
                               compute_sessions = TRUE, time_threshold = 900) {
-  stopifnot(is.data.frame(data), action %in% names(data))
+  if (!is.data.frame(data)) .psn_stop("`data` must be a data frame of events.")
+  if (!(is.character(action) && length(action) == 1L && action %in% names(data)))
+    .psn_stop(sprintf("`action` must name one column of `data` (got '%s').",
+                      paste(action, collapse = "', '")))
   miss <- setdiff(c(actor, session, time), names(data))
   if (length(miss)) {
-    stop("Columns not found in data: ", paste(miss, collapse = ", "),
+    .psn_stop("Columns not found in data: ", paste(miss, collapse = ", "),
          call. = FALSE)
   }
   ef <- .event_freq(data, actor, action, session, time,
@@ -129,7 +156,7 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 .within_between_decompose <- function(V, ids) {
   f  <- factor(ids)
   J  <- nlevels(f)
-  if (J < 2L) stop("Need at least 2 actors for a between-actor network.",
+  if (J < 2L) .psn_stop("Need at least 2 actors for a between-actor network.",
                    call. = FALSE)
   # Means use the observations available for each variable, so one missing
   # value does not erase that actor's other observations of the variable.
@@ -147,7 +174,7 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
   fn <- switch(method, glasso = ebic_glasso, pcor = pcor_network,
                ggm = ggm_modselect, huge = huge_network,
                tmfg = tmfg_network, logo = logo_network,
-               stop(sprintf("Unsupported method '%s' for net_multilevel().", method),
+               .psn_stop(sprintf("Unsupported method '%s' for net_multilevel().", method),
                     call. = FALSE))
   # A feature with no variance at this level (e.g. an action that is constant
   # across occasions, or constant within every actor) makes the correlation
@@ -161,7 +188,7 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
     mat <- mat[, !bad, drop = FALSE]
   }
   if (ncol(mat) < 2L) {
-    stop("Fewer than 2 features with variance remain to relate.", call. = FALSE)
+    .psn_stop("Fewer than 2 features with variance remain to relate.", call. = FALSE)
   }
   # Build the association matrix the way the requested estimator would, so
   # data-level options forwarded through `...` are honored: cor_method
@@ -198,11 +225,11 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 .event_design <- function(data, actor, action, session, time,
                           compute_sessions, time_threshold, id, vars,
                           standardize, labels, na_method = "pairwise") {
-  na_method <- match.arg(na_method, c("pairwise", "listwise"))
+  na_method <- .psn_match_arg(na_method, c("pairwise", "listwise"))
   if (!is.null(actor)) {                                # event-log mode
     miss <- setdiff(c(actor, session, time), names(data))
     if (length(miss)) {
-      stop("Columns not found in data: ", paste(miss, collapse = ", "),
+      .psn_stop("Columns not found in data: ", paste(miss, collapse = ", "),
            call. = FALSE)
     }
     ef  <- .event_freq(data, actor, action, session, time,
@@ -211,7 +238,7 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
     ids <- ef$actor
   } else {                                              # numeric feature table
     if (is.null(id) || !all(id %in% names(data))) {
-      stop("Supply `actor` for an event log, or `id` naming the actor column of a feature table.",
+      .psn_stop("Supply `actor` for an event log, or `id` naming the actor column of a feature table.",
            call. = FALSE)
     }
     if (is.null(vars)) {
@@ -221,21 +248,21 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
     V   <- as.matrix(data[, vars, drop = FALSE])
     ids <- if (length(id) == 1L) data[[id]] else .tuple_factor(data, id)
   }
-  if (ncol(V) < 2L) stop("Need at least 2 feature columns.", call. = FALSE)
-  if (!is.numeric(V)) stop("Every selected event feature must be numeric.", call. = FALSE)
-  if (anyNA(ids)) stop("Actor identifiers must be non-missing.", call. = FALSE)
+  if (ncol(V) < 2L) .psn_stop("Need at least 2 feature columns.", call. = FALSE)
+  if (!is.numeric(V)) .psn_stop("Every selected event feature must be numeric.", call. = FALSE)
+  if (anyNA(ids)) .psn_stop("Actor identifiers must be non-missing.", call. = FALSE)
   if (na_method == "listwise") {
     keep <- stats::complete.cases(V)
     V <- V[keep, , drop = FALSE]
     ids <- ids[keep]
   }
-  if (!nrow(V)) stop("No observed event feature rows remain.", call. = FALSE)
+  if (!nrow(V)) .psn_stop("No observed event feature rows remain.", call. = FALSE)
 
   # Honor user labels: rename the feature columns so the labels flow through the
   # fit (and survive any zero-variance column drop in .fit_ggm).
   if (!is.null(labels)) {
     if (length(labels) != ncol(V)) {
-      stop(sprintf("`labels` length (%d) must match the number of features (%d).",
+      .psn_stop(sprintf("`labels` length (%d) must match the number of features (%d).",
                    length(labels), ncol(V)), call. = FALSE)
     }
     colnames(V) <- labels
@@ -287,9 +314,10 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
                            id = NULL, vars = NULL, standardize = TRUE,
                            method = "glasso", threshold = 0, gamma = NULL,
                            labels = NULL, ...) {
-  stopifnot(is.data.frame(data), is.logical(standardize), length(standardize) == 1L)
+  if (!is.data.frame(data)) .psn_stop("`data` must be a data frame of events.")
+  .psn_check_flag(standardize, "standardize")
   if (!method %in% c("glasso", "pcor", "ggm", "huge", "tmfg", "logo")) {
-    stop(sprintf("Event data supports the Gaussian graphical methods only; '%s' is not one of them.",
+    .psn_stop(sprintf("Event data supports the Gaussian graphical methods only; '%s' is not one of them.",
                  method), call. = FALSE)
   }
   des <- .event_design(data, actor, action, session, time, compute_sessions,
@@ -305,8 +333,9 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 #' actor-by-action frequency covariance into a within-actor and a between-actor
 #' part.
 #'
-#' @param x A `psychnet_multilevel` object.
-#' @param ... Ignored.
+#' @param x,object A `psychnet_multilevel` object.
+#' @param ... Ignored by `print`, `summary` and `as.data.frame`; passed to
+#'   `cograph::splot()` by `plot`.
 #' @return `x`, invisibly (for `print`), after printing the numbers of actors and
 #'   occasions and each network's node and edge counts.
 #' @examples
@@ -318,7 +347,11 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 #' # Actions drawn at random, so neither network is expected to have edges.
 #' ml <- psychnet(ev, actor = "Actor", session = "Session", standardize = FALSE)
 #' ml
+#' summary(ml)
 #' as.data.frame(ml)
+#' if (requireNamespace("cograph", quietly = TRUE)) plot(ml)
+#' @name psychnet_multilevel
+#' @aliases psychnet_multilevel
 #' @export
 print.psychnet_multilevel <- function(x, ...) {
   cat(sprintf("<psychnet_multilevel> %s networks (within + between)\n",
@@ -332,7 +365,7 @@ print.psychnet_multilevel <- function(x, ...) {
   invisible(x)
 }
 
-#' @rdname print.psychnet_multilevel
+#' @rdname psychnet_multilevel
 #' @param row.names,optional Ignored (S3 consistency).
 #' @return For `as.data.frame`, the two edge lists stacked with a leading
 #'   `level` column (`"within"` or `"between"`): columns `level`, `from`, `to`,
@@ -344,4 +377,36 @@ as.data.frame.psychnet_multilevel <- function(x, row.names = NULL,
                                       row.names = NULL, stringsAsFactors = FALSE)
   rbind(tag(as.data.frame(x$within), "within"),
         tag(as.data.frame(x$between), "between"))
+}
+
+#' @rdname psychnet_multilevel
+#' @return For `summary`, a data frame with one row per level (`"within"`,
+#'   `"between"`): columns `level`, `nodes`, `edges`, `mean_abs_weight` (0
+#'   for a network without edges) and `n` (the level's effective sample
+#'   size: pooled within-actor degrees of freedom, or the number of actors).
+#' @export
+summary.psychnet_multilevel <- function(object, ...) {
+  rows <- lapply(c("within", "between"), function(lv) {
+    net <- object[[lv]]
+    data.frame(level = lv, nodes = nrow(net$nodes), edges = nrow(net$edges),
+               mean_abs_weight = if (nrow(net$edges))
+                 mean(abs(net$edges$weight)) else 0,
+               n = as.integer(net$n %||% NA_integer_),
+               stringsAsFactors = FALSE)
+  })
+  do.call(rbind, rows)
+}
+
+#' @rdname psychnet_multilevel
+#' @return For `plot`, `x` invisibly, after drawing the within and between
+#'   networks side by side with `cograph::splot()` (a Suggested package; a
+#'   `psychnet_bad_input` error says so when it is not installed).
+#' @export
+plot.psychnet_multilevel <- function(x, ...) {
+  if (!requireNamespace("cograph", quietly = TRUE)) {
+    .psn_stop("Network plotting needs the 'cograph' package. Install it, or ",
+              "read the networks with as.data.frame() or summary().")
+  }
+  cograph::splot(x, ...)
+  invisible(x)
 }

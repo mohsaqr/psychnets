@@ -69,7 +69,7 @@ net_predict <- function(x, data = NULL, ...) {
 
   # --- Gaussian graphical model: closed form from the precision --------------
   if (is.null(x$precision)) {
-    stop(sprintf("net_predict() is not defined for a '%s' network.",
+    .psn_stop(sprintf("net_predict() is not defined for a '%s' network.",
                  x$method), call. = FALSE)
   }
   theta <- x$precision
@@ -87,51 +87,67 @@ net_predict <- function(x, data = NULL, ...) {
 .nodewise_predict <- function(x, data, encoded = FALSE) {
   nw <- x$nodewise
   if (isFALSE(nw$exact)) {
-    stop("net_predict() does not support mgm networks containing multi-level categorical nodes; the nodewise design cannot be represented per variable.",
+    .psn_stop("net_predict() does not support mgm networks containing multi-level categorical nodes; the nodewise design cannot be represented per variable.",
          call. = FALSE)
   }
   if (is.null(data))
-    stop(sprintf("`data` is required for predictability of a '%s' network.",
+    .psn_stop(sprintf("`data` is required for predictability of a '%s' network.",
                  x$method), call. = FALSE)
   if (!is.data.frame(data) && !is.matrix(data))
-    stop("`data` must be a data frame or matrix.", call. = FALSE)
+    .psn_stop("`data` must be a data frame or matrix.", call. = FALSE)
   labs <- x$nodes$label
   p <- length(labs)
   source_names <- nw$source_names %||% x$nodes$name %||% labs
   supplied_names <- if (is.data.frame(data)) names(data) else colnames(data)
-  if (!is.null(supplied_names)) {
+  # Select by name only when the names can identify columns (unique, none
+  # empty or missing -- `cbind(a, b > 0)` leaves an empty name); otherwise the
+  # columns are taken by position and must match the node count.
+  by_name <- !is.null(supplied_names) && !anyNA(supplied_names) &&
+    all(nzchar(supplied_names)) && !anyDuplicated(supplied_names) &&
+    !anyNA(source_names) && all(nzchar(source_names))
+  if (by_name) {
     columns <- if (all(source_names %in% supplied_names)) source_names
                else if (all(labs %in% supplied_names)) labs else NULL
     if (is.null(columns))
-      stop("`data` is missing columns for some network nodes.", call. = FALSE)
+      .psn_stop("`data` is missing columns for some network nodes.", call. = FALSE)
     data <- data[, columns, drop = FALSE]
   }
   if (ncol(data) != p)
-    stop("`data` columns do not match the network nodes.", call. = FALSE)
+    .psn_stop("`data` columns do not match the network nodes.", call. = FALSE)
   d <- as.data.frame(data, stringsAsFactors = FALSE)
-  for (j in seq_len(p)) {
+  # Encode every column to the estimator's 0-based category codes.
+  d[] <- lapply(seq_len(p), function(j) {
     v <- d[[j]]
     levels <- nw$category_levels[[j]]
+    if (is.logical(v)) v <- as.character(v)       # coded by its training levels
     if (!encoded && !is.null(levels)) {
       code <- match(as.character(v), as.character(levels))
+      # numeric 0/1 for a node trained on labels (a factor or logical): the
+      # values are already the estimator's codes
+      already_codes <- is.numeric(v) && all(is.na(code[!is.na(v)])) &&
+        all(v[!is.na(v)] %in% (seq_along(levels) - 1L))
+      if (already_codes) code <- v + 1L
       if (any(!is.na(v) & is.na(code)))
-        stop(sprintf("`data` contains an unseen category for node '%s'.", labs[j]),
+        .psn_stop(sprintf("`data` contains an unseen category for node '%s'.", labs[j]),
              call. = FALSE)
       v <- code - 1L
     } else if (is.factor(v)) {
       v <- as.integer(v) - 1L
+    } else if (is.character(v) && identical(sort(unique(stats::na.omit(v))),
+                                            c("FALSE", "TRUE"))) {
+      v <- as.numeric(v == "TRUE")                 # a logical column, uncoded node
     } else if (is.character(v)) {
       v <- as.integer(factor(v)) - 1L
     }
     if (!is.numeric(v))
-      stop("Every prediction column must be numeric or categorical.", call. = FALSE)
-    d[[j]] <- v
-  }
+      .psn_stop("Every prediction column must be numeric or categorical.", call. = FALSE)
+    v
+  })
   mat <- as.matrix(d)
   storage.mode(mat) <- "double"
   mat <- mat[stats::complete.cases(mat), , drop = FALSE]
   if (!nrow(mat))
-    stop("`data` needs at least one complete observation for prediction.",
+    .psn_stop("`data` needs at least one complete observation for prediction.",
          call. = FALSE)
   Xstd <- sweep(sweep(mat, 2L, nw$center, "-"), 2L, nw$scale, "/")
   rows <- lapply(seq_len(p), function(i) {
@@ -163,17 +179,36 @@ net_predict <- function(x, data = NULL, ...) {
   return(out)
 }
 
+# Whether a freshly built network has a defined node predictability, decided
+# from its fields (mirrors the branches of net_predict()):
+#   * nodewise models (ising / IsingSampler / mgm): need the fit data, and a
+#     one-coefficient-per-variable design (no multi-level categorical node);
+#   * relimp: the stored per-node R-squared;
+#   * Gaussian graphical models: a precision matrix.
+# Everything else (cor, tmfg's plain partial correlations without precision,
+# aggregated macro networks, panel GVAR parts, moderated mgm) has none.
+#' @noRd
+.psn_has_predictability <- function(net, data = NULL) {
+  if (!is.null(net$nodewise))
+    return(!isFALSE(net$nodewise$exact) && !is.null(data))
+  if (identical(net$method, "relimp") && !is.null(net$r2)) return(TRUE)
+  !is.null(net$precision)
+}
+
 # Compute node predictability once at fit time and store it on the node table,
 # so a plotter (cograph::splot) can self-draw the predictability ring straight
 # from the object -- the caller never assembles a pie vector by hand. The
 # `predictability_default` flag records which networks should show the ring
 # without being asked: glasso (the canonical GGM) only.
+#'
+#' Predictability is attached only where it is defined (see
+#' `.psn_has_predictability()`); for those networks any error in computing it
+#' is a real defect and propagates, rather than being swallowed.
 #' @noRd
 .attach_predictability <- function(net, data = NULL) {
-  pred <- tryCatch(
-    if (!is.null(net$nodewise)) .nodewise_predict(net, data, encoded = TRUE)
-    else net_predict(net, data = data),
-    error = function(e) NULL)
+  pred <- if (!.psn_has_predictability(net, data)) NULL
+          else if (!is.null(net$nodewise)) .nodewise_predict(net, data, encoded = TRUE)
+          else net_predict(net, data = data)
   if (!is.null(pred)) {
     v <- pmin(pmax(pred$predictability, 0), 1)
     net$nodes$predictability <- v[match(net$nodes$label, pred$node)]

@@ -6,7 +6,24 @@
 # edge predictor -> outcome carries the predictor's importance share. The
 # combinatorial sum over 2^(p-1) subsets is the documented exception to the
 # vectorisation rule. Certified by lmg_certificate(): a node's incoming shares
-# sum to its full-model R-squared (Shapley efficiency).
+# sum to its full-model R-squared (Shapley efficiency), and that full-model
+# R-squared equals the closed form 1 - 1/diag(solve(S)). Efficiency alone
+# telescopes for ANY set function (it would pass even if every subset R^2 were
+# wrong by the same factor); the closed form anchors the full model
+# independently of the subset solver.
+
+# Decomposition residual shared by relimp_network() and lmg_certificate():
+# max of (a) |sum of incoming shares - stored R^2| and (b) |stored R^2 - closed
+# form 1 - 1/diag(S^-1)|. (b) needs an invertible S; for a singular S (exactly
+# collinear predictors) the closed form does not exist and only (a) is checked.
+#' @noRd
+.lmg_residual <- function(raw_importance, r2, S) {
+  efficiency <- max(abs(colSums(raw_importance) - r2))
+  rc <- rcond(S)
+  if (!is.finite(rc) || rc < 1e-12) return(efficiency)
+  r2_closed <- 1 - 1 / diag(solve(S))
+  max(efficiency, max(abs(r2 - r2_closed)))
+}
 
 # Closed-form subset R-squared from the correlation matrix:
 #   R^2_{j|A} = S[j,A] %*% solve(S[A,A]) %*% S[A,j].
@@ -45,24 +62,30 @@
 
 #' Relative-importance (LMG / Shapley) certificate
 #'
-#' By Shapley efficiency, the importance shares a node receives from its
-#' predictors sum exactly to that node's full-model R-squared. Returns the
-#' maximum absolute deviation from that identity; near zero certifies the
-#' decomposition.
+#' Checks two identities. By Shapley efficiency, the importance shares a node
+#' receives from its predictors sum exactly to that node's full-model
+#' R-squared; and that full-model R-squared must equal the closed form
+#' \eqn{1 - 1 / (S^{-1})_{jj}}. The first alone cannot detect a wrong subset
+#' solver (efficiency holds for any set function), so the second anchors the
+#' full model independently. When `S` is singular (reciprocal condition number
+#' below 1e-12) the closed form does not exist and only efficiency is checked.
+#' The certificate does not verify the individual subset R-squared values
+#' between the empty and the full model.
 #'
 #' @param x A [psychnet] object produced by [relimp_network()].
-#' @return Maximum absolute deviation of incoming-share sums from the per-node
-#'   R-squared (scalar); 0 = exact decomposition.
+#' @return The larger of the two deviations (scalar); 0 = exact decomposition.
+#'   An `x` that is not a relimp network is an error of class
+#'   `psychnet_bad_input`.
 #' @examples
 #' S <- 0.4^abs(outer(1:5, 1:5, "-"))
 #' lmg_certificate(relimp_network(cor_matrix = S))
 #' @export
 lmg_certificate <- function(x) {
   if (!inherits(x, "psychnet") || !identical(x$method, "relimp")) {
-    stop("`x` must be a relimp network from relimp_network().", call. = FALSE)
+    .psn_stop("`x` must be a relimp network from relimp_network().", call. = FALSE)
   }
   weights <- if (!is.null(x$raw_importance)) x$raw_importance else x$weights
-  max(abs(colSums(weights) - x$r2))
+  .lmg_residual(weights, x$r2, x$cor_matrix)
 }
 
 #' Relative-importance network (LMG / Shapley)
@@ -76,20 +99,23 @@ lmg_certificate <- function(x) {
 #' @param data Numeric data frame or matrix (rows = observations). Optional if
 #'   `cor_matrix` is supplied.
 #' @param cor_matrix Optional correlation matrix.
+#' @param n Accepted and ignored. The decomposition is computed from the
+#'   correlation matrix alone; the argument exists so a uniform
+#'   `(cor_matrix =, n =)` call shared with the other estimators works.
 #' @param cor_method Correlation when `data` is supplied: `"pearson"` (default),
 #'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see [cor_auto()]).
 #' @param max_nodes Refuse to run above this many nodes (the cost grows as
-#'   `2^(p-1)` per node). Default 21.
+#'   `2^(p-1)` per node): a whole number >= 2. Default 21.
 #' @param normalized If `TRUE`, rescale each outcome's incoming importance
 #'   shares to sum to 1, matching `bootnet`/`relaimpo`'s normalized reporting.
 #'   The default `FALSE` keeps raw LMG shares that sum to the outcome R-squared.
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
-#' @param labels Optional node labels.
+#' @param labels Optional node labels, one unique label per network node.
 #' @return A `psychnet` object whose `$weights` is the directed importance matrix
 #'   (`weights[k, j]` = importance of `k` for outcome `j`), with `$r2` (per-node
 #'   full-model R-squared), `$cor_matrix`, and `$kkt` (the decomposition
-#'   residual). With `normalized = FALSE` (default) each outcome's incoming
+#'   residual, see [lmg_certificate()]). With `normalized = FALSE` (default) each outcome's incoming
 #'   shares sum to its R-squared (`colSums($weights) == $r2`); with
 #'   `normalized = TRUE` they are rescaled to sum to 1, `$raw_importance` holds
 #'   the unscaled shares, and `$kkt` (like [lmg_certificate()]) is computed from
@@ -104,29 +130,28 @@ lmg_certificate <- function(x) {
 #' S <- 0.4^abs(outer(1:5, 1:5, "-"))
 #' relimp_network(cor_matrix = S)
 #' @export
-relimp_network <- function(data = NULL, cor_matrix = NULL,
+relimp_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                            cor_method = c("pearson", "spearman", "kendall", "auto"),
                            max_nodes = 21L, normalized = FALSE,
                            na_method = c("pairwise", "listwise"), labels = NULL) {
-  cor_method <- match.arg(cor_method)
-  na_method <- match.arg(na_method)
-  if (is.null(cor_matrix)) {
-    ci <- .cor_input(data, method = cor_method, na_method = na_method)
-    S <- ci$S; n_obs <- ci$n
-    if (is.null(labels)) labels <- ci$labels
-  } else {
-    S <- tryCatch(.check_cor_matrix(cor_matrix), error = function(e)
-      stop("relimp_network() requires a symmetric positive-semidefinite matrix: ",
-           conditionMessage(e), call. = FALSE))
-    if (is.null(labels)) {
-      labels <- colnames(S)
-      if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))
-    }
-    n_obs <- NA_integer_
+  cor_method <- .psn_match_arg(cor_method)
+  na_method <- .psn_match_arg(na_method)
+  .psn_check_number(max_nodes, "max_nodes", lower = 2, whole = TRUE)
+  .psn_check_flag(normalized, "normalized")
+  # The LMG decomposition needs a covariance (PSD) matrix; name that
+  # requirement in the error rather than only the generic matrix check.
+  if (!is.null(cor_matrix)) {
+    tryCatch(.check_cor_matrix(cor_matrix), psychnet_bad_input = function(e)
+      .psn_stop("relimp_network() requires a symmetric positive-semidefinite ",
+                "matrix: ", conditionMessage(e)))
   }
+  inp <- .network_input(data, cor_matrix, n, cor_method, na_method, labels,
+                        n_role = "ignored")
+  S <- inp$S; labels <- inp$labels
+  n_obs <- if (is.null(cor_matrix)) inp$n else NA_integer_
   p <- ncol(S)
   if (p > max_nodes) {
-    stop(sprintf("relimp_network() refuses p = %d > max_nodes = %d (cost grows as 2^(p-1)).",
+    .psn_stop(sprintf("relimp_network() refuses p = %d > max_nodes = %d (cost grows as 2^(p-1)).",
                  p, max_nodes), call. = FALSE)
   }
 
@@ -151,7 +176,7 @@ relimp_network <- function(data = NULL, cor_matrix = NULL,
   # certificate reads them, else falls back to $weights (raw == weights here).
   extra <- list(cor_matrix = S, r2 = stats::setNames(r2, labels),
                 normalized = isTRUE(normalized),
-                kkt = max(abs(colSums(raw_G) - r2)))
+                kkt = .lmg_residual(raw_G, r2, S))
   if (isTRUE(normalized)) extra$raw_importance <- raw_G
 
   .new_psychnet(

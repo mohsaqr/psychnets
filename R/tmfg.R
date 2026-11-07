@@ -110,7 +110,7 @@
 #' @export
 tmfg_certificate <- function(x) {
   if (!inherits(x, "psychnet") || is.null(x$adjacency)) {
-    stop("`x` must be a TMFG network from tmfg_network().", call. = FALSE)
+    .psn_stop("`x` must be a TMFG network from tmfg_network().", call. = FALSE)
   }
   adj <- x$adjacency
   p <- ncol(adj)
@@ -146,11 +146,19 @@ tmfg_certificate <- function(x) {
 #'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see [cor_auto()]).
 #' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
-#' @param labels Optional node labels.
+#' @param labels Optional node labels, one unique label per network node.
+#' @details The graph always has exactly `3(p - 2)` edges in `$adjacency`
+#'   (that is what [tmfg_certificate()] checks). `$weights` carries the signed
+#'   correlation on each retained edge, so a retained edge whose correlation is
+#'   exactly zero is in `$adjacency` but has weight 0 and therefore does not
+#'   appear in `$edges`, in `as.data.frame()`, or in the printed edge count.
+#'   With continuous data this happens only for a correlation matrix that has
+#'   exact zeros (for example a hand-built or block-diagonal `cor_matrix`).
 #' @return A `psychnet` object whose `$weights` is the filtered (signed)
-#'   correlation matrix on the retained edges, with `$adjacency`, `$cliques`,
-#'   `$separators` (the chordal decomposition used by [logo_network()]), and
-#'   `$cor_matrix`.
+#'   correlation matrix on the retained edges, with `$adjacency` (the
+#'   `3(p - 2)`-edge TMFG graph, including any retained edge of weight 0),
+#'   `$cliques`, `$separators` (the chordal decomposition used by
+#'   [logo_network()]), and `$cor_matrix`.
 #' @references Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network
 #'   filtering for big data: Triangulated maximally filtered graph. *Journal of
 #'   Complex Networks*, 5(2), 161-178. \doi{10.1093/comnet/cnw015}
@@ -162,22 +170,14 @@ tmfg_certificate <- function(x) {
 tmfg_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                          cor_method = c("pearson", "spearman", "kendall", "auto"),
                          na_method = c("pairwise", "listwise"), labels = NULL) {
-  cor_method <- match.arg(cor_method)
-  na_method <- match.arg(na_method)
-  if (is.null(cor_matrix)) {
-    ci <- .cor_input(data, method = cor_method, na_method = na_method)
-    S <- ci$S; n_obs <- ci$n
-    if (is.null(labels)) labels <- ci$labels
-  } else {
-    S <- .check_cor_matrix(cor_matrix)
-    if (is.null(labels)) {
-      labels <- colnames(S)
-      if (is.null(labels)) labels <- paste0("V", seq_len(ncol(S)))
-    }
-    n_obs <- NA_integer_
-  }
+  cor_method <- .psn_match_arg(cor_method)
+  na_method <- .psn_match_arg(na_method)
+  inp <- .network_input(data, cor_matrix, n, cor_method, na_method, labels,
+                        n_role = "ignored")
+  S <- inp$S; labels <- inp$labels
+  n_obs <- if (is.null(cor_matrix)) inp$n else NA_integer_
   p <- ncol(S)
-  if (p < 4L) stop("TMFG requires at least 4 variables.", call. = FALSE)
+  if (p < 4L) .psn_stop("TMFG requires at least 4 variables.", call. = FALSE)
 
   built <- .tmfg_build(abs(S))
   g <- S * built$adj

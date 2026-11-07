@@ -305,6 +305,12 @@
     }
   }
   beta_thr <- lapply(fits, thr_side)
+  # Did the threshold remove any selected coefficient? Then the returned graph
+  # is not the glmnet optimum the self-certificate grades (glasso/huge rule).
+  thresholded <- any(vapply(seq_len(p), function(i) {
+    before <- unlist(fits[[i]]$beta_sel); after <- unlist(beta_thr[[i]])
+    any(before != 0 & after == 0)
+  }, logical(1)))
 
   # Signed magnitude of node `i`'s thresholded effect of predictor `j`:
   #   magnitude = mean(|coef columns for j|) (mgm side_mag),
@@ -358,7 +364,11 @@
                 n_obs = n, data = mat,
                 extra = list(types = stats::setNames(types, labels),
                              levels = stats::setNames(as.integer(levels_v), labels),
-                             kkt = worst_kkt, threshold = threshold,
+                             kkt = if (thresholded) NA_real_ else worst_kkt,
+                             fit_kkt = worst_kkt,
+                             certificate_target = if (thresholded)
+                               "pre_threshold_fit" else "returned_network",
+                             threshold = threshold,
                              native = FALSE,
                              nlambda = nlambda,
                              lambda_min_ratio = lambda_min_ratio,

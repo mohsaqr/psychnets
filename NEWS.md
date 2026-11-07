@@ -1,3 +1,161 @@
+# psychnets 0.7.0
+
+This release follows a full function-by-function review of the package. Most
+changes are input validation and conditions that were silent before; the ones
+marked **(numbers change)** alter returned values, as the numerical-stability
+policy requires for a minor version.
+
+## Changes to returned numbers
+
+* **(numbers change)** `net_stability()` computes the CS-coefficient with the
+  rule of `bootnet::corStability()`, the source of the 0.25/0.5 guidance:
+  Pearson correlations (`cor0`: 0 when one side is constant) and strict `>`
+  for both `threshold` and `certainty`. New `cor_method = c("pearson",
+  "spearman")`; Spearman was the only option before. Undefined correlations
+  still count as failing (bootnet drops them). `net_casedrop_reliability()`
+  uses the same rule and its `cor_method` default changes from `"spearman"` to
+  `"pearson"`. `threshold` and `certainty` must lie in (0, 1).
+* **(numbers change)** `mgm_fit()`: gaussian nodes are solved to optimality
+  (coordinate descent on the Gram matrix plus an exact active-set solve)
+  instead of stopping after 100 sweeps. On collinear items the residual falls
+  from about 5e-5 (uncertified) to about 1e-15, and the fit is faster. Default
+  edge weights move by up to about 1e-7 (3.4e-8 on the golden data, no edge
+  added or removed); the golden fixture was regenerated. A fit that still
+  misses its optimum warns `psychnet_no_converge`.
+* **(numbers change for weighted fits)** `mgm_fit()`, `ising_fit()` and
+  `ising_sampler()` rescale `weights` to a maximum of 1, as `mgm::mgm()`
+  does, so only relative weights matter (weights summing to 1 used to return
+  an empty network). With `min_sum`, the rescaling uses the retained rows only.
+* **(numbers change)** `net_bridge(normalize = TRUE)`: the 2-step bridge
+  expected influence is normalized by the number of nodes, as in
+  `networktools::bridge()`, not the number of communities.
+* `condition()` reads `value` in the moderator's own coding: a level of a
+  categorical moderator (1/2, `"treat"`, ...) or the raw scale of a continuous
+  one. It used an internal 0-based code or a z value, and a value that is not
+  a level silently returned the reference group; that is now an error.
+* `panel_gvar()`: character waves that are all numbers are ordered
+  numerically ("10" used to sort before "2", fitting the waves out of time
+  order); other character waves warn `psychnet_wave_order`. The Fisher-scoring
+  polish halves its step instead of stopping, removing spurious
+  `psychnet_no_converge` warnings.
+* `net_boot()` and the case-dropping verbs catch a failing resample inside its
+  own draw, so results are identical for any `cores` (one failing draw used to
+  void a whole forked chunk).
+
+## Certificates
+
+* `mgm_fit()`: when the LW/HW threshold removes a coefficient, `$kkt` is `NA`
+  with the pre-threshold residual in `$fit_kkt`, as for every other
+  post-thresholded estimator (it reported the pre-threshold residual as
+  certified).
+* `ising_sampler()` warns `psychnet_separation` under (quasi-)complete
+  separation and no longer certifies such a fit. Separation is detected by a
+  drift test (the objective still rising along the direction the fit moves),
+  so an extreme but finite fit is still certified.
+* A binary node left constant by `min_sum` filtering or zero weights is
+  degenerate (no finite intercept): `psychnet_degenerate_sample` warning and no
+  certificate, instead of a certified fit with a huge threshold.
+* `lmg_certificate()` also checks each node's full-model R^2 against its
+  closed form (the efficiency identity alone holds for any set function).
+* `logo_network()` refuses ill-conditioned clique blocks (`psychnet_singular`)
+  instead of returning a network that fails its own certificate.
+* `ggm_modselect()` reports failed candidate fits (`psychnet_fit_failed`) and
+  uncertified results (`psychnet_no_converge`); `ggm_support_kkt()`
+  symmetrizes a triangular support; `print()` labels the TMFG and relimp
+  certificates as structural.
+
+## Input handling
+
+* Every input-contract error is a classed condition
+  (`psychnet_bad_input`, subclass of `psychnet_error`), and `threshold`,
+  `alpha`, `n`, `labels`, `gamma`, `nlambda`, `lambda_min_ratio`, `ci`,
+  `cores`, `iter`, `drop_prop`, `moderators` and the certificate helpers'
+  arguments are validated. `threshold = TRUE` (qgraph's logical form) and
+  other non-numeric thresholds used to return an empty network.
+* Data frames: ordered factors are kept as ordinal items (so
+  `cor_method = "auto"` treats them like `qgraph::cor_auto()`); other
+  non-numeric columns are dropped with a `psychnet_dropped_columns` message and
+  constant columns with a `psychnet_constant_variable` warning. `ising_fit()`
+  codes logical and two-level factor columns 0/1 instead of dropping them, and
+  `net_predict()` encodes new data with the same training coding.
+* Significance thresholding with too few observations (df <= 0) errors
+  (`psychnet_degenerate_sample`) instead of deleting every edge;
+  `pcor_network()` warns `psychnet_singular` for a singular correlation matrix.
+* `psychnet()` warns `psychnet_ignored_argument` when `threshold` or `gamma`
+  is given to a method that does not use it, and refuses several methods.
+* Resampling verbs report the estimator's own error (`psychnet_estimation_failed`)
+  instead of "estimation failed", and a failed draw's message
+  (`psychnet_resample_failed`).
+* `net_compare()`: the edge table gains `p_raw`, the unadjusted permutation
+  p-value, next to `p_value` (adjusted by `p_adjust`; `significant` uses it).
+  Previously the unadjusted values were discarded once an adjustment was
+  requested. The global M and S tests are never adjusted.
+* `net_compare()` refuses infinite values, lets a `gamma`/`na_method` you
+  supply override a group's (warning `psychnet_estimator_mismatch`), and
+  labels group-mode edges with the group's `labels`.
+* Group mode follows factor level order, refuses empty-string levels and
+  levels with fewer than 3 rows, and warns for small levels and for rows with
+  a missing group. Event data refuse missing actors or sessions.
+* `net_centralities(centrality_fn =)` aligns a named result by node label;
+  `net_edge_betweenness()` treats an asymmetric matrix as directed;
+  `net_bridge()`/`net_aggregate()` refuse duplicated or unknown community
+  labels; `net_aggregate()`/`redundancy()` report listwise-dropped rows.
+  `net_aggregate()` leaves out a column whose community is `NA` (e.g. an ID)
+  before any preprocessing, and orders numeric communities numerically
+  (`"2"` before `"10"`); character communities stay alphabetical.
+* `relimp_network()` gains an ignored `n` argument (as `tmfg_network()`).
+
+## New verbs
+
+* `scale_within()` centers each variable within persons and, by default,
+  divides by the person's own SD (the within-person standardization of
+  `mlVAR::mlVAR(scaleWithin = TRUE)`, which it reproduces exactly), as a data
+  step before any analysis -- e.g. a paired `net_compare()` of two occasions'
+  within-person networks. It warns (`psychnet_mirror_deviations`) when no
+  person has more than two observations, where the occasions' deviations are
+  mirror images and their networks identical by construction, and sets values
+  without within-person variation to `NA` (`psychnet_constant_within`).
+* `psychnet(within = "person")` applies the same scaling inside the front door
+  (over all rows, before `group` splits them), drops the person column from
+  the nodes, and records each row's person, so
+  `net_compare(nets, c(1, 4))` compares two occasions paired by person, by
+  default (independent of row order; persons seen in one level only are left
+  out with a `psychnet_rows_dropped` warning; `paired = FALSE` overrides).
+  Other groups keep the independent-groups default.
+
+## New accessors
+
+* `as.data.frame()` for `net_stability()` results (`what = c("table", "cs",
+  "correlations")`) and for moderated MGM fits; `as.data.frame()` on a
+  bootstrap gains `what = c("edges", "centrality", "predictability",
+  "thresholded")`; on a panel GVAR, `what = "path"` (EBIC lambda path) and
+  `what = "covariance"`. `psychnet_multilevel` gains `summary()` and `plot()`.
+* **(numbers change)** `net_split_reliability()`: a split in which one half
+  network is empty and the other is not has edge correlation 0 (bootnet's
+  `cor0()`); such splits used to be dropped, inflating the mean correlation.
+  Only splits where both halves are constant are undefined.
+* `net_split_reliability()` gains `n_valid` and reports NA rather than NaN;
+  stability and case-drop tables gain `actual_drop` and `n_valid`.
+
+## Plots
+
+* All plots use the Okabe-Ito palette. Significance is shown by filled vs open
+  points and solid vs dashed segments, series by line type and point shape as
+  well as colour, box-matrix cells print the sign, and the bridge plot styles
+  nodes by community. Every plot restores `par()`.
+
+## Documentation
+
+* S3 methods are documented on the page of the verb that creates the object
+  (`?net_boot` covers its `print`, `plot` and `as.data.frame` methods); the
+  `psychnet` object has its own page, `?"psychnet-class"`. The manual shrinks
+  from 69 to 48 topics.
+* `cor_auto()` documents that its polyserial is the Olsson ad-hoc estimator;
+  `net_edge_betweenness()` returns path counts; `net_centralities()`
+  betweenness and closeness are normalized (as igraph, unlike
+  `qgraph::centrality_auto()`); the crosswalk maps qgraph's
+  `EBICglasso(refit = TRUE)` to `refit = "unregularized"`.
+
 # psychnets 0.6.2
 
 ## Documentation

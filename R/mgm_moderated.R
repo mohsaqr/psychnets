@@ -4,8 +4,10 @@
 # precision); only the argument names are adapted to psychnet conventions
 # (gamma, rule, types) and the outputs are wrapped as psychnet objects. A chosen
 # variable moderates every pairwise edge; group-structure differences appear as
-# nonzero moderator x endpoint interactions. The fit is glmnet-based (the
-# reference path); there is no base engine for the moderated model.
+# nonzero moderator x endpoint interactions. Two engines: the default base
+# engine runs every nodewise fit on psychnets' own penalized-IRLS kernel
+# (R/lasso_glm.R, KKT-certified, gaussian + binary nodes); `native = FALSE`
+# uses glmnet, the reference path, which also covers multi-level categoricals.
 
 # Per-node main-effect magnitude for V_target (mean |coef| over its dummies).
 #' @noRd
@@ -35,6 +37,10 @@
 # Conditioning indicator for one interaction coefficient: for a categorical
 # moderator, 1 when the dummy level equals mod_value, else 0; for a continuous
 # moderator, mod_value itself.
+#' `mod_value` is on the INTERNAL scale: the 0-based level code of a
+#' categorical moderator, the standardized (z) value of a continuous one --
+#' condition() maps the user's value onto it with `.mmg_moderator_value()`.
+#' The model-matrix dummy of a categorical moderator is named "V<k>.<code>".
 #' @noRd
 .mmg_cond_indicator <- function(coef_name, moderator, mod_value, type_mod) {
   parts <- strsplit(coef_name, ":", fixed = TRUE)[[1]]
@@ -44,11 +50,51 @@
   if (type_mod == "c") {
     dot_parts <- strsplit(stripped, ".", fixed = TRUE)[[1]]
     if (length(dot_parts) < 2 || dot_parts[2] == "") return(mod_value)
-    lev <- suppressWarnings(as.numeric(dot_parts[2]))
-    if (is.na(lev)) return(0)
-    return(if (lev == mod_value) 1 else 0)
+    if (!grepl("^[0-9]+$", dot_parts[2])) return(0)
+    lev <- as.integer(dot_parts[2])
+    return(if (identical(lev, as.integer(mod_value))) 1 else 0)
   }
   mod_value
+}
+
+# Map a user-supplied moderator value onto the internal scale the fit uses:
+# the 0-based level code for a categorical moderator (matched against the
+# moderator's ORIGINAL levels, so a 1/2-coded or labelled moderator is read in
+# the user's own coding), the z value (value - mean) / sd for a continuous one
+# (the moderator is standardized internally, mgm's scale = TRUE). Anything that
+# is not one of those is refused by class.
+#' @noRd
+.mmg_moderator_value <- function(object, value) {
+  mod <- object$moderator
+  mod_label <- object$labels[mod]
+  if (length(value) != 1L || is.na(value)) {
+    .psn_stop(sprintf(
+      "`value` must be a single non-missing moderator value for '%s'.",
+      mod_label))
+  }
+  if (object$types[mod] == "c") {
+    levs <- object$moderator_levels
+    key <- if (is.factor(value) || is.logical(value)) as.character(value) else value
+    if (!is.character(key) && !is.numeric(key)) {
+      .psn_stop("`value` must be a number or a level label.")
+    }
+    # factor() labels numeric levels with as.character(), so the same coercion
+    # of a numeric value finds its level exactly.
+    idx <- match(as.character(key), levs)
+    if (is.na(idx)) {
+      .psn_stop(sprintf(paste0(
+        "`value` = %s is not a level of the categorical moderator '%s'; ",
+        "its levels are: %s."), format(value), mod_label,
+        paste(levs, collapse = ", ")))
+    }
+    return(idx - 1L)
+  }
+  if (!is.numeric(value) || !is.finite(value)) {
+    .psn_stop(sprintf(paste0(
+      "`value` for the continuous moderator '%s' must be a single finite ",
+      "number on its original scale."), mod_label))
+  }
+  (value - object$moderator_center) / object$moderator_scale
 }
 
 # Apply the requested mgm threshold to a coefficient vector.
@@ -93,18 +139,18 @@
   if (is_cat) {
     fit <- .nodewise_ebic(X, y - 1, "binomial", gamma, nlambda,
                           lambda_min_ratio)
-    b <- fit$beta
-    b <- .mmg_threshold(b, threshold, npar, n)
+    b <- .mmg_threshold(fit$beta, threshold, npar, n)
     # Split the logit coefficient into glmnet's symmetric 2-class convention.
     return(list(beta = NULL, beta_list = list(-b / 2, b / 2),
                 col_names = colnames(X), multinomial = TRUE,
-                lambda = fit$lambda, kkt = fit$kkt))
+                lambda = fit$lambda, kkt = fit$kkt, converged = fit$converged,
+                thresholded = any(fit$beta != 0 & b == 0)))
   }
   fit <- .nodewise_ebic(X, y, "gaussian", gamma, nlambda, lambda_min_ratio)
-  b <- fit$beta
-  b <- .mmg_threshold(b, threshold, npar, n)
+  b <- .mmg_threshold(fit$beta, threshold, npar, n)
   list(beta = b, col_names = colnames(X), multinomial = FALSE,
-       lambda = fit$lambda, kkt = fit$kkt)
+       lambda = fit$lambda, kkt = fit$kkt, converged = fit$converged,
+       thresholded = any(fit$beta != 0 & b == 0))
 }
 
 # Fit the moderated MGM (nodewise lasso + EBIC + LW threshold + AND/OR
@@ -117,15 +163,17 @@
 #' @noRd
 .mmg_estimate <- function(mat, types, moderator, gamma, rule, threshold,
                           labels, level = NULL, engine = "base",
-                          nlambda = 100L, lambda_min_ratio = 0.01) {
+                          nlambda = 100L, lambda_min_ratio = 0.01,
+                          moderator_levels = NULL) {
   if (engine == "glmnet" && !requireNamespace("glmnet", quietly = TRUE)) {
-    stop("native = FALSE needs the 'glmnet' package; install it, or keep ",
+    .psn_stop("native = FALSE needs the 'glmnet' package; install it, or keep ",
          "native = TRUE (the default, which uses the base-R kernel).",
          call. = FALSE)
   }
-  stopifnot(length(moderator) == 1L, moderator >= 1, moderator <= ncol(mat))
+  stopifnot("internal: `moderator` is one column index" =
+              length(moderator) == 1L && moderator >= 1 && moderator <= ncol(mat))
   if (ncol(mat) < 3L)
-    stop("Moderated MGM requires at least three variables (two endpoints and a moderator).",
+    .psn_stop("Moderated MGM requires at least three variables (two endpoints and a moderator).",
          call. = FALSE)
   # The base kernel is a binomial solver: it covers gaussian + binary nodes, the
   # documented mgm_fit() scope. A multi-level categorical needs the multinomial
@@ -135,7 +183,7 @@
                     function(j) length(unique(mat[, j])), integer(1))
     if (length(n_lev) && any(n_lev > 2L)) {
       bad <- which(types == "c")[n_lev > 2L]
-      stop(sprintf(paste0(
+      .psn_stop(sprintf(paste0(
         "Column(s) %s are categorical with more than 2 levels; the base kernel ",
         "supports gaussian and binary (0/1) nodes only. One-hot encode them, or ",
         "pass native = FALSE to use the multinomial glmnet engine."),
@@ -145,6 +193,18 @@
   data <- as.data.frame(mat)
   p <- ncol(data)
   scale_on <- any(types == "g")
+  # The moderator's own coding, kept so condition() can read a value on the
+  # user's scale: original level labels (in code order) for a categorical
+  # moderator, the mean/sd it is standardized by for a continuous one.
+  if (types[moderator] == "c") {
+    moderator_levels <- moderator_levels %||%
+      as.character(sort(unique(mat[, moderator])))
+    moderator_center <- NA_real_; moderator_scale <- NA_real_
+  } else {
+    moderator_levels <- NULL
+    moderator_center <- mean(mat[, moderator])
+    moderator_scale <- stats::sd(mat[, moderator])
+  }
   # Standardize continuous columns to unit variance up front (mgm scale = TRUE):
   # without this the gaussian main effects and edges carry each variable's SD and
   # diverge from mgm. Must happen here -- the moderated path bypasses mgm_fit's
@@ -207,11 +267,13 @@
       LL_lambda <- -0.5 * ((1 - fit$dev.ratio) * fit$nulldev) + LL_sat
       EBIC <- -2 * LL_lambda + n_nb * log(n) + 2 * gamma * n_nb * log(npar)
       idx <- which.min(EBIC)
-      beta_sel <- lapply(beta_list, function(B) B[, idx])
-      beta_sel <- lapply(beta_sel, .mmg_threshold, threshold = threshold,
+      beta_raw <- lapply(beta_list, function(B) B[, idx])
+      beta_sel <- lapply(beta_raw, .mmg_threshold, threshold = threshold,
                          npar = npar, n = n)
       return(list(beta = NULL, beta_list = beta_sel, col_names = colnames(X),
-                  multinomial = TRUE, lambda = fit$lambda[idx]))
+                  multinomial = TRUE, lambda = fit$lambda[idx],
+                  thresholded = any(unlist(beta_raw) != 0 &
+                                      unlist(beta_sel) == 0)))
     }
 
     glm_args <- list(x = X, y = y, family = "gaussian", alpha = 1,
@@ -226,10 +288,10 @@
     LL_lambda <- -0.5 * ((1 - fit$dev.ratio) * fit$nulldev) + LL_sat
     EBIC <- -2 * LL_lambda + n_nb * log(n) + 2 * gamma * n_nb * log(npar)
     idx <- which.min(EBIC)
-    b <- beta_path[, idx]
-    b <- .mmg_threshold(b, threshold, npar, n)
+    b_raw <- beta_path[, idx]
+    b <- .mmg_threshold(b_raw, threshold, npar, n)
     list(beta = b, col_names = colnames(X), multinomial = FALSE,
-         lambda = fit$lambda[idx])
+         lambda = fit$lambda[idx], thresholded = any(b_raw != 0 & b == 0))
   })
 
   pw_alive <- matrix(FALSE, p, p)
@@ -260,12 +322,24 @@
 
   # Worst nodewise KKT residual: the base kernel certifies every nodewise fit
   # against its own convex objective. The glmnet path carries no such residual.
-  kkt <- if (engine == "base")
+  # The LW/HW threshold edits the penalized solution afterwards, so when it
+  # removed a coefficient the network is not the certified optimum: `kkt` is
+  # NA and the residual of the penalized fits is kept as `fit_kkt`.
+  fit_kkt <- if (engine == "base")
     max(vapply(fits, function(f) f$kkt %||% NA_real_, numeric(1))) else NA_real_
+  thresholded <- any(vapply(fits, function(f) isTRUE(f$thresholded), logical(1)))
+  if (engine == "base") .warn_nodewise_convergence(fits, labels, "mgm_fit")
 
   structure(list(fits = fits, moderator = moderator, p = p, types = types,
                  level = level, labels = labels, n = n, data = mat,
-                 pw_alive = pw_alive, int_alive = int_alive, kkt = kkt,
+                 pw_alive = pw_alive, int_alive = int_alive,
+                 kkt = if (thresholded) NA_real_ else fit_kkt,
+                 fit_kkt = fit_kkt,
+                 certificate_target = if (thresholded) "pre_threshold_fit" else
+                   "returned_network",
+                 moderator_levels = moderator_levels,
+                 moderator_center = moderator_center,
+                 moderator_scale = moderator_scale,
                  engine = engine,
                  params = list(gamma = gamma, rule = rule, threshold = threshold,
                                nlambda = nlambda,
@@ -342,26 +416,65 @@
 #' `mgm::condition()`: it applies the AND-rule pre-filter, absorbs the moderator
 #' value into the main-effect coefficients, and re-aggregates the pairwise edges.
 #'
+#' `value` is always read on the moderator's **own** scale. For a categorical
+#' moderator it is one of the levels observed in the data, in the coding the
+#' data used: `1`/`2` for a moderator coded 1/2, `"treat"` for a factor level
+#' `"treat"` (the internal 0-based level code is never exposed). For a
+#' continuous moderator it is a value on the raw scale; the moderator is
+#' standardized internally (mgm's `scale = TRUE`), and the value is mapped to
+#' `(value - mean) / sd` before conditioning, so `value = mean(moderator)` gives
+#' the network at the average moderator. (`mgm::condition()` instead takes the
+#' value on its internal standardized scale: `condition(fit, v)` here equals
+#' `mgm::condition(ref, list(k = (v - mean) / sd))`.)
+#'
 #' @param object A `psychnet_moderated` object from `mgm_fit(..., moderators=)`.
-#' @param value Moderator value to condition on (e.g. `0` or `1` for a binary
-#'   moderator, or any numeric for a continuous one).
+#' @param value A single moderator value to condition on: a level of a
+#'   categorical moderator (number, label, factor or logical, as coded in the
+#'   data), or a finite number on the raw scale of a continuous one.
 #' @param rule Symmetrization rule; defaults to the rule used at fit time.
-#' @return A `psychnet` network object (the moderator node carries no edges).
+#' @param x A `psychnet_moderated` object.
+#' @param row.names,optional Standard [as.data.frame()] arguments; ignored.
+#' @param ... Unused.
+#' @return `condition()` returns a `psychnet` network object (the moderator node
+#'   carries no edges), with `$mod_value` the value conditioned on.
+#'
+#'   `as.data.frame()` on the moderated fit returns, with `value = NULL`, one
+#'   row per pair of nodes joined by a main effect or a moderation effect, with
+#'   columns `from`, `to`, `main_effect` (aggregated magnitude of the pairwise
+#'   main effect, mgm convention: mean absolute nodewise estimate, zero when the
+#'   pair does not survive `rule`), `interaction` (aggregated magnitude of the
+#'   moderator x pair three-way interaction, `NA` for a pair that includes the
+#'   moderator itself), `moderated` (logical: `interaction > 0`) and
+#'   `involves_moderator`. With a `value`, it returns the tidy edge list
+#'   (`from`, `to`, `weight`) of `condition(x, value)`.
+#'
+#'   `print()` on the moderated fit shows the number of nodes, the moderator
+#'   and the fit settings, and returns `x` invisibly.
+#'
+#'   Errors of class `psychnet_bad_input` when `value` is missing, not length
+#'   one, not a level of a categorical moderator, or not a finite number for a
+#'   continuous one.
 #' @examples
 #' set.seed(1)
 #' x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
-#' mod <- rep(0:1, each = 200)
-#' y <- x1 * (mod == 1) + stats::rnorm(400)   # x1-y edge only when mod == 1
+#' mod <- rep(1:2, each = 200)                 # moderator coded 1/2
+#' y <- x1 * (mod == 2) + stats::rnorm(400)   # x1-y edge only when mod == 2
 #' d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
-#' fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4)
-#' condition(fit, value = 0)   # no x1-y edge
-#' condition(fit, value = 1)   # the x1-y edge appears
+#' fit <- mgm_fit(d, types = c("g", "g", "g", "c"), moderators = "mod")
+#' fit
+#' as.data.frame(fit)            # main and moderation effects per edge
+#' condition(fit, value = 1)     # no x1-y edge
+#' condition(fit, value = 2)     # the x1-y edge appears
+#' as.data.frame(fit, value = 2) # the same network as a tidy edge list
 #' @export
 condition <- function(object, value, rule = NULL) {
-  stopifnot(inherits(object, "psychnet_moderated"))
+  if (!inherits(object, "psychnet_moderated")) {
+    .psn_stop("`object` must be a moderated fit from mgm_fit(..., moderators = ).")
+  }
   if (is.null(rule)) rule <- object$params$rule
-  rule <- match.arg(rule, c("AND", "OR"))
-  wadj <- .mmg_condition_wadj(object, value, rule)
+  rule <- .psn_match_arg(rule, c("AND", "OR"))
+  internal <- .mmg_moderator_value(object, value)
+  wadj <- .mmg_condition_wadj(object, internal, rule)
   .new_psychnet(wadj, object$labels, method = "mgm_moderated",
                 directed = FALSE, n_obs = object$n, data = object$data,
                 extra = list(types = stats::setNames(object$types, object$labels),
@@ -369,25 +482,47 @@ condition <- function(object, value, rule = NULL) {
                              rule = rule))
 }
 
-#' Print a moderated MGM fit
-#'
-#' @param x A `psychnet_moderated` object.
-#' @param ... Unused.
-#' @return `x`, invisibly. Prints the number of nodes, the moderator, and the
-#'   fit settings.
-#' @examples
-#' set.seed(1)
-#' x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
-#' mod <- rep(0:1, each = 200)
-#' y <- x1 * (mod == 1) + stats::rnorm(400)
-#' d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
-#' print(mgm_fit(d, types = c("g", "g", "g", "c"), moderators = 4))
+#' @describeIn condition Tidy table of the moderated fit: per-edge main and
+#'   moderation effects, or (with `value`) the conditioned edge list.
+#' @export
+as.data.frame.psychnet_moderated <- function(x, row.names = NULL,
+                                             optional = FALSE, ...,
+                                             value = NULL) {
+  if (!is.null(value)) return(as.data.frame(condition(x, value)))
+  p <- x$p; mod <- x$moderator; fits <- x$fits
+  pairs <- utils::combn(p, 2)
+  rows <- lapply(seq_len(ncol(pairs)), function(k) {
+    i <- pairs[1, k]; j <- pairs[2, k]
+    side <- c(.mmg_main_mag(fits[[i]], j), .mmg_main_mag(fits[[j]], i))
+    main <- if (x$pw_alive[i, j]) mean(side) else 0
+    with_mod <- i == mod || j == mod
+    inter <- if (with_mod) NA_real_ else if (x$int_alive[i, j]) {
+      mean(c(.mmg_int_mag(fits[[i]], j, mod), .mmg_int_mag(fits[[j]], i, mod),
+             .mmg_int_mag(fits[[mod]], i, j)))
+    } else 0
+    data.frame(from = x$labels[i], to = x$labels[j], main_effect = main,
+               interaction = inter, moderated = if (with_mod) NA else inter > 0,
+               involves_moderator = with_mod, stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  keep <- out$main_effect > 0 | (!is.na(out$interaction) & out$interaction > 0)
+  out <- out[keep, , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+#' @describeIn condition The moderated fit: nodes, moderator and settings.
 #' @export
 print.psychnet_moderated <- function(x, ...) {
   cat(sprintf("<psychnet_moderated> %d nodes, moderator = %s\n",
               x$p, x$labels[x$moderator]))
   cat(sprintf("  gamma = %.3g, rule = %s, threshold = %s\n",
               x$params$gamma, x$params$rule, x$params$threshold))
-  cat("  condition(fit, value) to extract the network at a moderator value.\n")
+  if (identical(x$types[x$moderator], "c") && length(x$moderator_levels)) {
+    cat(sprintf("  moderator levels: %s\n",
+                paste(x$moderator_levels, collapse = ", ")))
+  }
+  cat("  as.data.frame(fit) for main and moderation effects;",
+      "condition(fit, value) for the network at a moderator value.\n")
   invisible(x)
 }

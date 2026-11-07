@@ -18,7 +18,12 @@ ising_fit(
 )
 }
 \arguments{
-\item{data}{Binary (0/1) data frame or matrix (rows = observations).}
+\item{data}{Binary data frame or matrix (rows = observations). Columns may
+be numeric 0/1, logical, or two-level factors (the first level is coded 0).
+Any other column -- a numeric column not coded 0/1 (e.g. 1/2), a factor
+with more than two levels, a character column -- is an error naming it,
+never a silently dropped node. A constant column carries no information
+and is dropped.}
 
 \item{gamma}{EBIC hyperparameter. Default 0.25.}
 
@@ -35,7 +40,10 @@ it are dropped before fitting. \code{NULL} (default) keeps every row.}
 
 \item{weights}{Optional non-negative observation weights, one per input row
 after missing-data preparation. When \code{min_sum} is used, weights are filtered
-alongside their corresponding rows. \code{NULL} (default) is unweighted.}
+alongside their corresponding rows. Weights are rescaled to a maximum of 1
+(the \code{mgm::mgm()} convention), so only their relative sizes matter:
+\code{weights = w} and \code{weights = 7 * w} give the same network. \code{NULL}
+(default) is unweighted.}
 
 \item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
 each column over its observed values (mode for binary), keeping the full
@@ -50,13 +58,19 @@ self-certificate. \code{native = FALSE} needs the optional \code{glmnet} package
 (Suggests). \code{min_sum} is supported by both engines; observation \code{weights}
 require \code{native = TRUE}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels: one per node, or one per input column
+(labels of dropped constant columns are then discarded).}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the symmetric weight matrix,
 with \verb{$thresholds} (node intercepts), \verb{$rule}, \verb{$nodewise} (the per-node
 fits used by \code{\link[=net_predict]{net_predict()}}) and \verb{$kkt} (the worst nodewise stationarity
 residual, read with \code{\link[=certificate]{certificate()}}).
+
+Errors of class \code{psychnet_bad_input} for non-binary columns, invalid
+\code{gamma}/\code{nlambda}/\code{lambda_min_ratio}/\code{weights}, or mislengthed \code{labels}.
+A nodewise fit that does not reach its optimum raises a
+\code{psychnet_no_converge} warning naming the node.
 }
 \description{
 Estimates an Ising model by nodewise L1-penalized logistic regression with

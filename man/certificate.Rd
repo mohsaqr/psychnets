@@ -9,8 +9,9 @@ certificate(x, tol = 1e-06)
 \arguments{
 \item{x}{A \link{psychnet} object.}
 
-\item{tol}{Tolerance below which the fit is flagged \code{certified = TRUE}.
-Default \code{1e-6}.}
+\item{tol}{Tolerance below which the fit is flagged \code{certified = TRUE}: a
+single finite number >= 0. Default \code{1e-6}. Anything else is an error of
+class \code{psychnet_bad_input}.}
 }
 \value{
 A one-row \code{data.frame} with columns \code{method}, \code{certificate} (the

@@ -2,6 +2,8 @@
 % Please edit documentation in R/reliability.R
 \name{net_casedrop_reliability}
 \alias{net_casedrop_reliability}
+\alias{print.psychnet_casedrop}
+\alias{plot.psychnet_casedrop}
 \title{Edge-weight stability coefficient (case-dropping subset bootstrap)}
 \usage{
 net_casedrop_reliability(
@@ -11,11 +13,15 @@ net_casedrop_reliability(
   iter = 100L,
   threshold = 0.7,
   certainty = 0.95,
-  cor_method = c("spearman", "pearson", "kendall"),
+  cor_method = c("pearson", "spearman", "kendall"),
   labels = NULL,
   estimator_args = list(),
   ...
 )
+
+\method{print}{psychnet_casedrop}(x, ...)
+
+\method{plot}{psychnet_casedrop}(x, ...)
 }
 \arguments{
 \item{data}{Data frame or matrix (rows = observations), resampled exactly as
@@ -27,44 +33,80 @@ given (see \code{\link[=net_boot]{net_boot()}}), or a \code{psychnet_group} (cas
 
 \item{iter}{Subsets per proportion. Default 100.}
 
-\item{threshold}{Minimum acceptable edge-vector correlation. Default 0.7.}
+\item{threshold}{Correlation a subset must exceed (strictly) to count as
+stable. A single number in (0, 1). Default 0.7.}
 
-\item{certainty}{Probability the correlation must exceed \code{threshold}.
-Default 0.95.}
+\item{certainty}{Share of stable subsets that must be exceeded (strictly).
+A single number in (0, 1). Default 0.95.}
 
 \item{cor_method}{Correlation method for the edge-vector comparison:
-\code{"spearman"} (default, robust to the wide range of edge weights),
-\code{"pearson"}, or \code{"kendall"}.}
+\code{"pearson"} (default, as in bootnet), \code{"spearman"}, or \code{"kendall"}.}
 
 \item{labels}{Optional node labels.}
 
-\item{estimator_args}{Named list of estimator arguments. Use this for names
-consumed by the diagnostic itself, such as estimator \code{threshold}.}
+\item{estimator_args}{Named list of estimator arguments. \code{cor_method},
+\code{iter}, \code{threshold} and \code{drop_prop} are arguments of this diagnostic (the
+edge comparison), so an estimator's own \code{cor_method} or \code{threshold} must
+go here, e.g. \code{estimator_args = list(cor_method = "spearman")}; values in
+\code{...} with those names never reach the estimator.}
 
-\item{...}{Passed to the estimator.}
+\item{...}{Passed to the estimator by \code{net_casedrop_reliability()};
+ignored by the methods.}
+
+\item{x}{A \code{psychnet_casedrop} object.}
 }
 \value{
 A tidy \code{data.frame} (class \code{psychnet_casedrop}), one row per metric
-per drop proportion, with columns \code{metric}, \code{drop_prop}, \code{mean}, \code{sd}. The
-edge-weight CS-coefficient is carried in \code{attr(x, "cs")} and shown when the
-result is printed. Visualise it with \code{\link[=plot.psychnet_casedrop]{plot.psychnet_casedrop()}}.
+per drop proportion, with columns \code{metric}, \code{drop_prop} (nominal),
+\code{actual_drop} (the proportion actually dropped after rounding to whole
+cases), \code{mean}, \code{sd} and \code{n_valid} (subsets in which the metric was
+defined; \code{mean}/\code{sd} are \code{NA} when too few were). The edge-weight
+CS-coefficient is stored with it and shown when the result is printed.
+Undefined correlations raise a \code{psychnet_undefined_statistic} warning; a
+constant full-sample edge vector (e.g. an empty network) raises a
+\code{psychnet_constant_centrality} warning (its CS-coefficient is 0).
+A failed subset fit raises a \code{psychnet_resample_failed} warning carrying
+the first error; a failed full-sample fit raises a
+\code{psychnet_estimation_failed} error with the estimator's message. \code{plot()}
+draws the four similarity metrics (correlation, mean/median/max absolute
+deviation) against the proportion dropped, each with a +/- 1 SD band, the
+correlation panel carrying the threshold and the CS-coefficient. \code{print()}
+and \code{plot()} return \code{x} invisibly.
 }
 \description{
 The edge-vector complement to \code{\link[=net_stability]{net_stability()}}. For each drop proportion the
 network is re-estimated on random case-dropped subsets and the subset
 edge-weight vector is compared with the full-sample one. The edge-weight
-CS-coefficient is the largest drop proportion at which the edge-vector
-correlation stays \verb{>= threshold} with probability \verb{>= certainty} (Epskamp,
-Borsboom & Fried 2018).
-An undefined correlation (for example an empty subset network) counts as
-failing the threshold when calculating the CS-coefficient.
+CS-coefficient follows the rule of \code{bootnet::corStability()} (Epskamp,
+Borsboom & Fried 2018): a subset is stable when its edge-vector correlation
+is strictly greater than \code{threshold}, and the CS-coefficient is the largest
+drop proportion at which the share of stable subsets is strictly greater
+than \code{certainty} (0 when no proportion qualifies).
 }
+\details{
+The correlation follows bootnet's \code{cor0()}: 0 when either edge vector is
+constant (for example an empty subset network), undefined when fewer than
+two edges are available. Unlike bootnet, which drops undefined correlations
+from the share (\code{na.rm = TRUE}), psychnets counts an undefined correlation
+(and a failed subset fit) as failing, so the CS-coefficient is never raised
+by subsets that could not be compared.
+}
+\section{Functions}{
+\itemize{
+\item \code{print(psychnet_casedrop)}: The metric table and the edge-weight
+CS-coefficient.
+
+\item \code{plot(psychnet_casedrop)}: Similarity metrics by drop proportion.
+
+}}
 \examples{
 # `method`, `iter`, and `drop_prop` are chosen so the example runs quickly;
 # the defaults (method = "glasso", iter = 100, drop_prop = seq(0.1, 0.9,
 # 0.1)) are what a real reliability assessment should use.
-net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
-                         drop_prop = c(0.25, 0.5))
+rel <- net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
+                                drop_prop = c(0.25, 0.5))
+rel
+plot(rel)
 }
 \references{
 Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating

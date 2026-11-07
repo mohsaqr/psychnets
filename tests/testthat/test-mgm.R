@@ -93,9 +93,11 @@ test_that("a moderated edge scales with the value of a continuous moderator", {
   y <- 0.7 * x1 * mod + stats::rnorm(n)             # pure interaction, no main effect
   d <- data.frame(x1 = x1, x2 = x2, y = y, mod = mod)
   fit <- mgm_fit(d, types = c("g", "g", "g", "g"), moderators = 4)
-  w <- vapply(c(0, 1, 2), function(v) condition(fit, v)$weights["x1", "y"],
-              numeric(1))
-  expect_equal(w[1], 0, tolerance = 1e-8)           # zero at mod = 0
+  # condition() reads `value` on the moderator's raw scale (the fit
+  # standardizes it internally), so the no-effect point is the sample mean.
+  w <- vapply(mean(mod) + c(0, 1, 2) * stats::sd(mod),
+              function(v) condition(fit, v)$weights["x1", "y"], numeric(1))
+  expect_equal(w[1], 0, tolerance = 1e-8)           # zero at the mean moderator
   expect_gt(w[2], 0)                                # grows with |mod|
   expect_gt(w[3], w[2])
 })

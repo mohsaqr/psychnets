@@ -29,19 +29,29 @@ shared with the other estimators does not partial-match \code{na_method}.}
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one unique label per network node.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the filtered (signed)
-correlation matrix on the retained edges, with \verb{$adjacency}, \verb{$cliques},
-\verb{$separators} (the chordal decomposition used by \code{\link[=logo_network]{logo_network()}}), and
-\verb{$cor_matrix}.
+correlation matrix on the retained edges, with \verb{$adjacency} (the
+\code{3(p - 2)}-edge TMFG graph, including any retained edge of weight 0),
+\verb{$cliques}, \verb{$separators} (the chordal decomposition used by
+\code{\link[=logo_network]{logo_network()}}), and \verb{$cor_matrix}.
 }
 \description{
 Builds a sparse, planar, chordal association network by greedily retaining
 the \code{3(p - 2)} most informative edges (Massara et al. 2016). Equivalent in
 purpose to \code{NetworkToolbox::TMFG()} / \code{bootnet}'s \code{"TMFG"} default, pure base
 R; correctness is certified structurally by \code{\link[=tmfg_certificate]{tmfg_certificate()}}.
+}
+\details{
+The graph always has exactly \code{3(p - 2)} edges in \verb{$adjacency}
+(that is what \code{\link[=tmfg_certificate]{tmfg_certificate()}} checks). \verb{$weights} carries the signed
+correlation on each retained edge, so a retained edge whose correlation is
+exactly zero is in \verb{$adjacency} but has weight 0 and therefore does not
+appear in \verb{$edges}, in \code{as.data.frame()}, or in the printed edge count.
+With continuous data this happens only for a correlation matrix that has
+exact zeros (for example a hand-built or block-diagonal \code{cor_matrix}).
 }
 \examples{
 set.seed(1)

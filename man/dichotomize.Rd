@@ -16,11 +16,19 @@ dichotomize(data, method = c("median", "mean", "rank"))
 \item{\code{"rank"}}{\code{1} for observations whose average rank is above the
 midpoint. Tied values always remain together, so the split may be
 unbalanced rather than depending on row order.}
-}}
+}
+On a floor- or ceiling-heavy item the median can equal the column minimum,
+so \code{"median"} (\code{>=}) puts every observation in the upper group and the
+output column is constant. Such columns are reported by a
+\code{psychnet_constant_variable} warning (an Ising fit would drop them);
+\code{method = "mean"} or \code{"rank"} splits them.}
 }
 \value{
 An integer matrix of \code{0}/\code{1} values with the same dimensions and
-dimnames as \code{data}.
+dimnames as \code{data}. Missing values stay \code{NA} in the output (they are not
+assigned to either group). A non-numeric \code{data}, an empty one, or a
+constant / all-missing input column is an error of class
+\code{psychnet_bad_input}.
 }
 \description{
 Splits each column of a numeric matrix or data frame into a binary 0/1

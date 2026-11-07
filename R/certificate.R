@@ -3,6 +3,18 @@
 # by hand. Each estimator already stores its residual; this verb reads it and
 # reports it uniformly.
 
+# What a method's certificate measures: "none" (cor/pcor: no optimization),
+# "structural" (TMFG/relimp: a defining identity, not an optimum) or "kkt"
+# (every regularized / constrained estimator). Shared with print.psychnet so
+# the printed label and certificate()'s `kind` can never disagree.
+#' @noRd
+.certificate_kind <- function(method) {
+  switch(method,
+    cor = "none", pcor = "none",
+    tmfg = "structural", relimp = "structural",
+    "kkt")
+}
+
 #' Correctness certificate of a fitted network
 #'
 #' Regularized or constrained estimators in `psychnets` self-certify: each
@@ -20,8 +32,9 @@
 #' no optimization to certify and report `NA` with kind `"none"`.
 #'
 #' @param x A [psychnet] object.
-#' @param tol Tolerance below which the fit is flagged `certified = TRUE`.
-#'   Default `1e-6`.
+#' @param tol Tolerance below which the fit is flagged `certified = TRUE`: a
+#'   single finite number >= 0. Default `1e-6`. Anything else is an error of
+#'   class `psychnet_bad_input`.
 #' @return A one-row `data.frame` with columns `method`, `certificate` (the
 #'   residual; smaller is better), `kind` (`"kkt"` for the optimization
 #'   certificates, `"structural"` for TMFG/relimp, `"none"` for cor/pcor), and
@@ -34,11 +47,10 @@
 #' certificate(tmfg_network(cor_matrix = S))
 #' @export
 certificate <- function(x, tol = 1e-6) {
-  stopifnot(inherits(x, "psychnet"))
-  kind <- switch(x$method,
-    cor = "none", pcor = "none",
-    tmfg = "structural", relimp = "structural",
-    "kkt")
+  if (!inherits(x, "psychnet"))
+    .psn_stop("`x` must be a psychnet network object.")
+  .psn_check_number(tol, "tol", lower = 0)
+  kind <- .certificate_kind(x$method)
   value <- switch(x$method,
     cor = NA_real_, pcor = NA_real_,
     tmfg = tmfg_certificate(x),

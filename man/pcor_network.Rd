@@ -18,26 +18,33 @@ pcor_network(
 }
 \arguments{
 \item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied.}
+\code{cor_matrix} is supplied. Ordered-factor columns enter as their integer
+level codes; other non-numeric columns are dropped with a
+\code{psychnet_dropped_columns} message, and constant / all-missing columns
+with a \code{psychnet_constant_variable} warning.}
 
 \item{cor_matrix}{Optional precomputed correlation matrix; if given, \code{data}
 is ignored and \code{n} is required when \code{alpha} is used.}
 
 \item{n}{Sample size (needed for significance testing when \code{cor_matrix} is
-supplied).}
+supplied): a single number >= 1, and a whole number of at least 3 when
+\code{alpha} is set.}
 
 \item{cor_method}{Correlation method: \code{"pearson"} (default), \code{"spearman"},
 \code{"kendall"}, or \code{"auto"} (polychoric/polyserial for ordinal items, the
 \code{qgraph::cor_auto} default; see \code{\link[=cor_auto]{cor_auto()}}).}
 
 \item{threshold}{Correlations with absolute value below this are set to zero.
-Default 0.}
+A single number >= 0; default 0. (qgraph's logical \code{threshold = TRUE} is
+refused -- use \code{alpha} for a significance rule.)}
 
-\item{alpha}{Significance level; if set, correlations not significant at
-\code{alpha} are zeroed. \code{NULL} (default) keeps every edge.
+\item{alpha}{Significance level in (0, 1); if set, correlations not
+significant at \code{alpha} are zeroed. \code{NULL} (default) keeps every edge.
 Kendall marginal correlations use a tie-corrected asymptotic test and
 require raw data. Significance testing of full-order partial Kendall
-correlations is not supported.}
+correlations is not supported. A sample too small for the test
+(df = n - 2 - k <= 0, with k the number of variables partialled out) is an
+error of class \code{psychnet_degenerate_sample}, never an empty network.}
 
 \item{adjust}{Multiple-comparison adjustment for the edge p-values (any
 \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
@@ -47,7 +54,7 @@ pairwise-complete correlations projected to the nearest positive-definite
 matrix; \code{"listwise"} drops rows with any \code{NA}. Identical when data is
 complete.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one unique label per network node.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the thresholded
@@ -59,6 +66,13 @@ always the column order of the input \code{data} / \code{cor_matrix}, never sort
 Conditional (full-order) association network: each edge is the correlation
 between two variables with all others partialled out, obtained from the
 inverse correlation matrix. Equivalent to \code{bootnet}'s \code{"pcor"} default.
+}
+\details{
+Full-order partial correlations need an invertible correlation matrix. With
+fewer observations than variables, or collinear / duplicate columns, they
+are not identified: the nearest positive-definite matrix is inverted so a
+network is still returned, and a \code{psychnet_singular} warning says its edges
+are not interpretable (use a regularized estimator such as \code{\link[=ebic_glasso]{ebic_glasso()}}).
 }
 \examples{
 x <- matrix(stats::rnorm(200 * 4), 200, 4)

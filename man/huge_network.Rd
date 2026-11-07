@@ -25,7 +25,8 @@ huge_network(
 \item{cor_matrix}{Optional pre-transformed correlation matrix; if given, \code{n}
 is required, \code{data} and \code{npn} are ignored.}
 
-\item{n}{Sample size (required when \code{cor_matrix} is supplied).}
+\item{n}{Sample size (required when \code{cor_matrix} is supplied): a single
+finite number >= 1.}
 
 \item{npn}{Nonparanormal transform: \code{"shrinkage"} (default), \code{"truncation"},
 or \code{"skeptic"} (Spearman).}
@@ -37,7 +38,7 @@ or \code{"skeptic"} (Spearman).}
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
 
 \item{threshold}{Partial correlations with absolute value below this are
-zeroed. Default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
+zeroed: a single number >= 0, default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
 graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
 
 \item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
@@ -48,7 +49,7 @@ values) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 pure-R solver; \code{FALSE} delegates to the \code{glasso} Fortran package (in
 \code{Suggests}). See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one unique label per network node.}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,

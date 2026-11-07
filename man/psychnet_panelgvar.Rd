@@ -13,7 +13,7 @@
   row.names = NULL,
   optional = FALSE,
   ...,
-  what = c("edges", "parameters", "fit", "diagnostics", "variance"),
+  what = c("edges", "parameters", "fit", "diagnostics", "variance", "covariance", "path"),
   include_zero = FALSE
 )
 
@@ -39,10 +39,21 @@ effects), \code{"parameters"} (every model parameter, including means, scaling
 \code{delta}s, and fixed/pruned entries), \code{"fit"} (one row of fit indices), or
 \code{"diagnostics"} (one row: persons \code{n}, \code{waves}, the ML \code{score}
 certificate, \code{boundary} / \code{boundary_part}, \code{se_available}, and
-\code{starts_agree} of \code{starts} optimizer starts reaching the best saturated
-optimum), or \code{"variance"} (one row per variable: the model-implied
+\code{starts_agree} of \code{starts} optimizer starts reaching the best optimum --
+of the saturated fit, or with \code{select = "ebic"} of the penalized solve at
+the selected lambda, or of its refit when \code{refit = TRUE}; agreement is
+judged on the unit-free standardized objective), \code{"variance"} (one row
+per variable: the model-implied
 \code{between}-person variance, the stationary \code{within}-person variance, and
-\code{share_between}, their ratio to the total -- an intraclass correlation).}
+\code{share_between}, their ratio to the total -- an intraclass correlation),
+\code{"covariance"} (one row per entry of the lower triangle, diagonal
+included, of the innovation (contemporaneous) and between-person
+covariance matrices on the data scale: columns \code{matrix} (\code{"innovation"}
+or \code{"between"}), \code{row}, \code{col}, \code{value}), or \code{"path"} (\code{select = "ebic"}
+only, else a \code{psychnet_bad_input} error: one row per lambda on the
+penalty path, columns \code{lambda} (data-scale penalty), \code{ebic}, \code{edges}
+(non-zero penalized parameters), \code{kkt} (lasso KKT residual), \code{final}
+(re-solved to certification) and \code{selected} (the lambda returned)).}
 
 \item{include_zero}{For \code{what = "edges"}: also return pruned (fixed-zero)
 edges. Default \code{FALSE}.}
@@ -88,5 +99,6 @@ fit <- panel_gvar(srl_panel,
 summary(fit)
 as.data.frame(fit, what = "parameters")
 as.data.frame(fit, what = "diagnostics")
+as.data.frame(fit, what = "covariance")
 if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
 }

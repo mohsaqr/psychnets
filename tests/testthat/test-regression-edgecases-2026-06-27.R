@@ -42,11 +42,13 @@ test_that("mgm_fit never silently drops a factor/character column", {
 test_that("a {1,2}-coded column is a 2-level categorical, not an error", {
   # mgm's own rule: <= 10 distinct integers is categorical. A 2-level column is
   # recoded through its factor levels to 0/1, which is the same logistic model,
-  # so both engines accept any 2-level coding. The promotion is warned about
-  # because it changes the node from gaussian to categorical.
+  # so both engines accept any 2-level coding. A two-valued column is a binary
+  # node however it is coded, so it is NOT warned about as a promotion
+  # (review 2026-11-07, N11): only > 2-valued integer columns are.
   d <- as.data.frame(mat_g(3, p = 2))
   d$x12 <- sample(1:2, nrow(d), replace = TRUE)
-  expect_warning(fit <- mgm_fit(d, native = TRUE), "x12")
+  expect_no_warning(fit <- mgm_fit(d, native = TRUE),
+                    class = "psychnet_type_promotion")
   expect_equal(unname(fit$types[["x12"]]), "c")
 
   # and it agrees with the same column already coded 0/1, which needs no
@@ -56,7 +58,8 @@ test_that("a {1,2}-coded column is a 2-level categorical, not an error", {
   expect_equal(fit$weights, fit01$weights)
 
   skip_if_not_installed("glmnet")
-  expect_warning(fitg <- mgm_fit(d, native = FALSE), "x12")
+  expect_no_warning(fitg <- mgm_fit(d, native = FALSE),
+                    class = "psychnet_type_promotion")
   expect_equal(unname(fitg$types[["x12"]]), "c")
 })
 
@@ -78,9 +81,9 @@ test_that("an indefinite cor_matrix is rejected, not silently NaN", {
 
 test_that("the EBIC GGMs validate n as a single positive scalar", {
   S <- 0.4^abs(outer(1:5, 1:5, "-"))
-  expect_error(ebic_glasso(cor_matrix = S, n = 0),          "n > 0")
-  expect_error(ebic_glasso(cor_matrix = S, n = c(100, 200)), "length\\(n\\) == 1")
-  expect_error(huge_network(cor_matrix = S, n = -5),         "n > 0")
+  expect_error(ebic_glasso(cor_matrix = S, n = 0),           class = "psychnet_bad_input")
+  expect_error(ebic_glasso(cor_matrix = S, n = c(100, 200)), class = "psychnet_bad_input")
+  expect_error(huge_network(cor_matrix = S, n = -5),         class = "psychnet_bad_input")
 })
 
 # --- MEDIUM: exported certificate validation ---------------------------------
@@ -89,15 +92,16 @@ test_that("glm_lasso_kkt validates dimensions and family", {
   X <- scale(matrix(stats::rnorm(200 * 3), 200, 3))
   y <- as.numeric(X %*% c(1, 0, -1) + stats::rnorm(200))
   b <- stats::lm.fit(cbind(1, X), y)$coefficients
-  expect_error(glm_lasso_kkt(X, y[1:150], b[1], b[-1], 0), "length\\(y\\) == nrow\\(X\\)")
+  expect_error(glm_lasso_kkt(X, y[1:150], b[1], b[-1], 0),
+               class = "psychnet_bad_input")
   expect_error(glm_lasso_kkt(X, y, b[1], b[-1], 0, family = "poisson"), "should be one of")
 })
 
 test_that("glasso_kkt / ggm_support_kkt reject mismatched or non-finite inputs", {
   theta <- diag(4); S <- diag(4)
-  expect_error(glasso_kkt(theta, diag(3), 0.1), "dim\\(theta\\) == dim")
-  expect_error(ggm_support_kkt(theta, S, matrix(TRUE, 3, 3)), "dim\\(support\\)")
-  expect_error(ggm_support_kkt(theta, S, matrix(1, 4, 4)),    "is.logical")
+  expect_error(glasso_kkt(theta, diag(3), 0.1),               class = "psychnet_bad_input")
+  expect_error(ggm_support_kkt(theta, S, matrix(TRUE, 3, 3)), class = "psychnet_bad_input")
+  expect_error(ggm_support_kkt(theta, S, matrix(1, 4, 4)),    class = "psychnet_bad_input")
 })
 
 test_that("structural certificates reject a wrong-type network", {
@@ -110,8 +114,10 @@ test_that("structural certificates reject a wrong-type network", {
 
 test_that("ising_fit / mgm_fit reject wrong-length labels with a clear message", {
   b <- mat_b(5)
-  expect_error(ising_fit(b, labels = c("a", "b")),    "length\\(labels\\) == p")
-  expect_error(mgm_fit(mat_g(5), labels = c("a", "b")), "length\\(labels\\) == p")
+  expect_error(ising_fit(b, labels = c("a", "b")), "`labels` has 2 entries",
+               class = "psychnet_bad_input")
+  expect_error(mgm_fit(mat_g(5), labels = c("a", "b")), "`labels` has 2 entries",
+               class = "psychnet_bad_input")
 })
 
 test_that("ising_sampler validates alpha and ising_fit validates the path grid", {
@@ -127,7 +133,10 @@ test_that("a fractional n_boot / iter does not corrupt the printed object", {
   skip_slow()
   X <- mat_g(7)
   expect_no_error(utils::capture.output(print(net_boot(X, n_boot = 2.7, cores = 1))))
-  expect_no_error(utils::capture.output(print(net_stability(X, drop_prop = 0.5, iter = 2.7))))
+  # X is independent noise: the glasso network is empty, centrality constant
+  expect_warning(
+    expect_no_error(utils::capture.output(print(net_stability(X, drop_prop = 0.5, iter = 2.7)))),
+    class = "psychnet_constant_centrality")
 })
 
 # --- LOW: centrality input guard ---------------------------------------------

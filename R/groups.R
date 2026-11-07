@@ -45,25 +45,42 @@
 .psychnet_grouped <- function(data, group, source, vars_q, vars_env, method,
                               actor, action, session, time, compute_sessions,
                               time_threshold, id, standardize, threshold,
-                              gamma, labels, dots) {
+                              gamma, labels, dots, within = NULL) {
   if (!is.data.frame(data)) data <- as.data.frame(data, stringsAsFactors = FALSE)
   miss <- setdiff(group, names(data))
   if (length(miss))
-    stop("Group column(s) not found in data: ", paste(miss, collapse = ", "),
+    .psn_stop("Group column(s) not found in data: ", paste(miss, collapse = ", "),
          call. = FALSE)
 
+  # Level order decides group 1 and 2 of net_compare() and the order of every
+  # per-group result. A factor grouping keeps its level order (several factor
+  # columns: their levels in lexical tuple order); otherwise levels follow
+  # their order of appearance.
+  all_factor <- all(vapply(data[group], is.factor, logical(1)))
+  key_f <- if (length(group) == 1L) NULL
+           else .tuple_factor(data, group, sep = "-", lex.order = all_factor)
   key <- if (length(group) == 1L) as.character(data[[group]])
-         else as.character(.tuple_factor(data, group, sep = "-", lex.order = FALSE))
+         else as.character(key_f)
   ok   <- !is.na(key)
-  levs <- unique(key[ok])
+  if (any(!ok)) {
+    .psn_warn(sprintf(
+      "%d of %d rows have a missing `group` value and were dropped.",
+      sum(!ok), length(ok)), class = "psychnet_rows_dropped")
+  }
+  if (any(key[ok] == ""))
+    .psn_stop("`group` has an empty-string level; give those rows a name or ",
+              "set them to NA.")
+  levs <- if (!all_factor) unique(key[ok])
+          else if (length(group) == 1L) levels(droplevels(data[[group]][ok]))
+          else levels(droplevels(key_f[ok]))
   if (length(levs) < 2L)
-    stop("`group` must have at least 2 levels; found ", length(levs), ".",
+    .psn_stop("`group` must have at least 2 levels; found ", length(levs), ".",
          call. = FALSE)
 
   # Resolve a vars selection once (against the full data), then drop the group
   # column(s) from it so the grouping variable is never itself a node.
   vars_sel <- if (is.null(vars_q)) NULL
-              else setdiff(.select_names(data, vars_q, vars_env), group)
+              else setdiff(.select_names(data, vars_q, vars_env), c(group, within))
   cl <- list(method = method, threshold = threshold, gamma = gamma,
              labels = labels, dots = dots)
   rows_of <- function(lv) data[ok & key == lv, setdiff(names(data), group),
@@ -97,10 +114,17 @@
     # Cross-sectional table: keep the selected columns and re-estimate per level.
     cols_of <- function(lv) {
       sub <- rows_of(lv)
+      if (!is.null(within)) sub[[within]] <- NULL       # the person is not a node
       if (is.null(vars_sel)) sub else sub[, intersect(vars_sel, names(sub)),
                                           drop = FALSE]
     }
     subsets <- lapply(levs, cols_of)
+    # Which person each row is, per level: lets net_compare(paired = TRUE)
+    # pair two levels by person rather than by row position.
+    persons <- if (is.null(within)) NULL
+               else stats::setNames(lapply(levs, function(lv) rows_of(lv)[[within]]),
+                                    levs)
+    .check_group_sizes(subsets, levs)
     nets <- lapply(subsets, function(s)
       do.call(psychnet, c(list(data = s, method = method, threshold = threshold,
                                gamma = gamma, labels = labels), dots)))
@@ -108,8 +132,38 @@
   }
   names(nets) <- levs
   names(subsets) <- levs
-  .new_psychnet_group(nets, group_col = group, source = src,
-                      subsets = subsets, call = cl)
+  out <- .new_psychnet_group(nets, group_col = group, source = src,
+                             subsets = subsets, call = cl)
+  if (source != "eventdata" && !is.null(within)) {
+    attr(out, "persons") <- persons
+    attr(out, "within") <- within
+  }
+  out
+}
+
+# A network is not estimable from fewer than 3 rows, and is saturated -- or
+# singular -- from no more rows than variables: refuse the first, warn on the
+# second, naming the levels.
+#' @noRd
+.check_group_sizes <- function(subsets, levs) {
+  rows <- vapply(subsets, nrow, integer(1))
+  vars <- vapply(subsets, function(s) sum(vapply(s, is.numeric, logical(1))),
+                 integer(1))
+  tiny <- rows < 3L
+  if (any(tiny))
+    .psn_stop(sprintf(
+      "Every group level needs at least 3 rows to estimate a network; %s.",
+      paste(sprintf("level \"%s\" has %d", levs[tiny], rows[tiny]),
+            collapse = ", ")))
+  small <- rows <= vars
+  if (any(small))
+    .psn_warn(sprintf(paste0(
+      "Group level(s) with no more rows than variables: %s. Their networks ",
+      "rest on a saturated or singular correlation matrix and are unreliable."),
+      paste(sprintf("\"%s\" (%d rows, %d variables)", levs[small],
+                    rows[small], vars[small]), collapse = ", ")),
+      class = "psychnet_small_sample")
+  invisible(NULL)
 }
 
 #' Per-group psychometric networks
@@ -123,6 +177,14 @@
 #' rows. Groups built from several occasions per actor need resampling at the
 #' actor level and are refused by these row-based diagnostics.
 #'
+#' Networks are listed in the grouping variable's level order when it is a
+#' factor (so its first level is group 1 of [net_compare()]), otherwise in
+#' order of first appearance. Rows with a missing group value are dropped
+#' with a `psychnet_rows_dropped` warning; an empty-string level, or a
+#' cross-sectional level with fewer than 3 rows, is a `psychnet_bad_input`
+#' error; a level with no more rows than variables raises a
+#' `psychnet_small_sample` warning.
+#'
 #' @param x A `psychnet_group` object.
 #' @param ... Ignored.
 #' @return `x`, invisibly (for `print`), after printing one row per group with
@@ -134,6 +196,7 @@
 #' nets
 #' summary(nets)
 #' as.data.frame(nets)
+#' @name psychnet_group
 #' @aliases psychnet_group
 #' @export
 print.psychnet_group <- function(x, ...) {
@@ -146,7 +209,7 @@ print.psychnet_group <- function(x, ...) {
   invisible(x)
 }
 
-#' @rdname print.psychnet_group
+#' @rdname psychnet_group
 #' @param row.names,optional Ignored (S3 consistency).
 #' @return For `as.data.frame`, the per-group edge lists stacked with a leading
 #'   `group` column: one row per edge per group, columns `group`, `from`,
@@ -157,7 +220,7 @@ as.data.frame.psychnet_group <- function(x, row.names = NULL,
   .stack_by_group(lapply(x, as.data.frame), names(x))
 }
 
-#' @rdname print.psychnet_group
+#' @rdname psychnet_group
 #' @param object A `psychnet_group` object.
 #' @return For `summary`, a data frame with node/edge counts and mean absolute
 #'   edge weight: one row per group, or per group and `level` when a group
@@ -204,7 +267,9 @@ summary.psychnet_group <- function(object, ...) {
     data.frame(group = rep(lv, nrow(df)), df, row.names = NULL,
                stringsAsFactors = FALSE)
   }, dfs, levels)
-  do.call(rbind, parts)
+  out <- do.call(rbind, unname(parts))   # unnamed: rbind would build "1.1" row names
+  rownames(out) <- NULL
+  out
 }
 
 # Object-first verbs (centrality, predict): apply `fn` to each fitted network.
@@ -214,9 +279,10 @@ summary.psychnet_group <- function(object, ...) {
 # reject it with a clear message instead of crashing inside the bare-matrix path.
 .reject_multilevel_group <- function(x, verb) {
   if (any(vapply(x, inherits, logical(1), "psychnet_multilevel")))
-    stop(sprintf(paste0("%s() does not support within/between (multilevel) ",
-         "groups; apply it to a level's $within or $between network."), verb),
-         call. = FALSE)
+    .psn_stop(sprintf(paste0("%s() does not support within/between (multilevel) ",
+         "groups. Rebuild the group with standardize = TRUE for one ",
+         "person-centered network per level, or read the within and between ",
+         "edges with as.data.frame()."), verb))
   invisible(NULL)
 }
 
@@ -235,7 +301,7 @@ summary.psychnet_group <- function(object, ...) {
 # `args` carries the verb's own diagnostic options.
 .group_data_apply <- function(data, verb, verb_name, out_class, args) {
   if (!identical(attr(data, "source"), "data"))
-    stop(sprintf("%s() supports group mode for cross-sectional data only.",
+    .psn_stop(sprintf("%s() supports group mode for cross-sectional data only.",
                  verb_name), call. = FALSE)
   subs <- attr(data, "subsets"); cl <- attr(data, "call")
   estimator_args <- cl$dots
@@ -276,25 +342,28 @@ summary.psychnet_group <- function(object, ...) {
 #' cent <- net_centralities(nets)
 #' cent
 #' as.data.frame(cent)
+#' @name psychnet_result_group
+#' @aliases psychnet_result_group
 #' @export
 print.psychnet_result_group <- function(x, ...) {
   cat(sprintf("<%s> %d groups: %s\n", class(x)[1L], length(x),
               paste(names(x), collapse = ", ")))
-  for (nm in names(x)) {
+  lapply(names(x), function(nm) {
     cat(sprintf("\n--- %s ---\n", nm))
     print(x[[nm]])
-  }
+  })
   invisible(x)
 }
 
-#' @rdname print.psychnet_result_group
+#' @rdname psychnet_result_group
 #' @param row.names,optional Ignored (S3 consistency).
 #' @return For `as.data.frame`, the per-group tables stacked with a `group`
-#'   column.
+#'   column: each group's result converted by its own `as.data.frame()`
+#'   method, with `...` (e.g. `what =`) passed on to it. An error converting
+#'   any group's result is raised, not dropped.
 #' @export
 as.data.frame.psychnet_result_group <- function(x, row.names = NULL,
                                                 optional = FALSE, ...) {
-  dfs <- lapply(x, function(el)
-    tryCatch(as.data.frame(el, ...), error = function(e) NULL))
+  dfs <- lapply(x, function(el) as.data.frame(el, ...))
   .stack_by_group(dfs, names(x))
 }

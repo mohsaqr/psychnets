@@ -44,22 +44,23 @@
 net_clustering <- function(x, labels = NULL) {
   if (inherits(x, "psychnet")) {
     if (isTRUE(x$directed))
-      stop("net_clustering() requires an undirected network.", call. = FALSE)
+      .psn_stop("net_clustering() requires an undirected network.", call. = FALSE)
     W <- x$weights; labs <- x$nodes$label
   }
   else {
     if (!is.matrix(x) && !is.data.frame(x))
-      stop("`x` must be a psychnet object or a square weighted matrix.",
+      .psn_stop("`x` must be a psychnet object or a square weighted matrix.",
            call. = FALSE)
     W <- as.matrix(x)
     if (!is.numeric(W) || nrow(W) != ncol(W))
-      stop("`x` must be a square numeric weighted adjacency matrix.",
+      .psn_stop("`x` must be a square numeric weighted adjacency matrix.",
            call. = FALSE)
-    labs <- if (!is.null(labels)) labels else colnames(W)
+    .psn_check_labels(labels, ncol(W))
+    labs <- if (!is.null(labels)) as.character(labels) else colnames(W)
     if (is.null(labs)) labs <- paste0("V", seq_len(ncol(W)))
   }
   if (any(!is.finite(W)) || any(abs(W - t(W)) > 1e-8))
-    stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
+    .psn_stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
   diag(W) <- 0
   if (min(W, na.rm = TRUE) < -1 || max(W, na.rm = TRUE) > 1) W <- W / max(abs(W))
   aW <- abs(W)
@@ -96,7 +97,10 @@ net_clustering <- function(x, labels = NULL) {
                     clustOnnela = clustOnnela, signed_clustOnnela = signed_clustOnnela,
                     clustBarrat = clustBarrat,
                     stringsAsFactors = FALSE, row.names = NULL, check.names = FALSE)
-  for (nm in names(out)[-1]) out[[nm]][is.na(out[[nm]])] <- 0  # isolates -> 0
+  # A node with fewer than two neighbours has a 0/0 coefficient: report 0, as
+  # qgraph::clustcoef_auto does (an isolate closes no triangle).
+  coef_cols <- setdiff(names(out), "node")
+  out[coef_cols] <- lapply(out[coef_cols], function(v) { v[is.na(v)] <- 0; v })
   class(out) <- c("psychnet_clustering", "data.frame")
   out
 }
@@ -107,7 +111,7 @@ net_clustering <- function(x, labels = NULL) {
   tri  <- sum(diag(A %*% A %*% A))                 # 6 * triangles
   k    <- rowSums(A)
   trip <- sum(k * (k - 1))                         # 2 * paths of length two
-  if (trip == 0) 0 else tri / trip
+  if (trip < 0.5) 0 else tri / trip                # trip is a whole count
 }
 
 # Mean finite unweighted shortest-path length (BFS hop counts via repeated
@@ -125,6 +129,9 @@ net_clustering <- function(x, labels = NULL) {
   el <- which(A > 0 & upper.tri(A), arr.ind = TRUE)
   m <- nrow(el)
   if (m < 2L) return(A)
+  # A literal for loop (documented exception to the no-loop rule): each swap is
+  # proposed against the graph the previous swaps produced, so the chain is
+  # genuinely sequential and cannot be vectorized.
   # Use a fixed number of proposals, retaining rejected moves. Stopping after
   # a fixed number of accepted swaps instead samples the jump chain, which
   # overweights graphs with more available swaps.
@@ -157,6 +164,9 @@ net_clustering <- function(x, labels = NULL) {
 #' @param seed Optional integer for reproducibility of the random graphs.
 #' @return A tidy one-row `data.frame` (class `psychnet_smallworld`):
 #'   `smallworldness`, `transitivity`, `aspl`, `transitivity_rand`, `aspl_rand`.
+#'   When the random reference graphs have no triangles or no finite paths the
+#'   index is undefined: `smallworldness` is `NA` and a warning of class
+#'   `psychnet_undefined_statistic` is raised.
 #' @references Humphries, M. D., & Gurney, K. (2008). Network
 #'   'small-world-ness': A quantitative method for determining canonical network
 #'   equivalence. *PLoS ONE*, 3(4), e0002051.
@@ -168,22 +178,22 @@ net_clustering <- function(x, labels = NULL) {
 net_smallworld <- function(x, n_rand = 100L, seed = NULL) {
   if (inherits(x, "psychnet")) {
     if (isTRUE(x$directed))
-      stop("net_smallworld() requires an undirected network.", call. = FALSE)
+      .psn_stop("net_smallworld() requires an undirected network.", call. = FALSE)
     W <- x$weights
   }
   else {
     if (!is.matrix(x) && !is.data.frame(x))
-      stop("`x` must be a psychnet object or a square weighted matrix.",
+      .psn_stop("`x` must be a psychnet object or a square weighted matrix.",
            call. = FALSE)
     W <- as.matrix(x)
   }
   if (!is.numeric(W) || nrow(W) != ncol(W) || nrow(W) < 2L)
-    stop("`x` must be a square numeric weighted adjacency matrix.", call. = FALSE)
+    .psn_stop("`x` must be a square numeric weighted adjacency matrix.", call. = FALSE)
   if (any(!is.finite(W)) || any(abs(W - t(W)) > 1e-8))
-    stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
+    .psn_stop("`x` must be a finite symmetric (undirected) matrix.", call. = FALSE)
   if (!is.numeric(n_rand) || length(n_rand) != 1L || !is.finite(n_rand) ||
       n_rand < 1 || n_rand != as.integer(n_rand))
-    stop("`n_rand` must be a positive whole number.", call. = FALSE)
+    .psn_stop("`n_rand` must be a positive whole number.", call. = FALSE)
   n_rand <- as.integer(n_rand)
   # Seed the rewiring draws without leaving the caller's RNG stream disturbed.
   if (!is.null(seed)) {
@@ -206,9 +216,11 @@ net_smallworld <- function(x, n_rand = 100L, seed = NULL) {
   # The index is undefined when the reference graphs have no triangles
   # (C_r = 0) or no finite paths (L_r = 0) -- e.g. a (near-)acyclic binarised
   # network. Return NA with a warning rather than Inf/NaN.
-  if (!is.finite(C_r) || C_r == 0 || !is.finite(L_r) || L_r == 0) {
-    warning("Small-world index undefined: random reference graphs have no ",
-            "triangles or no finite paths; returning NA.", call. = FALSE)
+  tol <- sqrt(.Machine$double.eps)
+  if (!is.finite(C_r) || C_r < tol || !is.finite(L_r) || L_r < tol) {
+    .psn_warn("Small-world index undefined: random reference graphs have no ",
+              "triangles or no finite paths; returning NA.",
+              class = "psychnet_undefined_statistic")
     sigma <- NA_real_
   } else {
     sigma <- (C / C_r) / (L / L_r)

@@ -18,16 +18,28 @@ net_aggregate(
 \item{data}{A numeric data frame or matrix (rows = observations, columns =
 items).}
 
-\item{communities}{Community membership, one entry per item (column): a vector
-aligned to the columns, or a named vector / list keyed by item label.}
+\item{communities}{Community membership of the columns of \code{data}, in one of
+three forms: an unnamed vector with one entry per column of \code{data}, in
+column order (\code{NA} for a column to leave out, e.g. an ID column); a vector
+named by item label; or a list of item-label vectors, one element per
+community (the element names are the community names). Every retained item
+must belong to exactly one community: a label listed twice, a label that is
+not a column, or a retained item without a community is an error of class
+\code{psychnet_bad_input}. Output communities are ordered by list order, factor
+level, numeric value, or (character labels) alphabetically. A column
+whose community is \code{NA} is left out before any preprocessing.}
 
 \item{method}{Aggregation method. Score (return reduced data): \code{"mean"}
 (default), \code{"median"}, \code{"sum"}, \code{"pca"} (first principal component),
-\code{"factor"} (1-factor score, falls back to PCA for communities of < 3
-items), \code{"loadings"} (within-community connectivity-weighted mean).
+\code{"factor"} (1-factor regression score; a community of fewer than 3 items
+uses its first principal component, since one factor is not identified
+there, and a community where \code{stats::factanal()} fails also falls back to
+its first principal component with a \code{psychnet_fit_failed} warning naming
+it), \code{"loadings"} (within-community connectivity-weighted mean).
 Association (return macro network): \code{"average"} (mean signed edge weight
 between communities), \code{"rv"} (Escoufier RV coefficient), \code{"canonical"}
-(first canonical correlation).}
+(first canonical correlation; a pair where \code{stats::cancor()} fails gets
+weight 0 with a \code{psychnet_fit_failed} warning naming it).}
 
 \item{estimator}{Estimator used for the node-level network that \code{"loadings"}
 and \code{"average"} need (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
@@ -35,14 +47,15 @@ and \code{"average"} need (see \code{\link[=psychnet]{psychnet()}}). Default \co
 \item{scale}{Standardise each item before forming score composites. Default
 \code{TRUE}.}
 
-\item{labels}{Optional item labels (used when \code{data} has no column names).}
+\item{labels}{Optional item labels, one per column of \code{data}, used in place
+of its column names (and matched by a named \code{communities}).}
 
 \item{...}{Passed to the estimator.}
 }
 \value{
 For a score \code{method}, a \code{data.frame} with one column per community
-(one row per observation). For an association \code{method}, a \code{psychnet} macro
-network among communities.
+(one row per retained observation). For an association \code{method}, a
+\code{psychnet} macro network among communities.
 }
 \description{
 Collapses each community of items into a single super-node. \code{score} methods
@@ -50,6 +63,15 @@ build a composite column per community from the raw data and return a reduced
 \code{data.frame} (re-estimate the macro network with \code{\link[=psychnet]{psychnet()}} on it). \code{assoc}
 methods summarise each community pair's multivariate association directly and
 return the macro network as a \code{psychnet}.
+}
+\details{
+\strong{Data handling.} Non-numeric columns are dropped, and so is any column
+that is constant once incomplete rows are removed. Rows with a missing value
+in any numeric column are dropped (listwise deletion), with a warning of
+class \code{psychnet_rows_dropped} giving the count. \code{communities} is matched to
+the columns of \code{data} \emph{before} anything is dropped, so a dropped column must
+not carry a community (give it \code{NA}, or leave it out of a named vector or
+list): one that does is an error naming it.
 }
 \examples{
 net_aggregate(SRL_Claude, communities = c(1, 1, 2, 2, 2))            # reduced data

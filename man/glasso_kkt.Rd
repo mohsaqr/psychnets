@@ -17,7 +17,7 @@ glasso_kkt(
 
 \item{cor_matrix}{Correlation / covariance the model was fit to.}
 
-\item{rho}{Scalar penalty.}
+\item{rho}{Scalar penalty, a single finite number >= 0.}
 
 \item{active_tol}{Magnitude above which an off-diagonal entry is "active".}
 
@@ -26,7 +26,9 @@ Default \code{FALSE}, matching \code{\link[=ebic_glasso]{ebic_glasso()}}'s defau
 }
 \value{
 Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-\code{Inf} for an asymmetric or non-positive-definite \code{theta}.
+\code{Inf} for an asymmetric or non-positive-definite \code{theta}. Malformed input
+(non-square or non-finite matrices, a negative or missing \code{rho}) is an
+error of class \code{psychnet_bad_input}.
 }
 \description{
 A dependency-free correctness certificate for a fitted Gaussian graphical

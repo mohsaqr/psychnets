@@ -46,13 +46,13 @@
 .new_psychnet <- function(graph, labels, method, directed, n_obs,
                           extra = list(), data = NULL) {
   if (length(labels) != ncol(graph)) {
-    stop(sprintf(paste0("labels length (%d) does not match the network ",
+    .psn_stop(sprintf(paste0("labels length (%d) does not match the network ",
                         "dimension (%d); a non-numeric or zero-variance column ",
                         "may have been dropped from the data."),
                  length(labels), ncol(graph)), call. = FALSE)
   }
   if (anyNA(labels) || anyDuplicated(labels))
-    stop("`labels` must be unique and non-missing.", call. = FALSE)
+    .psn_stop("`labels` must be unique and non-missing.", call. = FALSE)
   weights <- graph
   diag(weights) <- 0
   dimnames(weights) <- list(labels, labels)
@@ -78,22 +78,53 @@
   .attach_predictability(net, data = data)
 }
 
-#' Back-compatible field access for a psychnet object
+#' Psychometric network objects
 #'
-#' The canonical (`str`-visible) fields are the lean netobject set; this method
-#' adds virtual aliases so older/external accessors keep working without storing
-#' redundant fields.
+#' Every estimator ([cor_network()], [ebic_glasso()], [ising_fit()],
+#' [mgm_fit()], ..., and the front door [psychnet()]) returns an object of class
+#' `c("psychnet", "cograph_network")`. Read it with `print()`, `summary()` and
+#' `as.data.frame()`, and draw it with `plot()`, which hands it to
+#' `cograph::splot()`. Diagnostics computed from it ([net_centralities()],
+#' [net_boot()], [net_stability()], ...) have their own result classes, with
+#' methods documented on those verbs' pages.
 #'
-#' @param x A `psychnet` object.
-#' @param name Field name. Canonical fields plus the legacy aliases `graph`
-#'   (= `weights`), `labels` (= `nodes$label`), `n_nodes`, `n_edges`, and
-#'   `n_obs` (= `n`).
-#' @return The requested field, or `NULL` if neither a canonical field nor a
-#'   known alias.
+#' The stored fields follow the cograph/Nestimate network object: `weights`
+#' (the p x p weighted adjacency matrix with zero diagonal; partial
+#' correlations for the Gaussian models, symmetrized regression weights for
+#' Ising and mixed models), `nodes` (data frame `id`, `label`, `name`), `edges`
+#' (integer node indices `from`, `to` and `weight`, the cograph format; use
+#' `as.data.frame()` for labelled edges), `directed`, `method` and `n` (sample
+#' size), plus method-specific fields such as `precision`, `lambda`, `gamma`,
+#' `cor_matrix`, `kkt`, `thresholds`, `types` and `nodewise`. Read the
+#' optimality certificate with [certificate()].
+#'
+#' @param x,object A `psychnet` object.
+#' @param name For `$`: a field name. Besides the stored fields, the legacy
+#'   aliases `graph` (= `weights`), `labels` (the node labels), `n_nodes`,
+#'   `n_edges` and `n_obs` (= `n`) are recognised.
+#' @param include_zero For `as.data.frame()`: if `TRUE`, keep zero-weight
+#'   (absent) edges. Default `FALSE`.
+#' @param row.names,optional Ignored (S3 consistency).
+#' @param ... For `plot()`, passed to [cograph::splot()]; ignored by the other
+#'   methods.
+#' @return `print()` returns `x` invisibly. `as.data.frame()` returns a
+#'   data frame with one row per edge and columns `from`, `to` (node labels)
+#'   and `weight`. `summary()` prints the network and its edge-weight range and
+#'   returns the same edge table invisibly. `plot()` returns the value of
+#'   [cograph::splot()] invisibly. `$` returns the requested field, or `NULL`
+#'   when the name is neither a stored field nor a known alias.
 #' @examples
 #' fit <- pcor_network(SRL_GPT)
-#' fit$method
-#' fit$labels
+#' fit
+#' summary(fit)
+#' as.data.frame(fit)
+#' as.data.frame(fit, include_zero = TRUE)
+#' if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
+#' @name psychnet-class
+#' @aliases psychnet-class
+NULL
+
+#' @describeIn psychnet-class Field access, including the legacy aliases.
 #' @method $ psychnet
 #' @export
 `$.psychnet` <- function(x, name) {
@@ -108,14 +139,10 @@
     NULL)
 }
 
-#' Print a psychnet network
-#'
-#' @param x A `psychnet` object.
-#' @param ... Unused.
-#' @return `x`, invisibly.
-#' @examples
-#' fit <- pcor_network(SRL_GPT)
-#' print(fit)
+#' @describeIn psychnet-class The estimator, node and edge counts, the
+#'   selected penalty and the certificate: the optimality (KKT) residual for
+#'   the regularized / constrained estimators, the structural certificate for
+#'   TMFG (number of violated invariants) and relimp (decomposition residual).
 #' @export
 print.psychnet <- function(x, ...) {
   cat(sprintf("<psychnet> %s network\n", x$method))
@@ -125,7 +152,19 @@ print.psychnet <- function(x, ...) {
   if (!is.null(x$lambda)) {
     cat(sprintf("  lambda: %.4g   gamma: %.2g\n", x$lambda, x$gamma))
   }
-  if (!is.null(x$kkt)) {
+  # Structural certificates (TMFG, relimp) check a defining identity, not an
+  # optimum, so they must not be labelled as a KKT residual.
+  if (identical(.certificate_kind(x$method), "structural")) {
+    value <- if (identical(x$method, "tmfg") && !is.null(x$adjacency))
+      tmfg_certificate(x) else x$kkt
+    if (!is.null(value)) {
+      cat(sprintf("  structural certificate (%s): %s\n",
+                  if (identical(x$method, "tmfg"))
+                    "violated TMFG invariants" else "decomposition residual",
+                  if (identical(x$method, "tmfg")) format(value)
+                  else sprintf("%.2e", value)))
+    }
+  } else if (!is.null(x$kkt)) {
     if (is.finite(x$kkt)) {
       cat(sprintf("  optimality (KKT residual): %.2e\n", x$kkt))
     } else if (identical(x$certificate_target, "pre_threshold_fit")) {
@@ -138,17 +177,7 @@ print.psychnet <- function(x, ...) {
   invisible(x)
 }
 
-#' Tidy edge list for a psychnet network
-#'
-#' @param x A `psychnet` object.
-#' @param ... Unused.
-#' @param include_zero If TRUE, keep zero-weight (absent) edges. Default FALSE.
-#' @param row.names,optional Ignored (for S3 consistency).
-#' @return A one-row-per-edge `data.frame` with columns `from`, `to`, `weight`.
-#' @examples
-#' fit <- pcor_network(SRL_GPT)
-#' as.data.frame(fit)
-#' as.data.frame(fit, include_zero = TRUE)
+#' @describeIn psychnet-class The tidy edge list, one row per edge.
 #' @export
 as.data.frame.psychnet <- function(x, row.names = NULL, optional = FALSE, ...,
                                    include_zero = FALSE) {
@@ -157,14 +186,7 @@ as.data.frame.psychnet <- function(x, row.names = NULL, optional = FALSE, ...,
   .edges_df(x$weights, x$nodes$label, x$directed, include_zero = include_zero)
 }
 
-#' Summarize a psychnet network
-#'
-#' @param object A `psychnet` object.
-#' @param ... Unused.
-#' @return The tidy edge list (invisibly); prints a summary as a side effect.
-#' @examples
-#' fit <- pcor_network(SRL_GPT)
-#' summary(fit)
+#' @describeIn psychnet-class The printout plus the edge-weight range.
 #' @export
 summary.psychnet <- function(object, ...) {
   print(object)

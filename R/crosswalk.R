@@ -31,9 +31,9 @@
         "psychnet only", "psychnet only"),
       c("correlation matrix in; psychnet also accepts raw data", "",
         "EBIC tuning, default 0.5", "default 100", "same default 0.01",
-        "qgraph: logical sig-rule; psychnet: numeric weight cutoff",
+        "qgraph: logical sig-rule; psychnet: numeric weight cutoff >= 0 (a logical is refused)",
         "same default FALSE (W_ii = S_ii)",
-        "qgraph: logical; psychnet also takes \"unregularized\" (support MLE)",
+        "qgraph refit = TRUE (unpenalized refit of the selected graph) is psychnet refit = \"unregularized\"; psychnet refit = TRUE (default) re-solves the penalized optimum to machine precision",
         "psychnet always validates/PD-checks cor_matrix",
         "per-edge penalty matrix; psychnet uses scalar rho",
         "EBIC df toggle; psychnet never counts the diagonal",
@@ -48,9 +48,12 @@
       c("data", "ordinalLevelMax", "missing", "detectOrdinal", "forcePD",
         "npn.SKEPTIC", "select", "verbose"),
       c("data", "ordinal_max_levels", "na_method", "-", "-", "-", "-", "-"),
-      c("identical", "renamed", "renamed", "reference only", "reference only",
-        "reference only", "reference only", "reference only"),
-      c("", "same default 7", "same default pairwise",
+      c("semantics differ", "renamed", "renamed", "reference only",
+        "reference only", "reference only", "reference only", "reference only"),
+      c(paste("ordered factors are ordinal (unordered factors are dropped with a",
+              "message); the polyserial is the Olsson ad-hoc estimator, not",
+              "qgraph's two-step ML (differences up to ~0.006)"),
+        "same default 7", "same default pairwise",
         "psychnet always auto-detects ordinal",
         "psychnet always nearest-PD projects",
         "nonparanormal SKEPTIC; see huge_network(npn=)",
@@ -193,7 +196,7 @@
 net_crosswalk <- function(reference = c("all", "EBICglasso", "cor_auto",
                                         "ggmModSelect", "IsingFit", "mgm",
                                         "panelgvar")) {
-  reference <- match.arg(reference)
+  reference <- .psn_match_arg(reference)
   cw <- .crosswalk_table()
   if (reference != "all") {
     cw <- cw[sub("^.*::", "", cw$reference) == reference, , drop = FALSE]

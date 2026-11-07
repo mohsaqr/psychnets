@@ -64,8 +64,20 @@ test_that("net_stability CS is invariant to drop_prop ordering", {
   set.seed(7)
   x <- mk(8, n = 250, p = 5)
   a <- net_stability(x, drop_prop = c(0.1, 0.3, 0.5), iter = 25)
-  b <- net_stability(x, drop_prop = c(0.5, 0.1, 0.3), iter = 25)
-  expect_equal(sort(a$cs), sort(b$cs))
+  # Two calls with reordered drop_prop draw different subsets, so comparing
+  # their CS is a coin flip near the certainty boundary (it flipped when the
+  # default became bootnet's Pearson rule, 2026-11-07). Assert the property
+  # exactly instead: the CS of the same correlations with the proportions
+  # permuted is unchanged (the largest PROPORTION, not the largest index).
+  cors <- as.data.frame(a, what = "correlations")
+  perm <- c(3L, 1L, 2L)
+  for (m in names(a$cs)) {
+    cm <- matrix(cors$correlation[cors$measure == m], 25L, 3L)
+    expect_identical(
+      psychnets:::.psn_cs_coefficient(cm[, perm], c(0.1, 0.3, 0.5)[perm],
+                                      a$threshold, a$certainty),
+      a$cs[[m]])
+  }
 })
 
 test_that("bootstrap keeps all directed edges for relimp", {
@@ -82,12 +94,16 @@ test_that("paired net_compare requires equal group sizes", {
                "equal size")
 })
 
-test_that("correlation significance does not fabricate edges when df <= 0", {
-  # n - 2 - (p-2) = n - p <= 0 for the partial test: nothing can be significant
+test_that("correlation significance refuses df <= 0 instead of deleting edges", {
+  # n - 2 - (p-2) = n - p <= 0 for the partial test: the test is undefined, so
+  # it errors (it used to return an empty network). n = p also makes the
+  # correlation matrix singular, which warns first.
   set.seed(2)
   x <- mk(2, n = 6, p = 6)
-  fit <- pcor_network(x, alpha = 0.05)
-  expect_equal(fit$n_edges, 0L)
+  expect_warning(
+    expect_error(pcor_network(x, alpha = 0.05),
+                 class = "psychnet_degenerate_sample"),
+    class = "psychnet_singular")
 })
 
 test_that("centrality rejects a non-square bare matrix", {

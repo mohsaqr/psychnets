@@ -25,19 +25,27 @@ test_that("custom resampling labels preserve networks when ids are ignored", {
   expect_identical(selected$observed$nodes$name, c("x", "y"))
   # A node becoming constant in a draw keeps its label and an isolated row.
   d$z <- 0
-  fit <- psychnets:::.psn_refit_network(d, "pcor", c("A", "B", "C"))
+  expect_warning(fit <- psychnets:::.psn_refit_network(d, "pcor", c("A", "B", "C")),
+                 class = "psychnet_constant_variable")
   expect_identical(dim(fit$weights), c(3L, 3L))
   expect_true(all(fit$weights["C", ] == 0))
 })
 
 test_that("two-node reliability returns deviations and unavailable correlation", {
   d <- framework_data()[1:2]
-  split <- net_split_reliability(d, method = "pcor", iter = 2)
-  drop <- net_casedrop_reliability(d, method = "pcor", iter = 2,
-                                  drop_prop = 0.2)
-  expect_true(is.nan(split$mean[split$metric == "correlation"]))
+  # One edge: the correlation is undefined (NA, not NaN since 2026-11-07),
+  # counted in n_valid and announced by a classed warning.
+  expect_warning(split <- net_split_reliability(d, method = "pcor", iter = 2),
+                 class = "psychnet_undefined_statistic")
+  expect_warning(drop <- net_casedrop_reliability(d, method = "pcor", iter = 2,
+                                                  drop_prop = 0.2),
+                 class = "psychnet_undefined_statistic")
+  expect_true(is.na(split$mean[split$metric == "correlation"]))
+  expect_false(is.nan(split$mean[split$metric == "correlation"]))
+  expect_identical(split$n_valid[split$metric == "correlation"], 0L)
   expect_true(all(is.finite(split$mean[split$metric != "correlation"])))
-  expect_true(is.nan(drop$mean[drop$metric == "correlation"]))
+  expect_true(is.na(drop$mean[drop$metric == "correlation"]))
+  expect_false(is.nan(drop$mean[drop$metric == "correlation"]))
   expect_true(all(is.finite(drop$mean[drop$metric != "correlation"])))
   expect_identical(attr(drop, "cs"), 0)
   grDevices::pdf(NULL)
@@ -67,9 +75,11 @@ test_that("undefined case-drop correlations count against the CS certainty", {
   set.seed(3)
   cd <- net_casedrop_reliability(d, drop_prop = 0.9, iter = 40)
   corr <- attr(cd, "correlations")
-  expect_true(anyNA(corr))
+  # bootnet's cor0 rule (2026-11-07): an empty subset network (constant edge
+  # vector) correlates 0 with the full one -- failing, as an NA did before.
+  expect_true(any(corr == 0))
   expect_identical(attr(cd, "n_success"), 40L)
-  expect_lt(sum(corr >= 0.7, na.rm = TRUE) / 40, 0.95)
+  expect_lt(mean(!is.na(corr) & corr > 0.7), 0.95)
   expect_identical(attr(cd, "cs"), 0)
   set.seed(3)
   st <- net_stability(d, drop_prop = 0.9, iter = 40)

@@ -28,7 +28,8 @@ ebic_glasso(
 \item{cor_matrix}{Optional correlation matrix; if given, \code{n} is required and
 \code{data} is ignored.}
 
-\item{n}{Sample size (required when \code{cor_matrix} is supplied).}
+\item{n}{Sample size (required when \code{cor_matrix} is supplied): a single
+finite number >= 1.}
 
 \item{gamma}{EBIC hyperparameter. Default 0.5.}
 
@@ -38,7 +39,8 @@ ebic_glasso(
 Default 0.01.}
 
 \item{threshold}{Partial correlations with absolute value below this are set
-to zero. Default 0. A positive value is post-estimation processing, so the
+to zero: a single number >= 0, default 0 (qgraph's logical
+\code{threshold = TRUE} rule is refused). A positive value is post-estimation processing, so the
 returned graph has \verb{$kkt = NA}; the fitted precision's residual remains in
 \verb{$fit_kkt}.}
 
@@ -80,7 +82,8 @@ reproduce them. \code{"unregularized"} keeps the selected support and refits the
 \emph{unpenalized} graph-restricted MLE on it, which is no longer a penalized
 optimum and is therefore certified by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} instead.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one unique label per network node (the
+columns that survive constant / non-numeric column removal).}
 }
 \value{
 A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
@@ -91,7 +94,7 @@ input \code{data} / \code{cor_matrix}, never sorted. With \code{refit = "unregul
 the object also carries \verb{$support}, and \verb{$kkt} is a \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}
 residual; with \code{refit = FALSE} the reported \verb{$kkt} reflects the loose scan
 tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
-\code{as.data.frame()} (see \code{\link[=as.data.frame.psychnet]{as.data.frame.psychnet()}}) and the certificate
+\code{as.data.frame()} (see \linkS4class{psychnet}) and the certificate
 with \code{\link[=certificate]{certificate()}}.
 }
 \description{

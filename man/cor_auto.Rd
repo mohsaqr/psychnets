@@ -10,12 +10,13 @@ cor_auto(data, ordinal_max_levels = 7L, na_method = c("pairwise", "listwise"))
 \item{data}{Numeric data frame or matrix (rows = observations).}
 
 \item{ordinal_max_levels}{Maximum distinct values for a variable to count as
-ordinal. Default 7.}
+ordinal: a whole number >= 2. Default 7.}
 
 \item{na_method}{\code{"pairwise"} (default) or \code{"listwise"}.}
 }
 \value{
-A correlation matrix with the variable names as dimnames.
+A correlation matrix with the variable names as dimnames. An invalid
+\code{ordinal_max_levels} is an error of class \code{psychnet_bad_input}.
 }
 \description{
 Detects ordinal variables (integer-valued with at most \code{ordinal_max_levels}
@@ -24,6 +25,24 @@ ordinal-ordinal pairs, a polyserial correlation for ordinal-continuous pairs,
 and Pearson otherwise, projected to the nearest positive-definite matrix. The
 base-R counterpart of \code{qgraph::cor_auto()}; this is the correlation
 \code{bootnet}/\code{qgraph} use by default for Likert data.
+}
+\details{
+The polychoric correlation is the two-step estimator of Olsson (1979):
+thresholds fixed at the marginal normal quantiles, then the contingency-table
+likelihood maximised over the correlation; it matches \code{psych}/\code{qgraph} to
+about 1e-5. The polyserial correlation is the Olsson, Drasgow & Dorans
+(1982) \emph{ad-hoc} estimator (the closed form
+\eqn{r_{xy}\,\sigma_y / \sum_k \phi(\tau_k)}), not the two-step
+maximum-likelihood polyserial that \code{qgraph::cor_auto()} obtains through
+\code{lavaan}. Both are consistent; on finite samples they differ by up to about
+0.006, so a mixed ordinal / continuous correlation matrix will not
+reproduce \code{qgraph::cor_auto()} exactly.
+
+An ordered-factor column of a data frame enters as its integer level codes
+and is then ordinal whenever it has at most \code{ordinal_max_levels} levels.
+Unordered factors, character and logical columns are dropped with a
+\code{psychnet_dropped_columns} message; constant columns with a
+\code{psychnet_constant_variable} warning.
 }
 \examples{
 set.seed(1)

@@ -335,19 +335,25 @@
     # still reduces F along the identified directions.
     step <- as.vector(MASS_ginv(2 * .pgv_information(st, jac), tol = 1e-12) %*% score)
     accepted <- FALSE
-    # Step halving: stop at the first fraction that does not increase F.
+    # Step halving: take the first fraction that does not increase F (beyond
+    # rounding) and improves the fit -- a strictly lower F, or a smaller
+    # score. Near the optimum F is flat to rounding, so the score is the
+    # measure of progress there; a full Fisher step can overshoot it (expected
+    # and observed information differ off the saturated model) while a
+    # shorter one still converges. Stopping at the first non-improving full
+    # step left interior fits at a score of ~1e-6.
     for (half in 0:20) {
       cand <- theta
       cand[free] <- theta[free] - step / 2^half
       cst <- .pgv_state(cand, ctx)
-      if (!is.null(cst) && cst$f <= st$f + 1e-13 * abs(st$f)) {
+      if (is.null(cst) || cst$f > st$f + 1e-13 * abs(st$f)) next
+      cscore <- .pgv_gradient_full(cst, ctx)[free]
+      if (max(abs(cscore)) < max(abs(score)) || cst$f < st$f) {
         accepted <- TRUE
         break
       }
     }
     if (!accepted) break
-    cscore <- .pgv_gradient_full(cst, ctx)[free]
-    if (max(abs(cscore)) >= max(abs(score)) && cst$f >= st$f) break
     theta <- cand
     st <- cst
     score <- cscore
@@ -355,6 +361,18 @@
   }
   list(theta = theta, state = st, iterations = opt$iterations,
        polish_steps = steps, message = opt$message)
+}
+
+# The record of the optimizer starts: each start's objective on the data scale
+# and whether it reached the best optimum. Agreement is judged on the
+# standardized-scale objective: the data-scale one adds the units' log-Jacobian,
+# a constant that would otherwise make a relative tolerance depend on the units.
+#' @noRd
+.pgv_starts_table <- function(starts, log_jacobian) {
+  f <- starts$objective
+  best <- is.finite(f) & abs(f - min(f)) <= 1e-6 * max(1, abs(min(f)))
+  data.frame(start = starts$start, objective = f + log_jacobian, best = best,
+             row.names = NULL, stringsAsFactors = FALSE)
 }
 
 # Run every start and keep the lowest objective. `starts` is a named list of
@@ -477,6 +495,41 @@
                       call = NULL))
 }
 
+# .psn_match_arg() with a classed error: `x` is the formal's default vector (take
+# its first element), or one string matching a choice (uniquely abbreviated,
+# as .psn_match_arg() allows).
+#' @noRd
+.pgv_choice <- function(x, choices, name) {
+  if (identical(x, choices)) return(choices[1L])
+  hit <- if (is.character(x) && length(x) == 1L && !is.na(x))
+    pmatch(x, choices) else NA_integer_
+  if (is.na(hit))
+    .pgv_bad_input(sprintf("`%s` must be one of %s.", name,
+                           paste(sprintf("\"%s\"", choices), collapse = ", ")))
+  choices[hit]
+}
+
+# The waves in time order. A factor keeps its level order; numbers, dates and
+# times sort by value. Character waves that are all numbers ("1", "2", "10")
+# sort numerically -- alphabetical order would put "10" before "2" and fit the
+# waves in the wrong time order. Any other character waves sort alphabetically,
+# with a warning naming the order used (pass a factor to set it).
+#' @noRd
+.pgv_wave_levels <- function(w) {
+  if (is.factor(w)) return(levels(droplevels(w)))
+  if (!is.character(w)) return(as.character(sort(unique(w))))
+  u <- unique(w)
+  number <- "^[[:space:]]*[-+]?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][-+]?[0-9]+)?[[:space:]]*$"
+  if (all(grepl(number, u))) return(u[order(as.numeric(u), u)])
+  u <- sort(u)
+  .psn_warn(sprintf(paste0(
+    "panel_gvar(): character `wave` values were ordered alphabetically: %s. ",
+    "If that is not their order in time, pass `wave` as a factor with the ",
+    "levels in time order."), paste(u, collapse = ", ")),
+    class = "psychnet_wave_order")
+  u
+}
+
 # Resolve `data` + (`vars`, `id`, `wave`) into a wide numeric matrix whose
 # columns are ordered wave-major (wave 1 variables, wave 2 variables, ...),
 # plus the variable labels and wave levels.
@@ -497,12 +550,26 @@
       labels <- paste0("V", seq_len(nrow(vars)))
     waves <- colnames(vars) %||% as.character(seq_len(ncol(vars)))
     cols <- as.vector(vars)
+    if (anyDuplicated(cols))
+      .pgv_bad_input(sprintf("The `vars` design names a column more than once: %s.",
+                             paste(unique(cols[duplicated(cols)]), collapse = ", ")))
     wide <- data[, cols, drop = FALSE]
   } else {
     if (!is.character(vars) || !length(vars))
       .pgv_bad_input("`vars` must be a character vector of variable names (long data) or a character design matrix (wide data).")
     if (is.null(id) || is.null(wave))
       .pgv_bad_input("Long data needs `id` and `wave` column names; for wide data pass `vars` as a design matrix (rows = variables, columns = waves).")
+    if (!is.character(id) || length(id) != 1L || !is.character(wave) ||
+        length(wave) != 1L)
+      .pgv_bad_input("`id` and `wave` must each name one column.")
+    if (identical(id, wave))
+      .pgv_bad_input("`id` and `wave` must be different columns.")
+    if (anyDuplicated(vars))
+      .pgv_bad_input(sprintf("`vars` names a column more than once: %s.",
+                             paste(unique(vars[duplicated(vars)]), collapse = ", ")))
+    if (any(vars %in% c(id, wave)))
+      .pgv_bad_input(sprintf("`vars` must not include the `id` or `wave` column (%s).",
+                             paste(intersect(vars, c(id, wave)), collapse = ", ")))
     need <- c(vars, id, wave)
     miss <- setdiff(need, names(data))
     if (length(miss))
@@ -510,11 +577,12 @@
                              paste(miss, collapse = ", ")))
     if (anyNA(data[[id]]))
       .pgv_bad_input("The person identifier column `id` must not contain missing values; unknown persons cannot be matched across waves.")
+    if (anyNA(data[[wave]]))
+      .pgv_bad_input("The `wave` column must not contain missing values; a row without a wave cannot be placed in time.")
     key <- paste(data[[id]], data[[wave]], sep = "\r")
     if (anyDuplicated(key))
       .pgv_bad_input("Each `id` must have at most one row per `wave`.")
-    wave_levels <- if (is.factor(data[[wave]])) levels(droplevels(data[[wave]]))
-                   else as.character(sort(unique(data[[wave]])))
+    wave_levels <- .pgv_wave_levels(data[[wave]])
     ids <- unique(data[[id]])
     per_wave <- lapply(wave_levels, function(w) {
       sub <- data[as.character(data[[wave]]) == w, , drop = FALSE]
@@ -631,8 +699,12 @@
 #'   character matrix of column names, one row per variable and one column per
 #'   wave (the `psychonetrics` `vars` design); its row names become the labels.
 #' @param id,wave Long data only: names of the person-identifier and wave
-#'   columns. Person identifiers must be non-missing. Waves are ordered by
-#'   `sort()` (or factor level order).
+#'   columns. Person identifiers and waves must be non-missing, and neither
+#'   column may be one of `vars`. Waves are put in time order: a factor by its
+#'   level order; numeric, date or time waves by value; character waves that
+#'   are all numbers (`"1"`, `"2"`, `"10"`) numerically; any other character
+#'   waves alphabetically, with a `psychnet_wave_order` warning naming the
+#'   order used (pass a factor to set it).
 #' @param select Edge selection. `"none"` (default): every edge is estimated
 #'   and reported with its standard error and p-value -- significance is shown,
 #'   not imposed (the `psychonetrics` default). `"prune"`: remove edges with
@@ -655,7 +727,10 @@
 #'   (`psychonetrics::prune()`'s default).
 #' @param adjust Multiplicity correction applied to the edge p-values before
 #'   pruning, one of [stats::p.adjust.methods]. Default `"none"`
-#'   (`psychonetrics::prune()`'s default).
+#'   (`psychonetrics::prune()`'s default). Used only with `select = "prune"`
+#'   (a `psychnet_ignored_argument` warning says so otherwise); the p-values
+#'   and `significant` flags reported in the edge and parameter tables are
+#'   always unadjusted.
 #' @param recursive Logical; repeat pruning until no edge has `p > alpha`.
 #'   Default `FALSE`.
 #' @param stepup Logical; after pruning, run the `psychonetrics::stepup()`
@@ -684,19 +759,22 @@
 #'   information ML is not yet implemented, so `"pairwise"` is refused.
 #' @return An object of class `c("psychnet_panelgvar", "netobject_group")`: a
 #'   named list of three [psychnet] networks, `temporal` (directed; edge
-#'   `from -> to` weight `beta[to, from]`, autoregressive effects kept in
-#'   `$beta`), `contemporaneous`, and `between` (undirected partial
-#'   correlations; the innovation / between covariance in `$sigma`). Being a
+#'   `from -> to` is the lag-1 effect of `from` on `to`), `contemporaneous`,
+#'   and `between` (undirected partial correlations). Being a
 #'   `netobject_group`, it plots as a grid with `cograph::splot()`. Read it with
 #'   `as.data.frame()`: `what = "edges"` (one row per edge with standard error,
-#'   p-value and 95% Wald interval), `what = "parameters"` (every model
+#'   p-value and 95% Wald interval; the temporal autoregressive effects are the
+#'   `from == to` rows), `what = "parameters"` (every model
 #'   parameter), `what = "fit"` (one row of fit indices: chi-square, CFI,
 #'   TLI, RMSEA, AIC, BIC), `what = "variance"` (one row per variable: the
-#'   between-person share of its variance), or `what = "diagnostics"` (one
+#'   between-person share of its variance), `what = "covariance"` (the
+#'   innovation and between-person covariance matrices, one row per entry),
+#'   `what = "path"` (for `select = "ebic"`: one row per penalty value on the
+#'   lambda path), or `what = "diagnostics"` (one
 #'   row: the score
 #'   certificate -- largest absolute gradient of the ML fit function on the
 #'   free parameters, or the lasso KKT residual for `select = "ebic"` --
-#'   boundary flag, SE availability, and how many of the three optimizer
+#'   boundary flag, SE availability, and how many of the optimizer
 #'   starts reached the best optimum). Fitting, inference and the certificate
 #'   run on standardized variables (pooled SD per variable), so they are
 #'   unit-free and the certificate does not depend on the variables' units;
@@ -704,8 +782,9 @@
 #'   exactly and are returned on the data scale.
 #'
 #'   Errors are classed: `psychnet_bad_input` for unusable input (fewer than
-#'   three waves, too few persons, non-numeric or missing columns, a requested
-#'   `"pairwise"`), `psychnet_no_converge` if the optimizer ends at an
+#'   three waves, too few persons, non-numeric, missing or duplicated columns,
+#'   duplicated or missing labels, an argument outside its allowed values, a
+#'   requested `"pairwise"`), `psychnet_no_converge` if the optimizer ends at an
 #'   infeasible point. Warnings are classed too: `psychnet_no_converge` (score
 #'   above `1e-6` at an interior solution), `psychnet_boundary` (the final
 #'   contemporaneous or between covariance is near-singular, i.e. partial
@@ -717,7 +796,10 @@
 #'   `psychnet_approximate_se` (the fit being pruned had a singular information;
 #'   the parameters it does not identify were treated as having infinite
 #'   standard errors, so pruning removes them), and
-#'   `psychnet_listwise_drop` (persons removed for missing values).
+#'   `psychnet_listwise_drop` (persons removed for missing values),
+#'   `psychnet_wave_order` (non-numeric character waves ordered
+#'   alphabetically) and `psychnet_ignored_argument` (`adjust` without
+#'   pruning).
 #' @references Epskamp, S. (2020). Psychometric network models from time-series
 #'   and panel data. *Psychometrika*, 85(1), 206-231.
 #'   \doi{10.1007/s11336-020-09697-3}
@@ -741,30 +823,33 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
                        refit = FALSE,
                        standardize = c("none", "z", "z_per_wave"),
                        labels = NULL, na_method = "listwise") {
-  select <- match.arg(select)
-  standardize <- match.arg(standardize)
-  criterion <- match.arg(criterion)
+  select <- .pgv_choice(select, c("none", "prune", "ebic"), "select")
+  standardize <- .pgv_choice(standardize, c("none", "z", "z_per_wave"),
+                             "standardize")
+  criterion <- .pgv_choice(criterion, c("bic", "none"), "criterion")
+  adjust <- .pgv_choice(adjust, stats::p.adjust.methods, "adjust")
   prune <- identical(select, "prune")
   if (!is.numeric(nlambda) || is.complex(nlambda) || length(nlambda) != 1L ||
       !is.finite(nlambda) || nlambda < 2 || nlambda > .Machine$integer.max ||
       nlambda != floor(nlambda))
     .pgv_bad_input("`nlambda` must be a single finite integer >= 2 and within the integer range.")
-  stopifnot(
-    "`refit` must be TRUE or FALSE" = isTRUE(refit) || isFALSE(refit),
-    "`gamma` must be a single non-negative number" =
-      is.numeric(gamma) && length(gamma) == 1L && is.finite(gamma) && gamma >= 0,
-    "`lambda_min_ratio` must be a single number in (0, 1)" =
-      is.numeric(lambda_min_ratio) && length(lambda_min_ratio) == 1L &&
-      lambda_min_ratio > 0 && lambda_min_ratio < 1,
-    "`stepup` must be TRUE or FALSE" = isTRUE(stepup) || isFALSE(stepup),
-    "`recursive` must be TRUE or FALSE" = isTRUE(recursive) || isFALSE(recursive),
-    "`alpha` must be a single number in (0, 1)" =
-      is.numeric(alpha) && length(alpha) == 1L && is.finite(alpha) &&
-      alpha > 0 && alpha < 1
-  )
-  adjust <- match.arg(adjust, stats::p.adjust.methods)
+  .psn_check_flag(refit, "refit")
+  .psn_check_flag(stepup, "stepup")
+  .psn_check_flag(recursive, "recursive")
+  .psn_check_number(gamma, "gamma", lower = 0)
+  .psn_check_number(lambda_min_ratio, "lambda_min_ratio", lower = 0, upper = 1,
+                    open = TRUE)
+  .psn_check_number(alpha, "alpha", lower = 0, upper = 1, open = TRUE)
   if (!identical(na_method, "listwise"))
     .pgv_bad_input("panel_gvar() supports na_method = \"listwise\" only: a pairwise covariance is not a likelihood for the panel model, and full-information ML is not yet implemented.")
+  # `adjust` corrects the p-values pruning tests; without pruning nothing is
+  # tested, and the reported p-values stay unadjusted.
+  if (!identical(adjust, "none") && !prune) {
+    .psn_warn(sprintf(paste0(
+      "panel_gvar(): `adjust = \"%s\"` is used only with select = \"prune\"; ",
+      "the reported p-values and `significant` are unadjusted."), adjust),
+      class = "psychnet_ignored_argument")
+  }
   wd <- .pgv_wide(data, vars, id, wave)
   p <- length(wd$labels)
   waves <- length(wd$waves)
@@ -774,6 +859,9 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
   if (!is.null(labels)) {
     if (length(labels) != p)
       .pgv_bad_input(sprintf("`labels` must have length %d.", p))
+    if (anyNA(labels) || anyDuplicated(as.character(labels)) ||
+        any(!nzchar(as.character(labels))))
+      .pgv_bad_input("`labels` must be unique, non-empty and non-missing.")
     wd$labels <- as.character(labels)
   }
   wd$wide <- .pgv_standardize(wd$wide, p, waves, standardize)
@@ -820,10 +908,7 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
                                   simple = .pgv_simple_start(sctx),
                                   baseline = base_fit$theta))
   log_jacobian <- 2 * waves * sum(log(s))   # F(data) = F(standardized) + this
-  starts <- fit$starts
-  starts$objective <- starts$objective + log_jacobian
-  starts$best <- abs(starts$objective - min(starts$objective)) <=
-    1e-6 * max(1, abs(min(starts$objective)))
+  starts <- .pgv_starts_table(fit$starts, log_jacobian)
 
   pruned_any <- FALSE
   pruned_unidentified <- FALSE
@@ -867,6 +952,8 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
     if (refit) {
       fit <- .pgv_best_fit(sctx, list(selected = ebic$theta,
                                       baseline = base_fit$theta))
+      # The fit returned is the refit, so its starts are the ones reported.
+      starts <- .pgv_starts_table(fit$starts, log_jacobian)
     }
   }
 
@@ -1165,10 +1252,21 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
 #'   `delta`s, and fixed/pruned entries), `"fit"` (one row of fit indices), or
 #'   `"diagnostics"` (one row: persons `n`, `waves`, the ML `score`
 #'   certificate, `boundary` / `boundary_part`, `se_available`, and
-#'   `starts_agree` of `starts` optimizer starts reaching the best saturated
-#'   optimum), or `"variance"` (one row per variable: the model-implied
+#'   `starts_agree` of `starts` optimizer starts reaching the best optimum --
+#'   of the saturated fit, or with `select = "ebic"` of the penalized solve at
+#'   the selected lambda, or of its refit when `refit = TRUE`; agreement is
+#'   judged on the unit-free standardized objective), `"variance"` (one row
+#'   per variable: the model-implied
 #'   `between`-person variance, the stationary `within`-person variance, and
-#'   `share_between`, their ratio to the total -- an intraclass correlation).
+#'   `share_between`, their ratio to the total -- an intraclass correlation),
+#'   `"covariance"` (one row per entry of the lower triangle, diagonal
+#'   included, of the innovation (contemporaneous) and between-person
+#'   covariance matrices on the data scale: columns `matrix` (`"innovation"`
+#'   or `"between"`), `row`, `col`, `value`), or `"path"` (`select = "ebic"`
+#'   only, else a `psychnet_bad_input` error: one row per lambda on the
+#'   penalty path, columns `lambda` (data-scale penalty), `ebic`, `edges`
+#'   (non-zero penalized parameters), `kkt` (lasso KKT residual), `final`
+#'   (re-solved to certification) and `selected` (the lambda returned)).
 #' @param include_zero For `what = "edges"`: also return pruned (fixed-zero)
 #'   edges. Default `FALSE`.
 #' @param row.names,optional Ignored (S3 consistency).
@@ -1196,6 +1294,7 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
 #' summary(fit)
 #' as.data.frame(fit, what = "parameters")
 #' as.data.frame(fit, what = "diagnostics")
+#' as.data.frame(fit, what = "covariance")
 #' if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
 #' @name psychnet_panelgvar
 #' @export
@@ -1203,16 +1302,56 @@ as.data.frame.psychnet_panelgvar <- function(x, row.names = NULL,
                                              optional = FALSE, ...,
                                              what = c("edges", "parameters",
                                                       "fit", "diagnostics",
-                                                      "variance"),
+                                                      "variance", "covariance",
+                                                      "path"),
                                              include_zero = FALSE) {
-  what <- match.arg(what)
+  what <- .pgv_choice(what, c("edges", "parameters", "fit", "diagnostics",
+                              "variance", "covariance", "path"), "what")
   switch(what,
     edges = .pgv_edges(attr(x, "parameters"), include_zero,
                        attr(x, "settings")$alpha, .pgv_sig_applies(x)),
     parameters = attr(x, "parameters"),
     fit = attr(x, "fit"),
     diagnostics = .pgv_diagnostics(x),
-    variance = .pgv_variance(x))
+    variance = .pgv_variance(x),
+    covariance = .pgv_covariance(x),
+    path = .pgv_path(x))
+}
+
+# Which fit the recorded optimizer starts belong to: the penalized solve at the
+# selected lambda, its unpenalized refit, or the saturated ML fit (which
+# pruning starts from).
+#' @noRd
+.pgv_starts_stage <- function(settings) {
+  if (!identical(settings$select, "ebic")) return("saturated")
+  if (isTRUE(settings$refit)) "refitted (unpenalized)" else "penalized"
+}
+
+# The EBIC lambda path, one row per penalty value (select = "ebic" only).
+#' @noRd
+.pgv_path <- function(x) {
+  path <- attr(x, "settings")$path
+  if (is.null(path))
+    .pgv_bad_input("what = \"path\" needs a fit with select = \"ebic\"; this fit has no penalty path.")
+  lambda <- attr(x, "settings")$lambda
+  path$selected <- abs(path$lambda - lambda) <= sqrt(.Machine$double.eps) * lambda
+  path
+}
+
+# The innovation (contemporaneous) and between-person covariance matrices,
+# tidy: one row per unique entry (lower triangle with the diagonal), on the
+# data scale.
+#' @noRd
+.pgv_covariance <- function(x) {
+  one <- function(net, name) {
+    sig <- net$sigma
+    keep <- lower.tri(sig, diag = TRUE)
+    rc <- which(keep, arr.ind = TRUE)
+    labels <- net$nodes$label
+    data.frame(matrix = name, row = labels[rc[, 1L]], col = labels[rc[, 2L]],
+               value = sig[keep], row.names = NULL, stringsAsFactors = FALSE)
+  }
+  rbind(one(x$contemporaneous, "innovation"), one(x$between, "between"))
 }
 
 # Per-variable split of the model-implied variance into the stable
@@ -1279,8 +1418,7 @@ print.psychnet_panelgvar <- function(x, ...) {
               attr(x, "kkt")))
   starts <- attr(x, "starts")
   cat(sprintf("  starts: %d of %d reached the best %s optimum\n",
-              sum(starts$best), nrow(starts),
-              if (is_ebic) "penalized" else "saturated"))
+              sum(starts$best), nrow(starts), .pgv_starts_stage(st)))
   invisible(x)
 }
 
@@ -1353,7 +1491,7 @@ summary.psychnet_panelgvar <- function(object, ...) {
 #' @export
 plot.psychnet_panelgvar <- function(x, edge_labels = TRUE, ...) {
   if (!requireNamespace("cograph", quietly = TRUE)) {
-    stop("Network plotting needs the 'cograph' package. Install it, or read ",
+    .psn_stop("Network plotting needs the 'cograph' package. Install it, or read ",
          "the networks with as.data.frame().", call. = FALSE)
   }
   alpha <- attr(x, "settings")$alpha

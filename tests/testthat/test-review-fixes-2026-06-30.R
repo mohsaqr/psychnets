@@ -3,7 +3,11 @@
 test_that("#1 group net_boot/net_stability forward the group's labels", {
   skip_slow()
   set.seed(1)
-  g <- data.frame(matrix(stats::rnorm(160 * 4), 160, 4), grp = rep(c("A", "B"), 80))
+  # a chain, so each group's network is non-empty (an empty one has constant
+  # centrality and warns psychnet_constant_centrality)
+  g <- data.frame(matrix(stats::rnorm(160 * 4), 160, 4) %*%
+                    chol(0.5^abs(outer(1:4, 1:4, "-"))),
+                  grp = rep(c("A", "B"), 80))
   gp <- psychnet(g, group = "grp", method = "glasso", labels = c("W", "X", "Y", "Z"))
   bb <- net_boot(gp, n_boot = 20, cores = 1)
   expect_identical(bb[["A"]]$node_labels, c("W", "X", "Y", "Z"))
@@ -42,7 +46,8 @@ test_that("#5 .psn_refit pads a dropped (constant) column back to the full node 
   set.seed(1)
   m <- matrix(stats::rnorm(60 * 4), 60, 4); colnames(m) <- paste0("V", 1:4)
   m[, 3] <- 1                                            # constant -> psychnet drops it
-  r <- psychnets:::.psn_refit(m, "glasso", colnames(m))
+  expect_warning(r <- psychnets:::.psn_refit(m, "glasso", colnames(m)),
+                 class = "psychnet_constant_variable")
   expect_equal(dim(r$weights), c(4L, 4L))               # re-expanded, not skipped
   expect_equal(unname(r$weights[3, ]), rep(0, 4))       # dropped node is isolated
 })

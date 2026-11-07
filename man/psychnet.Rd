@@ -13,6 +13,7 @@ psychnet(
   labels = NULL,
   vars = NULL,
   group = NULL,
+  within = NULL,
   source = c("auto", "data", "eventdata"),
   actor = NULL,
   action = "Action",
@@ -29,21 +30,25 @@ psychnet(
 \item{data}{A numeric data frame / matrix (rows = observations), or a long
 event log when \code{actor} is supplied.}
 
-\item{method}{Estimator. One of \code{"glasso"} (default), \code{"ggm"}, \code{"tmfg"},
-\code{"logo"}, \code{"relimp"}, \code{"ising"}, \code{"ising_sampler"}, \code{"huge"}, \code{"mgm"},
-\code{"cor"}, \code{"pcor"}. The \code{qgraph}/\code{bootnet} names are accepted as aliases
+\item{method}{Estimator, a single name. One of \code{"glasso"} (default),
+\code{"ggm"}, \code{"tmfg"}, \code{"logo"}, \code{"relimp"}, \code{"ising"}, \code{"ising_sampler"},
+\code{"huge"}, \code{"mgm"}, \code{"cor"}, \code{"pcor"}; several names at once are an error
+(\code{psychnet_bad_input}). The \code{qgraph}/\code{bootnet} names are accepted as aliases
 (e.g. \code{"EBICglasso"} -> \code{"glasso"}, \code{"ggmModSelect"} -> \code{"ggm"}).
 Event data is restricted to the Gaussian graphical methods.}
 
 \item{threshold}{Absolute-weight threshold below which edges are zeroed for
-\code{cor}, \code{pcor}, \code{glasso}, \code{huge}, \code{ggm}, and \code{logo}. For \code{mgm}, supply its
-character rule (\code{"LW"}, \code{"HW"}, or \code{"none"}); the numeric default leaves
-\code{mgm_fit()}'s own default unchanged.}
+\code{cor}, \code{pcor}, \code{glasso}, \code{huge}, \code{ggm}, and \code{logo}: a single number >= 0
+(validated by the estimator). For \code{mgm}, supply its character rule
+(\code{"LW"}, \code{"HW"}, or \code{"none"}); the numeric default leaves \code{mgm_fit()}'s
+own default unchanged. A non-zero value for any other method is ignored
+with a \code{psychnet_ignored_argument} warning.}
 
 \item{gamma}{EBIC hyperparameter. \code{NULL} (default) keeps each method's own
 default (0.5 for the regularized Gaussian graphical models, 0 for \code{ggm},
 0.25 for \code{ising}/\code{mgm}); set it to override. Forwarded only to the
-regularized methods.}
+regularized methods; a value given for another method is ignored with a
+\code{psychnet_ignored_argument} warning.}
 
 \item{labels}{Optional node labels.}
 
@@ -58,6 +63,15 @@ selects feature columns only when \code{data} is already a numeric table.)}
 estimated per level of \code{group} and a \code{psychnet_group} (a named list of
 networks) is returned, which plots as a grid and is iterated per level by
 the framework verbs.}
+
+\item{within}{Optional name of a person-identifier column. When supplied,
+every network variable is centered and scaled \emph{within persons} first (see
+\code{\link[=scale_within]{scale_within()}}; mlVAR's \code{scaleWithin}), over all rows -- so with \code{group}
+(e.g. occasions) the person means and SDs use every occasion -- and the
+person column is not a node. With \code{group}, the result remembers which
+person each row is, so \code{net_compare(x, levels, paired = TRUE)} pairs the
+two levels by person. Without \code{group}, rows of the same person are pooled
+and are not independent. Cross-sectional data only.}
 
 \item{source}{Input kind: \code{"auto"} (default; an event log when \code{actor} is
 given, otherwise a numeric table), \code{"data"}, or \code{"eventdata"}.}
@@ -132,4 +146,12 @@ d <- data.frame(g = rep(c("A", "B"), each = 100),
                 matrix(stats::rnorm(200 * 4), 200, 4,
                        dimnames = list(NULL, paste0("V", 1:4))))
 psychnet(d, method = "glasso", group = "g")         # one network per level
+
+# Within-person networks, one per week, scaled within each student over all
+# four weeks; compare two weeks (paired by student automatically).
+nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
+                 within = "student")
+nets
+set.seed(1)
+net_compare(nets, c(1, 4), iter = 3)  # iter >= 1000 in practice
 }

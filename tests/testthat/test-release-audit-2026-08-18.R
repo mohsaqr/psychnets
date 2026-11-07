@@ -107,14 +107,17 @@ test_that("resampling aligns rare nodes and translates engine", {
   expect_equal(dim(bs$edge_boot), c(20L, 3L))
   expect_equal(bs$n_success, 20L)
   expect_false(anyNA(bs$edge_boot))
-  st <- net_stability(b, method = "ising", iter = 5, drop_prop = 0.3)
+  # independent bits: the Ising network is empty, so centrality is constant
+  expect_warning(st <- net_stability(b, method = "ising", iter = 5, drop_prop = 0.3),
+                 class = "psychnet_constant_centrality")
   expect_equal(st$n_success, 5L)
 })
 
 test_that("a dropped bootstrap node does not erase other predictabilities", {
   set.seed(51)
   x <- cbind(a = rnorm(60), rare = 0, b = rnorm(60))
-  fit <- psychnets:::.psn_refit_network(x, "glasso", colnames(x))
+  expect_warning(fit <- psychnets:::.psn_refit_network(x, "glasso", colnames(x)),
+                 class = "psychnet_constant_variable")
   pred <- psychnets:::.psn_predictability(fit)
   expect_true(is.na(pred["rare"]))
   expect_true(all(is.finite(pred[c("a", "b")])))

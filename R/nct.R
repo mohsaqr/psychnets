@@ -63,6 +63,15 @@
   d2 <- numeric_only(data2)
   if (ncol(d1) < 2L || ncol(d2) < 2L)
     .nct_bad_input("`data1` and `data2` each need at least 2 numeric variables.")
+  # A value is either observed (finite) or missing (NA). An infinite value has
+  # no correlation, and would otherwise reach the network as a silently
+  # isolated variable.
+  infinite <- c(data1 = sum(is.infinite(d1)), data2 = sum(is.infinite(d2)))
+  if (any(infinite > 0L))
+    .nct_bad_input(sprintf(
+      "`data1` and `data2` must hold finite values or NA; found %s.",
+      paste(sprintf("%d infinite value(s) in `%s`", infinite[infinite > 0L],
+                    names(infinite)[infinite > 0L]), collapse = " and ")))
   n1 <- colnames(d1); n2 <- colnames(d2)
   if (!is.null(n1) && !is.null(n2) && !identical(n1, n2)) {
     listing <- function(v) if (length(v)) paste(v, collapse = ", ") else "none"
@@ -103,7 +112,28 @@
       if (identical(conditionMessage(w), zero_sd)) invokeRestart("muffleWarning")
     }
   )
-  S[is.na(S)] <- 0
+  # Only a variable without variation (over the rows a pair shares) has an
+  # undefined correlation here; it is zeroed, the isolated-node convention. Any
+  # other non-finite correlation (e.g. overflow of huge values) is an error,
+  # never a silently isolated variable.
+  undefined <- which(!is.finite(S) & upper.tri(S), arr.ind = TRUE)
+  if (nrow(undefined)) {
+    flat <- function(v) length(unique(v[!is.na(v)])) < 2L
+    explained <- vapply(seq_len(nrow(undefined)), function(k) {
+      i <- undefined[k, 1L]; j <- undefined[k, 2L]
+      shared <- !is.na(x[, i]) & !is.na(x[, j])
+      flat(x[shared, i]) || flat(x[shared, j])
+    }, logical(1))
+    if (!all(explained)) {
+      bad <- undefined[!explained, , drop = FALSE]
+      .nct_bad_input(sprintf(
+        "The correlation of %s is not finite although both variables vary (are the values too large?).",
+        paste(sprintf("%s-%s", colnames(x)[bad[, 1L]], colnames(x)[bad[, 2L]]),
+              collapse = ", ")))
+    }
+    S[undefined] <- 0
+    S[undefined[, 2:1, drop = FALSE]] <- 0
+  }
   diag(S) <- 1
   S
 }
@@ -136,28 +166,38 @@
 
 #' @noRd
 .nct_group <- function(x, levels, iter, gamma, paired, abs, weighted, p_adjust,
-                       na_method) {
+                       na_method, gamma_supplied = FALSE,
+                       na_method_supplied = FALSE, paired_supplied = FALSE) {
   if (!identical(attr(x, "source"), "data"))
-    stop("net_compare() supports group mode for cross-sectional data only.",
-         call. = FALSE)
+    .nct_bad_input("net_compare() supports group mode for cross-sectional data only.")
   subs <- attr(x, "subsets")
   pair <- if (is.null(levels)) names(subs) else as.character(levels)
-  if (length(pair) != 2L)
-    stop("Specify two group levels to compare, e.g. data2 = c(\"A\", \"B\").",
-         call. = FALSE)
+  if (length(pair) != 2L || anyNA(pair) || anyDuplicated(pair))
+    .nct_bad_input("Specify two different group levels to compare, e.g. c(1, 4) or c(\"A\", \"B\").")
   miss <- setdiff(pair, names(subs))
   if (length(miss))
-    stop("Group level(s) not found: ", paste(miss, collapse = ", "),
-         call. = FALSE)
+    .nct_bad_input(paste0("Group level(s) not found: ", paste(miss, collapse = ", "),
+                          ". Available: ", paste(names(subs), collapse = ", "), "."))
   # net_compare() re-estimates each level as an EBIC glasso from (gamma,
-  # na_method). Say so when the group was built some other way: the networks
-  # compared are then not the group's own networks.
+  # na_method). The group's own settings are used unless the caller supplies
+  # them; say so whenever the networks compared are not the group's own.
   cl <- attr(x, "call")
   method <- .resolve_method(cl$method %||% "glasso")
   dots <- cl$dots %||% list()
+  group_gamma <- cl$gamma %||% 0.5          # ebic_glasso()'s default
+  group_na <- dots$na_method %||% "pairwise"
+  use_gamma <- if (gamma_supplied) gamma else group_gamma
+  use_na <- if (na_method_supplied) na_method else group_na
   ignored <- setdiff(names(dots), "na_method")
   if (!isTRUE(all.equal(cl$threshold %||% 0, 0))) ignored <- c(ignored, "threshold")
-  if (!identical(method, "glasso") || length(ignored)) {
+  overridden <- c(
+    if (identical(method, "glasso") && is.numeric(use_gamma) &&
+        length(use_gamma) == 1L && !isTRUE(all.equal(use_gamma, group_gamma)))
+      sprintf("`gamma = %s` replaces the group's %s", format(use_gamma),
+              format(group_gamma)),
+    if (!identical(use_na, group_na))
+      sprintf("`na_method = \"%s\"` replaces the group's \"%s\"", use_na, group_na))
+  if (!identical(method, "glasso") || length(ignored) || length(overridden)) {
     warning(warningCondition(sprintf(
       "net_compare() compares EBIC-glasso networks estimated from `gamma` and `na_method`; %s.",
       paste(c(
@@ -166,14 +206,57 @@
         if (length(ignored))
           sprintf("the group's %s %s not used",
                   paste(sprintf("`%s`", ignored), collapse = ", "),
-                  if (length(ignored) > 1L) "are" else "is")),
+                  if (length(ignored) > 1L) "are" else "is"),
+        overridden),
         collapse = " and ")),
       class = "psychnet_estimator_mismatch", call = NULL))
   }
-  res <- net_compare(subs[[pair[1L]]], subs[[pair[2L]]], iter = iter,
-                     gamma = cl$gamma %||% gamma, paired = paired, abs = abs,
-                     weighted = weighted, p_adjust = p_adjust,
-                     na_method = dots$na_method %||% na_method)
+  d1 <- subs[[pair[1L]]]
+  d2 <- subs[[pair[2L]]]
+  # A group built with `within =` knows each row's person: a paired comparison
+  # pairs by person, keeping the persons observed in both levels.
+  persons <- attr(x, "persons")
+  # the same persons at every level: the paired test is the right one, so it
+  # is the default for such a group (an explicit `paired = FALSE` still wins)
+  if (!paired_supplied && !is.null(persons)) paired <- TRUE
+  if (isTRUE(paired) && !is.null(persons)) {
+    p1 <- persons[[pair[1L]]]
+    p2 <- persons[[pair[2L]]]
+    if (anyDuplicated(p1) || anyDuplicated(p2))
+      .nct_bad_input(sprintf(paste0(
+        "A paired comparison needs one row per person in each level; `%s` ",
+        "repeats within level %s."), attr(x, "within"),
+        paste(pair[c(anyDuplicated(p1) > 0, anyDuplicated(p2) > 0)], collapse = " and ")))
+    # sorted, so the pairs (and hence the permutation draws under a seed) do
+    # not depend on the row order of the input
+    common <- sort(intersect(p1, p2))
+    n_out <- length(p1) + length(p2) - 2L * length(common)
+    if (n_out > 0L)
+      .psn_warn(sprintf(paste0(
+        "%d row(s) of persons observed in only one of levels %s and %s were ",
+        "left out of the paired comparison."), n_out, pair[1L], pair[2L]),
+        class = "psychnet_rows_dropped")
+    d1 <- d1[match(common, p1), , drop = FALSE]
+    d2 <- d2[match(common, p2), , drop = FALSE]
+  }
+  # The group's node labels name the compared variables, as in its networks.
+  if (!is.null(cl$labels)) {
+    relabel <- function(d) {
+      d <- as.data.frame(d, stringsAsFactors = FALSE)
+      num <- vapply(d, is.numeric, logical(1))
+      if (sum(num) != length(cl$labels))
+        .nct_bad_input(sprintf(
+          "The group's `labels` name %d variables but its data hold %d numeric variables.",
+          length(cl$labels), sum(num)))
+      names(d)[num] <- as.character(cl$labels)
+      d
+    }
+    d1 <- relabel(d1)
+    d2 <- relabel(d2)
+  }
+  res <- net_compare(d1, d2, iter = iter, gamma = use_gamma, paired = paired,
+                     abs = abs, weighted = weighted, p_adjust = p_adjust,
+                     na_method = use_na)
   res[["groups"]] <- pair
   res
 }
@@ -214,19 +297,40 @@
 #' exact. A constant variable in an observed group raises a
 #' `psychnet_constant_variable` warning.
 #'
-#' @param data1,data2 Numeric data frames/matrices with the same variables. When
-#'   `data1` is a [psychnet_group], `data2` names the two levels to compare
-#'   (defaulting to its two levels when there are exactly two).
+#' @param data1,data2 Numeric data frames/matrices with the same variables,
+#'   holding finite values or `NA` (an infinite value is a
+#'   `psychnet_bad_input` error). When `data1` is a [psychnet_group], `data2`
+#'   gives the two levels to compare as they appear in the grouping column,
+#'   e.g. `c(1, 4)` for weeks 1 and 4 (default: its two levels when there are
+#'   exactly two); the group's node `labels` name the edges, and the group's
+#'   `gamma` and `na_method` are used unless you supply `gamma` / `na_method`,
+#'   which then win (with a `psychnet_estimator_mismatch` warning when they
+#'   differ from the group's).
 #' @param iter Number of permutations. Default 1000.
 #' @param gamma EBIC hyperparameter. Default 0.5.
 #' @param paired Logical; within-row swapping for paired designs (row `i` of
-#'   `data1` and of `data2` are the same unit). Default FALSE.
+#'   `data1` and of `data2` are the same unit). Default `FALSE`, except for a
+#'   group built by `psychnet(..., within = )`: its levels hold the same
+#'   persons, so they are compared paired by person unless `paired = FALSE`
+#'   (persons seen in only one level are left out, with a
+#'   `psychnet_rows_dropped` warning).
 #' @param abs Logical; compare absolute edge weights. Default TRUE.
 #' @param weighted Logical; if FALSE, binarize networks first. Default TRUE.
 #' @param p_adjust Multiple-comparison adjustment for per-edge p-values
 #'   (any [stats::p.adjust] method). Default `"none"`.
 #' @param na_method `"pairwise"` (default) or `"listwise"` handling of missing
 #'   values; see Details.
+#' @param x,object A `psychnet_nct` object.
+#' @param alpha For the methods: significance level for the `significant`
+#'   column, the `*` marks and the edge colouring. Default 0.05.
+#' @param n For `print()`: number of edges to list, largest difference first.
+#'   Default `Inf` (all).
+#' @param type For `plot()`: `"strength"` (default) or `"structure"` draw the
+#'   permutation null of S or M with the observed value and p-value marked;
+#'   `"edges"` draws the observed per-edge absolute differences, significant
+#'   ones coloured and marked `*`.
+#' @param row.names,optional Ignored (S3 consistency).
+#' @param ... Unused.
 #' @return An object of class `psychnet_nct`, a list with `$nw1`, `$nw2` (the
 #'   two estimated weighted adjacency matrices); the three tests, each with
 #'   `observed`, `perm` and `p_value`: `$structure` (statistic M, the largest
@@ -238,9 +342,22 @@
 #'   the group levels), `paired` and `params`. The letters follow van
 #'   Borkulo et al. (2022) and `NetworkComparisonTest`; `$M` and `$S` (which
 #'   before psychnets 0.6.0 held the two global tests the other way round) raise
-#'   a `psychnet_renamed` error. Printing the object shows every result; as
-#'   tables, `summary()` gives the M and S tests and `as.data.frame()` one row
-#'   per edge (see [summary.psychnet_nct()]).
+#'   a `psychnet_renamed` error.
+#'
+#'   `print()` shows every result: the two global tests, each group's global
+#'   strength, the number of differing edges and every edge, largest
+#'   difference first. `summary()` returns a data frame with one row per
+#'   global test, columns `test` (`"network structure"`; `"global strength"`,
+#'   or `"global expected influence"` when `abs = FALSE`), `statistic` (`"M"`,
+#'   `"S"`), `observed`, `p_value` and `significant` (`p_value < alpha`).
+#'   `as.data.frame()` returns one row per node pair, columns `from`, `to`,
+#'   `weight_1`, `weight_2` (the edge in each group's network; 0/1 when
+#'   `weighted = FALSE`), `difference` (absolute difference, statistic E),
+#'   `p_value` (permutation p, adjusted by `p_adjust`), `p_raw` (the same
+#'   permutation p before adjustment; equal to `p_value` when `p_adjust =
+#'   "none"`) and `significant` (`p_value < alpha`, i.e. on the adjusted p).
+#'   The global M and S tests are never adjusted.
+#'   `print()` and `plot()` return `x` invisibly.
 #'
 #'   Errors of class `psychnet_bad_input` for malformed arguments or groups
 #'   whose columns differ (in name or order); of class
@@ -248,7 +365,8 @@
 #'   than two observed rows in a group or a permuted split. Warnings of class
 #'   `psychnet_constant_variable` (a constant variable in an observed group) and
 #'   `psychnet_estimator_mismatch` (a group object built with an estimator or
-#'   settings other than EBIC glasso).
+#'   settings other than EBIC glasso, or compared with a `gamma` / `na_method`
+#'   other than the group's own).
 #' @references van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski,
 #'   J. J., Tio, P., Schoevers, R. A., Borsboom, D., & Waldorp, L. J. (2022).
 #'   Comparing network structures on three aspects: A permutation test.
@@ -262,25 +380,31 @@
 #' # iter = 10 keeps the example fast (smallest p = 1/11); use iter >= 1000.
 #' fit <- net_compare(a, b, iter = 10)
 #' fit
+#' print(fit, n = 3)          # the three largest edge differences
 #' summary(fit)
 #' as.data.frame(fit)
+#' plot(fit)                  # global strength permutation null
+#' plot(fit, type = "edges")  # per-edge differences
 #' @export
 net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
                         paired = FALSE, abs = TRUE, weighted = TRUE,
                         p_adjust = "none", na_method = c("pairwise", "listwise")) {
-  na_method <- match.arg(na_method)
+  na_method_supplied <- !missing(na_method)
+  na_method <- .psn_match_arg(na_method)
   groups <- c(.nct_label(substitute(data1), "group 1"),
               .nct_label(substitute(data2), "group 2"))
   if (inherits(data1, "psychnet_group")) {
     return(.nct_group(data1, data2, iter = iter, gamma = gamma, paired = paired,
                       abs = abs, weighted = weighted, p_adjust = p_adjust,
-                      na_method = na_method))
+                      na_method = na_method, gamma_supplied = !missing(gamma),
+                      na_method_supplied = na_method_supplied,
+                      paired_supplied = !missing(paired)))
   }
   if (is.null(data2))
     .nct_bad_input(paste0("`data2` is required (a second data set, or two ",
                           "group levels when `data1` is a psychnet_group)."))
   .nct_validate(iter, gamma, paired, abs, weighted)
-  p_adjust <- match.arg(p_adjust, stats::p.adjust.methods)
+  p_adjust <- .psn_match_arg(p_adjust, stats::p.adjust.methods)
   cols <- .nct_columns(data1, data2)
   data1 <- cols$data1
   data2 <- cols$data2
@@ -371,6 +495,10 @@ net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
   max_pval <- (sum(max_perm >= max_obs) + 1) / (iter + 1)
   E_pval <- (colSums(E_perm >= matrix(E_obs, iter, n_edges, byrow = TRUE)) + 1) /
             (iter + 1)
+  # Keep the unadjusted per-edge p-values next to the adjusted ones, so a
+  # corrected analysis still reports both (M and S are single tests and are
+  # never adjusted, as in NetworkComparisonTest).
+  E_pval_raw <- E_pval
   if (p_adjust != "none") E_pval <- stats::p.adjust(E_pval, method = p_adjust)
 
   structure(
@@ -379,7 +507,7 @@ net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
          strength = list(observed = str_obs, perm = str_perm, p_value = str_pval,
                          by_group = strength_by_group),
          E = list(observed = E_obs, perm = E_perm, p_value = E_pval,
-                  edge_names = edge_names),
+                  p_raw = E_pval_raw, edge_names = edge_names),
          groups = groups, n_iter = iter, n = c(n1, n2), paired = paired,
          params = list(gamma = gamma, abs = abs, weighted = weighted,
                        p_adjust = p_adjust, na_method = na_method)),
@@ -387,33 +515,7 @@ net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
   )
 }
 
-#' Tables of a Network Comparison Test
-#'
-#' `summary()` gives the tests, `as.data.frame()` the edges.
-#'
-#' @param x,object A `psychnet_nct` object from [net_compare()].
-#' @param row.names,optional Ignored (base generic compatibility).
-#' @param alpha Significance level for the `significant` column. Default 0.05.
-#' @param ... Unused.
-#' @return `summary()`: a data frame with one row per global test, columns
-#'   `test` (`"network structure"`; `"global strength"`, or `"global expected
-#'   influence"` when `abs = FALSE`), `statistic` (`"M"`, `"S"`), `observed`,
-#'   `p_value` and `significant` (`p_value < alpha`).
-#'
-#'   `as.data.frame()`: a data frame with one row per node pair, columns
-#'   `from`, `to`, `weight_1`, `weight_2` (the edge in the first and second
-#'   group's network; 0/1 when `weighted = FALSE`), `difference` (absolute
-#'   difference, statistic E), `p_value` (permutation p, adjusted by
-#'   `p_adjust`) and `significant`.
-#' @examples
-#' set.seed(1)
-#' # group a has a stronger chain than group b
-#' a <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.5^abs(outer(1:4, 1:4, "-")))
-#' b <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.2^abs(outer(1:4, 1:4, "-")))
-#' colnames(a) <- colnames(b) <- paste0("V", 1:4)
-#' fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
-#' summary(fit)
-#' as.data.frame(fit)
+#' @describeIn net_compare The M and S tests as a table.
 #' @export
 summary.psychnet_nct <- function(object, alpha = 0.05, ...) {
   stopifnot("`alpha` must be a single number in (0, 1)" =
@@ -429,7 +531,7 @@ summary.psychnet_nct <- function(object, alpha = 0.05, ...) {
     stringsAsFactors = FALSE)
 }
 
-#' @rdname summary.psychnet_nct
+#' @describeIn net_compare The per-edge tests, one row per node pair.
 #' @export
 as.data.frame.psychnet_nct <- function(x, row.names = NULL, optional = FALSE,
                                        alpha = 0.05, ...) {
@@ -439,30 +541,12 @@ as.data.frame.psychnet_nct <- function(x, row.names = NULL, optional = FALSE,
   data.frame(from = x$E$edge_names$from, to = x$E$edge_names$to,
              weight_1 = x$nw1[ut], weight_2 = x$nw2[ut],
              difference = x$E$observed, p_value = x$E$p_value,
+             p_raw = x$E$p_raw %||% x$E$p_value,
              significant = x$E$p_value < alpha,
              stringsAsFactors = FALSE, row.names = NULL)
 }
 
-#' Print a Network Comparison Test
-#'
-#' Shows every result: the two global tests (M, network structure; S, global
-#' strength with each group's value), the number of differing edges, and every
-#' edge -- largest difference first -- with each group's edge weight.
-#'
-#' @param x A `psychnet_nct` object.
-#' @param n Number of edges to list, largest difference first. Default `Inf`
-#'   (all).
-#' @param alpha Significance level for the `*` marks. Default 0.05.
-#' @param ... Unused.
-#' @return `x`, invisibly.
-#' @examples
-#' set.seed(1)
-#' # group a has a stronger chain than group b
-#' a <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.5^abs(outer(1:4, 1:4, "-")))
-#' b <- matrix(stats::rnorm(100 * 4), 100, 4) %*% chol(0.2^abs(outer(1:4, 1:4, "-")))
-#' colnames(a) <- colnames(b) <- paste0("V", 1:4)
-#' fit <- net_compare(a, b, iter = 10)  # iter >= 1000 for real use
-#' print(fit, n = 3)   # the three largest edge differences
+#' @describeIn net_compare Every result, edges largest difference first.
 #' @export
 print.psychnet_nct <- function(x, n = Inf, alpha = 0.05, ...) {
   cat(.nct_display(x, n = n, alpha = alpha), sep = "\n")

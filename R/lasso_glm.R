@@ -173,7 +173,8 @@
 # `max_outer` passes is continued for up to 4 * `max_outer` more: a slow but
 # finite fit (extreme weights or probabilities) converges there, while under
 # (quasi-)complete separation the coefficients keep growing without bound.
-# `separation` is set by a drift test on that continuation (see below).
+# `separation` is set by a drift test on that continuation, checked every 25
+# passes so a drifting fit stops as soon as the test says so (see below).
 .glm_lasso_fit <- function(X, y, family, lambda,
                            max_outer = 100L, tol_outer = 1e-7,
                            max_inner = 100L, tol_inner = 1e-7,
@@ -221,21 +222,36 @@
   # (quasi-)complete separation it keeps rising toward its supremum.
   if (!run$converged || any(abs(eta[wobs > 0]) > 11)) {
     th0 <- c(run$b0, run$beta)
-    run <- irls(run$b0, run$beta, 4L * max_outer, floor = 1e-14)
-    th1 <- c(run$b0, run$beta)
     objective <- function(th) {                  # penalized log-likelihood / n
       e <- th[1L] + as.numeric(X %*% th[-1L])
       log1pexp <- ifelse(e > 0, e + log1p(exp(-e)), log1p(exp(e)))
       sum(wobs * (y * e - log1pexp)) / n - lambda * sum(abs(th[-1L]))
     }
-    d <- th1 - th0
-    step <- sqrt(sum(d^2))
-    at <- objective(th1)
-    eta <- th1[1L] + as.numeric(X %*% th1[-1L])
-    separation <- if (step > 1e-6) {
-      objective(th1 + 10 * d / step) >= at - 1e-12 * max(1, abs(at))
-    } else {
-      any(abs(eta[wobs > 0]) > 30)               # stalled at saturation
+    drifting <- function(th1) {
+      d <- th1 - th0
+      step <- sqrt(sum(d^2))
+      eta <- th1[1L] + as.numeric(X %*% th1[-1L])
+      if (step > 1e-6) {
+        at <- objective(th1)
+        objective(th1 + 10 * d / step) >= at - 1e-12 * max(1, abs(at))
+      } else {
+        any(abs(eta[wobs > 0]) > 30)             # stalled at saturation
+      }
+    }
+    # The continuation runs in chunks with the drift test (always measured from
+    # th0) after each one. irls() carries no state between passes, so a fit that
+    # converges or reaches the cap takes exactly the passes and gets exactly the
+    # verdict it would in one uninterrupted run; only a fit already drifting
+    # (separation, whose coefficients are arbitrary) stops early instead of
+    # spending up to 4 * max_outer passes of near-zero working weights.
+    chunk <- 25L
+    left <- 4L * max_outer
+    repeat {
+      passes <- min(chunk, left)
+      run <- irls(run$b0, run$beta, passes, floor = 1e-14)
+      left <- left - passes
+      separation <- drifting(c(run$b0, run$beta))
+      if (run$converged || separation || left <= 0L) break
     }
     if (separation) run$converged <- FALSE
   }

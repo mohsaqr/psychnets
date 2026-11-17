@@ -77,6 +77,7 @@ test_that("ising_fit glmnet output is unchanged", {
 golden_pgv <- readRDS(test_path("fixtures", "golden-panelgvar.rds"))
 
 test_that("panel_gvar output is unchanged", {
+  skip_on_cran()  # nine full fits; the golden anchors run on CI
   cases <- list(default = list(n = 400, p = 3, waves = 4, seed = 1,
                                alpha = 0.01, adjust = "none"),
                 large = list(n = 600, p = 5, waves = 5, seed = 8,
@@ -105,8 +106,11 @@ test_that("panel_gvar output is unchanged", {
     if (identical(nm, "stepup_small")) {
       expect_true(as.data.frame(sat, what = "diagnostics")$boundary,
                   label = nm)
+      # A boundary optimum: the likelihood is flat there, so its last digits
+      # follow the optimizer's stopping point and move ~1e-9 (relative)
+      # across BLAS/compilers (Windows R 4.5.3: -1098.2504456).
       expect_equal(as.data.frame(sat, what = "fit")$logl, -1098.25044401848,
-                   tolerance = 1e-10, label = nm)
+                   tolerance = 1e-8, label = nm)
       expect_equal(as.data.frame(sat, what = "parameters")$estimate,
                    golden_pgv[[nm]]$saturated, tolerance = 1e-3, label = nm)
     } else {

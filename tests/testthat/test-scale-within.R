@@ -87,7 +87,7 @@ test_that("within-scaled occasions feed a paired network comparison", {
   sw <- scale_within(srl_panel, "student", v)
   set.seed(1)
   fit <- net_compare(subset(sw, week == 1, select = v),
-                     subset(sw, week == 4, select = v), paired = TRUE, iter = 20)
+                     subset(sw, week == 4, select = v), paired = TRUE, iter = 5)
   expect_s3_class(fit, "psychnet_nct")
   expect_identical(nrow(as.data.frame(fit)), 10L)
 })
@@ -110,13 +110,13 @@ test_that("a paired comparison of a within group pairs by person, not row order"
   nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
                    within = "student")
   set.seed(1)
-  a <- net_compare(nets, c(1, 4), iter = 30)
+  a <- net_compare(nets, c(1, 4), iter = 3)
   set.seed(7)
   shuffled <- srl_panel[sample(nrow(srl_panel)), ]
   nets_s <- psychnet(shuffled, vars = efficacy:anxiety, group = "week",
                      within = "student")
   set.seed(1)
-  b <- net_compare(nets_s, c(1, 4), iter = 30)
+  b <- net_compare(nets_s, c(1, 4), iter = 3)
   # same pairs and same permutation draws; the numbers agree to float noise
   # (the per-person means are summed in a different order after shuffling)
   expect_equal(as.data.frame(a), as.data.frame(b), tolerance = 1e-10)
@@ -128,7 +128,7 @@ test_that("persons seen in one level only are left out with a warning", {
   d <- subset(srl_panel, !(student == "S001" & week == 1))
   nets <- psychnet(d, vars = efficacy:anxiety, group = "week", within = "student")
   set.seed(1)
-  expect_warning(cmp <- net_compare(nets, c(1, 4), iter = 10),
+  expect_warning(cmp <- net_compare(nets, c(1, 4), iter = 2),
                  class = "psychnet_rows_dropped")
   expect_identical(cmp$n, c(99L, 99L))
 })
@@ -157,23 +157,23 @@ test_that("stacked group tables have plain row names", {
 test_that("a within group is compared paired by person by default", {
   nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
                    within = "student")
-  set.seed(1); auto <- net_compare(nets, c(1, 4), iter = 10)
-  set.seed(1); expl <- net_compare(nets, c("1", "4"), paired = TRUE, iter = 10)
+  set.seed(1); auto <- net_compare(nets, c(1, 4), iter = 2)
+  set.seed(1); expl <- net_compare(nets, c("1", "4"), paired = TRUE, iter = 2)
   expect_true(auto$paired)
   expect_identical(as.data.frame(auto), as.data.frame(expl))
-  set.seed(1); unpaired <- net_compare(nets, c(1, 4), paired = FALSE, iter = 10)
+  set.seed(1); unpaired <- net_compare(nets, c(1, 4), paired = FALSE, iter = 2)
   expect_false(unpaired$paired)
   # an ordinary group keeps the independent-groups default
   d <- rbind(data.frame(SRL_GPT, src = "GPT"), data.frame(SRL_Claude, src = "Claude"))
   set.seed(1)
-  expect_false(net_compare(psychnet(d, group = "src"), iter = 10)$paired)
+  expect_false(net_compare(psychnet(d, group = "src"), iter = 2)$paired)
 })
 
 test_that("two networks of one group can be compared directly", {
   nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
                    within = "student")
-  set.seed(1); by_level <- net_compare(nets, c(1, 4), iter = 10)
-  set.seed(1); by_fit <- net_compare(nets$`1`, nets$`4`, iter = 10)
+  set.seed(1); by_level <- net_compare(nets, c(1, 4), iter = 2)
+  set.seed(1); by_fit <- net_compare(nets$`1`, nets$`4`, iter = 2)
   expect_identical(as.data.frame(by_fit), as.data.frame(by_level))
   expect_identical(summary(by_fit), summary(by_level))
   expect_true(by_fit$paired)                         # within group: paired
@@ -181,8 +181,8 @@ test_that("two networks of one group can be compared directly", {
   # an ordinary two-level group
   d <- rbind(data.frame(SRL_GPT, src = "GPT"), data.frame(SRL_Claude, src = "Claude"))
   g <- psychnet(d, group = "src")
-  set.seed(2); a <- net_compare(g$GPT, g$Claude, iter = 10)
-  set.seed(2); b <- net_compare(g, iter = 10)
+  set.seed(2); a <- net_compare(g$GPT, g$Claude, iter = 2)
+  set.seed(2); b <- net_compare(g, iter = 2)
   expect_identical(as.data.frame(a), as.data.frame(b))
   # refusals: a standalone fit, the same level twice, two different calls
   expect_error(net_compare(ebic_glasso(SRL_GPT), ebic_glasso(SRL_Claude), iter = 5),

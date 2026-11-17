@@ -74,6 +74,7 @@ test_that("the fit is certified: ML score ~ 0 at the returned estimate", {
 })
 
 test_that("matches psychonetrics::panelgvar() (stored reference fixture)", {
+  skip_on_cran()  # numerical anchor; runs on CI with the other references
   ref <- readRDS(test_path("fixtures", "psychonetrics-panelgvar.rds"))
   cases <- list(default = list(n = 400, p = 3, waves = 4, seed = 1,
                                alpha = 0.01, adjust = "none"),
@@ -353,6 +354,7 @@ test_that("raw-scale, small-n data fit as well as their standardized version", {
 })
 
 test_that("modification indices match psychonetrics' at the pruned model", {
+  skip_on_cran()  # numerical anchor; runs on CI with the other references
   ref <- readRDS(test_path("fixtures", "psychonetrics-panelgvar.rds"))
   for (nm in c("default", "bh", "stepup_small")) {
     rf <- ref[[nm]]
@@ -396,6 +398,7 @@ test_that("an MI equals the likelihood-ratio statistic to first order", {
 })
 
 test_that("stepup re-adds a parameter one-pass pruning removed", {
+  skip_on_cran()  # several full fits; runs on CI
   long <- panel_sim(n = 45, p = 4, waves = 4, seed = 21)
   pruned <- quiet_boundary(fit_long(long, select = "prune", stepup = FALSE))
   stepped <- quiet_boundary(fit_long(long, select = "prune"))

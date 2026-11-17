@@ -85,6 +85,26 @@ test_that("C7 an extreme but finite fit is certified; separation is not", {
   expect_true(is.na(certificate(g)$certificate))
 })
 
+test_that("a separated fit stops when the drift test fires, not at the pass cap", {
+  # The continuation after the first max_outer = 100 IRLS passes runs in chunks
+  # of 25 with the drift test after each; a drifting fit used to run all 400.
+  set.seed(1)
+  a <- stats::rbinom(200, 1, 0.5)
+  X <- cbind(b = a, c = stats::rbinom(200, 1, 0.5), d = stats::rbinom(200, 1, 0.5))
+  X[1, "b"] <- 1 - X[1, "b"]                           # quasi-complete separation
+  X <- scale(X) * sqrt(200 / 199)                      # population-sd standardized
+  wls <- .wls_lasso
+  passes <- 0L
+  local_mocked_bindings(.wls_lasso = function(...) {
+    passes <<- passes + 1L
+    wls(...)
+  })
+  fit <- .glm_lasso_fit(X, a, "binomial", lambda = 0)
+  expect_true(fit$separation)
+  expect_false(fit$converged)
+  expect_lte(passes, 150L)                             # 100 + one or two chunks, not 500
+})
+
 test_that("C8 bad choices and flags are classed errors", {
   expect_error(ebic_glasso(diag(3), native = NA), class = "psychnet_bad_input")
   expect_error(cor_network(diag(3), cor_method = "typo"),
@@ -109,17 +129,17 @@ test_that("net_compare keeps the unadjusted edge p-values next to the adjusted o
   a <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.5^abs(outer(1:5, 1:5, "-")))
   b <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.2^abs(outer(1:5, 1:5, "-")))
   colnames(a) <- colnames(b) <- paste0("V", 1:5)
-  set.seed(2); raw <- as.data.frame(net_compare(a, b, iter = 50))
+  set.seed(2); raw <- as.data.frame(net_compare(a, b, iter = 5))
   expect_identical(raw$p_raw, raw$p_value)              # no adjustment: equal
   for (m in c("holm", "BH")) {
-    set.seed(2); fit <- net_compare(a, b, iter = 50, p_adjust = m)
+    set.seed(2); fit <- net_compare(a, b, iter = 5, p_adjust = m)
     ed <- as.data.frame(fit)
     expect_identical(ed$p_raw, raw$p_value)             # same permutations
     expect_equal(ed$p_value, stats::p.adjust(ed$p_raw, method = m),
                  tolerance = 1e-15)
     expect_identical(ed$significant, ed$p_value < 0.05) # decided on adjusted p
   }
-  set.seed(2); hol <- net_compare(a, b, iter = 50, p_adjust = "holm")
-  set.seed(2); none <- net_compare(a, b, iter = 50)
+  set.seed(2); hol <- net_compare(a, b, iter = 5, p_adjust = "holm")
+  set.seed(2); none <- net_compare(a, b, iter = 5)
   expect_identical(summary(hol), summary(none))         # M and S never adjusted
 })

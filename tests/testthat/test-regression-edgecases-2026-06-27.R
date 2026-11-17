@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the 2026-06-27 exhaustive edge-case audit. Each test
 # pins a previously silent-wrong / crash / cryptic-error path to an explicit,
 # clear rejection (or, for the integer-coercion fixes, a clean print).

@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the 2026-11-07 review of net_compare(), group mode,
 # event-data multilevel networks and panel_gvar(). Each block names the
 # finding it pins (N* = NCT / groups / multilevel, P* = panel GVAR).

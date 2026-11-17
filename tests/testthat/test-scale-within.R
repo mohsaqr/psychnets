@@ -1,9 +1,9 @@
-# scale_within(): within-person centering and scaling (mlVAR scaleWithin).
+# .scale_within() (internal): within-person centering and scaling (mlVAR scaleWithin).
 
 v <- c("efficacy", "planning", "effort", "enjoyment", "anxiety")
 
 test_that("scale_within centers and scales each person to mean 0, sd 1", {
-  sw <- scale_within(srl_panel, id = "student", vars = v)
+  sw <- .scale_within(srl_panel, id = "student", vars = v)
   expect_identical(dim(sw), dim(srl_panel))
   expect_identical(sw[c("student", "week")], srl_panel[c("student", "week")])
   means <- vapply(v, function(x) max(abs(tapply(sw[[x]], sw$student, mean))), 1)
@@ -13,10 +13,10 @@ test_that("scale_within centers and scales each person to mean 0, sd 1", {
 })
 
 test_that("center-only and scale-only follow their definitions", {
-  ce <- scale_within(srl_panel, "student", v, scale = FALSE)
+  ce <- .scale_within(srl_panel, "student", v, scale = FALSE)
   expect_equal(ce$effort, srl_panel$effort - stats::ave(srl_panel$effort, srl_panel$student),
                tolerance = 1e-14)
-  sc <- scale_within(srl_panel, "student", v, center = FALSE)
+  sc <- .scale_within(srl_panel, "student", v, center = FALSE)
   expect_equal(sc$effort,
                srl_panel$effort / stats::ave(srl_panel$effort, srl_panel$student,
                                              FUN = stats::sd),
@@ -26,7 +26,7 @@ test_that("center-only and scale-only follow their definitions", {
 test_that("scale_within equals mlVAR's within-person scaling", {
   skip_if_not_installed("mlVAR")
   ave_center <- utils::getFromNamespace("aveCenter", "mlVAR")
-  sw <- scale_within(srl_panel, "student", v)
+  sw <- .scale_within(srl_panel, "student", v)
   ref <- lapply(srl_panel[v], function(x)
     stats::ave(x, srl_panel$student, FUN = function(z) ave_center(z, scale = TRUE)))
   expect_equal(as.list(sw[v]), ref, tolerance = 1e-14)
@@ -40,7 +40,7 @@ test_that("the result is invariant to a per-person shift and positive rescaling"
   key <- as.character(d$student)
   d2 <- d
   d2[v] <- lapply(d[v], function(x) x * mult[key] + shift[key])
-  expect_equal(scale_within(d2, "student", v)[v], scale_within(d, "student", v)[v],
+  expect_equal(.scale_within(d2, "student", v)[v], .scale_within(d, "student", v)[v],
                tolerance = 1e-10)
 })
 
@@ -48,43 +48,43 @@ test_that("two occasions per person warn that deviations are mirror images", {
   two <- subset(srl_panel, week <= 2)
   # (a few students have equal values in both weeks: no variation -> NA)
   expect_warning(
-    expect_warning(sw <- scale_within(two, "student", v),
+    expect_warning(sw <- .scale_within(two, "student", v),
                    class = "psychnet_mirror_deviations"),
     class = "psychnet_constant_within")
   # the two weeks' centered deviations are exact negatives
   expect_equal(subset(sw, week == 1, select = v)$effort,
                -subset(sw, week == 2, select = v)$effort, tolerance = 1e-12)
-  expect_no_warning(scale_within(srl_panel, "student", v))
+  expect_no_warning(.scale_within(srl_panel, "student", v))
 })
 
 test_that("persons without within-person variation get NA with a warning", {
   d <- srl_panel
   d$effort[d$student == d$student[1]] <- 50           # one constant person
-  expect_warning(sw <- scale_within(d, "student", v),
+  expect_warning(sw <- .scale_within(d, "student", v),
                  class = "psychnet_constant_within")
   expect_true(all(is.na(sw$effort[d$student == d$student[1]])))
   expect_false(anyNA(sw$effort[d$student != d$student[1]]))
   one <- rbind(srl_panel, transform(srl_panel[1, ], student = 999L))
-  expect_warning(scale_within(one, "student", v, scale = FALSE),
+  expect_warning(.scale_within(one, "student", v, scale = FALSE),
                  class = "psychnet_constant_within")
 })
 
 test_that("bad input is a classed error", {
-  expect_error(scale_within(as.matrix(srl_panel), "student"), class = "psychnet_bad_input")
-  expect_error(scale_within(srl_panel, "nope"), class = "psychnet_bad_input")
-  expect_error(scale_within(srl_panel, "student", vars = "nope"),
+  expect_error(.scale_within(as.matrix(srl_panel), "student"), class = "psychnet_bad_input")
+  expect_error(.scale_within(srl_panel, "nope"), class = "psychnet_bad_input")
+  expect_error(.scale_within(srl_panel, "student", vars = "nope"),
                class = "psychnet_bad_input")
   d <- srl_panel; d$student[3] <- NA
-  expect_error(scale_within(d, "student", v), class = "psychnet_bad_input")
+  expect_error(.scale_within(d, "student", v), class = "psychnet_bad_input")
   d <- srl_panel; d$tag <- "x"
-  expect_error(scale_within(d, "student", vars = c(v, "tag")),
+  expect_error(.scale_within(d, "student", vars = c(v, "tag")),
                class = "psychnet_bad_input")
-  expect_error(scale_within(srl_panel, "student", v, scale = NA),
+  expect_error(.scale_within(srl_panel, "student", v, scale = NA),
                class = "psychnet_bad_input")
 })
 
 test_that("within-scaled occasions feed a paired network comparison", {
-  sw <- scale_within(srl_panel, "student", v)
+  sw <- .scale_within(srl_panel, "student", v)
   set.seed(1)
   fit <- net_compare(subset(sw, week == 1, select = v),
                      subset(sw, week == 4, select = v), paired = TRUE, iter = 5)
@@ -97,7 +97,7 @@ test_that("within-scaled occasions feed a paired network comparison", {
 test_that("psychnet(within =) fits each level on within-person scaled data", {
   nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
                    within = "student")
-  sw <- scale_within(srl_panel, "student", v)
+  sw <- .scale_within(srl_panel, "student", v)
   expect_identical(nets[["2"]]$weights,
                    ebic_glasso(subset(sw, week == 2, select = v))$weights)
   expect_false("student" %in% nets[["1"]]$nodes$label)

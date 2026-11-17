@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the Codex review of the 0.7.0 candidate (2026-11-07).
 # C1..C9 follow the review's numbering.
 

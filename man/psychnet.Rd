@@ -54,8 +54,10 @@ or \code{c("joy", "fear")}) or a single name, as in the \code{select} argument o
 level and a \link{psychnet_group} is returned.}
 
 \item{within}{Optional person-identifier column. Each variable is centred
-and scaled within persons over all rows before estimation (see
-\code{\link[=scale_within]{scale_within()}}), and the person column is not a node. With \code{group},
+and scaled within persons over all rows before estimation (each
+person's mean subtracted and the result divided by the person's standard
+deviation, as \code{mlVAR::mlVAR(scaleWithin = TRUE)}), and the person column
+is not a node. With \code{group},
 rows are matched by person so that \code{\link[=net_compare]{net_compare()}} can pair two levels
 (\code{paired = TRUE}). Without \code{group}, a person's rows are pooled and are
 not independent. Numeric tables only.}

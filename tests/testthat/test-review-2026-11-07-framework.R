@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the 2026-11-07 review of the framework verbs:
 # centrality (W2, W3, W11), bridge (W1, W4, W7), aggregate / redundancy (W4,
 # W5, W6), predictability (W10) and the base-graphics plots (W8, W9, N13).

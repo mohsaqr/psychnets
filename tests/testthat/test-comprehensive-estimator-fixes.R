@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regressions from the complete function review. Each check targets a public
 # statistical or data-handling contract rather than duplicating a solver.
 

@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 test_that("undirected rewiring explores the same degree null after relabelling", {
   A <- matrix(0, 6, 6)
   A[1:3, 4:6] <- A[4:6, 1:3] <- 1

@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Review 2026-11-07, nodewise estimators (ising_fit, ising_sampler, mgm_fit,
 # the moderated MGM). Finding ids N1-N13 refer to the review; every error path
 # is asserted by condition class, not by message.

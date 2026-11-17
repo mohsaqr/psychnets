@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the 2026-06-30 code-review fixes.
 
 test_that("#1 group net_boot/net_stability forward the group's labels", {

@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression checks for the function-by-function framework review.
 
 framework_data <- function(n = 60L, seed = 11L) {

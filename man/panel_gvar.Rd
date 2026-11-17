@@ -137,7 +137,7 @@ The result is a \code{psychnet_panelgvar} object holding the three networks
 
 The model needs at least three waves. For a network from cross-sectional
 data, use \code{\link[=psychnet]{psychnet()}}; for networks of within-person deviations without a
-temporal model, \code{\link[=scale_within]{scale_within()}}. The model is the one fitted by
+temporal model, \code{\link[=psychnet]{psychnet()}} with \code{within}. The model is the one fitted by
 \code{psychonetrics::panelgvar()}.
 }
 \details{
@@ -230,6 +230,6 @@ Systems}, 23, 604-612.
 }
 \seealso{
 \link{psychnet_panelgvar} for reading the fit; \code{\link[=ebic_glasso]{ebic_glasso()}} for
-cross-sectional data; \code{\link[=scale_within]{scale_within()}}; \code{\link[=certificate]{certificate()}} for the
+cross-sectional data; \code{\link[=psychnet]{psychnet()}} with \code{within}; \code{\link[=certificate]{certificate()}} for the
 certificates of the other estimators.
 }

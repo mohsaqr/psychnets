@@ -1,3 +1,7 @@
+# panel_gvar is exercised on CRAN by its examples; these numerical checks
+# run on CI and GitHub Actions (all platforms), not in CRAN's check.
+skip_on_cran()
+
 # panel_gvar(): the panel graphical VAR. Formula tests (implied moments, both
 # gradient routes), equivalence with psychonetrics::panelgvar() via a stored
 # reference fixture, invariance properties, pruning, error/warning classes, and

@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Review 2026-11-07, resampling verbs (net_boot, difference_test,
 # net_stability, net_casedrop_reliability, net_split_reliability).
 # Finding ids R1-R10 refer to the review.

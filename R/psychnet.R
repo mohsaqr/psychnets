@@ -52,8 +52,10 @@
 #' @param group Optional grouping column(s). One network is estimated per
 #'   level and a [psychnet_group] is returned.
 #' @param within Optional person-identifier column. Each variable is centred
-#'   and scaled within persons over all rows before estimation (see
-#'   [scale_within()]), and the person column is not a node. With `group`,
+#'   and scaled within persons over all rows before estimation (each
+#'   person's mean subtracted and the result divided by the person's standard
+#'   deviation, as `mlVAR::mlVAR(scaleWithin = TRUE)`), and the person column
+#'   is not a node. With `group`,
 #'   rows are matched by person so that [net_compare()] can pair two levels
 #'   (`paired = TRUE`). Without `group`, a person's rows are pooled and are
 #'   not independent. Numeric tables only.
@@ -166,7 +168,7 @@ psychnet <- function(data,
     } else {
       setdiff(.select_names(data, vars_q, vars_env), c(within, group))
     }
-    data <- scale_within(data, id = within, vars = nodes)
+    data <- .scale_within(data, id = within, vars = nodes)
   }
 
   # Group mode: one network per level of `group`, returned as a psychnet_group.

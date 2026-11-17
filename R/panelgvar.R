@@ -691,7 +691,7 @@
 #'
 #' The model needs at least three waves. For a network from cross-sectional
 #' data, use [psychnet()]; for networks of within-person deviations without a
-#' temporal model, [scale_within()]. The model is the one fitted by
+#' temporal model, [psychnet()] with `within`. The model is the one fitted by
 #' `psychonetrics::panelgvar()`.
 #'
 #' @details
@@ -821,7 +821,7 @@
 #'   `psychnet_wave_order` when character waves are ordered alphabetically;
 #'   `psychnet_ignored_argument` when `adjust` is set without pruning.
 #' @seealso [psychnet_panelgvar] for reading the fit; [ebic_glasso()] for
-#'   cross-sectional data; [scale_within()]; [certificate()] for the
+#'   cross-sectional data; [psychnet()] with `within`; [certificate()] for the
 #'   certificates of the other estimators.
 #' @references Epskamp, S. (2020). Psychometric network models from time-series
 #'   and panel data. *Psychometrika*, 85(1), 206-231.

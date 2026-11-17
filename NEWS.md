@@ -1,4 +1,4 @@
-# psychnets 0.8.1
+# psychnets 0.8.2
 
 This release collects the changes made since the CRAN release 0.5.2,
 listed below by development version.
@@ -127,16 +127,14 @@ ones marked **(numbers change)** alter returned values.
 
 ## New verbs
 
-* `scale_within()` centers each variable within persons and, by default,
+* `psychnet(within = "person")` centers each variable within persons and
   divides by the person's own SD (the within-person standardization of
-  `mlVAR::mlVAR(scaleWithin = TRUE)`, which it reproduces exactly), as a data
-  step before any analysis -- e.g. a paired `net_compare()` of two occasions'
-  within-person networks. It warns (`psychnet_mirror_deviations`) when no
-  person has more than two observations, where the occasions' deviations are
-  mirror images and their networks identical by construction, and sets values
-  without within-person variation to `NA` (`psychnet_constant_within`).
-* `psychnet(within = "person")` applies the same scaling inside the front door
-  (over all rows, before `group` splits them), drops the person column from
+  `mlVAR::mlVAR(scaleWithin = TRUE)`, which it reproduces exactly), over all
+  rows before `group` splits them. It warns (`psychnet_mirror_deviations`)
+  when no person has more than two observations, where the occasions'
+  deviations are mirror images and their networks identical by construction,
+  and sets values without within-person variation to `NA`
+  (`psychnet_constant_within`). It drops the person column from
   the nodes, and records each row's person, so
   `net_compare(nets, c(1, 4))` compares two occasions paired by person, by
   default (independent of row order; persons seen in one level only are left

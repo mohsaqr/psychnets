@@ -76,7 +76,6 @@ export(pcor_network)
 export(psychnet)
 export(redundancy)
 export(relimp_network)
-export(scale_within)
 export(tmfg_certificate)
 export(tmfg_network)
 importFrom(stats,

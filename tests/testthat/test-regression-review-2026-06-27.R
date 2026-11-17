@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the 2026-06-27 package-review fixes. Each test is written
 # to FAIL on the pre-fix code and pass on the fix:
 #  (A) ising_fit / mgm_fit must store the WEIGHTED centers/scales (the same ones

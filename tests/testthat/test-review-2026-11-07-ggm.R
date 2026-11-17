@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the 2026-11-07 review of the GGM / structural / front-door
 # estimators (findings G1-G10, S1-S15). Each block names the finding it pins.
 

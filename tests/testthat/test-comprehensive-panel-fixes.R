@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regressions from the complete panel-function review. These cases exercise
 # public output and plotting, including panels with no selected edges.
 

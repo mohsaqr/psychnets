@@ -57,7 +57,6 @@ reference:
   - panel_gvar
   - psychnet_panelgvar
   - psychnet_multilevel
-  - scale_within
 
 - title: Groups and event data
   desc: One network per group, and networks from logs of coded events.

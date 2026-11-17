@@ -1,3 +1,6 @@
+# Review regression tests: run on CI and GitHub Actions, not in CRAN's check.
+skip_on_cran()
+
 # Regression tests for the pre-release algorithm audit.
 
 test_that("cor_auto refuses pairs with no estimable joint information", {

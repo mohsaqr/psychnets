@@ -1,16 +1,30 @@
-# Constrained Gaussian-MRF (graph-restricted MLE) stationarity residual
+# Check that a precision matrix is the maximum-likelihood network on a graph
 
-Certificate for an *unregularized* Gaussian graphical model whose
-precision is constrained to a fixed graph (the estimator behind
-[`ggm_modselect()`](https://pak.dynasite.org/psychnets/reference/ggm_modselect.md)
-and
-[`logo_network()`](https://pak.dynasite.org/psychnets/reference/logo_network.md)).
-The maximum-likelihood / maximum-entropy conditions for a Gaussian
-Markov random field on a graph \\G\\ are exact: \\W\_{ij} = S\_{ij}\\
-for every \\(i,j)\\ on the graph and on the diagonal (\\W =
-\Theta^{-1}\\), and \\\Theta\_{ij} = 0\\ for every \\(i,j)\\ not on the
-graph. A near-zero return certifies the constrained optimum with no
-reference solver.
+`ggm_support_kkt()` checks whether a precision matrix is the
+maximum-likelihood Gaussian graphical model on a given graph, for the
+correlation or covariance matrix it was fitted to. Some Gaussian
+graphical models are estimated without a penalty: a graph is chosen
+first, and the precision matrix is then the maximum-likelihood estimate
+under the constraint that every pair of variables not joined by an edge
+has a partial correlation of zero.
+
+This constrained estimate is unique and is characterized by two
+conditions: the covariance implied by the model reproduces the observed
+covariance for every pair joined by an edge and for every variance, and
+the precision matrix is zero for every pair that is not joined. A matrix
+meeting both conditions is the maximum-likelihood network on that graph.
+
+`ggm_support_kkt()` returns the largest violation of these conditions; a
+value near zero shows that the matrix is the constrained optimum, up to
+numerical precision.
+
+Networks from
+[`ggm_modselect()`](https://pak.dynasite.org/psychnets/reference/ggm_modselect.md),
+[`logo_network()`](https://pak.dynasite.org/psychnets/reference/logo_network.md)
+and `ebic_glasso(refit = "unregularized")` store this value, and
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+reports it. Penalized graphical lasso networks are checked by
+[`glasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glasso_kkt.md).
 
 ## Usage
 
@@ -22,34 +36,58 @@ ggm_support_kkt(theta, cor_matrix, support, active_tol = 1e-08)
 
 - theta:
 
-  Precision matrix to test.
+  The precision matrix to check: a finite, square numeric matrix.
 
 - cor_matrix:
 
-  Correlation / covariance the model was fit to.
+  The correlation or covariance matrix the model was fitted to, of the
+  same size as `theta`.
 
 - support:
 
-  Logical p x p matrix; `TRUE` where an edge is allowed. It is
-  symmetrized (`support | t(support)`), so an upper- or lower-triangular
-  support describes the same undirected graph; the diagonal is ignored.
+  A logical matrix of the same size, `TRUE` where an edge is allowed,
+  with no missing values. It is made symmetric, so an upper- or
+  lower-triangular matrix describes the same graph; the diagonal is
+  ignored.
 
 - active_tol:
 
-  Magnitude above which an off-support entry counts as a nonzero
-  violation.
+  A single finite number \>= 0 (default `1e-8`). It is checked but does
+  not affect the result: every entry of `theta` outside the graph counts
+  as a violation of its absolute size.
 
 ## Value
 
-Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-`Inf` for an asymmetric or non-positive-definite `theta`. A `support`
-that is not a logical matrix of the right size, or contains `NA`, is an
-error of class `psychnet_bad_input`.
+A single number, the largest absolute violation of the conditions: 0 at
+the exact constrained optimum, `Inf` for an asymmetric or
+non-positive-definite `theta`.
+
+## Details
+
+For a Gaussian graphical model on a graph \\G\\, with \\W =
+\Theta^{-1}\\, the maximum-likelihood conditions are \\W\_{ij} =
+S\_{ij}\\ for every \\(i,j)\\ in \\G\\ and on the diagonal, and
+\\\Theta\_{ij} = 0\\ for every \\(i,j)\\ not in \\G\\. The function
+returns the largest absolute deviation from these conditions; a `theta`
+that is asymmetric (by more than `1e-8`) or not positive definite
+returns `Inf`.
+
+## Conditions
+
+`psychnet_bad_input` when `theta` is not a finite square numeric matrix,
+`cor_matrix` is not a finite matrix of the same size, `support` is not a
+logical matrix of that size without missing values, or `active_tol` is
+not a single finite number \>= 0.
 
 ## See also
 
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md),
-which reads the stored residual of a fitted network.
+which reports the stored value of a fitted network;
+[`ggm_modselect()`](https://pak.dynasite.org/psychnets/reference/ggm_modselect.md)
+and
+[`logo_network()`](https://pak.dynasite.org/psychnets/reference/logo_network.md);
+[`glasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glasso_kkt.md)
+for penalized networks.
 
 ## Examples
 
@@ -62,7 +100,7 @@ ggm_support_kkt(solve(S), S, support = chain)
 # The same precision violates an empty-graph (diagonal) constraint.
 ggm_support_kkt(solve(S), S, support = diag(6) > 0)
 #> [1] 0.4761905
-# A fitted network reports its residual through certificate().
+# A fitted network reports its value through certificate().
 certificate(ggm_modselect(cor_matrix = S, n = 250))
 #>   method  certificate kind certified
 #> 1    ggm 2.220446e-16  kkt      TRUE

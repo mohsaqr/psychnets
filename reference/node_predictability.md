@@ -1,14 +1,17 @@
-# Node predictability as a plotting vector
+# Return node predictability as a vector for plotting
 
-A thin companion to
-[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
-that returns predictability as a plain numeric vector in node order,
-clamped to `[0, 1]` – the form
+`node_predictability()` returns node predictability as a numeric vector
+in node order, limited to the range 0 to 1, as
 [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-expects for `pie_values` (the predictability ring drawn around each
-node). Use
+expects for `pie_values`. Node predictability is the proportion of a
+node's variance explained by its neighbours in the network (see
+[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)),
+and is often drawn as a ring around each node of a network plot.
+
+For binary nodes the value is the normalized accuracy (nCC). Use
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
-when you want the full tidy table.
+for the full table, including the type of each node and the raw
+accuracy.
 
 ## Usage
 
@@ -20,18 +23,28 @@ node_predictability(x, data = NULL)
 
 - x:
 
-  A [psychnet](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-  object.
+  A fitted network
+  ([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)).
 
 - data:
 
   The data the network was estimated from; required for the nodewise
-  models (ising / ising_sampler / mgm), ignored for the GGMs.
+  models (`ising`, `ising_sampler`, `mgm`), ignored otherwise.
 
 ## Value
 
-A named numeric vector, one value per node (node order), each in
-`[0, 1]`.
+A numeric vector with one value per node, in node order, named by node
+label, each value between 0 and 1.
+
+## Conditions
+
+The conditions of
+[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md).
+
+## See also
+
+[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
+for the table.
 
 ## Examples
 

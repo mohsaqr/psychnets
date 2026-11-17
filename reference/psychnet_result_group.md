@@ -1,15 +1,24 @@
-# Per-group framework results
+# Results of an analysis applied to networks per group
 
-The list returned by a framework verb
-([`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md),
+A `psychnet_result_group` holds the results of an analysis applied to
+networks estimated per group, such as their centralities or bootstrapped
+edges: one result per group, keyed by group level, so that they can be
+printed together and combined into one table.
+
+It is returned when a
+[psychnet_group](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
+is passed to
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md),
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md),
 [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md),
-[`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md))
-applied to a
-[psychnet_group](https://pak.dynasite.org/psychnets/reference/psychnet_group.md):
-one result per group level, keyed by level.
+[`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md),
+[`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
+or
+[`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md).
+[`print()`](https://rdrr.io/r/base/print.html) shows each group's result
+under a heading, and
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) stacks
-the per-group tables with a leading `group` column.
+the groups' tables with a leading `group` column.
 
 ## Usage
 
@@ -29,22 +38,31 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 - ...:
 
-  Ignored.
+  Ignored by [`print()`](https://rdrr.io/r/base/print.html); passed by
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) to the
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) method
+  of each group's result (for example `what`).
 
 - row.names, optional:
 
-  Ignored (S3 consistency).
+  Ignored.
 
 ## Value
 
-`x`, invisibly (for `print`), after printing each group's result under a
-group heading.
+[`print()`](https://rdrr.io/r/base/print.html) returns `x` invisibly,
+after printing each group's result under a group heading.
 
-For `as.data.frame`, the per-group tables stacked with a `group` column:
-each group's result converted by its own
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the groups' tables, each converted by its own
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) method,
-with `...` (e.g. `what =`) passed on to it. An error converting any
-group's result is raised, not dropped.
+stacked with a leading `group` column. An error in converting any
+group's result is raised, not skipped.
+
+## See also
+
+[psychnet_group](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
+for the networks; the analysis functions listed above for the columns of
+each table.
 
 ## Examples
 

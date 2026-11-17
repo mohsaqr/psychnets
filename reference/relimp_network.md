@@ -1,11 +1,35 @@
-# Relative-importance network (LMG / Shapley)
+# Estimate a directed relative-importance network
 
-Builds a directed network in which the edge predictor -\> outcome is the
-predictor's LMG (Shapley) share of the outcome node's regression
-R-squared. Equivalent in purpose to
-`relaimpo::calc.relimp(type = "lmg")` applied nodewise / `bootnet`'s
-`"relimp"` default, pure base R and self-certified via
-[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md).
+`relimp_network()` estimates a directed relative-importance network: for
+each variable, how much of its variance the other variables explain
+together and how that explained variance is shared among them. Each
+variable is regressed on all the others, and its \\R^2\\ is divided
+among the predictors by the LMG method (Lindeman et al., 1980;
+Groemping, 2006): a predictor's share is its increase in \\R^2\\ when it
+enters the regression, averaged over all orders in which the predictors
+can enter, which is the Shapley value of the predictor.
+
+The shares are non-negative and sum to the \\R^2\\. The network is
+directed: the edge from a predictor to an outcome carries the
+predictor's share of the outcome's explained variance, so the two edges
+between a pair of variables can differ. `relimp_network()` computes
+these shares for every variable from raw data or a correlation matrix.
+With `normalized = TRUE` each outcome's shares are rescaled to sum to 1,
+giving proportions of explained variance rather than proportions of
+total variance. The computation considers every subset of predictors, so
+its cost doubles with each added variable; `max_nodes` limits the
+network size.
+
+It returns the network of shares; the identity that defines the
+decomposition is checked by
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md).
+
+For undirected conditional associations use
+[`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
+or
+[`pcor_network()`](https://pak.dynasite.org/psychnets/reference/pcor_network.md).
+The shares are those of `relaimpo::calc.relimp(type = "lmg")` applied to
+each variable in turn.
 
 ## Usage
 
@@ -26,59 +50,81 @@ relimp_network(
 
 - data:
 
-  Numeric data frame or matrix (rows = observations). Optional if
-  `cor_matrix` is supplied.
+  A numeric data frame or matrix with one row per observation. Not
+  needed when `cor_matrix` is given.
 
 - cor_matrix:
 
-  Optional correlation matrix.
+  A correlation matrix to use instead of `data`; it must be symmetric
+  and positive semi-definite, and a covariance matrix is rescaled to a
+  correlation matrix.
 
 - n:
 
-  Accepted and ignored. The decomposition is computed from the
-  correlation matrix alone; the argument exists so a uniform
-  `(cor_matrix =, n =)` call shared with the other estimators works.
+  Accepted and ignored: the decomposition needs only the correlation
+  matrix. It exists so that a call written for the other estimators,
+  `(cor_matrix = , n = )`, also works here.
 
 - cor_method:
 
-  Correlation when `data` is supplied: `"pearson"` (default),
-  `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see
+  Correlation computed from `data`: `"pearson"` (default), `"spearman"`,
+  `"kendall"`, or `"auto"` (polychoric and polyserial correlations for
+  ordinal items; see
   [`cor_auto()`](https://pak.dynasite.org/psychnets/reference/cor_auto.md)).
 
 - max_nodes:
 
-  Refuse to run above this many nodes (the cost grows as `2^(p-1)` per
-  node): a whole number \>= 2. Default 21.
+  Largest number of variables accepted, a whole number \>= 2. Default
+  `21`; larger networks are refused.
 
 - normalized:
 
-  If `TRUE`, rescale each outcome's incoming importance shares to sum to
-  1, matching `bootnet`/`relaimpo`'s normalized reporting. The default
-  `FALSE` keeps raw LMG shares that sum to the outcome R-squared.
+  Whether to rescale each outcome's incoming shares to sum to 1, as
+  `bootnet` and `relaimpo` report them. Default `FALSE`, which keeps
+  shares that sum to the outcome's \\R^2\\.
 
 - na_method:
 
-  Missing-data handling when `data` is supplied: `"pairwise"` (default)
-  or `"listwise"`. See
+  Handling of missing values in `data`: `"pairwise"` (default) or
+  `"listwise"`. See
   [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md).
 
 - labels:
 
-  Optional node labels, one unique label per network node.
+  Optional node labels, one unique label per node of the network.
 
 ## Value
 
-A `psychnet` object whose `$weights` is the directed importance matrix
-(`weights[k, j]` = importance of `k` for outcome `j`), with `$r2`
-(per-node full-model R-squared), `$cor_matrix`, and `$kkt` (the
-decomposition residual, see
-[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md)).
-With `normalized = FALSE` (default) each outcome's incoming shares sum
-to its R-squared (`colSums($weights) == $r2`); with `normalized = TRUE`
-they are rescaled to sum to 1, `$raw_importance` holds the unscaled
-shares, and `$kkt` (like
-[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md))
-is computed from those raw shares.
+A fitted network of class `psychnet`
+([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)),
+directed, whose edge weights are importance shares.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+one row per edge with columns `from` (the predictor), `to` (the outcome)
+and `weight`;
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+reports the structural check. The object also stores each node's
+full-model \\R^2\\ (`r2`), the correlation matrix (`cor_matrix`),
+whether the shares were normalized (`normalized`) and, with
+`normalized = TRUE`, the unscaled shares (`raw_importance`), from which
+the certificate is computed. The sample size is recorded when the
+network is built from `data` and is `NA` with `cor_matrix`.
+
+## Details
+
+The \\R^2\\ of each subset regression is computed from the correlation
+matrix. The certificate, computed by
+[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md),
+checks that each outcome's shares sum to its full-model \\R^2\\ and that
+this \\R^2\\ agrees with its closed form from the inverse correlation
+matrix.
+
+## Conditions
+
+`psychnet_bad_input` when there are more variables than `max_nodes`,
+`max_nodes` or `normalized` is invalid, `cor_matrix` is not a finite,
+symmetric, positive semi-definite matrix with a positive diagonal, or
+`labels` do not match the nodes; `psychnet_constant_variable` (warning)
+when a constant or all-missing column is dropped.
 
 ## References
 
@@ -88,6 +134,21 @@ bivariate and multivariate analysis*. Scott, Foresman.
 Groemping, U. (2006). Relative importance for linear regression in R:
 The package relaimpo. *Journal of Statistical Software*, 17(1), 1-27.
 [doi:10.18637/jss.v017.i01](https://doi.org/10.18637/jss.v017.i01)
+
+## See also
+
+[`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md)
+and
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+for the check;
+[`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
+and
+[`pcor_network()`](https://pak.dynasite.org/psychnets/reference/pcor_network.md)
+for undirected networks;
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md),
+which routes `method = "relimp"` here;
+[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+for the result.
 
 ## Examples
 

@@ -1,9 +1,21 @@
-# Synthetic weekly self-regulated-learning panel
+# Simulated weekly panel of self-regulated learning
 
-A synthetic panel of 100 students measured in four consecutive weeks on
-five self-regulated-learning indicators – a small, fully shareable data
-set for the panel graphical VAR
+`srl_panel` is a simulated panel of 100 students measured in four
+consecutive weeks on five self-regulated-learning indicators – a small,
+fully shareable dataset for the panel graphical VAR
 ([`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)).
+
+The data were simulated, once, from a stationary random-intercept VAR(1)
+(the panel graphical VAR model) whose structure was taken from the
+weekly means of real experience-sampling data (the anonymized `esm_srl`
+data of the idiographic package): the contemporaneous partial
+correlations, the temporal pattern (autoregressive effects and an effort
+-\> efficacy lagged effect, scaled to 0.6 of the estimated values so
+trait and state differences are separable in four waves), and the
+correlations among students' average levels, with 60% of each variable's
+variance between students. Values are on a 0-100 scale (one of the 2,000
+values was bounded to the scale) and rounded to one decimal. No real
+student is represented.
 
 ## Usage
 
@@ -48,19 +60,12 @@ A data frame with 400 rows (100 students x 4 weeks) and 7 columns:
 Simulated; structure derived from the weekly means of the `esm_srl` data
 in the idiographic package.
 
-## Details
+## See also
 
-The data were simulated, once, from a stationary random-intercept VAR(1)
-(the panel graphical VAR model) whose structure was taken from the
-weekly means of real experience-sampling data (the anonymized `esm_srl`
-data of the idiographic package): the contemporaneous partial
-correlations, the temporal pattern (autoregressive effects and an effort
--\> efficacy lagged effect, scaled to 0.6 of the estimated values so
-trait and state differences are separable in four waves), and the
-correlations among students' average levels, with 60% of each variable's
-variance between students. Values are on a 0-100 scale (one of the 2,000
-values was bounded to the scale) and rounded to one decimal. No real
-student is represented.
+[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
+for the model;
+[SRL](https://pak.dynasite.org/psychnets/reference/SRL.md) for
+cross-sectional data.
 
 ## Examples
 

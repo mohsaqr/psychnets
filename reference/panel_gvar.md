@@ -1,16 +1,46 @@
-# Panel graphical VAR network (panel-GVAR)
+# Estimate temporal, contemporaneous and between-person networks from panel data
 
-Estimates the three networks of the panel graphical
-vector-autoregressive model (Epskamp 2020) from few-wave, many-person
-panel data: a directed **temporal** network (within-person lag-1
-effects), an undirected **contemporaneous** network (partial
-correlations of the within-person innovations), and an undirected
-**between**-person network (partial correlations of the stable person
-means). The within-person process is a stationary VAR(1) around a random
-intercept; means are stationary across waves. This is the model fitted
-by
-[`psychonetrics::panelgvar()`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html),
-estimated by maximum likelihood in base R.
+`panel_gvar()` estimates temporal, contemporaneous and between-person
+networks from panel data, which follow many persons over a few
+measurement waves. It fits the panel graphical vector-autoregressive
+(panel-GVAR) model, which separates three kinds of association among the
+measured variables (Epskamp, 2020).
+
+The **temporal** network is directed: an edge from A to B is the
+within-person effect of A at one wave on B at the next, given all other
+variables, and a self-loop is an autoregressive effect. The
+**contemporaneous** network holds the partial correlations among a
+person's deviations at the same wave that the temporal effects leave
+unexplained. The **between** network holds the partial correlations
+among the persons' stable means. Together they distinguish variables
+that predict one another over time within persons, that vary together
+within persons at the same wave, and that differ together between
+persons.
+
+The model is fitted by maximum likelihood to long data (one row per
+person and wave) or wide data (one row per person). By default every
+edge is estimated and reported with its standard error, p-value, 95%
+Wald interval and a `significant` flag at `alpha`. `select = "prune"`
+removes the edges that are not significant and refits the model, then
+adds back removed edges that improve the fit (`stepup`).
+`select = "ebic"` estimates the three networks with a lasso penalty
+chosen by the extended Bayesian information criterion (EBIC), the panel
+counterpart of
+[`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md).
+The fitted model is checked against its optimality conditions (see
+Details), and `as.data.frame(x, what = "diagnostics")` reports the
+result.
+
+The result is a `psychnet_panelgvar` object holding the three networks
+([psychnet_panelgvar](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)).
+
+The model needs at least three waves. For a network from cross-sectional
+data, use
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md);
+for networks of within-person deviations without a temporal model,
+[`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md).
+The model is the one fitted by
+[`psychonetrics::panelgvar()`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html).
 
 ## Usage
 
@@ -40,212 +70,200 @@ panel_gvar(
 
 - data:
 
-  A data.frame (or matrix). Either **long** (one row per person per
-  wave; give `vars`, `id`, `wave`) or **wide** (one row per person; give
-  `vars` as a design matrix).
+  A data frame or matrix: **long** (one row per person per wave; give
+  `vars`, `id` and `wave`) or **wide** (one row per person; give `vars`
+  as a design matrix).
 
 - vars:
 
-  Long data: character vector of the variable columns. Wide data: a
-  character matrix of column names, one row per variable and one column
-  per wave (the `psychonetrics` `vars` design); its row names become the
-  labels.
+  Long data: the names of the variable columns. Wide data: a character
+  matrix of column names with one row per variable and one column per
+  wave (the `psychonetrics` design); its row names become the labels.
 
 - id, wave:
 
-  Long data only: names of the person-identifier and wave columns.
-  Person identifiers and waves must be non-missing, and neither column
-  may be one of `vars`. Waves are put in time order: a factor by its
-  level order; numeric, date or time waves by value; character waves
-  that are all numbers (`"1"`, `"2"`, `"10"`) numerically; any other
-  character waves alphabetically, with a `psychnet_wave_order` warning
-  naming the order used (pass a factor to set it).
+  Long data only: the names of the person and wave columns. Neither may
+  contain missing values or be one of `vars`, and each person has at
+  most one row per wave. Waves are ordered by factor level order, by
+  value for numbers, dates and times, numerically for character values
+  that are all numbers, and alphabetically (with a warning) for any
+  other character values; pass a factor to set the order.
 
 - select:
 
-  Edge selection. `"none"` (default): every edge is estimated and
-  reported with its standard error and p-value – significance is shown,
-  not imposed (the `psychonetrics` default). `"prune"`: remove edges
-  with p \> `alpha` and refit, then step up (see `stepup`) –
-  psychonetrics' `prune() |> stepup()`. `"ebic"`: penalized maximum
-  likelihood (lasso on every temporal, contemporaneous and between
-  parameter) with the penalty chosen by EBIC along a path –
-  psychonetrics' `panelgvar(estimator = "PML")`, the panel counterpart
-  of
-  [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md).
+  Edge selection: `"none"` (default) estimates every edge and reports
+  its significance; `"prune"` removes non-significant edges and refits
+  (see Details); `"ebic"` estimates penalized networks with the penalty
+  chosen by EBIC.
 
 - alpha:
 
-  Significance level for the `significant` flag, the solid/dashed edges
-  of [`plot()`](https://rdrr.io/r/graphics/plot.default.html), and
-  `select = "prune"`. Default `0.01`
-  ([`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html)'s
-  default).
+  Significance level, in (0, 1), for the `significant` flag, the solid
+  and dashed edges of
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html), and pruning.
+  Default `0.01`, as in
+  [`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html).
 
 - adjust:
 
-  Multiplicity correction applied to the edge p-values before pruning,
-  one of
+  Multiplicity correction for the p-values tested in pruning, one of
   [stats::p.adjust.methods](https://rdrr.io/r/stats/p.adjust.html).
-  Default `"none"`
-  ([`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html)'s
-  default). Used only with `select = "prune"` (a
-  `psychnet_ignored_argument` warning says so otherwise); the p-values
-  and `significant` flags reported in the edge and parameter tables are
-  always unadjusted.
+  Default `"none"`. Used only with `select = "prune"`; the reported
+  p-values and `significant` flags are always unadjusted.
 
 - recursive:
 
-  Logical; repeat pruning until no edge has `p > alpha`. Default
-  `FALSE`.
+  With `select = "prune"`: repeat pruning until no edge has p \>
+  `alpha`. Default `FALSE`.
 
 - stepup:
 
-  Logical; after pruning, run the
-  [`psychonetrics::stepup()`](https://rdrr.io/pkg/psychonetrics/man/stepup.html)
-  search: re-add the pruned edge with the largest modification index
-  while it is significant at `alpha` and the refit passes a chi-square
-  difference test at `alpha` (and lowers BIC, with `criterion = "bic"`).
-  Default `TRUE`, because one-pass pruning can remove parameters that
-  substitute for each other (e.g. an autoregression and correlated
-  cross-lagged effects), each non-significant alone but not jointly.
-  `FALSE` reproduces
-  [`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html)
-  alone. Used only with `select = "prune"`.
+  With `select = "prune"`: after pruning, add back removed edges that
+  improve the fit (see Details). Default `TRUE`, because one-pass
+  pruning can remove parameters that are each non-significant but
+  jointly significant, such as an autoregression and correlated
+  cross-lagged effects. `FALSE` gives pruning alone.
 
 - criterion:
 
-  Step-up acceptance criterion besides the chi-square test: `"bic"`
-  (default, as
-  [`psychonetrics::stepup()`](https://rdrr.io/pkg/psychonetrics/man/stepup.html))
-  or `"none"`.
+  With `stepup`: `"bic"` (default) also requires BIC to decrease when an
+  edge is added; `"none"` uses the significance tests only.
 
 - gamma, nlambda, lambda_min_ratio:
 
-  For `select = "ebic"`: the EBIC hyperparameter (default 0.5), the
-  number of penalty values on the path (50; a finite integer \>= 2) and
-  the smallest as a fraction of the largest (1e-4) – psychonetrics'
-  `find_penalized_lambda()` defaults.
+  With `select = "ebic"`: the EBIC hyperparameter (default `0.5`), the
+  number of penalty values (default `50`, a whole number \>= 2), and the
+  smallest penalty as a fraction of the largest (default `1e-4`).
 
 - refit:
 
-  For `select = "ebic"`: refit the selected network by unpenalized
-  maximum likelihood (standard errors and p-values then come from that
-  refit). Default `FALSE`: the penalized estimates are returned, and
-  standard errors, p-values and `significant` are `NA` (they do not
-  apply to lasso estimates).
+  With `select = "ebic"`: refit the selected networks by unpenalized
+  maximum likelihood, so that standard errors and p-values are
+  available. Default `FALSE` returns the penalized estimates, for which
+  standard errors, p-values and `significant` are `NA`.
 
 - standardize:
 
-  Rescale the data before fitting, as psychonetrics'
-  `panelvar(standardize =)`: `"none"` (default), `"z"` (one mean and SD
-  per variable, pooled over waves), or `"z_per_wave"` (z-score every
-  variable separately within every wave). `"z_per_wave"` removes
-  wave-to-wave drift in means and variances – useful when the
-  stationary-means assumption fails, at the price of no longer modelling
-  that drift – and makes the edges standardized. Standardization uses
-  the available values (SD with denominator n - 1) before listwise
-  deletion.
+  Rescaling before fitting: `"none"` (default), `"z"` (one mean and
+  standard deviation per variable, pooled over waves), or `"z_per_wave"`
+  (each variable z-scored within each wave). `"z_per_wave"` removes
+  changes in means and variances across waves, which the model would
+  otherwise assume absent, and makes the edges standardized.
+  Standardization uses the available values before listwise deletion.
 
 - labels:
 
-  Optional node labels (default: `vars` for long data, the design row
-  names for wide data).
+  Optional node labels, unique and non-empty (default: `vars` for long
+  data, the design row names for wide data).
 
 - na_method:
 
-  Missing-data handling. Only `"listwise"` is supported: a person
-  missing any wave/variable is dropped (with a warning giving the
-  count). A pairwise covariance is not a likelihood for this model and
-  full- information ML is not yet implemented, so `"pairwise"` is
-  refused.
+  Only `"listwise"` (default): a person with any missing value is
+  dropped. `"pairwise"` is refused, because a pairwise covariance is not
+  a likelihood for this model.
 
 ## Value
 
-An object of class `c("psychnet_panelgvar", "netobject_group")`: a named
-list of three
-[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-networks, `temporal` (directed; edge `from -> to` is the lag-1 effect of
-`from` on `to`), `contemporaneous`, and `between` (undirected partial
-correlations). Being a `netobject_group`, it plots as a grid with
-[`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html).
-Read it with
-[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html):
-`what = "edges"` (one row per edge with standard error, p-value and 95%
-Wald interval; the temporal autoregressive effects are the `from == to`
-rows), `what = "parameters"` (every model parameter), `what = "fit"`
-(one row of fit indices: chi-square, CFI, TLI, RMSEA, AIC, BIC),
-`what = "variance"` (one row per variable: the between-person share of
-its variance), `what = "covariance"` (the innovation and between-person
-covariance matrices, one row per entry), `what = "path"` (for
-`select = "ebic"`: one row per penalty value on the lambda path), or
-`what = "diagnostics"` (one row: the score certificate – largest
-absolute gradient of the ML fit function on the free parameters, or the
-lasso KKT residual for `select = "ebic"` – boundary flag, SE
-availability, and how many of the optimizer starts reached the best
-optimum). Fitting, inference and the certificate run on standardized
-variables (pooled SD per variable), so they are unit-free and the
-certificate does not depend on the variables' units; the model is
-scale-equivariant, so estimates and standard errors map back exactly and
-are returned on the data scale.
-
-Errors are classed: `psychnet_bad_input` for unusable input (fewer than
-three waves, too few persons, non-numeric, missing or duplicated
-columns, duplicated or missing labels, an argument outside its allowed
-values, a requested `"pairwise"`), `psychnet_no_converge` if the
-optimizer ends at an infeasible point. Warnings are classed too:
-`psychnet_no_converge` (score above `1e-6` at an interior solution),
-`psychnet_boundary` (the final contemporaneous or between covariance is
-near-singular, i.e. partial correlations near +/-1 – common with three
-waves; those estimates are unreliable, and the score, which need not
-vanish there, is quoted in the message), `psychnet_singular_information`
-(some parameters are not identified at the returned estimate: their
-standard errors are NA, the others exact), `psychnet_approximate_se`
-(the fit being pruned had a singular information; the parameters it does
-not identify were treated as having infinite standard errors, so pruning
-removes them), and `psychnet_listwise_drop` (persons removed for missing
-values), `psychnet_wave_order` (non-numeric character waves ordered
-alphabetically) and `psychnet_ignored_argument` (`adjust` without
-pruning).
+An object of class `c("psychnet_panelgvar", "netobject_group")`
+([psychnet_panelgvar](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)):
+a named list of three networks of class `psychnet`, `temporal`
+(directed), `contemporaneous` and `between` (undirected).
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) gives one
+row per edge with its standard error, p-value and Wald interval;
+`as.data.frame(x, what = ...)` gives the `"parameters"`, `"fit"`
+indices, `"variance"` decomposition, `"covariance"` matrices, EBIC
+`"path"` or `"diagnostics"`, whose `score` column is the certificate.
+[`summary()`](https://rdrr.io/r/base/summary.html) gives one row per
+network and [`plot()`](https://rdrr.io/r/graphics/plot.default.html)
+draws the three networks.
 
 ## Details
 
-By default the full (saturated) model is returned: every edge with its
-standard error, p-value, 95% Wald interval and a `significant` flag at
-`alpha`, drawn solid (significant) or dashed (not) by
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html).
+Write \\y\_{it}\\ for the scores of person \\i\\ at wave \\t\\. The
+model is \\y\_{it} = \mu + b_i + w\_{it}\\, with means \\\mu\\ shared by
+all waves, stable person deviations \\b_i\\ with covariance
+\\\Sigma_b\\, and a stationary within-person process \\w\_{it} = B
+w\_{i,t-1} + \zeta\_{it}\\ with innovation covariance \\\Sigma\_\zeta\\.
+The temporal network is \\B\\ (the edge from \\j\\ to \\i\\ is
+\\B\_{ij}\\); the contemporaneous and between networks are the partial
+correlations implied by \\\Sigma\_\zeta\\ and \\\Sigma_b\\. When the
+means drift across waves, `standardize = "z_per_wave"` removes the
+drift.
 
-`select = "ebic"` instead minimizes F + lambda \* sum\|theta\| over the
-temporal (autoregressive diagonal included), contemporaneous and between
-parameters, for 50 log-spaced lambdas from the smallest penalty that
-empties every network, keeping the lambda with the lowest EBIC = -2
-logL + k log n
+Pruning fixes to zero, in one pass, every temporal, contemporaneous and
+between edge whose Wald p-value (after `adjust`) exceeds `alpha`, and
+refits; `recursive = TRUE` repeats until every remaining edge is
+significant. The step-up search then frees the removed edge with the
+largest modification index while that index is significant at `alpha`,
+and keeps it when the likelihood-ratio test of the refit is significant
+at `alpha` and, with `criterion = "bic"`, BIC decreases; the first
+rejected edge ends the search. This is psychonetrics' `prune()` followed
+by `stepup()`.
 
-- 4 k gamma log V (k free parameters, V wave x variable columns). The
-  solver (accelerated proximal gradient, then an active-set Newton
-  polish) stays inside the model's domain and is certified by the lasso
-  KKT conditions; the selected lambda is re-solved from three starts.
-  The likelihood is not convex, so the certificate proves a stationary
-  point, and [`print()`](https://rdrr.io/r/base/print.html) reports how
-  many starts agree.
+With `select = "ebic"`, the lasso penalty applies to the temporal
+(autoregressive effects included), contemporaneous and between
+parameters on the data scale, over `nlambda` log-spaced values from the
+smallest penalty that empties every network down to `lambda_min_ratio`
+times that value. The selected penalty minimizes \\\mathrm{EBIC} = -2
+\log L + k \log n + 4 \gamma k \log V\\, with \\k\\ the number of
+nonzero free parameters, \\n\\ the number of persons and \\V\\ the
+number of wave-by-variable columns. Penalized estimates below `1e-5` in
+absolute value on the data scale are set to zero before the certificate
+is computed.
 
-With `select = "prune"` the saturated model is fitted, every temporal,
-contemporaneous, and between edge whose Wald p-value exceeds `alpha` is
-fixed to zero in a single pass, and the model is refitted – the
-[`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html)
-default workflow (`recursive = TRUE` repeats until every remaining edge
-is significant). Then, with `stepup = TRUE` (default), the
-[`psychonetrics::stepup()`](https://rdrr.io/pkg/psychonetrics/man/stepup.html)
-search adds pruned edges back one at a time while modification indices,
-chi-square difference tests and BIC support them, so `select = "prune"`
-equals psychonetrics'
-`panelgvar() |> runmodel() |> prune() |> stepup()`.
+The certificate is the largest absolute gradient of the likelihood over
+the free parameters or, for `select = "ebic"` without `refit`, the
+largest violation of the lasso optimality (Karush–Kuhn–Tucker)
+conditions. Pruned and penalized models are refitted or re-solved after
+selection, so the certificate refers to the networks returned. It is
+computed on standardized variables and does not depend on the variables'
+units. The likelihood is not convex: a value near zero shows a
+stationary point, and the fit is started from several points whose
+agreement is reported.
+
+## Conditions
+
+`psychnet_bad_input` when `data`, `vars`, `id` or `wave` cannot be
+resolved (columns missing or duplicated, `id` and `wave` the same or
+among `vars`, missing persons or waves, a person with two rows in one
+wave), a variable is not numeric, there are fewer than two variables or
+fewer than three waves, there are no more complete persons than
+wave-by-variable columns, the stacked covariance is singular, a variable
+does not vary as `standardize` requires, `labels` is invalid, an
+argument is outside its allowed values, or `na_method` is not
+`"listwise"`; `psychnet_no_converge` (error) when no start reaches a
+feasible optimum, the fitted model is worse than its nested baseline, or
+no penalized model is feasible. Warnings: `psychnet_no_converge` when
+the score exceeds `1e-6` at an interior solution; `psychnet_boundary`
+when the contemporaneous or between covariance is near singular (partial
+correlations near +/-1, common with three waves), so estimates involving
+it are unreliable; `psychnet_singular_information` when some parameters
+are not identified at the estimate (their standard errors are `NA`);
+`psychnet_approximate_se` when a fit being pruned had a singular
+information and its unidentified parameters were pruned;
+`psychnet_listwise_drop` when persons are removed for missing values;
+`psychnet_wave_order` when character waves are ordered alphabetically;
+`psychnet_ignored_argument` when `adjust` is set without pruning.
 
 ## References
 
 Epskamp, S. (2020). Psychometric network models from time-series and
 panel data. *Psychometrika*, 85(1), 206-231.
 [doi:10.1007/s11336-020-09697-3](https://doi.org/10.1007/s11336-020-09697-3)
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. *Advances in Neural Information
+Processing Systems*, 23, 604-612.
+
+## See also
+
+[psychnet_panelgvar](https://pak.dynasite.org/psychnets/reference/psychnet_panelgvar.md)
+for reading the fit;
+[`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
+for cross-sectional data;
+[`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md);
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+for the certificates of the other estimators.
 
 ## Examples
 
@@ -262,7 +280,7 @@ fit
 #>   edges (significant/estimated, p < 0.01): temporal 1/20 (+4/5 autoregressive)   contemporaneous 5/10   between 2/10
 #>   selection: none (full model)
 #>   fit: chisq(170) = 207.19, p = 0.0273   CFI = 0.957   TLI = 0.946   RMSEA = 0.047
-#>   optimality (ML score): 5.91e-13
+#>   optimality (ML score): 8.16e-13
 #>   starts: 3 of 3 reached the best saturated optimum
 as.data.frame(fit)
 #>            network      from        to       weight         se            p

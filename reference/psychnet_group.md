@@ -1,22 +1,37 @@
-# Per-group psychometric networks
+# Networks estimated separately for each group
 
-The object returned by
+A `psychnet_group` holds networks estimated separately for each group:
+one fitted network per level of the grouping variable, estimated with
+the same method and settings. When the same variables are measured in
+several groups, such as clinical and control samples, cohorts or
+occasions, these networks show how the association structure differs
+between them.
+
+It is returned by
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-when `group` is supplied: a named list of
-[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-networks, one per level of the grouping variable. It plots as a grid
-with
+with `group`. [`print()`](https://rdrr.io/r/base/print.html) lists the
+groups with their numbers of nodes and edges and their sample sizes,
+[`summary()`](https://rdrr.io/r/base/summary.html) returns these counts
+as a table, and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) stacks
+the edges of all groups;
 [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-and is consumed per level by the framework verbs
-([`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md),
+draws the networks in a grid. The analysis functions
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md),
 [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md),
 [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md),
 [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md),
-[`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)),
-each returning a `*_group` result. Data-based resampling and comparison
-require independent cross-sectional rows. Groups built from several
-occasions per actor need resampling at the actor level and are refused
-by these row-based diagnostics.
+[`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
+and
+[`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
+accept the object and return one result per group (a
+[psychnet_result_group](https://pak.dynasite.org/psychnets/reference/psychnet_result_group.md));
+[`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+tests the difference between two of its levels.
+
+Resampling and comparison assume independent rows. Groups formed from
+several occasions per actor of an event log are refused by these
+functions, because they would need resampling at the actor level.
 
 ## Usage
 
@@ -43,7 +58,7 @@ summary(object, ...)
 
 - row.names, optional:
 
-  Ignored (S3 consistency).
+  Ignored.
 
 - object:
 
@@ -51,27 +66,45 @@ summary(object, ...)
 
 ## Value
 
-`x`, invisibly (for `print`), after printing one row per group with its
-node and edge counts and sample size.
+[`print()`](https://rdrr.io/r/base/print.html) returns `x` invisibly,
+after printing one row per group with its numbers of nodes and edges and
+its sample size.
 
-For `as.data.frame`, the per-group edge lists stacked with a leading
-`group` column: one row per edge per group, columns `group`, `from`,
-`to`, `weight`.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns a
+data frame with one row per edge per group and columns `group`, `from`,
+`to` and `weight`.
 
-For `summary`, a data frame with node/edge counts and mean absolute edge
-weight: one row per group, or per group and `level` when a group
-contains within/between networks.
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a data frame
+with one row per group (or per group and `level` when a group holds
+within-actor and between-actor networks) and columns `group`, `nodes`,
+`edges` and `mean_abs_weight`.
 
 ## Details
 
-Networks are listed in the grouping variable's level order when it is a
-factor (so its first level is group 1 of
-[`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)),
-otherwise in order of first appearance. Rows with a missing group value
-are dropped with a `psychnet_rows_dropped` warning; an empty-string
-level, or a cross-sectional level with fewer than 3 rows, is a
-`psychnet_bad_input` error; a level with no more rows than variables
-raises a `psychnet_small_sample` warning.
+Groups are ordered by the levels of the grouping variable when it is a
+factor, so its first level is group 1 in
+[`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md),
+and otherwise by first appearance. Each network keeps the rows it was
+estimated from, so two members can be passed to
+[`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+directly.
+
+## Conditions
+
+`psychnet_rows_dropped` (warning) when rows with a missing group value
+are dropped; `psychnet_bad_input` when a group column is missing, a
+level is the empty string, there are fewer than 2 levels, or a level of
+a numeric table has fewer than 3 rows; `psychnet_small_sample` (warning)
+when a level has no more rows than variables.
+
+## See also
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+to estimate the networks;
+[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+for a single network;
+[`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+to compare two groups.
 
 ## Examples
 

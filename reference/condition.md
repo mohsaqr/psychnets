@@ -1,11 +1,45 @@
-# Condition a moderated network at a moderator value
+# Read a moderated mixed graphical model at a value of the moderator
 
-Extracts the effective pairwise network implied by a moderated MGM
-([`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)
-with `moderators`) at a given value of the moderator, mirroring
-[`mgm::condition()`](https://rdrr.io/pkg/mgm/man/condition.html): it
-applies the AND-rule pre-filter, absorbs the moderator value into the
-main-effect coefficients, and re-aggregates the pairwise edges.
+`condition()` reads a moderated mixed graphical model at one value of
+the moderator and returns that network as an ordinary `psychnet`;
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) and
+[`print()`](https://rdrr.io/r/base/print.html) read the moderated fit
+itself. In a moderated network model, fitted by
+[`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)
+with `moderators`, the strength of an edge between two variables can
+depend on the value of a third variable, the moderator, so each pairwise
+association has a main effect and an interaction with the moderator.
+
+The network at a given moderator value, for example in a treatment group
+compared with a control group, or at low compared with high stress,
+shows how the conditional associations among the other variables differ
+across the moderator. For each pair, `condition()` takes the main effect
+plus the interaction evaluated at `value`, aggregated over the two
+nodewise regressions and combined by the AND or OR rule. Pairs whose
+main effect or interaction did not survive the rule at fitting time
+contribute nothing. The moderator itself carries no edges, and edge
+weights are magnitudes (non-negative), as in
+[`mgm::condition()`](https://rdrr.io/pkg/mgm/man/condition.html).
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) on the
+moderated fit lists the size of the main effect and of the moderation
+effect of every pair with a nonzero effect, or, with `value`, the edges
+of the conditioned network.
+
+`value` is read on the moderator's own scale: a level of a categorical
+moderator as coded in the data (`1` or `2` for a moderator coded 1/2,
+`"treat"` for a factor level `"treat"`), or a raw value of a continuous
+moderator, so that `value = mean(moderator)` gives the network at the
+average moderator. The conditioned network is computed from the fit
+rather than estimated, so
+[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
+reports its certificate as missing.
+
+`condition()` returns an undirected network of class `psychnet`
+([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)).
+
+To fit the moderated model, use
+[`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)
+with `moderators`.
 
 ## Usage
 
@@ -23,27 +57,30 @@ print(x, ...)
 
 - object:
 
-  A `psychnet_moderated` object from `mgm_fit(..., moderators=)`.
+  A `psychnet_moderated` fit from
+  [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)
+  with `moderators`.
 
 - value:
 
-  A single moderator value to condition on: a level of a categorical
-  moderator (number, label, factor or logical, as coded in the data), or
-  a finite number on the raw scale of a continuous one.
+  A single moderator value: a level of a categorical moderator (number,
+  label, factor or logical, as coded in the data), or a finite number on
+  the raw scale of a continuous one. For
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html), `NULL`
+  (default) gives the table of main and moderation effects.
 
 - rule:
 
-  Symmetrization rule; defaults to the rule used at fit time.
+  `"AND"` or `"OR"` combination of the two conditioned nodewise
+  estimates of each pair. Default `NULL` uses the rule of the fit.
 
 - x:
 
-  A `psychnet_moderated` object.
+  A `psychnet_moderated` fit.
 
 - row.names, optional:
 
-  Standard
-  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
-  arguments; ignored.
+  Ignored.
 
 - ...:
 
@@ -51,51 +88,45 @@ print(x, ...)
 
 ## Value
 
-`condition()` returns a `psychnet` network object (the moderator node
-carries no edges), with `$mod_value` the value conditioned on.
+`condition()` returns an undirected network of class `psychnet`
+([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md));
+the value conditioned on is stored as `mod_value`.
 
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) on the
 moderated fit returns, with `value = NULL`, one row per pair of nodes
 joined by a main effect or a moderation effect, with columns `from`,
-`to`, `main_effect` (aggregated magnitude of the pairwise main effect,
-mgm convention: mean absolute nodewise estimate, zero when the pair does
-not survive `rule`), `interaction` (aggregated magnitude of the
-moderator x pair three-way interaction, `NA` for a pair that includes
-the moderator itself), `moderated` (logical: `interaction > 0`) and
-`involves_moderator`. With a `value`, it returns the tidy edge list
-(`from`, `to`, `weight`) of `condition(x, value)`.
+`to`, `main_effect` (magnitude of the pairwise main effect: the mean
+absolute nodewise estimate, zero when the pair does not survive the
+rule), `interaction` (magnitude of the moderator-by-pair interaction,
+`NA` for a pair that includes the moderator), `moderated`
+(`interaction > 0`, `NA` for a pair that includes the moderator) and
+`involves_moderator`. With a `value`, it returns the edge list (`from`,
+`to`, `weight`) of `condition(x, value)`.
 
-[`print()`](https://rdrr.io/r/base/print.html) on the moderated fit
-shows the number of nodes, the moderator and the fit settings, and
-returns `x` invisibly.
-
-Errors of class `psychnet_bad_input` when `value` is missing, not length
-one, not a level of a categorical moderator, or not a finite number for
-a continuous one.
-
-## Details
-
-`value` is always read on the moderator's **own** scale. For a
-categorical moderator it is one of the levels observed in the data, in
-the coding the data used: `1`/`2` for a moderator coded 1/2, `"treat"`
-for a factor level `"treat"` (the internal 0-based level code is never
-exposed). For a continuous moderator it is a value on the raw scale; the
-moderator is standardized internally (mgm's `scale = TRUE`), and the
-value is mapped to `(value - mean) / sd` before conditioning, so
-`value = mean(moderator)` gives the network at the average moderator.
-([`mgm::condition()`](https://rdrr.io/pkg/mgm/man/condition.html)
-instead takes the value on its internal standardized scale:
-`condition(fit, v)` here equals
-`mgm::condition(ref, list(k = (v - mean) / sd))`.)
+[`print()`](https://rdrr.io/r/base/print.html) shows the number of
+nodes, the moderator and the fit settings, and returns `x` invisibly.
 
 ## Functions
 
-- `as.data.frame(psychnet_moderated)`: Tidy table of the moderated fit:
-  per-edge main and moderation effects, or (with `value`) the
-  conditioned edge list.
+- `as.data.frame(psychnet_moderated)`: Main and moderation effects of
+  every pair, or (with `value`) the edge list of the conditioned
+  network.
 
-- `print(psychnet_moderated)`: The moderated fit: nodes, moderator and
-  settings.
+- `print(psychnet_moderated)`: Print the nodes, the moderator and the
+  fit settings.
+
+## Conditions
+
+`psychnet_bad_input` when `object` is not a moderated fit, `rule` is not
+`"AND"` or `"OR"`, or `value` is missing, not of length one, not a level
+of a categorical moderator, or not a finite number for a continuous one.
+
+## See also
+
+[`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)
+for fitting the moderated model;
+[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+for the conditioned network.
 
 ## Examples
 
@@ -120,7 +151,7 @@ condition(fit, value = 1)     # no x1-y edge
 condition(fit, value = 2)     # the x1-y edge appears
 #> <psychnet> mgm_moderated network
 #>   nodes: 4   edges: 1   (undirected)
-as.data.frame(fit, value = 2) # the same network as a tidy edge list
+as.data.frame(fit, value = 2) # the same network as an edge list
 #>   from to   weight
 #> 1   x1  y 0.646064
 ```

@@ -1,86 +1,76 @@
 # psychnets
 
-> **Clean-room, self-certifying estimation of cross-sectional
-> psychometric network models in base R.**
->
-> — by [**Mohammed Saqr**](https://saqr.me)
+Written by [Mohammed Saqr](https://saqr.me) and [Sonsoles
+López-Pernas](https://sonsoles.me)
 
-*psychnets* implements the principal cross-sectional estimators used in
-psychometric network analysis entirely in base R. The package provides
-correlation and partial-correlation networks, the EBIC-regularized
-Gaussian graphical model (graphical lasso), together with its
-nonparanormal and unregularized stepwise variants, information-filtering
-networks including the Triangulated Maximally Filtered Graph (TMFG) and
-Local–Global inverse covariance estimation, relative-importance
-networks, the Ising model for binary variables, and the mixed graphical
-model. Whereas these estimators are conventionally accessed through
-high-level R packages that delegate numerical optimization to compiled
-Fortran or C/C++ libraries, *psychnets* reimplements the complete
-estimation procedures directly in R. In particular, graphical lasso
-estimation is commonly performed through *qgraph* and *bootnet*, which
-invoke the Fortran implementation provided by *glasso*, while Ising and
-mixed graphical models are typically estimated through *IsingFit* and
-*mgm*, both of which rely on the compiled optimization routines of
-*glmnet*. *psychnets* invokes none of these packages or their underlying
-compiled numerical libraries. Its only package dependencies are the
-standard R distributions *stats*, *parallel*, *graphics*, and
-*grDevices*.
+Provides clean-room implementations for estimating psychometric network
+models, including correlation and partial-correlation networks, Gaussian
+graphical models with extended Bayesian information criterion (EBIC)
+regularization, nonparanormal and stepwise selection variants,
+information-filtering networks (the triangulated maximally filtered
+graph and the local-global inverse covariance), relative-importance
+networks, and Ising and mixed graphical models
+([doi:10.3758/s13428-017-0862-1](https://doi.org/10.3758/s13428-017-0862-1);
+[doi:10.1007/978-3-031-54464-4_19](https://doi.org/10.1007/978-3-031-54464-4_19)).
+All methods are implemented from first principles in base R without
+compiled dependencies and return consistent, tidy outputs. Functions are
+designed to be transparent and report optimization diagnostics where
+applicable. For Gaussian graphical models, the graphical lasso
+stationarity (Karush-Kuhn-Tucker) residual quantifies the deviation of
+the estimated solution from the optimum of the corresponding convex
+optimization problem.
 
-For fitted regularized optimization models, *psychnets* reports a
-numerical certificate in the form of the Karush–Kuhn–Tucker (KKT)
-residual associated with the objective defining the estimator. The KKT
-residual quantifies the degree to which the necessary first-order
-optimality conditions are satisfied and therefore provides a direct
-measure of convergence. Residual values approaching zero indicate that
-the numerical solution is effectively stationary with respect to the
-objective function. Because this diagnostic is computed directly from
-the fitted solution, its evaluation is independent of external
-optimization software and does not require comparison with reference
-implementations. Post-estimation transformations and methods without an
-applicable residual report an unavailable certificate rather than a
-successful one.
+## Overview
 
-The implementation philosophy of *psychnets* is based on four
-complementary design principles. First, the estimation procedure is
-fully transparent, as both the statistical methodology and the numerical
-optimization algorithms are implemented explicitly in R, allowing every
-computational step to be inspected and reproduced without reference to
-opaque compiled libraries. Second, estimation is reproducible because
-convergence behaviour is determined by user-accessible numerical
-criteria rather than by implementation-specific tolerances embedded
-within precompiled binaries. Third, the package maintains a minimal
-dependency structure by avoiding external numerical libraries such as
-*glasso*, *glmnet*, *qgraph*, and *Matrix*, together with their
-associated compiled dependency chains, including *Rcpp* and
-*RcppArmadillo*. Finally, estimation is directly auditable because
-fitted optimization solutions are accompanied by an optimality
-certificate that quantifies its numerical accuracy with respect to the
-objective function being minimized. Consequently, the correctness of a
-fitted optimization can be assessed directly rather than inferred
-through agreement with an independent software implementation.
+`psychnets` estimates psychometric networks and assesses how far they
+can be trusted. A psychometric network represents variables such as
+questionnaire items, symptoms or behaviours as nodes and the
+associations between them as edges; in a partial-correlation network an
+edge is the association between two variables that remains once all the
+others are taken into account (Epskamp & Fried, 2018). The network shows
+which variables are directly related, which hold a central position, and
+how the structure differs between groups. The package estimates Gaussian
+graphical models (regularized, unregularized and nonparanormal),
+information-filtering and relative-importance networks, Ising models for
+binary items, mixed graphical models, and the panel graphical VAR for a
+few waves of panel data. Each network can be bootstrapped, tested for
+the stability of its centralities and the reliability of its edges, and
+compared between groups.
 
-Because each optimization problem is solved to numerical stationarity
-and model selection is performed using the standard formulation of the
-Extended Bayesian Information Criterion (EBIC), network recovery
-reflects the theoretical properties of the estimator rather than
-artefacts of incomplete optimization. As a consequence, edge selection
-is not influenced by premature termination of the numerical algorithm,
-thereby avoiding the inclusion of edges that may arise solely from
-insufficient convergence of the underlying optimization procedure.
+Every estimator is written in base R. A regularized fit reports how far
+it is from the optimum of its objective
+([`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)),
+so the network can be checked without a second solver.
 
-Validation uses simulated data with known generating models and
-published psychometric datasets. Agreement with reference packages is
-assessed using method-appropriate criteria: exact or near-numerical
-agreement where objective and solver conventions coincide, and support,
-sign, or structural agreement where penalty paths or diagonal
-conventions differ. For the EBIC graphical lasso, the comparison limit
-is determined by the convergence criterion of the glasso implementation
-used by qgraph, approximately 1e-4. psychnets solves its native
-optimization to tighter tolerances. If post-estimation thresholding
-changes a returned graph,
-[`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
-reports `NA` for that graph, and printing the network shows the residual
-of the fit before thresholding.
+## Vignettes and guides
+
+**Vignettes**
+
+- [Gaussian graphical models: estimation and
+  interpretation](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.html)
+- [Stepwise Gaussian graphical model
+  selection](https://pak.dynasite.org/psychnets/articles/ggm-model-selection.html)
+- [Information-filtering networks with TMFG and
+  LoGo](https://pak.dynasite.org/psychnets/articles/information-filtering-networks.html)
+- [Relative-importance
+  networks](https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html)
+- [Ising networks for binary
+  data](https://pak.dynasite.org/psychnets/articles/ising-networks.html)
+- [Mixed graphical
+  models](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html)
+- [Panel graphical VAR: temporal, contemporaneous, and between-person
+  networks](https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html)
+
+**Guides**
+
+- [Regulation networks from Dynalytics event
+  data](https://pak.dynasite.org/psychnets/articles/group-networks-from-event-data.html)
+- [Edge-weight stability and split-half
+  reliability](https://pak.dynasite.org/psychnets/articles/network-reliability.html)
+- [Visualizing networks with
+  cograph](https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.html)
+- [Visualizing bootstrap, centrality and difference results (base
+  R)](https://pak.dynasite.org/psychnets/articles/visualizing-networks.html)
 
 ## Installation
 
@@ -139,13 +129,14 @@ reference:
 
 certificate(net)
 #>   method  certificate kind certified
-#> 1 glasso 2.213367e-10  kkt      TRUE
+#> 1 glasso 2.213347e-10  kkt      TRUE
 ```
 
 ## Models and methods
 
-The estimators, each fitted in base R and — where regularized —
-self-certified:
+The estimators, each fitted in base R; the regularized ones report a
+certificate
+([`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)):
 
 | Verb | Model | Data |
 |----|----|----|
@@ -207,25 +198,36 @@ plot(net_boot(SRL_GPT, method = "glasso", n_boot = 500), type = "edges")
 
 ![bootstrapped edge weights](reference/figures/README-bootstrap-1.png)
 
-## Self-certification
+## Implementation and certificates
 
-`psychnets` treats correctness as a measured quantity rather than as
-agreement with a second implementation. For a Gaussian graphical model,
+Every estimator is written in base R. The only package dependencies are
+*stats*, *parallel*, *graphics* and *grDevices*; the compiled solvers of
+*glasso* and *glmnet*, which *qgraph*, *bootnet*, *IsingFit* and *mgm*
+call, are not used.
+
+A fitted network carries its own check. For a Gaussian graphical model,
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
 reports (and
 [`glasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glasso_kkt.md)
 computes) the stationarity residual of the graphical-lasso objective;
 because that objective is strictly convex its minimizer is unique, so a
-near-zero residual certifies the global optimum with no reference solver
-involved. The nodewise Ising and mixed graphical models are certified
-analogously through the penalized-likelihood score residual. External
-packages (`qgraph`, `IsingFit`, `mgm`, `bootnet`) serve as cross-checks
-at independent-solver precision, never as the definition of correct.
+near-zero residual shows that the network is the optimum, with no
+reference solver involved. The nodewise Ising and mixed graphical models
+are checked the same way through the penalized-likelihood score
+residual. Because each fit is solved to stationarity before the EBIC is
+computed, no edge is selected only because the optimization stopped
+early. A network changed after fitting, by a threshold or by pruning,
+reports `NA`, and printing it shows the residual of the fit before the
+change. External packages (`qgraph`, `IsingFit`, `mgm`, `bootnet`) serve
+as cross-checks, not as the definition of a correct fit.
 
 ## Validation
 
 `psychnets` is checked against the established reference packages in two
-ways, both reproducible from a fixed set of package versions.
+ways, both reproducible from a fixed set of package versions. For the
+EBIC graphical lasso, the comparison limit is set by the convergence
+criterion of the *glasso* implementation used by *qgraph*, about 1e-4;
+`psychnets` solves its own optimization to tighter tolerances.
 
 ### Estimator equivalence versus the reference packages
 

@@ -1,15 +1,26 @@
-# Action frequencies from an event log
+# Count the actions of each actor and session in an event log
 
-Converts a long event log – one row per event, with an actor, an action,
-and optionally a session and time – into a frequency table: one row per
-occasion, one column per distinct action, holding that action's count.
-The conversion mirrors the "frequency" format of the Nestimate event
-pipeline. An occasion is one (actor, session) cell; with
-`compute_sessions = TRUE` the `time` column is used to split each actor
+`event_frequencies()` counts how often each action occurred in each
+occasion of an event log, where an occasion is an actor, or an actor's
+session. This table of action frequencies is what a network of actions,
+which shows which actions tend to occur together in the same occasion,
+is estimated from.
+
+In an event log each row records one action by one actor, such as a
+student reading, taking a quiz or writing a note; behavioural and
+learning data often arrive in this form. Occasions are formed by
+`actor`, by `actor` and `session` when sessions are given, and, with
+`time` and `compute_sessions = TRUE`, by splitting an actor's events
 into sessions wherever the gap between consecutive events exceeds
-`time_threshold`. This is the frequency input that
+`time_threshold`.
+
+The result is a data frame with one row per occasion and one column per
+distinct action, holding the count.
+
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-builds internally for event data (`source = "eventdata"`).
+performs this conversion itself when given an event log, so the function
+is needed only to inspect or reuse the table. Events with a missing or
+empty action are not counted.
 
 ## Usage
 
@@ -29,45 +40,56 @@ event_frequencies(
 
 - data:
 
-  A long event log (data frame), one row per event.
+  A data frame with one row per event.
 
 - actor:
 
-  Column(s) naming the actor / subject. Default `"Actor"`.
+  Column(s) identifying the actor. Default `"Actor"`.
 
 - action:
 
-  Column naming the action / state. Default `"Action"`.
+  Column holding the action. Default `"Action"`.
 
 - session:
 
-  Optional column(s) naming an explicit session within an actor.
+  Optional column(s) identifying sessions within an actor.
 
 - time:
 
-  Optional column used to compute sessions from gaps (see
-  `compute_sessions`); it is not used for any temporal model.
+  Optional column of event times (numbers, dates, date-times or
+  timestamps as text), used only to split sessions.
 
 - compute_sessions:
 
-  If `TRUE`, split each actor into sessions from the `time` gaps (a new
-  session starts when the gap exceeds `time_threshold`). Default `TRUE`.
+  Whether to split each actor's events into sessions at gaps in `time`
+  longer than `time_threshold`. Default `TRUE`; has no effect without
+  `time`.
 
 - time_threshold:
 
-  Maximum gap (in the units of `time`, seconds for a timestamp) between
-  consecutive events before a new session begins. Default `900` (15
-  minutes), as in Nestimate.
+  Longest gap between consecutive events within one session, in the
+  units of `time` (seconds for date-times). Default `900` (15 minutes).
 
 ## Value
 
-A `data.frame` with one row per occasion: an `actor` column (character),
-a `session` column (character occasion label: the actor and session
-values joined by `"."`, followed by the computed session number when
-`compute_sessions` splits by `time`), and one numeric (double) count
-column per action. Errors of class `psychnet_bad_input` when a column is
-missing, `actor` or `session` has missing values, or `time` cannot be
-parsed.
+A data frame with one row per occasion and columns `actor`, `session`
+(an occasion label joining the actor, the session and, when sessions are
+computed from `time`, the session number, separated by `"."`) and one
+numeric column of counts per action.
+
+## Conditions
+
+`psychnet_bad_input` when `data` is not a data frame, a named column is
+missing, `action` has fewer than two distinct values, `actor` or
+`session` has missing values, or `time` cannot be read as numbers or
+timestamps.
+
+## See also
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+with `actor` to estimate a network from an event log;
+[psychnet_multilevel](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
+for within-actor and between-actor networks.
 
 ## Examples
 

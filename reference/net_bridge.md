@@ -1,8 +1,33 @@
-# Bridge centrality
+# Compute bridge centrality between communities of nodes
 
-Computes bridge centrality for an undirected weighted network: how
-strongly each node connects to communities other than its own. You
-supply the community membership; psychnets does not detect it.
+`net_bridge()` computes the bridge centrality of each node in a network
+whose nodes belong to known communities, such as the symptoms of two
+disorders or the items of different scales. Bridge centrality (Jones, Ma
+& McNally, 2021) describes how strongly a node is connected to the
+communities other than its own; nodes with high bridge centrality are
+those through which the communities are linked, for example symptoms
+that may connect two disorders in comorbidity.
+
+The function computes five measures for each node of an undirected
+network: bridge strength, the sum of the absolute weights of its edges
+to other communities; one-step bridge expected influence (`bridge_ei1`),
+the sum of the signed weights of those edges; two-step bridge expected
+influence (`bridge_ei2`), which adds the signed weights of the paths of
+two edges that end in another community; bridge betweenness, the number
+of shortest paths between nodes of different communities that pass
+through the node; and bridge closeness, the inverse of the mean distance
+from the node to the nodes of other communities. Shortest paths use the
+positive edges, with weights inverted to distances. The communities are
+given by the user; `normalize` divides the measures by the number of
+nodes they can involve.
+
+It returns one row per node, with its community and the five measures.
+
+For centrality without regard to communities, use
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md).
+To merge each community into a single node and estimate the network
+between communities, use
+[`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md).
 
 ## Usage
 
@@ -17,39 +42,37 @@ plot(x, measures = NULL, ...)
 
 - x:
 
-  A `psychnet` object or a square weighted adjacency matrix. For
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html), the
-  `psychnet_bridge` table returned by `net_bridge()`.
+  An undirected fitted network
+  ([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md))
+  or a symmetric weighted adjacency matrix. For
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html), the table
+  returned by `net_bridge()`.
 
 - communities:
 
-  Community membership, in one of three forms: an unnamed vector with
-  one entry per node, in node order; a vector named by node label (every
-  node named exactly once); or a list of node-label vectors, one element
-  per community (the element names are the community names), e.g.
+  The community of each node, in one of three forms: an unnamed vector
+  with one entry per node, in node order; a vector named by node label;
+  or a list of node-label vectors, one per community, whose names are
+  the community names, e.g.
   `list(anxiety = c("A1", "A2"), mood = c("M1", "M2"))`. Every node must
-  belong to exactly one community: a label listed twice, a label that is
-  not a node, or a node left without a community is an error of class
-  `psychnet_bad_input`.
+  belong to exactly one community, and there must be at least two.
 
 - normalize:
 
-  If `TRUE`, rescale each metric as
-  `networktools::bridge(normalize = TRUE)` does: bridge strength and
-  1-step bridge expected influence are divided by the node's number of
-  other-community nodes `q`, bridge betweenness by `(p - 1) q`, and
-  2-step bridge expected influence by `q + (p - 1)(q - q / (p - 1))`,
-  where `p` is the number of nodes. Bridge closeness is already a mean
-  and is left unchanged. Default `FALSE`.
+  If `TRUE`, divide bridge strength and one-step bridge expected
+  influence by the number `q` of nodes in other communities, bridge
+  betweenness by `(p - 1) q`, and two-step bridge expected influence by
+  `q + (p - 1)(q - q / (p - 1))`, where `p` is the number of nodes, as
+  `networktools::bridge(normalize = TRUE)` does. Bridge closeness is
+  unchanged. Default `FALSE`.
 
 - labels:
 
-  Optional node labels (used when `x` is a bare matrix): one unique
-  label per node.
+  Optional node labels for a bare matrix, one unique label per node.
 
 - measures:
 
-  For [`plot()`](https://rdrr.io/r/graphics/plot.default.html): which
+  For [`plot()`](https://rdrr.io/r/graphics/plot.default.html): the
   bridge columns to draw. Default: all five.
 
 - ...:
@@ -58,28 +81,41 @@ plot(x, measures = NULL, ...)
 
 ## Value
 
-A tidy `data.frame` (class `psychnet_bridge`), one row per node, with
-columns `node`, `community`, `bridge_strength`, `bridge_betweenness`,
-`bridge_closeness`, `bridge_ei1`, `bridge_ei2`.
+A data frame of class `psychnet_bridge`, one row per node, with columns
+`node`, `community`, `bridge_strength`, `bridge_betweenness`,
+`bridge_closeness`, `bridge_ei1` and `bridge_ei2`.
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws one
-sorted horizontal panel per bridge measure, each node's point coloured
-(Okabe-Ito) **and** shaped by its community with a community legend, and
-returns `x` invisibly.
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) raises
-`psychnet_bad_input` for a `measures` entry that is not a bridge column,
-skips a column with no finite value with a `psychnet_plot_skipped`
-warning, and errors (`psychnet_bad_input`) when no requested column has
-a finite value.
+sorted panel per measure, each node's point coloured and shaped by its
+community, with a legend of the communities, and returns `x` invisibly.
 
 ## Functions
 
-- `plot(psychnet_bridge)`: One sorted panel per bridge measure, points
-  coloured and shaped by community.
+- `plot(psychnet_bridge)`: One sorted panel per bridge measure, with
+  points coloured and shaped by community.
+
+## Conditions
+
+`psychnet_bad_input` when `x` is directed, is not a finite symmetric
+square matrix, or `labels` is invalid; when `communities` lists a node
+twice, names a node that is not in the network, leaves a node without a
+community, has the wrong length, or defines fewer than two communities.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) raises
+`psychnet_bad_input` for a `measures` entry that is not a bridge column,
+`psychnet_plot_skipped` (warning) when it skips a measure without finite
+values, and `psychnet_nothing_to_plot` (an error) when no requested
+measure has one.
 
 ## References
 
 Jones, P. J., Ma, R., & McNally, R. J. (2021). Bridge centrality.
 *Multivariate Behavioral Research*, 56(2), 353-367.
+
+## See also
+
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
+for centrality without communities;
+[`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md)
+for the network between communities.
 
 ## Examples
 

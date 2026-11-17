@@ -1,11 +1,31 @@
-# Aggregate a network's communities into super-nodes
+# Aggregate communities of items into a network between communities
 
-Collapses each community of items into a single super-node. `score`
-methods build a composite column per community from the raw data and
-return a reduced `data.frame` (re-estimate the macro network with
-[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-on it). `assoc` methods summarise each community pair's multivariate
-association directly and return the macro network as a `psychnet`.
+`net_aggregate()` builds a network between communities of items, such as
+the items of several scales, in which each community is a single node.
+It offers two routes: the items of each community are combined into a
+composite score, and a network is then estimated among the composites;
+or the association between two communities is summarized directly from
+their items.
+
+The score methods are the mean, median or sum of the items, the first
+principal component, a one-factor score, or a mean in which each item is
+weighted by its connections to the other items of its community in the
+item-level network (`"loadings"`). The association methods are the mean
+signed edge weight between the items of two communities in the
+item-level network (`"average"`), Escoufier's RV coefficient (`"rv"`),
+or the first canonical correlation (`"canonical"`).
+
+A score method returns a data frame with one composite column per
+community, ready for
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md);
+an association method returns the network between communities directly.
+
+The centrality of single items with respect to the communities is
+computed by
+[`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md);
+pairs of nearly identical items can be found with
+[`redundancy()`](https://pak.dynasite.org/psychnets/reference/redundancy.md)
+before aggregating.
 
 ## Usage
 
@@ -25,49 +45,37 @@ net_aggregate(
 
 - data:
 
-  A numeric data frame or matrix (rows = observations, columns = items).
+  A numeric data frame or matrix with one row per observation and one
+  column per item.
 
 - communities:
 
-  Community membership of the columns of `data`, in one of three forms:
-  an unnamed vector with one entry per column of `data`, in column order
-  (`NA` for a column to leave out, e.g. an ID column); a vector named by
-  item label; or a list of item-label vectors, one element per community
-  (the element names are the community names). Every retained item must
-  belong to exactly one community: a label listed twice, a label that is
-  not a column, or a retained item without a community is an error of
-  class `psychnet_bad_input`. Output communities are ordered by list
-  order, factor level, numeric value, or (character labels)
-  alphabetically. A column whose community is `NA` is left out before
-  any preprocessing.
+  The community of each column of `data`, in one of three forms: an
+  unnamed vector with one entry per column, in column order (`NA` for a
+  column to leave out, such as an identifier); a vector named by item
+  label; or a list of item-label vectors, one per community, whose names
+  are the community names. Every retained item must belong to exactly
+  one community. Communities are ordered by list order, factor level,
+  numeric value, or alphabetically for character labels.
 
 - method:
 
-  Aggregation method. Score (return reduced data): `"mean"` (default),
-  `"median"`, `"sum"`, `"pca"` (first principal component), `"factor"`
-  (1-factor regression score; a community of fewer than 3 items uses its
-  first principal component, since one factor is not identified there,
-  and a community where
-  [`stats::factanal()`](https://rdrr.io/r/stats/factanal.html) fails
-  also falls back to its first principal component with a
-  `psychnet_fit_failed` warning naming it), `"loadings"`
-  (within-community connectivity-weighted mean). Association (return
-  macro network): `"average"` (mean signed edge weight between
-  communities), `"rv"` (Escoufier RV coefficient), `"canonical"` (first
-  canonical correlation; a pair where
-  [`stats::cancor()`](https://rdrr.io/r/stats/cancor.html) fails gets
-  weight 0 with a `psychnet_fit_failed` warning naming it).
+  Aggregation method. Score methods (return a data frame): `"mean"`
+  (default), `"median"`, `"sum"`, `"pca"`, `"factor"` or `"loadings"`.
+  Association methods (return a network): `"average"`, `"rv"` or
+  `"canonical"`.
 
 - estimator:
 
-  Estimator used for the node-level network that `"loadings"` and
-  `"average"` need (see
-  [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)).
+  Estimator of the item-level network used by `"loadings"` and
+  `"average"`, as in
+  [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md).
   Default `"glasso"`.
 
 - scale:
 
-  Standardise each item before forming score composites. Default `TRUE`.
+  If `TRUE` (default), standardize each item before forming composite
+  scores.
 
 - labels:
 
@@ -76,23 +84,60 @@ net_aggregate(
 
 - ...:
 
-  Passed to the estimator.
+  Further arguments for the estimator.
 
 ## Value
 
-For a score `method`, a `data.frame` with one column per community (one
-row per retained observation). For an association `method`, a `psychnet`
-macro network among communities.
+For a score `method`, a data frame with one row per retained observation
+and one column per community, named by community. For an association
+`method`, a fitted network
+([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md))
+with one node per community; it is directed only for `"average"` with a
+directed estimator.
 
 ## Details
 
-**Data handling.** Non-numeric columns are dropped, and so is any column
-that is constant once incomplete rows are removed. Rows with a missing
-value in any numeric column are dropped (listwise deletion), with a
-warning of class `psychnet_rows_dropped` giving the count. `communities`
-is matched to the columns of `data` *before* anything is dropped, so a
-dropped column must not carry a community (give it `NA`, or leave it out
-of a named vector or list): one that does is an error naming it.
+Non-numeric columns are dropped, and so is any column that is constant
+once incomplete rows are removed. Rows with a missing value in any
+numeric column are dropped (listwise deletion). `communities` is matched
+to the columns of `data` before anything is dropped, so a dropped column
+must not carry a community: give it `NA`, or leave it out of a named
+vector or list.
+
+A community of one item is that item (standardized when `scale = TRUE`).
+Principal-component and factor scores are signed to point in the
+direction of the community's items. A factor score needs at least three
+items, so a smaller community, or one for which
+[`stats::factanal()`](https://rdrr.io/r/stats/factanal.html) fails, uses
+its first principal component instead. In `"loadings"`, each item's
+weight is the sum of its absolute edge weights to the other items of its
+community (equal weights when these are all zero). A pair of communities
+for which [`stats::cancor()`](https://rdrr.io/r/stats/cancor.html) fails
+gets weight 0 under `"canonical"`.
+
+## Conditions
+
+`psychnet_bad_input` for an invalid argument, or when `communities`
+lists an item twice, names an item that is not a column, or leaves a
+retained item without a community; `psychnet_dropped_column` (an error,
+also `psychnet_bad_input`) when a dropped column carries a community;
+`psychnet_rows_dropped` (warning) when incomplete rows are dropped;
+`psychnet_constant_variable` (warning) when a constant column is
+dropped; `psychnet_dropped_columns` (a message) when non-numeric columns
+are dropped; `psychnet_fit_failed` (warning) when
+[`stats::factanal()`](https://rdrr.io/r/stats/factanal.html) or
+[`stats::cancor()`](https://rdrr.io/r/stats/cancor.html) fails for a
+community, naming it. With `"loadings"` or `"average"`, the estimator
+raises its own conditions.
+
+## See also
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+to estimate a network from the composite scores;
+[`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md)
+for bridge centrality;
+[`redundancy()`](https://pak.dynasite.org/psychnets/reference/redundancy.md)
+for redundant items.
 
 ## Examples
 

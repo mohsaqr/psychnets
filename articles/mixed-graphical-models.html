@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,19 +32,24 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+<li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
     <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
     <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
-    <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
-    <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Networks of regulation actions from event logs</a></li>
+    <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
+    <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -65,6 +70,8 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Mixed graphical models</h1>
+                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
+</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/mixed-graphical-models.Rmd" class="external-link"><code>vignettes/mixed-graphical-models.Rmd</code></a></small>
@@ -73,36 +80,50 @@
 
     
     
-<div class="section level2">
-<h2 id="what-a-mixed-graphical-model-is">What a mixed graphical model is<a class="anchor" aria-label="anchor" href="#what-a-mixed-graphical-model-is"></a>
-</h2>
-<p>A mixed graphical model analyzes continuous and binary variables in
-the same network. A continuous node can represent a scale score or
-measured quantity. A binary node can represent symptom presence, group
-membership, or a yes/no response.</p>
-<p>Each edge describes an association that remains above and beyond the
-other variables. Consider a network with continuous motivation and
-self-efficacy scores together with binary indicators for assignment
-completion and high test anxiety. An edge between motivation and
-assignment completion means that motivation remains associated with the
-conditional probability of completion after self-efficacy, anxiety, and
-the other nodes have been considered.</p>
-<p>A positive edge indicates that higher values or endorsement tend to
-occur together after adjustment. A negative edge indicates an inverse
-adjusted relation. A missing edge means that the selected model did not
-retain enough unique association for that pair. Edges remain
-associational and provide no causal direction.</p>
-</div>
-<div class="section level2">
-<h2 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
-</h2>
-<p>The example uses three continuous <code>SRL_GPT</code> scores:
-cognitive strategy use (<code>CSU</code>), intrinsic value
-(<code>IV</code>), and self-efficacy (<code>SE</code>). Self-regulation
-and test anxiety are represented by binary indicators,
-<code>SR_hi</code> and <code>TA_hi</code>, coded 1 at or above their
-respective medians and 0 below them.</p>
+<p>Studies in psychology and education often measure variables of
+different types together: continuous scale scores such as motivation or
+self-efficacy alongside binary variables such as a diagnosis, a passed
+course or a reported behaviour. A Gaussian graphical model requires
+every variable to be continuous and an Ising model requires every
+variable to be binary, so neither can place both kinds in one network
+without transforming some of them. A mixed graphical model (Haslbeck
+&amp; Waldorp, 2020) does. Each variable is regressed on all the others
+with a model suited to its type, linear for continuous and logistic for
+binary variables, and the regression coefficients form the edges. An
+edge is an association that remains with all other variables held
+constant; a missing edge means that the association is accounted for by
+the rest of the network.</p>
+<p>This article estimates a mixed network of three continuous and two
+binary indicators of self-regulated learning, reads its edges, describes
+the nodes by centrality and by type-appropriate predictability, and
+examines how the rule that combines the two regressions of each pair
+changes the result.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
+</h2>
+<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
+Strategies for Learning Questionnaire. The responses were generated by a
+large language model (GPT) in a study of how such models answer
+psychological surveys (Saqr, 2025); they serve as a well-structured
+example and are not evidence about students. To obtain variables of both
+types, two of the five construct scores are recoded as binary
+indicators.</p>
+<ul>
+<li>
+<strong>Continuous nodes:</strong> <code>CSU</code> (cognitive
+strategy use), <code>IV</code> (intrinsic value) and <code>SE</code>
+(self-efficacy), construct scores on a scale from 1 to 7.</li>
+<li>
+<strong>Binary nodes:</strong> <code>SR_hi</code>, 1 when
+self-regulation is at or above its median; <code>TA_hi</code>, 1 when
+test anxiety is at or above its median.</li>
+<li>
+<strong>Observations:</strong> one row per respondent; the data are
+complete.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mixed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">SRL_GPT</span>,</span>
 <span>                        SR_hi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">SR</span> <span class="op">&gt;=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">SR</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                        TA_hi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">TA</span> <span class="op">&gt;=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">TA</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -115,46 +136,65 @@ respective medians and 0 below them.</p>
 <span><span class="co">#&gt; 4 5.692308 6.555556 6.333333     1     1</span></span>
 <span><span class="co">#&gt; 5 4.384615 5.555556 4.888889     0     1</span></span>
 <span><span class="co">#&gt; 6 4.846154 5.444444 5.666667     0     0</span></span></code></pre></div>
-<p>The self-regulation indicator has an endorsement rate of 0.54, and
-the test-anxiety indicator has a rate of 0.50. The example coding is
-pedagogical. Real applications should preserve continuous variables when
-the research question concerns their full scale and should use binary
-coding only when the two states have a meaningful interpretation.</p>
+<p>The recoding is for illustration. In an applied study a continuous
+variable is kept continuous unless its two states have a substantive
+meaning.</p>
 </div>
 <div class="section level2">
-<h2 id="fitting-the-network-with-psychnet">Fitting the network with <code>psychnet()</code><a class="anchor" aria-label="anchor" href="#fitting-the-network-with-psychnet"></a>
+<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
 </h2>
-<p><code><a href="../reference/psychnet.html">psychnet()</a></code> estimates a mixed graphical model when
-<code>method = "mgm"</code>. Node types are detected with the rule of
-<code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code>: factor and character columns, and numeric
-columns with at most 10 distinct integer values, are categorical, and
-other numeric columns are Gaussian. Here the two 0/1 indicators are
-binary and the three scale scores are Gaussian. A numeric column that
-the integer rule turns into a categorical node is named in a warning,
-because that changes the model; supply <code>types</code> to override
-the detection. The default AND rule retains an edge when both nodewise
-models select the relation.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mixed_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mixed_data</span>, method <span class="op">=</span> <span class="st">"mgm"</span><span class="op">)</span></span>
-<span><span class="va">mixed_net</span></span>
-<span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
-<span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span></code></pre></div>
-<p>The fitted network contains 5 nodes and 6 edges. The printed KKT
-residual is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>7.58</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">7.58 \times 10^{-8}</annotation></semantics></math>.</p>
+<p>A mixed graphical model is a pairwise Markov random field,</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>p</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>∝</mo><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>ϕ</mi><mi>j</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><munder><mo>∑</mo><mrow><mi>j</mi><mo>&lt;</mo><mi>k</mi></mrow></munder><msub><mi>ϕ</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>,</mo><msub><mi>x</mi><mi>k</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
+p(x_1, \ldots, x_p) \propto \exp\left(\sum_j \phi_j(x_j)
++ \sum_{j&lt;k}\phi_{jk}(x_j, x_k)\right),
+</annotation></semantics></math></p>
+<p>in which a zero pairwise term
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϕ</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">\phi_{jk}</annotation></semantics></math>
+means that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mi>j</mi></msub><annotation encoding="application/x-tex">x_j</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>x</mi><mi>k</mi></msub><annotation encoding="application/x-tex">x_k</annotation></semantics></math>
+are independent given all other variables. It is estimated one node at a
+time: for node
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
+the coefficients
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol\beta</annotation></semantics></math>
+minimize</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>ℓ</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>,</mo><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mo>,</mo><mi>−</mi><mi>j</mi></mrow><mi>𝖳</mi></msubsup><mi>𝛃</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mi>λ</mi><mi>j</mi></msub><msub><mrow><mo stretchy="true" form="prefix">‖</mo><mi>𝛃</mi><mo stretchy="true" form="postfix">‖</mo></mrow><mn>1</mn></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\frac{1}{n}\sum_{i=1}^n \ell\left(x_{ij}, \beta_0
++ \mathbf{x}_{i,-j}^{\mathsf T}\boldsymbol\beta\right)
++ \lambda_j\lVert\boldsymbol\beta\rVert_1 ,
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℓ</mi><annotation encoding="application/x-tex">\ell</annotation></semantics></math>
+is the Gaussian or binomial negative log-likelihood and the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ℓ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\ell_1</annotation></semantics></math>
+penalty sets weak coefficients to zero. The penalty
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>λ</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\lambda_j</annotation></semantics></math>
+is chosen for each node by the extended BIC
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0.25</mn></mrow><annotation encoding="application/x-tex">\gamma = 0.25</annotation></semantics></math>
+by default), and selected coefficients below a small threshold that
+shrinks with the sample size are then set to zero
+(<code>threshold = "LW"</code>, as in mgm). Continuous variables are
+standardized, so their units do not determine the coefficients. Each
+pair then has two estimates, one from each regression. The AND rule
+keeps the pair when both regressions select it, the OR rule when either
+does, and the edge weight is the mean of the two estimates.</p>
+<p>Node types are detected from the data: factor and character columns,
+and numeric columns with at most 10 distinct integer values, are
+categorical, and other numeric columns are Gaussian. Here the two 0/1
+indicators are binary and the three scores Gaussian. When the integer
+rule turns a numeric column into a categorical node, a warning names it;
+the <code>types</code> argument overrides the detection.</p>
 </div>
 <div class="section level2">
-<h2 id="inspecting-mixed-edges-with-summary-and-as-data-frame">Inspecting mixed edges with <code>summary()</code> and
-<code>as.data.frame()</code><a class="anchor" aria-label="anchor" href="#inspecting-mixed-edges-with-summary-and-as-data-frame"></a>
+<h2 id="which-variables-are-directly-associated">Which variables are directly associated?<a class="anchor" aria-label="anchor" href="#which-variables-are-directly-associated"></a>
 </h2>
-<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the fitted model with the range and
-mean of its weights, and <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> returns the edge
-table with <code>from</code>, <code>to</code>, and <code>weight</code>.
-The weights are standardized nodewise interaction estimates combined
-into an undirected network.</p>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>method = "mgm"</code> estimates
+the network with the AND rule.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">mixed_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mixed_data</span>, method <span class="op">=</span> <span class="st">"mgm"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span>
@@ -167,52 +207,43 @@ into an undirected network.</p>
 <span><span class="co">#&gt; 4  CSU SR_hi 0.4509658</span></span>
 <span><span class="co">#&gt; 5   IV SR_hi 0.6323683</span></span>
 <span><span class="co">#&gt; 6   SE SR_hi 0.1956633</span></span></code></pre></div>
-<p>The largest edge joins intrinsic value and high self-regulation
-(<code>IV</code>-<code>SR_hi</code>, 0.632). Higher intrinsic value is
-associated with higher conditional odds of belonging to the high
-self-regulation group after the other nodes have been taken into
-account. The <code>CSU</code>-<code>IV</code> and
-<code>CSU</code>-<code>SE</code> edges are also positive, at 0.518 and
-0.485.</p>
-<p>High test anxiety has no retained edge under the AND rule. The two
-nodewise regressions disagree about the
-<code>SR_hi</code>-<code>TA_hi</code> pair: only one of them selects it,
-so the AND rule removes it. The OR-rule sensitivity analysis below shows
-this edge.</p>
-<p>Edge scales depend on the types of the connected nodes, so magnitudes
-should be compared cautiously across Gaussian-Gaussian, Gaussian-binary,
-and binary-binary pairs. For a binary-binary pair, the implementation
-retains the sign of the nodewise logistic coefficient. Some mixed-model
-software reports only its magnitude because the categorical-categorical
-sign depends on coding convention.</p>
+<p>The network has 6 edges, all positive, with weights from 0.196 to
+0.632. The strongest joins intrinsic value and high self-regulation
+(0.632): with the other variables held constant, respondents with higher
+intrinsic value are more likely to be in the upper half of
+self-regulation. Cognitive strategy use is joined to intrinsic value
+(0.518), self-efficacy (0.485) and high self-regulation (0.451). High
+test anxiety has no edge: under the AND rule, no pair involving it is
+selected by both of its regressions.</p>
+<p>Edge weights are on different scales for continuous–continuous,
+continuous–binary and binary–binary pairs, so magnitudes are compared
+within a pair type. For a binary–binary edge, the sign of the logistic
+coefficient is kept; some software reports only its magnitude, because
+that sign depends on how the categories are coded.</p>
 </div>
 <div class="section level2">
-<h2 id="checking-numerical-optimality-with-certificate">Checking numerical optimality with <code>certificate()</code><a class="anchor" aria-label="anchor" href="#checking-numerical-optimality-with-certificate"></a>
+<h2 id="is-the-fitted-network-the-optimum-of-its-objective">Is the fitted network the optimum of its objective?<a class="anchor" aria-label="anchor" href="#is-the-fitted-network-the-optimum-of-its-objective"></a>
 </h2>
-<p><code><a href="../reference/certificate.html">certificate()</a></code> reports the largest stationarity residual
-among the nodewise models. It returns <code>method</code>,
-<code>certificate</code>, <code>kind</code>, and
-<code>certified</code>.</p>
+<p>Each penalized regression is solved iteratively. Any solution must
+satisfy the problem’s optimality (Karush–Kuhn–Tucker) conditions; the
+amount by which a fitted network violates them, the largest over the
+nodewise regressions, is its certificate, and a value near zero shows
+that the network is the optimum of its objective.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    mgm 4.997066e-11  kkt      TRUE</span></span></code></pre></div>
-<p>The residual is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>7.58</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">7.58 \times 10^{-8}</annotation></semantics></math>
-and <code>certified</code> is <code>TRUE</code>. It is below the default
-tolerance of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>6</mn></mrow></msup><annotation encoding="application/x-tex">10^{-6}</annotation></semantics></math>
-and indicates that the nodewise penalized models satisfy their numerical
-conditions within that tolerance. The certificate does not assess
-measurement quality, sampling stability, or causation.</p>
+<span><span class="co">#&gt; 1    mgm 4.997067e-11  kkt      TRUE</span></span></code></pre></div>
+<p>The violation is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5.00</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">5.00 \times 10^{-11}</annotation></semantics></math>,
+so the edges are the solutions of the penalized regressions. The
+certificate concerns the computation, not the sampling stability of the
+edges or the measurement of the variables.</p>
 </div>
 <div class="section level2">
-<h2 id="describing-node-position-with-net_centralities">Describing node position with <code>net_centralities()</code><a class="anchor" aria-label="anchor" href="#describing-node-position-with-net_centralities"></a>
+<h2 id="which-variables-are-most-connected">Which variables are most connected?<a class="anchor" aria-label="anchor" href="#which-variables-are-most-connected"></a>
 </h2>
-<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns <code>node</code>,
-<code>strength</code>, and <code>expected_influence</code> by default.
-Strength is the sum of absolute incident weights. Expected influence is
-the signed sum.</p>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns strength, the sum of absolute
+edge weights, and expected influence, the signed sum.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    node  strength expected_influence</span></span>
@@ -222,25 +253,25 @@ the signed sum.</p>
 <span><span class="co">#&gt; 4 SR_hi 1.2789974          1.2789974</span></span>
 <span><span class="co">#&gt; 5 TA_hi 0.0000000          0.0000000</span></span></code></pre></div>
 <p>Cognitive strategy use has the largest strength (1.454), followed by
-intrinsic value (1.347) and high self-regulation (1.279). Every retained
-edge is positive, so expected influence equals strength for every node.
-High test anxiety has no edge, giving strength and expected influence of
-0.</p>
-<p>Centrality summarizes the fitted edge pattern. It does not place
-continuous and binary variables on an identical substantive scale and
-does not identify causal importance.</p>
+intrinsic value (1.347) and high self-regulation (1.279). All edges are
+positive, so expected influence equals strength, and high test anxiety
+has 0 on both. Because the edge scales differ by pair type, centrality
+compares the continuous and binary nodes only roughly.</p>
 </div>
 <div class="section level2">
-<h2 id="evaluating-predictability-with-net_predict">Evaluating predictability with <code>net_predict()</code><a class="anchor" aria-label="anchor" href="#evaluating-predictability-with-net_predict"></a>
+<h2 id="how-well-is-each-variable-predicted-by-the-others">How well is each variable predicted by the others?<a class="anchor" aria-label="anchor" href="#how-well-is-each-variable-predicted-by-the-others"></a>
 </h2>
-<p><code><a href="../reference/net_predict.html">net_predict()</a></code> uses a metric matched to each node type.
-Continuous nodes report
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
-the proportion of variance explained. Binary nodes report normalized
-classification accuracy (<code>nCC</code>) and raw
-<code>accuracy</code>. The function returns <code>node</code>,
-<code>type</code>, <code>metric</code>, <code>predictability</code>, and
-<code>accuracy</code>.</p>
+<p>Predictability uses a measure suited to each node type:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+for continuous nodes, and for binary nodes the normalized classification
+accuracy,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">nCC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\operatorname{nCC}_j = (\operatorname{CC}_j - m_j)/(1 - m_j)</annotation></semantics></math>,
+where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><annotation encoding="application/x-tex">\operatorname{CC}_j</annotation></semantics></math>
+is the proportion classified correctly and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>m</mi><mi>j</mi></msub><annotation encoding="application/x-tex">m_j</annotation></semantics></math>
+the proportion in the larger category (Haslbeck &amp; Waldorp, 2018).
+<code><a href="../reference/net_predict.html">net_predict()</a></code> needs the data to compute both.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">mixed_net</span>, data <span class="op">=</span> <span class="va">mixed_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    node     type metric predictability accuracy</span></span>
@@ -249,33 +280,29 @@ classification accuracy (<code>nCC</code>) and raw
 <span><span class="co">#&gt; 3    SE gaussian     R2      0.7153497       NA</span></span>
 <span><span class="co">#&gt; 4 SR_hi   binary    nCC      0.7391304     0.88</span></span>
 <span><span class="co">#&gt; 5 TA_hi   binary    nCC      0.0000000     0.50</span></span></code></pre></div>
-<p>Cognitive strategy use has
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.813</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.813</annotation></semantics></math>,
-intrinsic value has 0.776, and self-efficacy has 0.715. The remaining
-nodes explain a large proportion of each continuous construct’s
-in-sample variance.</p>
-<p>High self-regulation has <code>nCC = 0.739</code> and raw accuracy
-0.880, which is a large improvement over its marginal classification
-baseline. High test anxiety has <code>nCC = 0</code> and accuracy 0.50:
-without neighbours it is classified no better than by its base rate.
-Validation on excluded observations is needed for claims about
-performance on new data.</p>
+<p>The other variables explain 81% of the variance in cognitive strategy
+use
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.813</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.813</annotation></semantics></math>),
+78% in intrinsic value and 72% in self-efficacy. High self-regulation is
+classified correctly for 88% of the respondents, an nCC of 0.739 over
+its base rate. High test anxiety has nCC = 0 and 50% correct: with no
+edges, it is predicted no better than by its base rate. These are
+in-sample values.</p>
 </div>
 <div class="section level2">
-<h2 id="sensitivity-to-the-edge-combination-rule">Sensitivity to the edge-combination rule<a class="anchor" aria-label="anchor" href="#sensitivity-to-the-edge-combination-rule"></a>
+<h2 id="does-the-edge-combination-rule-change-the-network">Does the edge-combination rule change the network?<a class="anchor" aria-label="anchor" href="#does-the-edge-combination-rule-change-the-network"></a>
 </h2>
-<p><code><a href="../reference/psychnet.html">psychnet()</a></code> accepts <code>rule = "OR"</code> to retain an
-edge when either nodewise model selects it. The OR rule can produce a
-denser network when the two directed neighbourhood estimates
-disagree.</p>
+<p>The two regressions of a pair can disagree. With
+<code>rule = "OR"</code> a pair is kept when either regression selects
+it.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mixed_or</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mixed_data</span>, method <span class="op">=</span> <span class="st">"mgm"</span>, rule <span class="op">=</span> <span class="st">"OR"</span><span class="op">)</span></span>
-<span><span class="va">mixed_or</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mixed_or</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixed_or</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.168, 0.632], mean 0.330</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixed_or</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from    to     weight</span></span>
 <span><span class="co">#&gt; 1   CSU    IV  0.5179205</span></span>
 <span><span class="co">#&gt; 2   CSU    SE  0.4850679</span></span>
@@ -284,98 +311,63 @@ disagree.</p>
 <span><span class="co">#&gt; 5    IV SR_hi  0.6323683</span></span>
 <span><span class="co">#&gt; 6    SE SR_hi  0.1956633</span></span>
 <span><span class="co">#&gt; 7 SR_hi TA_hi -0.1681336</span></span></code></pre></div>
-<p>The OR analysis returns 7 edges: the six AND-rule edges with
-unchanged weights, plus a negative <code>SR_hi</code>-<code>TA_hi</code>
-edge (-0.168). High self-regulation is associated with lower conditional
-odds of high test anxiety after the continuous learning constructs are
-considered, but only one of the two nodewise regressions supports this,
-so it should be reported as rule-dependent. The other six pairs satisfy
-both combination rules.</p>
+<p>The OR network has 7 edges: the six AND edges with the same weights
+and a negative edge between high self-regulation and high test anxiety
+(-0.168). Respondents in the upper half of self-regulation are less
+likely to be in the upper half of test anxiety, with the continuous
+constructs held constant, but only one of the two regressions supports
+this association. It is the edge through which test anxiety connects to
+the network, and it is reported as dependent on the combination rule.
+The other six edges are selected under either rule.</p>
 </div>
 <div class="section level2">
-<h2 id="visualizing-the-network-with-cographsplot">Visualizing the network with <code>cograph::splot()</code><a class="anchor" aria-label="anchor" href="#visualizing-the-network-with-cographsplot"></a>
+<h2 id="what-does-the-network-look-like">What does the network look like?<a class="anchor" aria-label="anchor" href="#what-does-the-network-look-like"></a>
 </h2>
-<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the fitted object when
-<code>cograph</code> is available. Green and red edges encode positive
-and negative weights, and predictability rings summarize the
-node-specific metric.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the network, with green positive
+and red negative edges and a ring showing each node’s
+predictability.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">mixed_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="mixed-graphical-models_files/figure-html/plot-network-1.png" class="r-plt" alt="" width="672"></p>
-<p>The plot provides orientation, while the edge and predictability
-tables provide the numerical results. Layout distances have no
-statistical scale.</p>
+<p><img src="mixed-graphical-models_files/figure-html/plot-1.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
+<p>The figure shows four connected nodes and an isolated high test
+anxiety node with an empty predictability ring. Node positions come from
+a layout algorithm and carry no statistical meaning.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
 </h2>
-<p>A report should identify each node as continuous or binary, define
-the binary coding, state the sample size, EBIC setting, threshold,
-combination rule, and missing-data procedure, and report the edge
-weights numerically. Predictability must be reported with the correct
-metric for each node type.</p>
-<p>The present analysis used 300 complete observations, three Gaussian
-nodes, two binary nodes, and the default AND rule. The model retained 6
-edges, all positive; high test anxiety was isolated. The largest edge
-was <code>IV</code>-<code>SR_hi</code> (0.632). The KKT residual was
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>7.58</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">7.58 \times 10^{-8}</annotation></semantics></math>.
-The OR sensitivity analysis added one negative edge,
-<code>SR_hi</code>-<code>TA_hi</code> (-0.168).</p>
+<p>A report identifies each node as continuous or binary, defines the
+binary coding, and states the sample size,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>,
+the combination rule and the treatment of missing data. Edge weights are
+reported numerically, and predictability with the measure matching each
+node type.</p>
+<p>In this analysis, a mixed graphical model of three continuous and two
+binary nodes from 300 complete responses kept 6 positive edges under the
+AND rule, the largest between intrinsic value and high self-regulation
+(0.632), and left high test anxiety isolated. Under the OR rule a
+seventh, negative edge joined high self-regulation and high test anxiety
+(-0.168).</p>
 </div>
 <div class="section level2">
-<h2 id="how-the-mixed-network-is-estimated">How the mixed network is estimated<a class="anchor" aria-label="anchor" href="#how-the-mixed-network-is-estimated"></a>
+<h2 id="assumptions-and-when-to-use-a-mixed-graphical-model">Assumptions and when to use a mixed graphical model<a class="anchor" aria-label="anchor" href="#assumptions-and-when-to-use-a-mixed-graphical-model"></a>
 </h2>
-<p>Every node is regressed on the remaining nodes with a model matched
-to its type. A continuous outcome uses linear regression and a binary
-outcome uses logistic regression. An
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ℓ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\ell_1</annotation></semantics></math>
-penalty filters weak coefficients, and EBIC selects the penalty
-separately for each node.</p>
-<p>Each pair receives two directed estimates. The edge-combination rule
-determines whether the pair is retained, and the selected directed
-estimates are averaged to produce an undirected weight. Continuous
-variables are standardized during estimation so their arbitrary units do
-not determine the Gaussian coefficients.</p>
-<p>The default pure-R solver supports Gaussian and binary nodes. A
-categorical node with more than two levels requires
-<code>native = FALSE</code>, which fits a multinomial lasso through the
-optional <code>glmnet</code> package and keeps the k-level variable as
-one node. One-hot encoding is not an equivalent workaround, because it
-turns one k-level node into k separate nodes.</p>
-</div>
-<div class="section level2">
-<h2 id="mathematical-foundations">Mathematical foundations<a class="anchor" aria-label="anchor" href="#mathematical-foundations"></a>
-</h2>
-<p>A mixed graphical model is a pairwise Markov random field,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>p</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>∝</mo><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>ϕ</mi><mi>j</mi></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>+</mo><munder><mo>∑</mo><mrow><mi>j</mi><mo>&lt;</mo><mi>k</mi></mrow></munder><msub><mi>ϕ</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>j</mi></msub><mo>,</mo><msub><mi>x</mi><mi>k</mi></msub><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
-p(x_1,\ldots,x_p) \propto \exp\left(
-\sum_j\phi_j(x_j)+\sum_{j&lt;k}\phi_{jk}(x_j,x_k)
-\right).
-</annotation></semantics></math></p>
-<p>A zero pairwise potential removes the corresponding conditional
-association. For node
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
-estimation minimizes</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>ℓ</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>x</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>,</mo><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><msubsup><mi>𝐱</mi><mrow><mi>i</mi><mo>,</mo><mi>−</mi><mi>j</mi></mrow><mi>𝖳</mi></msubsup><mi>𝛃</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><msub><mi>λ</mi><mi>j</mi></msub><msub><mrow><mo stretchy="true" form="prefix">‖</mo><mi>𝛃</mi><mo stretchy="true" form="postfix">‖</mo></mrow><mn>1</mn></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
-\frac{1}{n}\sum_{i=1}^n
-\ell\left(x_{ij},\beta_0+\mathbf{x}_{i,-j}^{\mathsf T}\boldsymbol\beta\right)
-+\lambda_j\lVert\boldsymbol\beta\rVert_1,
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℓ</mi><annotation encoding="application/x-tex">\ell</annotation></semantics></math>
-is Gaussian or binomial negative log-likelihood. The certificate is the
-largest KKT residual across the nodewise objectives.</p>
-<p>For continuous nodes, predictability is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>1</mn><mo>−</mo><mrow><mi mathvariant="normal">RSS</mi><mo>⁡</mo></mrow><mi>/</mi><mi mathvariant="normal">TSS</mi></mrow><annotation encoding="application/x-tex">R^2=1-\operatorname{RSS}/\operatorname{TSS}</annotation></semantics></math>.
-For a binary node
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">nCC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>=</mo><mfrac><mrow><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub></mrow><mrow><mn>1</mn><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
-\operatorname{nCC}_j
-=\frac{\operatorname{CC}_j-m_j}{1-m_j},
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>m</mi><mi>j</mi></msub><annotation encoding="application/x-tex">m_j</annotation></semantics></math>
-is the larger marginal class proportion.</p>
+<ul>
+<li>The model is for data that combine continuous and binary variables.
+With continuous variables only, a Gaussian graphical model is simpler;
+with binary variables only, the Ising model.</li>
+<li>Continuous nodes are modelled by linear regression, binary nodes by
+logistic regression, and observations are independent of one
+another.</li>
+<li>Categorical variables with more than two levels require
+<code>native = FALSE</code>, which fits a multinomial regression through
+the optional <code>glmnet</code> package and keeps the variable as one
+node. One-hot coding is not an equivalent alternative, because it turns
+one variable into several nodes.</li>
+<li>Edges selected only under the OR rule are less certain than those
+selected under both rules.</li>
+<li>Edges are conditional associations, not causal effects.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -386,6 +378,9 @@ network models. <em>Behavior Research Methods</em>, 50(2), 853-861. <a href="htt
 <p>Haslbeck, J. M. B., &amp; Waldorp, L. J. (2020). mgm: Estimating
 time-varying mixed graphical models in high-dimensional data.
 <em>Journal of Statistical Software</em>, 93(8), 1-46. <a href="https://doi.org/10.18637/jss.v093.i08" class="external-link">doi:10.18637/jss.v093.i08</a></p>
+<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
+the structure of self-regulated learning via LLM-generated survey
+responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -394,7 +389,7 @@ time-varying mixed graphical models in high-dimensional data.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Mohammed Saqr, Sonsoles López-Pernas.</p>
+  <p>Developed by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a>, <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

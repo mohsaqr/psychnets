@@ -1,17 +1,34 @@
-# Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm / psychonetrics
+# Map the arguments of established network packages to psychnets
 
-A tidy, one-row-per-argument map from each reference package's estimator
-to its `psychnet` equivalent, so users migrating from
-[`qgraph::EBICglasso`](https://rdrr.io/pkg/qgraph/man/EBICglasso.html),
-[`qgraph::cor_auto`](https://rdrr.io/pkg/qgraph/man/cor_auto.html),
-[`qgraph::ggmModSelect`](https://rdrr.io/pkg/qgraph/man/ggmModSelect.html),
-[`IsingFit::IsingFit`](https://rdrr.io/pkg/IsingFit/man/isingfit.html),
-[`mgm::mgm`](https://rdrr.io/pkg/mgm/man/mgm.html), or
-[`psychonetrics::panelgvar`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html)
-can find the matching argument and see what `psychnet` changes by
-default. Intensive time-series models (`graphicalVAR`, `mlVAR`) are out
-of scope; the few-wave panel model is covered by
-[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md).
+`net_crosswalk()` maps the arguments of `qgraph`, `IsingFit`, `mgm` and
+`psychonetrics` functions to their psychnets counterparts, as a table
+with one row per argument. It shows which function fits the same model,
+which argument corresponds to which, and where the defaults or the
+meaning of an argument differ, for analyses moved to this package from
+those packages.
+
+The table covers
+[`qgraph::EBICglasso()`](https://rdrr.io/pkg/qgraph/man/EBICglasso.html)
+([`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)),
+[`qgraph::cor_auto()`](https://rdrr.io/pkg/qgraph/man/cor_auto.html)
+([`cor_auto()`](https://pak.dynasite.org/psychnets/reference/cor_auto.md)),
+[`qgraph::ggmModSelect()`](https://rdrr.io/pkg/qgraph/man/ggmModSelect.html)
+([`ggm_modselect()`](https://pak.dynasite.org/psychnets/reference/ggm_modselect.md)),
+[`IsingFit::IsingFit()`](https://rdrr.io/pkg/IsingFit/man/isingfit.html)
+([`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)),
+[`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html)
+([`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md))
+and
+[`psychonetrics::panelgvar()`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html)
+([`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md));
+`reference` selects one of them. Each row records whether the argument
+is identical, renamed, has a different default or a different meaning,
+or exists in only one of the two functions, with a short note.
+
+The result is a data frame with one row per argument; nothing is fitted.
+
+Intensive time-series models (`graphicalVAR`, `mlVAR`) are not covered
+by this package.
 
 ## Usage
 
@@ -26,17 +43,27 @@ net_crosswalk(
 
 - reference:
 
-  Which reference function to show: `"all"` (default), `"EBICglasso"`,
-  `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, `"mgm"`, or
+  The reference function to show: `"all"` (default), `"EBICglasso"`,
+  `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, `"mgm"` or
   `"panelgvar"`.
 
 ## Value
 
-A tidy `data.frame`, one row per argument, with columns `reference` (the
-`pkg::fn` being substituted), `psychnet` (the psychnet verb), `ref_arg`,
-`psychnet_arg` (`"-"` when there is no counterpart), `status`
-(`identical` / `renamed` / `default differs` / `semantics differ` /
-`reference only` / `psychnet only`), and a short `note`.
+A data frame with one row per argument and columns `reference` (the
+reference function, as `pkg::fn`), `psychnet` (the corresponding
+function in this package), `ref_arg` and `psychnet_arg` (the argument
+names, `"-"` when there is no counterpart), `status` (`"identical"`,
+`"renamed"`, `"default differs"`, `"semantics differ"`,
+`"reference only"` or `"psychnet only"`) and `note`.
+
+## Conditions
+
+`psychnet_bad_input` when `reference` is not one of the listed values.
+
+## See also
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md),
+which also accepts the `qgraph` and `bootnet` method names.
 
 ## Examples
 

@@ -1,7 +1,29 @@
-# Read a panel graphical VAR fit
+# Read the networks, parameters and fit of a panel graphical VAR
 
-Methods for the object returned by
-[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md).
+A `psychnet_panelgvar` object holds the three networks of a panel
+graphical vector-autoregressive model fitted by
+[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md):
+the directed temporal network of lag-1 within-person effects, the
+contemporaneous network of within-person partial correlations at the
+same wave, and the between network of partial correlations among the
+persons' stable means. Its methods read the fitted model as tidy tables,
+summarize it, and draw the three networks side by side.
+
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) gives the
+edges by default and, through `what`, the full parameter table, the fit
+indices, the split of each variable's variance into between- and
+within-person parts, the innovation and between-person covariances, the
+EBIC penalty path, or the diagnostics that include the certificate.
+[`summary()`](https://rdrr.io/r/base/summary.html) counts the edges of
+each network, and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+networks with significance shown by line type.
+
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) and
+[`summary()`](https://rdrr.io/r/base/summary.html) return data frames;
+[`print()`](https://rdrr.io/r/base/print.html) and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) return the
+object invisibly.
 
 ## Usage
 
@@ -30,51 +52,71 @@ plot(x, edge_labels = TRUE, ...)
 
 - x, object:
 
-  A `psychnet_panelgvar` object.
+  A `psychnet_panelgvar` object from
+  [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md).
 
 - row.names, optional:
 
-  Ignored (S3 consistency).
+  Ignored.
 
 - ...:
 
-  Passed to
-  [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-  by [`plot()`](https://rdrr.io/r/graphics/plot.default.html); named
-  arguments override the plotting defaults, with unique argument
-  abbreviations accepted. Otherwise ignored.
+  For [`plot()`](https://rdrr.io/r/graphics/plot.default.html), passed
+  to
+  [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html);
+  named arguments override the plotting defaults, and unique
+  abbreviations are accepted. Ignored by the other methods.
 
 - what:
 
-  For [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html):
-  `"edges"` (default; one row per estimated edge across the three
-  networks, with standard error, p-value and 95% Wald interval –
-  temporal rows include the autoregressive `from == to` effects),
-  `"parameters"` (every model parameter, including means, scaling
-  `delta`s, and fixed/pruned entries), `"fit"` (one row of fit indices),
-  or `"diagnostics"` (one row: persons `n`, `waves`, the ML `score`
-  certificate, `boundary` / `boundary_part`, `se_available`, and
-  `starts_agree` of `starts` optimizer starts reaching the best optimum
-  – of the saturated fit, or with `select = "ebic"` of the penalized
-  solve at the selected lambda, or of its refit when `refit = TRUE`;
-  agreement is judged on the unit-free standardized objective),
-  `"variance"` (one row per variable: the model-implied `between`-person
-  variance, the stationary `within`-person variance, and
-  `share_between`, their ratio to the total – an intraclass
-  correlation), `"covariance"` (one row per entry of the lower triangle,
-  diagonal included, of the innovation (contemporaneous) and
-  between-person covariance matrices on the data scale: columns `matrix`
-  (`"innovation"` or `"between"`), `row`, `col`, `value`), or `"path"`
-  (`select = "ebic"` only, else a `psychnet_bad_input` error: one row
-  per lambda on the penalty path, columns `lambda` (data-scale penalty),
-  `ebic`, `edges` (non-zero penalized parameters), `kkt` (lasso KKT
-  residual), `final` (re-solved to certification) and `selected` (the
-  lambda returned)).
+  For [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html),
+  the table to return:
+
+  `"edges"`
+
+  :   (default) one row per estimated edge of the three networks, with
+      standard error, p-value and 95% Wald interval; the autoregressive
+      effects are the temporal rows with `from == to`.
+
+  `"parameters"`
+
+  :   every model parameter, including the means, the scale parameters
+      and the edges fixed to zero.
+
+  `"fit"`
+
+  :   one row of fit indices.
+
+  `"diagnostics"`
+
+  :   one row: the number of persons and waves, the certificate
+      (`score`), whether the solution is on a boundary, whether standard
+      errors are available, and how many optimizer starts reached the
+      best optimum. The starts are those of the full model, of the
+      penalized solution at the selected penalty with `select = "ebic"`,
+      or of its refit with `refit = TRUE`.
+
+  `"variance"`
+
+  :   one row per variable: the model-implied between-person variance,
+      the stationary within-person variance, and the between-person
+      share of the total (an intraclass correlation).
+
+  `"covariance"`
+
+  :   one row per entry of the lower triangle, diagonal included, of the
+      innovation (contemporaneous) and between-person covariance
+      matrices, on the data scale.
+
+  `"path"`
+
+  :   only for `select = "ebic"`: one row per penalty value on the EBIC
+      path.
 
 - include_zero:
 
-  For `what = "edges"`: also return pruned (fixed-zero) edges. Default
-  `FALSE`.
+  For `what = "edges"`: also return edges fixed to zero by pruning or
+  the penalty. Default `FALSE`.
 
 - edge_labels:
 
@@ -83,33 +125,81 @@ plot(x, edge_labels = TRUE, ...)
 
 ## Value
 
-[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html): a
-data.frame as described under `what`. The edge table has columns
-`network`, `from`, `to`, `weight`, `se`, `p`, `ci_lower`, `ci_upper`,
-`significant` (p \< the fit's `alpha`); the parameter table has
-`matrix`, `row`, `col`, `estimate`, `se`, `p`, `ci_lower`, `ci_upper`,
-`fixed`; the diagnostics row has `n`, `waves`, `score`, `boundary`,
-`boundary_part`, `se_available`, `starts_agree`, `starts`; the variance
-table has `variable`, `between`, `within`, `share_between`.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns a
+data frame:
+
+- edges:
+
+  columns `network`, `from`, `to`, `weight`, `se`, `p`, `ci_lower`,
+  `ci_upper` and `significant` (p \< the fit's `alpha`; `NA` for
+  penalized estimates). A temporal edge from `from` to `to` is the
+  effect of `from` at one wave on `to` at the next.
+
+- parameters:
+
+  columns `matrix` (`mu`, `beta`, `omega_zeta_within`,
+  `delta_zeta_within`, `omega_zeta_between`, `delta_zeta_between`),
+  `row`, `col`, `estimate`, `se`, `p`, `ci_lower`, `ci_upper` and
+  `fixed`.
+
+- fit:
+
+  columns `logl`, `npar`, `df`, `chisq`, `pvalue`, `baseline_chisq`,
+  `baseline_df`, `cfi`, `tli`, `rmsea`, `aic` and `bic`.
+
+- diagnostics:
+
+  columns `n`, `waves`, `score`, `boundary`, `boundary_part`,
+  `se_available`, `starts_agree` and `starts`.
+
+- variance:
+
+  columns `variable`, `between`, `within` and `share_between`.
+
+- covariance:
+
+  columns `matrix` (`"innovation"` or `"between"`), `row`, `col` and
+  `value`.
+
+- path:
+
+  columns `lambda` (the penalty on the data scale), `ebic`, `edges`
+  (nonzero penalized parameters), `kkt` (the lasso certificate), `final`
+  (re-solved to full precision) and `selected` (the penalty returned).
+
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a data frame
+with one row per network and columns `network`, `directed`, `nodes`,
+`edges`, `significant` (`NA` for penalized estimates) and
+`mean_abs_weight`, autoregressive effects excluded.
 [`print()`](https://rdrr.io/r/base/print.html) and
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) return `x`
-invisibly. [`summary()`](https://rdrr.io/r/base/summary.html) returns a
-data.frame with one row per network (`network`, `directed`, `nodes`,
-`edges`, `significant`, `mean_abs_weight`).
+invisibly.
 
 ## Details
 
-By default, [`plot()`](https://rdrr.io/r/graphics/plot.default.html)
-draws the three networks side by side on one shared circle layout (so a
-node sits in the same place in every panel), with the temporal
-autoregressive effects as self-loops. Line type shows significance:
-solid edges have p \< `alpha` (the fit's `alpha`), dashed edges do not
-(an edge without a p-value counts as not significant). Colour shows sign
-– blue positive, vermillion negative (Okabe-Ito) – and the signed weight
-is printed on each edge, so sign never rests on colour alone. A network
-with nothing estimated shows "no edges". It needs the `cograph` package.
-If `edge_style` is overridden, the legend no longer assigns significance
-to solid or dashed lines.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the three
+networks side by side on one circle layout, so each node has the same
+position in every panel, with the autoregressive effects as self-loops.
+Solid edges are significant at the fit's `alpha` and dashed edges are
+not (an edge without a p-value counts as not significant); for penalized
+estimates every selected edge is solid. Colour shows sign, blue for
+positive and vermillion for negative, and the signed weight is printed
+on each edge, so sign does not rest on colour alone. A network without
+edges is marked "no edges". Overriding `edge_style` removes the
+significance key from the legend. Plotting needs the `cograph` package.
+
+## Conditions
+
+`psychnet_bad_input` when `what` is not one of the listed tables,
+`what = "path"` is requested for a fit without `select = "ebic"`,
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) is called
+without the `cograph` package, or a plotting argument is ambiguous or
+given twice.
+
+## See also
+
+[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
+for fitting the model.
 
 ## Examples
 
@@ -250,7 +340,7 @@ as.data.frame(fit, what = "parameters")
 #> 60  7.67742639 11.21673413 FALSE
 as.data.frame(fit, what = "diagnostics")
 #>     n waves        score boundary boundary_part se_available starts_agree
-#> 1 100     4 5.906386e-13    FALSE          <NA>         TRUE            3
+#> 1 100     4 8.159029e-13    FALSE          <NA>         TRUE            3
 #>   starts
 #> 1      3
 as.data.frame(fit, what = "covariance")

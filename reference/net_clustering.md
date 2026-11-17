@@ -1,11 +1,29 @@
-# Weighted clustering coefficients
+# Compute weighted clustering coefficients of the nodes
 
-Per-node clustering coefficients for a weighted (optionally signed)
-network: Watts-Strogatz, Zhang-Horvath, Onnela, and Barrat. For signed
-networks the signed variants are also returned (a closed triangle of
-three negative or one negative edge lowers the signed coefficient).
-Ported from
-[`qgraph::clustcoef_auto`](https://rdrr.io/pkg/qgraph/man/clustcoef_auto.html).
+`net_clustering()` computes weighted clustering coefficients for each
+node of a network. The clustering coefficient of a node measures how
+strongly its neighbours are connected to each other: in a psychometric
+network, a node with high clustering lies within a closely related group
+of variables, whereas a node with low clustering links variables that
+are otherwise unrelated.
+
+Several generalizations of the clustering coefficient to weighted
+networks exist, and the function returns four of them: that of Watts and
+Strogatz (1998), which uses only the presence of edges; of Zhang and
+Horvath (2005), which uses the edge weights; of Onnela et al. (2005),
+which uses the geometric mean of the weights in each triangle; and of
+Barrat et al. (2004), which weights triangles by node strength. For the
+first three it also returns the signed versions of Costantini and
+Perugini (2014), in which a triangle with one or three negative edges
+lowers the coefficient.
+
+It returns one row per node, with one column per coefficient.
+
+For a summary of clustering at the level of the whole network, compared
+with random graphs, use
+[`net_smallworld()`](https://pak.dynasite.org/psychnets/reference/net_smallworld.md);
+for other node measures, use
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md).
 
 ## Usage
 
@@ -17,17 +35,31 @@ net_clustering(x, labels = NULL)
 
 - x:
 
-  A `psychnet` object or a square weighted adjacency matrix.
+  An undirected fitted network
+  ([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md))
+  or a symmetric weighted adjacency matrix.
 
 - labels:
 
-  Optional node labels (used when `x` is a bare matrix).
+  Optional node labels for a bare matrix, one unique label per node.
 
 ## Value
 
-A tidy `data.frame` (class `psychnet_clustering`), one row per node:
-`node`, `clustWS`, `signed_clustWS`, `clustZhang`, `signed_clustZhang`,
-`clustOnnela`, `signed_clustOnnela`, `clustBarrat`.
+A data frame of class `psychnet_clustering`, one row per node, with
+columns `node`, `clustWS`, `signed_clustWS`, `clustZhang`,
+`signed_clustZhang`, `clustOnnela`, `signed_clustOnnela` and
+`clustBarrat`.
+
+## Details
+
+Edge weights outside \[-1, 1\] are first divided by the largest absolute
+weight. A node with fewer than two neighbours closes no triangle and has
+coefficient 0. The Barrat coefficient uses absolute weights.
+
+## Conditions
+
+`psychnet_bad_input` when `x` is directed, is not a finite symmetric
+square matrix, or `labels` is invalid.
 
 ## References
 
@@ -53,6 +85,13 @@ Barrat, A., Barthelemy, M., Pastor-Satorras, R., & Vespignani, A.
 (2004). The architecture of complex weighted networks. *Proceedings of
 the National Academy of Sciences*, 101(11), 3747-3752.
 [doi:10.1073/pnas.0400087101](https://doi.org/10.1073/pnas.0400087101)
+
+## See also
+
+[`net_smallworld()`](https://pak.dynasite.org/psychnets/reference/net_smallworld.md)
+for the small-world index;
+[`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
+for other node measures.
 
 ## Examples
 

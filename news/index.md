@@ -1,5 +1,10 @@
 # Changelog
 
+## psychnets 0.8.0
+
+This release collects the changes made since the CRAN release 0.5.2,
+listed below by development version.
+
 ## psychnets 0.7.2
 
 - [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
@@ -13,20 +18,10 @@
   [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
   calls.
 
-## psychnets 0.7.1
-
-- Tests: the frozen network-comparison baseline is compared to a
-  tolerance of 1e-10 instead of exact identity. It was frozen on macOS,
-  and other platforms’ floating-point arithmetic differs in the last
-  bits (~1e-15), which failed the check on Linux and Windows. No code or
-  returned number changed.
-
 ## psychnets 0.7.0
 
-This release follows a full function-by-function review of the package.
 Most changes are input validation and conditions that were silent
-before; the ones marked **(numbers change)** alter returned values, as
-the numerical-stability policy requires for a minor version.
+before; the ones marked **(numbers change)** alter returned values.
 
 ### Changes to returned numbers
 
@@ -45,13 +40,11 @@ the numerical-stability policy requires for a minor version.
   (0, 1).
 - **(numbers change)**
   [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md):
-  gaussian nodes are solved to optimality (coordinate descent on the
-  Gram matrix plus an exact active-set solve) instead of stopping after
-  100 sweeps. On collinear items the residual falls from about 5e-5
+  gaussian nodes are solved to optimality instead of stopping after 100
+  sweeps. On collinear items the residual falls from about 5e-5
   (uncertified) to about 1e-15, and the fit is faster. Default edge
-  weights move by up to about 1e-7 (3.4e-8 on the golden data, no edge
-  added or removed); the golden fixture was regenerated. A fit that
-  still misses its optimum warns `psychnet_no_converge`.
+  weights move by up to about 1e-7 (no edge added or removed). A fit
+  that still misses its optimum warns `psychnet_no_converge`.
 - **(numbers change for weighted fits)**
   [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md),
   [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)
@@ -65,6 +58,12 @@ the numerical-stability policy requires for a minor version.
   expected influence is normalized by the number of nodes, as in
   [`networktools::bridge()`](https://rdrr.io/pkg/networktools/man/bridge.html),
   not the number of communities.
+- **(numbers change)**
+  [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md):
+  a split in which one half network is empty and the other is not has
+  edge correlation 0 (bootnet’s `cor0()`); such splits used to be
+  dropped, inflating the mean correlation. Only splits where both halves
+  are constant are undefined.
 - [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md)
   reads `value` in the moderator’s own coding: a level of a categorical
   moderator (1/2, `"treat"`, …) or the raw scale of a continuous one. It
@@ -202,12 +201,6 @@ the numerical-stability policy requires for a minor version.
   `what = "covariance"`. `psychnet_multilevel` gains
   [`summary()`](https://rdrr.io/r/base/summary.html) and
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html).
-- **(numbers change)**
-  [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md):
-  a split in which one half network is empty and the other is not has
-  edge correlation 0 (bootnet’s `cor0()`); such splits used to be
-  dropped, inflating the mean correlation. Only splits where both halves
-  are constant are undefined.
 - [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
   gains `n_valid` and reports NA rather than NaN; stability and
   case-drop tables gain `actual_drop` and `n_valid`.
@@ -219,54 +212,6 @@ the numerical-stability policy requires for a minor version.
   point shape as well as colour, box-matrix cells print the sign, and
   the bridge plot styles nodes by community. Every plot restores
   [`par()`](https://rdrr.io/r/graphics/par.html).
-
-### Documentation
-
-- S3 methods are documented on the page of the verb that creates the
-  object
-  ([`?net_boot`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
-  covers its `print`, `plot` and `as.data.frame` methods); the
-  `psychnet` object has its own page,
-  [`?"psychnet-class"`](https://pak.dynasite.org/psychnets/reference/psychnet-class.md).
-  The manual shrinks from 69 to 48 topics.
-- [`cor_auto()`](https://pak.dynasite.org/psychnets/reference/cor_auto.md)
-  documents that its polyserial is the Olsson ad-hoc estimator;
-  [`net_edge_betweenness()`](https://pak.dynasite.org/psychnets/reference/net_edge_betweenness.md)
-  returns path counts;
-  [`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
-  betweenness and closeness are normalized (as igraph, unlike
-  [`qgraph::centrality_auto()`](https://rdrr.io/pkg/qgraph/man/centrality_auto.html));
-  the crosswalk maps qgraph’s `EBICglasso(refit = TRUE)` to
-  `refit = "unregularized"`.
-
-## psychnets 0.6.2
-
-### Documentation
-
-- Vignettes rechecked against current output. The Ising and mixed
-  graphical model vignettes described networks from an earlier release
-  (7 edges and a self-regulation to test-anxiety edge); their prose now
-  matches the current fits (6 edges, test anxiety isolated under the AND
-  rule; the OR rule adds the negative edge). Each vignette shows the
-  edge table with
-  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html), which
-  [`summary()`](https://rdrr.io/r/base/summary.html) returns only
-  invisibly, and lists its method references.
-- Examples no longer reach into result objects with `$`: certificates
-  are read with
-  [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md),
-  stability with [`print()`](https://rdrr.io/r/base/print.html), and the
-  certificate helpers
-  ([`glasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glasso_kkt.md),
-  [`ggm_support_kkt()`](https://pak.dynasite.org/psychnets/reference/ggm_support_kkt.md),
-  [`glm_lasso_kkt()`](https://pak.dynasite.org/psychnets/reference/glm_lasso_kkt.md))
-  are shown on exact closed-form optima.
-  [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
-  examples use the bundled `srl_panel`; Ising examples use
-  `dichotomize(SRL_GPT)`. Every print method has an example.
-- Method references added to the estimator, centrality, predictability
-  and resampling help pages; DESCRIPTION references now give authors and
-  years.
 
 ## psychnets 0.6.1
 
@@ -307,9 +252,9 @@ the numerical-stability policy requires for a minor version.
   `fit_kkt` and report the altered network’s certificate as unavailable.
   Covariance PSD validation runs in correlation units, including for
   relative-importance fits.
-- Two-node external Ising/MGM fits work through an inert design-padding
-  column; moderation requires at least three nodes. TMFG certificates
-  now also validate planar stacked-triangulation structure.
+- Two-node external Ising/MGM fits work; moderation requires at least
+  three nodes. TMFG certificates now also validate planar
+  stacked-triangulation structure.
 - Small-world null rewiring randomizes undirected edge orientations and
   retains rejected proposals, removing node-order restrictions and
   accepted-move bias. NCT plots identify signed global expected
@@ -340,10 +285,9 @@ the numerical-stability policy requires for a minor version.
   means). The within-person process is a stationary VAR(1) around a
   random intercept with stationary means – the model of
   [`psychonetrics::panelgvar()`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html)
-  – fitted by maximum likelihood in base R (nlminb with an analytic
-  reverse-mode gradient, then a Fisher-scoring polish). Long data
-  (`vars`, `id`, `wave`) or wide data (`vars` as a variables-by-waves
-  design matrix) are accepted.
+  – fitted by maximum likelihood in base R. Long data (`vars`, `id`,
+  `wave`) or wide data (`vars` as a variables-by-waves design matrix)
+  are accepted.
 - Robust on raw-scale, small-sample data: the optimizer works on
   standardized variables (an exact reparameterization – the model is
   scale-equivariant) from three deterministic starts (moment-based,
@@ -375,36 +319,31 @@ the numerical-stability policy requires for a minor version.
   and psychonetrics’ `panelgvar(estimator = "PML")`: lasso on every
   temporal (autoregressions included), contemporaneous and between
   parameter, 50-value lambda path from lambda_max with warm starts, EBIC
-  (`gamma = 0.5`), optional unpenalized `refit`. Accelerated proximal
-  gradient that never leaves the model’s domain, then an active-set
-  Newton polish; certified by the lasso KKT conditions (~1e-10); the
-  selected lambda is re-solved from three starts and their agreement
-  reported. Matches psychonetrics’ PML on every simulated design
-  compared (same lambda, same zero pattern, estimates within 3e-3, lower
-  penalized objective); on weekly ESM means psychonetrics’ PML returns
-  an invalid model (non-positive-definite contemporaneous block) while
-  `select = "ebic"` returns a certified one. Lasso estimates carry no
-  p-values (`significant` is `NA`; the plot draws selected edges solid).
-- Robustness (from an adversarial review): the EBIC choice is
-  reconsidered after the final certified solve (a final solve can change
-  a lambda’s EBIC; the path table marks fully solved rows in `final`);
-  only variances on the optimizer’s actual bound are treated as active
-  constraints (a near-zero but interior variance no longer has its score
-  suppressed in the certificate); singular-information SEs use the
-  pseudo-inverse on the identifiable eigenspace (dropping unidentified
-  coordinates had understated the SEs of parameters conditioned on their
-  identifiable combinations); all post-fit computation runs on the
-  standardized scale, so data whose variables differ in units by orders
-  of magnitude (or are tiny) fit identically instead of failing a
-  covariance check or crashing in a data-scale solve.
-- Edge selection is one argument, `select = c("none", "prune", "ebic")`
-  (replacing the earlier logical `prune`).
-- Default output is the full model: `prune = FALSE` by default (the
-  psychonetrics default, where `prune()` is a separate step). Every edge
-  is reported with its SE, p-value, Wald CI and a new `significant`
-  column (p \< `alpha`); [`print()`](https://rdrr.io/r/base/print.html)
-  and [`summary()`](https://rdrr.io/r/base/summary.html) count
-  significant edges per network, and
+  (`gamma = 0.5`), optional unpenalized `refit`. Certified by the lasso
+  KKT conditions (~1e-10); the selected lambda is re-solved from three
+  starts and their agreement reported. Matches psychonetrics’ PML on
+  every simulated design compared (same lambda, same zero pattern,
+  estimates within 3e-3, lower penalized objective); on weekly ESM means
+  psychonetrics’ PML returns an invalid model (non-positive-definite
+  contemporaneous block) while `select = "ebic"` returns a certified
+  one. Lasso estimates carry no p-values (`significant` is `NA`; the
+  plot draws selected edges solid).
+- Robustness: the EBIC choice is reconsidered after the final certified
+  solve (a final solve can change a lambda’s EBIC; the path table marks
+  fully solved rows in `final`); only variances on the optimizer’s
+  actual bound are treated as active constraints (a near-zero but
+  interior variance no longer has its score suppressed in the
+  certificate); all post-fit computation runs on the standardized scale,
+  so data whose variables differ in units by orders of magnitude (or are
+  tiny) fit identically instead of failing a covariance check or
+  crashing in a data-scale solve.
+- Edge selection is one argument, `select = c("none", "prune", "ebic")`.
+- Default output is the full model (the psychonetrics default, where
+  `prune()` is a separate step). Every edge is reported with its SE,
+  p-value, Wald CI and a new `significant` column (p \< `alpha`);
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) count significant
+  edges per network, and
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws
   significant edges solid and non-significant ones dashed (sign by
   colour plus the signed weight label, with a line-type key).
@@ -418,8 +357,7 @@ the numerical-stability policy requires for a minor version.
   other (an autoregression and correlated cross-lagged effects): on
   weekly ESM means it removed 22 parameters that were jointly
   significant (chi-square 76.9, p = 5e-8), and step-up restores the two
-  that matter. Modification indices match psychonetrics’ (score test,
-  `n g^2 / (4 V)` with the Schur-complement information); the selected
+  that matter. Modification indices match psychonetrics’; the selected
   supports match psychonetrics’ `prune()` and `prune() |> stepup()` on
   every well-identified design compared. `stepup = FALSE` reproduces
   `prune()` alone.
@@ -438,8 +376,7 @@ the numerical-stability policy requires for a minor version.
 - Pruning follows
   [`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html):
   Wald p-values from the expected Fisher information, `alpha = 0.01`,
-  optional `adjust` (any `p.adjust` method) and `recursive`;
-  `prune = FALSE` returns the saturated fit.
+  optional `adjust` (any `p.adjust` method) and `recursive`.
 - Self-certified: the ML score on the free parameters is recomputed by a
   forward-mode Jacobian (independent of the optimizer’s reverse-mode
   gradient) and reported by
@@ -471,8 +408,7 @@ the numerical-stability policy requires for a minor version.
   pairwise covariance is refused because it is not a likelihood for this
   model.
 - `net_crosswalk("panelgvar")` maps the psychonetrics arguments.
-- No existing estimator’s numbers changed; the new golden baseline lives
-  in a separate fixture (`golden-panelgvar.rds`).
+- No existing estimator’s numbers changed.
 
 ### `ebic_glasso()`: absent edges are exact zeros
 
@@ -481,18 +417,14 @@ the numerical-stability policy requires for a minor version.
   (the `$edges` table already dropped it). This happened when the
   selected lambda sat at max\|S_ij\| (the empty graph) after the
   positive-definite projection, and in a substantial share of sparse
-  fits generally (10 of 40 random n = 60, p = 12 null draws in the new
-  regression test). Anything that compares weights with zero read the
+  fits generally. Anything that compares weights with zero read the
   residue as an edge; in
   [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
   two empty networks gave M = S = 5.6e-17 and a false p = 0.02 instead
-  of 1 (found by the NetworkComparisonTest parity grid). Precision
-  entries with \|theta_ij\| \<= 1e-10 – the same rule the EBIC uses to
-  count edges – are now returned as exact zeros, so the network has
-  exactly the support the EBIC scored. Every edge above 1e-10 is
-  unchanged; the golden baselines pass at 1e-12. Because the returned
-  support can change (residue -\> 0), this ships in the 0.6.0 minor
-  release per the numerical-stability policy.
+  of 1. Precision entries with \|theta_ij\| \<= 1e-10 – the same rule
+  the EBIC uses to count edges – are now returned as exact zeros, so the
+  network has exactly the support the EBIC scored. Every edge above
+  1e-10 is unchanged.
 
 ### `ebic_glasso()`: the selected lambda is the exact EBIC minimum
 
@@ -500,16 +432,10 @@ the numerical-stability policy requires for a minor version.
   chosen lambda was refit tightly. The scan can leave an entry that is
   zero at the optimum just above the 1e-10 edge-count threshold; one
   miscounted edge raises that lambda’s EBIC by exactly log(n) + 4 gamma
-  log(p) and can hide the true minimum. The NetworkComparisonTest parity
-  audit found this in 4 of 29 divergent fits (EBIC up to 9.6 units worse
-  than the optimum). Every lambda whose scan EBIC is within two edge
-  penalties of the best is now refit at the refit tolerance and
-  rescored, and the lowest exact EBIC wins. On the audited fits
-  psychnets now reaches the lower exact EBIC in 29 of 29 (NCT/qgraph in
-  4, because qgraph counts a ~1e-17 residue as an edge at lambda =
-  max\|S_ij\| and so never selects an empty graph). Default engine only;
-  `engine = "glasso"` is unchanged. About 40% more time per fit; golden
-  baselines, equivalence and every estimator suite pass unchanged.
+  log(p) and can hide the true minimum. Every lambda whose scan EBIC is
+  within two edge penalties of the best is now refit at the refit
+  tolerance and rescored, and the lowest exact EBIC wins. Default engine
+  only; `engine = "glasso"` is unchanged. About 40% more time per fit.
 
 ### Network comparison test (`net_compare()`) fixes
 
@@ -527,10 +453,9 @@ the numerical-stability policy requires for a minor version.
   global strength, NCT’s `glstrinv.sep`; with `abs = FALSE` the test is
   labelled global expected influence, as in NCT.
 
-On complete data every returned number is unchanged (frozen in
-`tests/testthat/fixtures/nct-baseline.rds`), and under a shared seed the
-M, S and per-edge p-values equal `NetworkComparisonTest::NCT()` 2.2.2
-exactly.
+On complete data every returned number is unchanged, and under a shared
+seed the M, S and per-edge p-values equal `NetworkComparisonTest::NCT()`
+2.2.2 exactly.
 
 - **Missing values no longer erase a variable.** A single `NA` made
   every correlation of that variable `NA`, which was then replaced by 0,
@@ -542,9 +467,7 @@ exactly.
   in a paired design).
 - A constant variable now enters the network as an isolated node through
   an explicit rule (the convention of every psychnets estimator for a
-  constant column) instead of a blanket `NA` -\> 0 replacement under
-  [`suppressWarnings()`](https://rdrr.io/r/base/warning.html); a
-  constant variable in an observed group raises a
+  constant column); a constant variable in an observed group raises a
   `psychnet_constant_variable` warning. A variable that becomes constant
   in a permuted split (a rare binary item) is handled the same way, so
   the statistic is defined on every split and the test stays exact.

@@ -1,10 +1,41 @@
-# Within / between event-data networks
+# Within-actor and between-actor networks from event data
 
-The object returned by
+A `psychnet_multilevel` object holds a pair of Gaussian graphical
+networks estimated from event data with several occasions per actor: a
+within-actor network and a between-actor network.
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-for nested event data with `standardize = FALSE`: a pair of Gaussian
-graphical networks decomposing the actor-by-action frequency covariance
-into a within-actor and a between-actor part.
+returns it for event data (an event log, or a table of action
+frequencies with one row per occasion and an `id` column) with several
+occasions per actor and `standardize = FALSE`, estimating both networks
+with the chosen method.
+
+When the same actors, such as students in a learning environment,
+contribute several occasions (sessions), the association between the
+frequencies of two actions has two sources. Within actors, it shows
+whether an actor who performs one action more often than usual on an
+occasion also performs the other more often. Between actors, it shows
+whether actors who perform one action more often on average also perform
+the other more often. The two can differ in size and even in sign. The
+within network is estimated from each occasion's deviations from its
+actor's mean action frequencies, with the pooled within-actor degrees of
+freedom (occasions minus actors) as sample size; the between network
+from the actors' mean frequencies, with the number of actors as sample
+size.
+
+[`print()`](https://rdrr.io/r/base/print.html) reports the numbers of
+actors, occasions, nodes and edges,
+[`summary()`](https://rdrr.io/r/base/summary.html) and
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) return
+data frames, and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the two
+networks side by side.
+
+With `standardize = TRUE` (the default),
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+returns only the within-actor network, as a single `psychnet`. For
+persons measured at fixed waves, with effects from one wave to the next,
+use
+[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md).
 
 ## Usage
 
@@ -30,33 +61,49 @@ plot(x, ...)
 
 - ...:
 
-  Ignored by `print`, `summary` and `as.data.frame`; passed to
+  Passed to
   [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-  by `plot`.
+  by [`plot()`](https://rdrr.io/r/graphics/plot.default.html); ignored
+  by the other methods.
 
 - row.names, optional:
 
-  Ignored (S3 consistency).
+  Ignored.
 
 ## Value
 
-`x`, invisibly (for `print`), after printing the numbers of actors and
-occasions and each network's node and edge counts.
+[`print()`](https://rdrr.io/r/base/print.html) returns `x` invisibly,
+after printing the numbers of actors and occasions and each network's
+numbers of nodes and edges.
 
-For `as.data.frame`, the two edge lists stacked with a leading `level`
-column (`"within"` or `"between"`): columns `level`, `from`, `to`,
-`weight`, one row per edge.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+one row per edge of the two networks, with columns `level` (`"within"`
+or `"between"`), `from`, `to` and `weight`.
 
-For `summary`, a data frame with one row per level (`"within"`,
-`"between"`): columns `level`, `nodes`, `edges`, `mean_abs_weight` (0
-for a network without edges) and `n` (the level's effective sample size:
-pooled within-actor degrees of freedom, or the number of actors).
+[`summary()`](https://rdrr.io/r/base/summary.html) returns a data frame
+with one row per level (`"within"`, `"between"`) and columns `level`,
+`nodes`, `edges`, `mean_abs_weight` (0 for a network without edges) and
+`n` (the sample size used at that level).
 
-For `plot`, `x` invisibly, after drawing the within and between networks
-side by side with
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the two
+networks side by side with
 [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-(a Suggested package; a `psychnet_bad_input` error says so when it is
-not installed).
+and returns `x` invisibly.
+
+## Conditions
+
+`psychnet_bad_input` from
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) when the
+`cograph` package is not installed.
+
+## See also
+
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+for fitting;
+[`event_frequencies()`](https://pak.dynasite.org/psychnets/reference/event_frequencies.md)
+for the conversion of an event log;
+[psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)
+for the two networks.
 
 ## Examples
 

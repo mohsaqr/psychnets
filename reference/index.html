@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,18 +18,23 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
     <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Regulation networks from Dynalytics event data</a></li>
     <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
+    <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
     <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
     <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
-    <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
-    <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing bootstrap, centrality and difference results (base R)</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Networks of regulation actions from event logs</a></li>
+    <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
+    <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/mohsaqr/psychnets/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -45,7 +50,446 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="psychnets-package.html">psychnets</a></code> <code><a href="psychnets-package.html">psychnets-package</a></code>
+
+        </dt>
+        <dd>psychnets: Psychometric Network Estimation</dd>
+
+        <dt>
+
+          <code><a href="psychnet.html">psychnet()</a></code>
+
+        </dt>
+        <dd>Estimate a psychometric network with any of the package's estimators</dd>
+      </dl></div><div class="section level2">
+      <h2 id="gaussian-graphical-models">Gaussian graphical models<a class="anchor" aria-label="anchor" href="#gaussian-graphical-models"></a></h2>
+
+      <div class="section-desc"><p>Partial-correlation networks for continuous or ordinal indicators, regularized, selected stepwise, or nonparanormal.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ebic_glasso.html">ebic_glasso()</a></code>
+
+        </dt>
+        <dd>Estimate a Gaussian graphical model with the EBIC graphical lasso</dd>
+
+        <dt>
+
+          <code><a href="ggm_modselect.html">ggm_modselect()</a></code>
+
+        </dt>
+        <dd>Select an unregularized Gaussian graphical model by stepwise search</dd>
+
+        <dt>
+
+          <code><a href="pcor_network.html">pcor_network()</a></code>
+
+        </dt>
+        <dd>Estimate a partial correlation network</dd>
+
+        <dt>
+
+          <code><a href="cor_network.html">cor_network()</a></code>
+
+        </dt>
+        <dd>Estimate a correlation network</dd>
+
+        <dt>
+
+          <code><a href="huge_network.html">huge_network()</a></code>
+
+        </dt>
+        <dd>Estimate a nonparanormal Gaussian graphical model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="information-filtering-and-relative-importance-networks">Information-filtering and relative-importance networks<a class="anchor" aria-label="anchor" href="#information-filtering-and-relative-importance-networks"></a></h2>
+
+      <div class="section-desc"><p>Sparse networks built from the correlation structure (TMFG, LoGo) and networks of shared explained variance.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="tmfg_network.html">tmfg_network()</a></code>
+
+        </dt>
+        <dd>Filter a correlation network with the triangulated maximally filtered graph</dd>
+
+        <dt>
+
+          <code><a href="logo_network.html">logo_network()</a></code>
+
+        </dt>
+        <dd>Estimate a sparse Gaussian graphical model on a filtered graph (LoGo)</dd>
+
+        <dt>
+
+          <code><a href="relimp_network.html">relimp_network()</a></code>
+
+        </dt>
+        <dd>Estimate a directed relative-importance network</dd>
+      </dl></div><div class="section level2">
+      <h2 id="binary-and-mixed-data">Binary and mixed data<a class="anchor" aria-label="anchor" href="#binary-and-mixed-data"></a></h2>
+
+      <div class="section-desc"><p>Ising networks for binary indicators and mixed graphical models for variables of different types, including moderation.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ising_fit.html">ising_fit()</a></code>
+
+        </dt>
+        <dd>Estimate a regularized Ising network for binary items</dd>
+
+        <dt>
+
+          <code><a href="ising_sampler.html">ising_sampler()</a></code>
+
+        </dt>
+        <dd>Estimate an unregularized Ising network for binary items</dd>
+
+        <dt>
+
+          <code><a href="mgm_fit.html">mgm_fit()</a></code>
+
+        </dt>
+        <dd>Estimate a mixed graphical model for continuous and binary variables</dd>
+
+        <dt>
+
+          <code><a href="condition.html">condition()</a></code> <code><a href="condition.html">as.data.frame(<i>&lt;psychnet_moderated&gt;</i>)</a></code> <code><a href="condition.html">print(<i>&lt;psychnet_moderated&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Read a moderated mixed graphical model at a value of the moderator</dd>
+
+        <dt>
+
+          <code><a href="dichotomize.html">dichotomize()</a></code>
+
+        </dt>
+        <dd>Split numeric items into binary 0/1 variables</dd>
+      </dl></div><div class="section level2">
+      <h2 id="panel-and-within-person-networks">Panel and within-person networks<a class="anchor" aria-label="anchor" href="#panel-and-within-person-networks"></a></h2>
+
+      <div class="section-desc"><p>Temporal, contemporaneous and between-person networks from repeated measurements.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="panel_gvar.html">panel_gvar()</a></code>
+
+        </dt>
+        <dd>Estimate temporal, contemporaneous and between-person networks from panel data</dd>
+
+        <dt>
+
+          <code><a href="psychnet_panelgvar.html">as.data.frame(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code> <code><a href="psychnet_panelgvar.html">print(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code> <code><a href="psychnet_panelgvar.html">summary(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code> <code><a href="psychnet_panelgvar.html">plot(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Read the networks, parameters and fit of a panel graphical VAR</dd>
+
+        <dt>
+
+          <code><a href="psychnet_multilevel.html">print(<i>&lt;psychnet_multilevel&gt;</i>)</a></code> <code><a href="psychnet_multilevel.html">as.data.frame(<i>&lt;psychnet_multilevel&gt;</i>)</a></code> <code><a href="psychnet_multilevel.html">summary(<i>&lt;psychnet_multilevel&gt;</i>)</a></code> <code><a href="psychnet_multilevel.html">plot(<i>&lt;psychnet_multilevel&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Within-actor and between-actor networks from event data</dd>
+
+        <dt>
+
+          <code><a href="scale_within.html">scale_within()</a></code>
+
+        </dt>
+        <dd>Center and scale variables within persons</dd>
+      </dl></div><div class="section level2">
+      <h2 id="groups-and-event-data">Groups and event data<a class="anchor" aria-label="anchor" href="#groups-and-event-data"></a></h2>
+
+      <div class="section-desc"><p>One network per group, and networks from logs of coded events.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="psychnet_group.html">print(<i>&lt;psychnet_group&gt;</i>)</a></code> <code><a href="psychnet_group.html">as.data.frame(<i>&lt;psychnet_group&gt;</i>)</a></code> <code><a href="psychnet_group.html">summary(<i>&lt;psychnet_group&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Networks estimated separately for each group</dd>
+
+        <dt>
+
+          <code><a href="psychnet_result_group.html">print(<i>&lt;psychnet_result_group&gt;</i>)</a></code> <code><a href="psychnet_result_group.html">as.data.frame(<i>&lt;psychnet_result_group&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Results of an analysis applied to networks per group</dd>
+
+        <dt>
+
+          <code><a href="event_frequencies.html">event_frequencies()</a></code>
+
+        </dt>
+        <dd>Count the actions of each actor and session in an event log</dd>
+      </dl></div><div class="section level2">
+      <h2 id="preparing-data">Preparing data<a class="anchor" aria-label="anchor" href="#preparing-data"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cor_auto.html">cor_auto()</a></code>
+
+        </dt>
+        <dd>Compute correlations suited to ordinal and continuous variables</dd>
+
+        <dt>
+
+          <code><a href="redundancy.html">redundancy()</a></code> <code><a href="redundancy.html">print(<i>&lt;psychnet_redundancy&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Detect redundant pairs of items</dd>
+
+        <dt>
+
+          <code><a href="net_aggregate.html">net_aggregate()</a></code>
+
+        </dt>
+        <dd>Aggregate communities of items into a network between communities</dd>
+      </dl></div><div class="section level2">
+      <h2 id="node-and-network-measures">Node and network measures<a class="anchor" aria-label="anchor" href="#node-and-network-measures"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="net_centralities.html">net_centralities()</a></code> <code><a href="net_centralities.html">plot(<i>&lt;psychnet_centrality&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Compute the centrality of each node in a network</dd>
+
+        <dt>
+
+          <code><a href="net_bridge.html">net_bridge()</a></code> <code><a href="net_bridge.html">plot(<i>&lt;psychnet_bridge&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Compute bridge centrality between communities of nodes</dd>
+
+        <dt>
+
+          <code><a href="net_edge_betweenness.html">net_edge_betweenness()</a></code>
+
+        </dt>
+        <dd>Compute the edge betweenness of a network</dd>
+
+        <dt>
+
+          <code><a href="net_clustering.html">net_clustering()</a></code>
+
+        </dt>
+        <dd>Compute weighted clustering coefficients of the nodes</dd>
+
+        <dt>
+
+          <code><a href="net_smallworld.html">net_smallworld()</a></code>
+
+        </dt>
+        <dd>Compute the small-world index of a network</dd>
+
+        <dt>
+
+          <code><a href="net_predict.html">net_predict()</a></code>
+
+        </dt>
+        <dd>Compute how well each node is predicted by the network</dd>
+
+        <dt>
+
+          <code><a href="node_predictability.html">node_predictability()</a></code>
+
+        </dt>
+        <dd>Return node predictability as a vector for plotting</dd>
+      </dl></div><div class="section level2">
+      <h2 id="accuracy-and-stability">Accuracy and stability<a class="anchor" aria-label="anchor" href="#accuracy-and-stability"></a></h2>
+
+      <div class="section-desc"><p>Bootstrap intervals, difference tests, and the stability and reliability of edges and centralities under case dropping and splitting.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="net_boot.html">net_boot()</a></code> <code><a href="net_boot.html">as.data.frame(<i>&lt;psychnet_bootstrap&gt;</i>)</a></code> <code><a href="net_boot.html">print(<i>&lt;psychnet_bootstrap&gt;</i>)</a></code> <code><a href="net_boot.html">plot(<i>&lt;psychnet_bootstrap&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Bootstrap the edges and centralities of a network</dd>
+
+        <dt>
+
+          <code><a href="difference_test.html">difference_test()</a></code> <code><a href="difference_test.html">plot(<i>&lt;psychnet_difference&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Test differences between edges or between centralities within a network</dd>
+
+        <dt>
+
+          <code><a href="net_stability.html">plot(<i>&lt;psychnet_stability&gt;</i>)</a></code> <code><a href="net_stability.html">net_stability()</a></code> <code><a href="net_stability.html">print(<i>&lt;psychnet_stability&gt;</i>)</a></code> <code><a href="net_stability.html">as.data.frame(<i>&lt;psychnet_stability&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Assess the stability of centralities when cases are dropped</dd>
+
+        <dt>
+
+          <code><a href="net_casedrop_reliability.html">net_casedrop_reliability()</a></code> <code><a href="net_casedrop_reliability.html">print(<i>&lt;psychnet_casedrop&gt;</i>)</a></code> <code><a href="net_casedrop_reliability.html">plot(<i>&lt;psychnet_casedrop&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Assess the stability of edge weights when cases are dropped</dd>
+
+        <dt>
+
+          <code><a href="net_split_reliability.html">net_split_reliability()</a></code> <code><a href="net_split_reliability.html">print(<i>&lt;psychnet_reliability&gt;</i>)</a></code> <code><a href="net_split_reliability.html">plot(<i>&lt;psychnet_reliability&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Assess the split-half reliability of a network's edge weights</dd>
+      </dl></div><div class="section level2">
+      <h2 id="comparing-networks">Comparing networks<a class="anchor" aria-label="anchor" href="#comparing-networks"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="net_compare.html">net_compare()</a></code> <code><a href="net_compare.html">summary(<i>&lt;psychnet_nct&gt;</i>)</a></code> <code><a href="net_compare.html">as.data.frame(<i>&lt;psychnet_nct&gt;</i>)</a></code> <code><a href="net_compare.html">print(<i>&lt;psychnet_nct&gt;</i>)</a></code> <code><a href="net_compare.html">plot(<i>&lt;psychnet_nct&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Compare the networks of two groups with a permutation test</dd>
+      </dl></div><div class="section level2">
+      <h2 id="certificates">Certificates<a class="anchor" aria-label="anchor" href="#certificates"></a></h2>
+
+      <div class="section-desc"><p>Optimality and structural checks that a fitted network is the solution of its estimator.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="certificate.html">certificate()</a></code>
+
+        </dt>
+        <dd>Check that a fitted network solves its estimator</dd>
+
+        <dt>
+
+          <code><a href="glasso_kkt.html">glasso_kkt()</a></code>
+
+        </dt>
+        <dd>Check that a precision matrix solves the graphical lasso</dd>
+
+        <dt>
+
+          <code><a href="glm_lasso_kkt.html">glm_lasso_kkt()</a></code>
+
+        </dt>
+        <dd>Check that coefficients solve a lasso-penalized regression</dd>
+
+        <dt>
+
+          <code><a href="ggm_support_kkt.html">ggm_support_kkt()</a></code>
+
+        </dt>
+        <dd>Check that a precision matrix is the maximum-likelihood network on a graph</dd>
+
+        <dt>
+
+          <code><a href="lmg_certificate.html">lmg_certificate()</a></code>
+
+        </dt>
+        <dd>Check the decomposition of a relative-importance network</dd>
+
+        <dt>
+
+          <code><a href="tmfg_certificate.html">tmfg_certificate()</a></code>
+
+        </dt>
+        <dd>Check that a network has the structure of a TMFG</dd>
+      </dl></div><div class="section level2">
+      <h2 id="result-objects">Result objects<a class="anchor" aria-label="anchor" href="#result-objects"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="psychnet-class.html">plot(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">`$`(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">print(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">as.data.frame(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">summary(<i>&lt;psychnet&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Fitted psychometric network</dd>
+      </dl></div><div class="section level2">
+      <h2 id="crosswalk">Crosswalk<a class="anchor" aria-label="anchor" href="#crosswalk"></a></h2>
+
+      <div class="section-desc"><p>Arguments of qgraph, bootnet, IsingFit and mgm mapped to psychnets.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="net_crosswalk.html">net_crosswalk()</a></code>
+
+        </dt>
+        <dd>Map the arguments of established network packages to psychnets</dd>
+      </dl></div><div class="section level2">
+      <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h2>
 
 
 
@@ -59,335 +503,21 @@
           <code><a href="SRL.html">SRL_GPT</a></code> <code><a href="SRL.html">SRL_Gemini</a></code> <code><a href="SRL.html">SRL_Claude</a></code> <code><a href="SRL.html">SRL_Mistral</a></code> <code><a href="SRL.html">SRL_LLaMa</a></code>
 
         </dt>
-        <dd>Self-regulated-learning (MSLQ) construct scores simulated by large language models</dd>
-
-        <dt>
-
-          <code><a href="certificate.html">certificate()</a></code>
-
-        </dt>
-        <dd>Correctness certificate of a fitted network</dd>
-
-        <dt>
-
-          <code><a href="condition.html">condition()</a></code> <code><a href="condition.html">as.data.frame(<i>&lt;psychnet_moderated&gt;</i>)</a></code> <code><a href="condition.html">print(<i>&lt;psychnet_moderated&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Condition a moderated network at a moderator value</dd>
-
-        <dt>
-
-          <code><a href="cor_auto.html">cor_auto()</a></code>
-
-        </dt>
-        <dd>Automatic correlation matrix (polychoric / polyserial / Pearson)</dd>
-
-        <dt>
-
-          <code><a href="cor_network.html">cor_network()</a></code>
-
-        </dt>
-        <dd>Correlation network</dd>
-
-        <dt>
-
-          <code><a href="dichotomize.html">dichotomize()</a></code>
-
-        </dt>
-        <dd>Dichotomize numeric columns to 0/1</dd>
-
-        <dt>
-
-          <code><a href="difference_test.html">difference_test()</a></code> <code><a href="difference_test.html">plot(<i>&lt;psychnet_difference&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Bootstrapped difference test for edges or centralities</dd>
-
-        <dt>
-
-          <code><a href="ebic_glasso.html">ebic_glasso()</a></code>
-
-        </dt>
-        <dd>EBIC-regularized Gaussian graphical model (graphical lasso)</dd>
-
-        <dt>
-
-          <code><a href="event_frequencies.html">event_frequencies()</a></code>
-
-        </dt>
-        <dd>Action frequencies from an event log</dd>
-
-        <dt>
-
-          <code><a href="ggm_modselect.html">ggm_modselect()</a></code>
-
-        </dt>
-        <dd>Stepwise Gaussian graphical model selection (ggmModSelect)</dd>
-
-        <dt>
-
-          <code><a href="ggm_support_kkt.html">ggm_support_kkt()</a></code>
-
-        </dt>
-        <dd>Constrained Gaussian-MRF (graph-restricted MLE) stationarity residual</dd>
-
-        <dt>
-
-          <code><a href="glasso_kkt.html">glasso_kkt()</a></code>
-
-        </dt>
-        <dd>Graphical-lasso stationarity (KKT) residual</dd>
-
-        <dt>
-
-          <code><a href="glm_lasso_kkt.html">glm_lasso_kkt()</a></code>
-
-        </dt>
-        <dd>Stationarity (KKT) residual of an L1-penalized GLM fit</dd>
-
-        <dt>
-
-          <code><a href="huge_network.html">huge_network()</a></code>
-
-        </dt>
-        <dd>Nonparanormal graphical model (huge)</dd>
-
-        <dt>
-
-          <code><a href="ising_fit.html">ising_fit()</a></code>
-
-        </dt>
-        <dd>Ising network for binary data</dd>
-
-        <dt>
-
-          <code><a href="ising_sampler.html">ising_sampler()</a></code>
-
-        </dt>
-        <dd>Unregularized Ising network for binary data</dd>
-
-        <dt>
-
-          <code><a href="lmg_certificate.html">lmg_certificate()</a></code>
-
-        </dt>
-        <dd>Relative-importance (LMG / Shapley) certificate</dd>
-
-        <dt>
-
-          <code><a href="logo_network.html">logo_network()</a></code>
-
-        </dt>
-        <dd>Local-Global sparse inverse covariance (LoGo)</dd>
-
-        <dt>
-
-          <code><a href="mgm_fit.html">mgm_fit()</a></code>
-
-        </dt>
-        <dd>Mixed graphical model</dd>
-
-        <dt>
-
-          <code><a href="net_aggregate.html">net_aggregate()</a></code>
-
-        </dt>
-        <dd>Aggregate a network's communities into super-nodes</dd>
-
-        <dt>
-
-          <code><a href="net_boot.html">net_boot()</a></code> <code><a href="net_boot.html">as.data.frame(<i>&lt;psychnet_bootstrap&gt;</i>)</a></code> <code><a href="net_boot.html">print(<i>&lt;psychnet_bootstrap&gt;</i>)</a></code> <code><a href="net_boot.html">plot(<i>&lt;psychnet_bootstrap&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Bootstrap a psychometric network</dd>
-
-        <dt>
-
-          <code><a href="net_bridge.html">net_bridge()</a></code> <code><a href="net_bridge.html">plot(<i>&lt;psychnet_bridge&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Bridge centrality</dd>
-
-        <dt>
-
-          <code><a href="net_casedrop_reliability.html">net_casedrop_reliability()</a></code> <code><a href="net_casedrop_reliability.html">print(<i>&lt;psychnet_casedrop&gt;</i>)</a></code> <code><a href="net_casedrop_reliability.html">plot(<i>&lt;psychnet_casedrop&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Edge-weight stability coefficient (case-dropping subset bootstrap)</dd>
-
-        <dt>
-
-          <code><a href="net_centralities.html">net_centralities()</a></code> <code><a href="net_centralities.html">plot(<i>&lt;psychnet_centrality&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Node centrality</dd>
-
-        <dt>
-
-          <code><a href="net_clustering.html">net_clustering()</a></code>
-
-        </dt>
-        <dd>Weighted clustering coefficients</dd>
-
-        <dt>
-
-          <code><a href="net_compare.html">net_compare()</a></code> <code><a href="net_compare.html">summary(<i>&lt;psychnet_nct&gt;</i>)</a></code> <code><a href="net_compare.html">as.data.frame(<i>&lt;psychnet_nct&gt;</i>)</a></code> <code><a href="net_compare.html">print(<i>&lt;psychnet_nct&gt;</i>)</a></code> <code><a href="net_compare.html">plot(<i>&lt;psychnet_nct&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Network Comparison Test</dd>
-
-        <dt>
-
-          <code><a href="net_crosswalk.html">net_crosswalk()</a></code>
-
-        </dt>
-        <dd>Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm / psychonetrics</dd>
-
-        <dt>
-
-          <code><a href="net_edge_betweenness.html">net_edge_betweenness()</a></code>
-
-        </dt>
-        <dd>Edge betweenness centrality</dd>
-
-        <dt>
-
-          <code><a href="net_predict.html">net_predict()</a></code>
-
-        </dt>
-        <dd>Node predictability</dd>
-
-        <dt>
-
-          <code><a href="net_smallworld.html">net_smallworld()</a></code>
-
-        </dt>
-        <dd>Small-world index</dd>
-
-        <dt>
-
-          <code><a href="net_split_reliability.html">net_split_reliability()</a></code> <code><a href="net_split_reliability.html">print(<i>&lt;psychnet_reliability&gt;</i>)</a></code> <code><a href="net_split_reliability.html">plot(<i>&lt;psychnet_reliability&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Split-half reliability of the network edge structure</dd>
-
-        <dt>
-
-          <code><a href="net_stability.html">plot(<i>&lt;psychnet_stability&gt;</i>)</a></code> <code><a href="net_stability.html">net_stability()</a></code> <code><a href="net_stability.html">print(<i>&lt;psychnet_stability&gt;</i>)</a></code> <code><a href="net_stability.html">as.data.frame(<i>&lt;psychnet_stability&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Centrality-stability coefficient (case-dropping subset bootstrap)</dd>
-
-        <dt>
-
-          <code><a href="node_predictability.html">node_predictability()</a></code>
-
-        </dt>
-        <dd>Node predictability as a plotting vector</dd>
-
-        <dt>
-
-          <code><a href="panel_gvar.html">panel_gvar()</a></code>
-
-        </dt>
-        <dd>Panel graphical VAR network (panel-GVAR)</dd>
-
-        <dt>
-
-          <code><a href="pcor_network.html">pcor_network()</a></code>
-
-        </dt>
-        <dd>Partial correlation network</dd>
-
-        <dt>
-
-          <code><a href="psychnet-class.html">plot(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">`$`(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">print(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">as.data.frame(<i>&lt;psychnet&gt;</i>)</a></code> <code><a href="psychnet-class.html">summary(<i>&lt;psychnet&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Psychometric network objects</dd>
-
-        <dt>
-
-          <code><a href="psychnet.html">psychnet()</a></code>
-
-        </dt>
-        <dd>Estimate a psychometric network</dd>
-
-        <dt>
-
-          <code><a href="psychnet_group.html">print(<i>&lt;psychnet_group&gt;</i>)</a></code> <code><a href="psychnet_group.html">as.data.frame(<i>&lt;psychnet_group&gt;</i>)</a></code> <code><a href="psychnet_group.html">summary(<i>&lt;psychnet_group&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Per-group psychometric networks</dd>
-
-        <dt>
-
-          <code><a href="psychnet_multilevel.html">print(<i>&lt;psychnet_multilevel&gt;</i>)</a></code> <code><a href="psychnet_multilevel.html">as.data.frame(<i>&lt;psychnet_multilevel&gt;</i>)</a></code> <code><a href="psychnet_multilevel.html">summary(<i>&lt;psychnet_multilevel&gt;</i>)</a></code> <code><a href="psychnet_multilevel.html">plot(<i>&lt;psychnet_multilevel&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Within / between event-data networks</dd>
-
-        <dt>
-
-          <code><a href="psychnet_panelgvar.html">as.data.frame(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code> <code><a href="psychnet_panelgvar.html">print(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code> <code><a href="psychnet_panelgvar.html">summary(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code> <code><a href="psychnet_panelgvar.html">plot(<i>&lt;psychnet_panelgvar&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Read a panel graphical VAR fit</dd>
-
-        <dt>
-
-          <code><a href="psychnet_result_group.html">print(<i>&lt;psychnet_result_group&gt;</i>)</a></code> <code><a href="psychnet_result_group.html">as.data.frame(<i>&lt;psychnet_result_group&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Per-group framework results</dd>
-
-        <dt>
-
-          <code><a href="redundancy.html">redundancy()</a></code> <code><a href="redundancy.html">print(<i>&lt;psychnet_redundancy&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Detect redundant node pairs ("goldbricker")</dd>
-
-        <dt>
-
-          <code><a href="relimp_network.html">relimp_network()</a></code>
-
-        </dt>
-        <dd>Relative-importance network (LMG / Shapley)</dd>
-
-        <dt>
-
-          <code><a href="scale_within.html">scale_within()</a></code>
-
-        </dt>
-        <dd>Center and scale variables within persons</dd>
+        <dd>Self-regulated learning scores generated by large language models</dd>
 
         <dt>
 
           <code><a href="srl_panel.html">srl_panel</a></code>
 
         </dt>
-        <dd>Synthetic weekly self-regulated-learning panel</dd>
-
-        <dt>
-
-          <code><a href="tmfg_certificate.html">tmfg_certificate()</a></code>
-
-        </dt>
-        <dd>Structural certificate for a TMFG network</dd>
-
-        <dt>
-
-          <code><a href="tmfg_network.html">tmfg_network()</a></code>
-
-        </dt>
-        <dd>Triangulated Maximally Filtered Graph (TMFG)</dd>
+        <dd>Simulated weekly panel of self-regulated learning</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Mohammed Saqr, Sonsoles López-Pernas.</p>
+  <p>Developed by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a>, <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

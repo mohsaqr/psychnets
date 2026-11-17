@@ -1,13 +1,39 @@
-# Node centrality
+# Compute the centrality of each node in a network
 
-Summarizes each node's position in a fitted network as a tidy table. For
-psychometric networks the recommended measures are strength (the sum of
-absolute edge weights) and expected influence (the signed sum, so
-negative edges offset positive ones; Robinaugh, Millner & McNally 2016).
-Betweenness and closeness follow Opsahl, Agneessens and Skvoretz (2010)
-on the inverted absolute weights. For a directed network (e.g.
-[`relimp_network()`](https://pak.dynasite.org/psychnets/reference/relimp_network.md))
-strength and expected influence sum the outgoing edges.
+`net_centralities()` computes the centrality of each node in a network,
+by default its strength and expected influence. Centrality indices
+summarize the position of each node in a network; for psychometric
+networks, whose edges are signed and weighted, the most informative are
+strength, the sum of the absolute weights of a node's edges, and
+expected influence, the sum of their signed weights, in which negative
+edges offset positive ones (Robinaugh, Millner & McNally, 2016). A node
+with high strength is strongly connected to the other variables;
+expected influence also shows whether these connections are, on balance,
+positive or negative.
+
+On request the function adds two-step expected influence, which also
+counts the expected influence a node passes on through its neighbours,
+and betweenness and closeness, which are computed on shortest paths
+through the absolute edge weights, inverted to distances (Opsahl,
+Agneessens & Skvoretz, 2010). Because betweenness and closeness ignore
+the sign of an edge, they are less suited to signed networks. Further
+measures can be supplied as a function (`centrality_fn`). For a directed
+network, such as one from
+[`relimp_network()`](https://pak.dynasite.org/psychnets/reference/relimp_network.md),
+strength and expected influence sum a node's outgoing edges.
+
+It returns one row per node, with one column per requested measure.
+
+Whether differences in centrality can be interpreted depends on their
+accuracy and stability; see
+[`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md),
+[`difference_test()`](https://pak.dynasite.org/psychnets/reference/difference_test.md)
+and
+[`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md).
+Centrality with respect to communities is computed by
+[`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md),
+and the betweenness of edges by
+[`net_edge_betweenness()`](https://pak.dynasite.org/psychnets/reference/net_edge_betweenness.md).
 
 ## Usage
 
@@ -33,35 +59,29 @@ plot(
 
 - x:
 
-  A [psychnet](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-  object or a weighted adjacency matrix. For
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html), the
-  `psychnet_centrality` table returned by `net_centralities()`.
+  A fitted network
+  ([psychnet](https://pak.dynasite.org/psychnets/reference/psychnet-class.md)),
+  a weighted adjacency matrix, or a
+  [psychnet_group](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
+  (one table per group). For
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html), the table
+  returned by `net_centralities()`.
 
 - measures:
 
-  Character vector of measures to return (for
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html): which of the
-  returned measure columns to draw; default all). Any of `"strength"`,
-  `"expected_influence"` (the defaults, recommended for psychometric
-  networks), `"expected_influence_2step"` (a node's one-step expected
-  influence plus the one-step expected influence it transmits through
-  its neighbours), `"betweenness"`, `"closeness"`, plus any names
-  supplied via `centrality_fn`. Betweenness and closeness are computed
-  on the absolute, inverted-weight graph and are not generally
-  meaningful on signed networks – request them only when a downstream
-  comparison needs them.
+  Measures to compute: any of `"strength"`, `"expected_influence"` (the
+  defaults), `"expected_influence_2step"`, `"betweenness"`,
+  `"closeness"`, and names supplied by `centrality_fn`. For
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html): the measure
+  columns to draw (default: all).
 
 - centrality_fn:
 
-  Optional function taking the weighted adjacency matrix (with
-  node-label dimnames) and returning a named list of node-centrality
-  vectors, used to supply any `measures` not built in. Each vector must
-  have one numeric value per node. A *named* vector is aligned to the
-  nodes by label (its names must be exactly the node labels, in any
-  order); an unnamed vector is taken in node order. A wrong length,
-  missing or extra names, or a non-numeric value is an error of class
-  `psychnet_bad_input`.
+  Optional function that takes the weighted adjacency matrix (with node
+  labels as dimnames) and returns a named list of centrality vectors,
+  one numeric value per node, for measures that are not built in. A
+  named vector is matched to the nodes by label; an unnamed one is taken
+  in node order.
 
 - ...:
 
@@ -70,49 +90,58 @@ plot(
 - type:
 
   For [`plot()`](https://rdrr.io/r/graphics/plot.default.html): `"bar"`
-  (default; one sorted lollipop panel per measure) or `"line"` (the
-  qgraph/bootnet centrality plot: one panel per measure, nodes on a
-  shared vertical axis).
+  (default; one sorted panel per measure) or `"line"` (one panel per
+  measure, with the nodes in a shared order).
 
 - scale:
 
-  For `plot(type = "line")`: the per-measure transform, `"raw"`
-  (default; each panel keeps its own axis), `"z"` (z-score per measure)
-  or `"relative"` (min-max scaled to \[0, 1\]). `type = "bar"` always
-  shows raw values.
+  For `plot(type = "line")`: `"raw"` (default), `"z"` (z-scores per
+  measure) or `"relative"` (rescaled to 0-1 per measure). `type = "bar"`
+  always shows raw values.
 
 ## Value
 
-A tidy `data.frame` of class `c("psychnet_centrality", "data.frame")`,
-one row per node, with a `node` column and one column per requested
-measure (`strength` = sum of absolute edge weights, `expected_influence`
-= sum of signed edge weights, by default; `betweenness` and `closeness`
-are normalized, see Details);
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws it and
-returns it invisibly. For a
-[psychnet_group](https://pak.dynasite.org/psychnets/reference/psychnet_group.md)
-the result is a per-group list (see
+A data frame of class `psychnet_centrality`, one row per node, with a
+`node` column and one column per requested measure, named as in
+`measures`. [`plot()`](https://rdrr.io/r/graphics/plot.default.html)
+draws it and returns it invisibly. For a
+[psychnet_group](https://pak.dynasite.org/psychnets/reference/psychnet_group.md),
+one table per group (see
 [psychnet_result_group](https://pak.dynasite.org/psychnets/reference/psychnet_result_group.md)).
 
 ## Details
 
-**Scaling of betweenness and closeness.** Both are *normalized*, as
-igraph's `betweenness(normalized = TRUE)` /
-`closeness(normalized = TRUE)`: betweenness is divided by the number of
-node pairs not involving the node, `(p - 1)(p - 2) / 2`, and closeness
-is the number of reachable nodes over the sum of distances to them (the
-inverse mean distance). They therefore differ from
+Two-step expected influence is the node's expected influence plus the
+sum, over its neighbours, of each edge weight times that neighbour's
+expected influence.
+
+Betweenness and closeness are normalized, as in igraph's
+`betweenness(normalized = TRUE)` and `closeness(normalized = TRUE)`:
+betweenness is divided by the number of pairs of other nodes,
+`(p - 1)(p - 2) / 2`, and closeness is the number of reachable nodes
+divided by the sum of the distances to them (the inverse mean distance).
+They therefore differ from
 [`qgraph::centrality_auto()`](https://rdrr.io/pkg/qgraph/man/centrality_auto.html),
-which reports raw betweenness (path counts) and closeness as
+which reports betweenness as a count of paths and closeness as
 `1 / sum(distances)`.
 
 ## Functions
 
-- `plot(psychnet_centrality)`: One panel per measure (see `type`,
-  `scale`). Raises `psychnet_bad_input` for a `measures` entry that is
-  not a measure column, skips a column with no finite value with a
-  `psychnet_plot_skipped` warning, and errors
-  (`psychnet_nothing_to_plot`) when none has one.
+- `plot(psychnet_centrality)`: One panel per measure, nodes sorted by
+  value (`type = "bar"`) or in a shared order (`type = "line"`).
+
+## Conditions
+
+`psychnet_bad_input` when `x` is not a fitted network or a square
+numeric matrix, a measure is not built in and `centrality_fn` does not
+supply it, `centrality_fn` returns something other than a named list of
+one numeric value per node (or names that are not the node labels), or a
+group holds within- and between-person networks.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) raises
+`psychnet_bad_input` for a `measures` entry that is not a measure
+column, `psychnet_plot_skipped` (warning) when it skips a measure
+without finite values, and `psychnet_nothing_to_plot` (an error) when no
+requested measure has one.
 
 ## References
 
@@ -125,6 +154,17 @@ Opsahl, T., Agneessens, F., & Skvoretz, J. (2010). Node centrality in
 weighted networks: Generalizing degree and shortest paths. *Social
 Networks*, 32(3), 245-251.
 [doi:10.1016/j.socnet.2010.03.006](https://doi.org/10.1016/j.socnet.2010.03.006)
+
+## See also
+
+[`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
+and
+[`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+for the accuracy and stability of centralities;
+[`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md);
+[`net_edge_betweenness()`](https://pak.dynasite.org/psychnets/reference/net_edge_betweenness.md);
+[`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
+for node predictability.
 
 ## Examples
 

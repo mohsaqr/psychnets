@@ -1,9 +1,15 @@
 # Changelog
 
-## psychnets 0.8.0
+## psychnets 0.8.1
 
 This release collects the changes made since the CRAN release 0.5.2,
 listed below by development version.
+
+- [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md)
+  stops a fit whose items are (quasi-)completely separated as soon as
+  the separation is detected, instead of after up to 400 further
+  iterations; on separated data it is about four times faster. Fits
+  without separation return the same numbers as before.
 
 ## psychnets 0.7.2
 

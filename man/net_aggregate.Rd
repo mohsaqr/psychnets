@@ -2,7 +2,7 @@
 % Please edit documentation in R/aggregate.R
 \name{net_aggregate}
 \alias{net_aggregate}
-\title{Aggregate a network's communities into super-nodes}
+\title{Aggregate communities of items into a network between communities}
 \usage{
 net_aggregate(
   data,
@@ -15,65 +15,100 @@ net_aggregate(
 )
 }
 \arguments{
-\item{data}{A numeric data frame or matrix (rows = observations, columns =
-items).}
+\item{data}{A numeric data frame or matrix with one row per observation and
+one column per item.}
 
-\item{communities}{Community membership of the columns of \code{data}, in one of
-three forms: an unnamed vector with one entry per column of \code{data}, in
-column order (\code{NA} for a column to leave out, e.g. an ID column); a vector
-named by item label; or a list of item-label vectors, one element per
-community (the element names are the community names). Every retained item
-must belong to exactly one community: a label listed twice, a label that is
-not a column, or a retained item without a community is an error of class
-\code{psychnet_bad_input}. Output communities are ordered by list order, factor
-level, numeric value, or (character labels) alphabetically. A column
-whose community is \code{NA} is left out before any preprocessing.}
+\item{communities}{The community of each column of \code{data}, in one of three
+forms: an unnamed vector with one entry per column, in column order (\code{NA}
+for a column to leave out, such as an identifier); a vector named by item
+label; or a list of item-label vectors, one per community, whose names are
+the community names. Every retained item must belong to exactly one
+community. Communities are ordered by list order, factor level, numeric
+value, or alphabetically for character labels.}
 
-\item{method}{Aggregation method. Score (return reduced data): \code{"mean"}
-(default), \code{"median"}, \code{"sum"}, \code{"pca"} (first principal component),
-\code{"factor"} (1-factor regression score; a community of fewer than 3 items
-uses its first principal component, since one factor is not identified
-there, and a community where \code{stats::factanal()} fails also falls back to
-its first principal component with a \code{psychnet_fit_failed} warning naming
-it), \code{"loadings"} (within-community connectivity-weighted mean).
-Association (return macro network): \code{"average"} (mean signed edge weight
-between communities), \code{"rv"} (Escoufier RV coefficient), \code{"canonical"}
-(first canonical correlation; a pair where \code{stats::cancor()} fails gets
-weight 0 with a \code{psychnet_fit_failed} warning naming it).}
+\item{method}{Aggregation method. Score methods (return a data frame):
+\code{"mean"} (default), \code{"median"}, \code{"sum"}, \code{"pca"}, \code{"factor"} or
+\code{"loadings"}. Association methods (return a network): \code{"average"}, \code{"rv"}
+or \code{"canonical"}.}
 
-\item{estimator}{Estimator used for the node-level network that \code{"loadings"}
-and \code{"average"} need (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
+\item{estimator}{Estimator of the item-level network used by \code{"loadings"}
+and \code{"average"}, as in \code{\link[=psychnet]{psychnet()}}. Default \code{"glasso"}.}
 
-\item{scale}{Standardise each item before forming score composites. Default
-\code{TRUE}.}
+\item{scale}{If \code{TRUE} (default), standardize each item before forming
+composite scores.}
 
 \item{labels}{Optional item labels, one per column of \code{data}, used in place
 of its column names (and matched by a named \code{communities}).}
 
-\item{...}{Passed to the estimator.}
+\item{...}{Further arguments for the estimator.}
 }
 \value{
-For a score \code{method}, a \code{data.frame} with one column per community
-(one row per retained observation). For an association \code{method}, a
-\code{psychnet} macro network among communities.
+For a score \code{method}, a data frame with one row per retained
+observation and one column per community, named by community. For an
+association \code{method}, a fitted network (\link[=psychnet-class]{psychnet}) with one node
+per community; it is directed only for \code{"average"} with a directed
+estimator.
 }
 \description{
-Collapses each community of items into a single super-node. \code{score} methods
-build a composite column per community from the raw data and return a reduced
-\code{data.frame} (re-estimate the macro network with \code{\link[=psychnet]{psychnet()}} on it). \code{assoc}
-methods summarise each community pair's multivariate association directly and
-return the macro network as a \code{psychnet}.
+\code{net_aggregate()} builds a network between communities of items, such as the
+items of several scales, in which each community is a single node. It offers
+two routes: the items of each community are combined into a composite score,
+and a network is then estimated among the composites; or the association
+between two communities is summarized directly from their items.
+
+The score methods are the mean, median or sum of the items, the first
+principal component, a one-factor score, or a mean in which each item is
+weighted by its connections to the other items of its community in the
+item-level network (\code{"loadings"}). The association methods are the mean
+signed edge weight between the items of two communities in the item-level
+network (\code{"average"}), Escoufier's RV coefficient (\code{"rv"}), or the first
+canonical correlation (\code{"canonical"}).
+
+A score method returns a data frame with one composite column per community,
+ready for \code{\link[=psychnet]{psychnet()}}; an association method returns the network between
+communities directly.
+
+The centrality of single items with respect to the communities is computed
+by \code{\link[=net_bridge]{net_bridge()}}; pairs of nearly identical items can be found with
+\code{\link[=redundancy]{redundancy()}} before aggregating.
 }
 \details{
-\strong{Data handling.} Non-numeric columns are dropped, and so is any column
-that is constant once incomplete rows are removed. Rows with a missing value
-in any numeric column are dropped (listwise deletion), with a warning of
-class \code{psychnet_rows_dropped} giving the count. \code{communities} is matched to
-the columns of \code{data} \emph{before} anything is dropped, so a dropped column must
-not carry a community (give it \code{NA}, or leave it out of a named vector or
-list): one that does is an error naming it.
+Non-numeric columns are dropped, and so is any column that is constant once
+incomplete rows are removed. Rows with a missing value in any numeric
+column are dropped (listwise deletion). \code{communities} is matched to the
+columns of \code{data} before anything is dropped, so a dropped column must not
+carry a community: give it \code{NA}, or leave it out of a named vector or list.
+
+A community of one item is that item (standardized when \code{scale = TRUE}).
+Principal-component and factor scores are signed to point in the direction
+of the community's items. A factor score needs at least three items, so a
+smaller community, or one for which \code{stats::factanal()} fails, uses its
+first principal component instead. In
+\code{"loadings"}, each item's weight is the sum of its absolute edge weights to
+the other items of its community (equal weights when these are all zero).
+A pair of communities for which \code{stats::cancor()} fails gets weight 0 under
+\code{"canonical"}.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument, or when \code{communities} lists
+an item twice, names an item that is not a column, or leaves a retained
+item without a community; \code{psychnet_dropped_column} (an error, also
+\code{psychnet_bad_input}) when a dropped column carries a community;
+\code{psychnet_rows_dropped} (warning)
+when incomplete rows are dropped; \code{psychnet_constant_variable} (warning)
+when a constant column is dropped; \code{psychnet_dropped_columns} (a message)
+when non-numeric columns are dropped; \code{psychnet_fit_failed} (warning)
+when \code{stats::factanal()} or \code{stats::cancor()} fails for a community,
+naming it. With \code{"loadings"} or \code{"average"}, the estimator raises its own
+conditions.
+}
+
 \examples{
 net_aggregate(SRL_Claude, communities = c(1, 1, 2, 2, 2))            # reduced data
 net_aggregate(SRL_Claude, communities = c(1, 1, 2, 2, 2), method = "rv")  # macro net
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}} to estimate a network from the composite scores;
+\code{\link[=net_bridge]{net_bridge()}} for bridge centrality; \code{\link[=redundancy]{redundancy()}} for redundant items.
 }

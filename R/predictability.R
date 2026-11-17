@@ -10,27 +10,65 @@
 # (ising, IsingSampler, mgm) predictability is computed from the data using the
 # stored nodewise coefficients.
 
-#' Node predictability
+#' Compute how well each node is predicted by the network
 #'
-#' Reports how well each node is predicted by the others in a fitted network.
-#' For Gaussian graphical models this is the closed-form variance explained
-#' (R-squared) from the precision matrix and needs no data. For the nodewise
-#' models ([ising_fit()], [ising_sampler()], [mgm_fit()]) it requires the data
-#' and reports R-squared for Gaussian nodes and classification accuracy (`CC`)
-#' plus normalized accuracy (`nCC`) for binary nodes.
+#' @description
+#' `net_predict()` computes the predictability of each node in a network. The
+#' predictability of a node is the proportion of its variance explained by the
+#' nodes it is connected to (Haslbeck & Waldorp, 2018): where centrality
+#' describes how a node is connected, predictability describes how much of the
+#' node's variation its connections account for. It places the edges on an
+#' absolute scale: a node with low predictability depends largely on variables
+#' outside the network, which limits how far it can be changed through its
+#' neighbours.
 #'
-#' Prediction selects the original modeled columns, independently of display
-#' `labels`. Binary MGM categories use the levels recorded when fitting,
-#' including numeric codes such as 1/2; unseen categories are refused.
+#' For Gaussian graphical models, predictability is the explained variance
+#' (R^2), which follows from the estimated precision matrix without the data.
+#' For a relative-importance network ([relimp_network()]) it is the R^2 stored
+#' with the fit. For the nodewise models ([ising_fit()], [ising_sampler()] and
+#' [mgm_fit()]) it is computed from the data by predicting each node from the
+#' others: R^2 for continuous nodes and, for binary nodes, the proportion of
+#' correct classifications (CC) and the normalized accuracy (nCC), the gain
+#' over always predicting the more frequent category as a share of the gain
+#' that was possible.
 #'
-#' @param x A [psychnet] object.
+#' It returns one row per node, with the type of the node, the metric used and
+#' its value, and the raw accuracy of binary nodes.
+#'
+#' [node_predictability()] returns the same values as a vector for plotting;
+#' [net_boot()] with `predictability = TRUE` gives bootstrap intervals for
+#' Gaussian graphical models.
+#'
+#' @details
+#' For a Gaussian graphical model with precision matrix \eqn{\Theta} and
+#' correlation matrix \eqn{S}, the predictability of node \eqn{j} is
+#' \eqn{R^2_j = 1 - 1 / (\Theta_{jj} S_{jj})}.
+#'
+#' For the nodewise models, the columns of `data` are matched to the nodes by
+#' name (the original column names, then the node labels) when the names
+#' allow it, and otherwise by position; binary categories are coded as when
+#' the network was fitted, and a category not seen in fitting is refused.
+#' Incomplete rows are left out.
+#'
+#' @param x A fitted network ([psychnet-class]), or a [psychnet_group] (one
+#'   table per group).
 #' @param data The data the network was estimated from; required for the
-#'   nodewise models (ising / IsingSampler / mgm), ignored for the GGMs.
+#'   nodewise models (`ising`, `ising_sampler`, `mgm`), ignored otherwise.
 #' @param ... Unused.
-#' @return A tidy `data.frame`, one row per node, with columns `node`, `type`
+#' @return A data frame with one row per node and columns `node`, `type`
 #'   (`"gaussian"` or `"binary"`), `metric` (`"R2"` or `"nCC"`),
-#'   `predictability`, and `accuracy` (classification accuracy for binary nodes,
-#'   `NA` for Gaussian).
+#'   `predictability` (the value of `metric`) and `accuracy` (CC for binary
+#'   nodes, `NA` for Gaussian ones). For a [psychnet_group], one table per
+#'   group (see [psychnet_result_group]).
+#' @section Conditions:
+#'   `psychnet_bad_input` for a network without predictability (for example
+#'   from [cor_network()] or [tmfg_network()]); for a nodewise model when
+#'   `data` is missing, lacks columns for some nodes, contains a category not
+#'   seen in fitting, or has no complete row; for a mixed graphical model with
+#'   a categorical node of more than two levels; and for a group of within-
+#'   and between-person networks.
+#' @seealso [node_predictability()]; [net_centralities()] for centrality;
+#'   [net_boot()] for intervals.
 #' @references Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network
 #'   models predict observations? On the importance of predictability in
 #'   network models. *Behavior Research Methods*, 50(2), 853-861.
@@ -218,18 +256,27 @@ net_predict <- function(x, data = NULL, ...) {
   net
 }
 
-#' Node predictability as a plotting vector
+#' Return node predictability as a vector for plotting
 #'
-#' A thin companion to [net_predict()] that returns predictability as a plain
-#' numeric vector in node order, clamped to `[0, 1]` -- the form
-#' `cograph::splot()` expects for `pie_values` (the predictability ring drawn
-#' around each node). Use [net_predict()] when you want the full tidy table.
+#' @description
+#' `node_predictability()` returns node predictability as a numeric vector in
+#' node order, limited to the range 0 to 1, as `cograph::splot()` expects for
+#' `pie_values`. Node predictability is the proportion of a node's variance
+#' explained by its neighbours in the network (see [net_predict()]), and is
+#' often drawn as a ring around each node of a network plot.
 #'
-#' @param x A [psychnet] object.
+#' For binary nodes the value is the normalized accuracy (nCC). Use
+#' [net_predict()] for the full table, including the type of each node and the
+#' raw accuracy.
+#'
+#' @param x A fitted network ([psychnet-class]).
 #' @param data The data the network was estimated from; required for the
-#'   nodewise models (ising / ising_sampler / mgm), ignored for the GGMs.
-#' @return A named numeric vector, one value per node (node order), each in
-#'   `[0, 1]`.
+#'   nodewise models (`ising`, `ising_sampler`, `mgm`), ignored otherwise.
+#' @return A numeric vector with one value per node, in node order, named by
+#'   node label, each value between 0 and 1.
+#' @section Conditions:
+#'   The conditions of [net_predict()].
+#' @seealso [net_predict()] for the table.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' node_predictability(ebic_glasso(cor_matrix = S, n = 250))

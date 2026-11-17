@@ -76,51 +76,97 @@
   -2 * loglik + npar * log(n) + 4 * npar * gamma * log(p)
 }
 
-#' Stepwise Gaussian graphical model selection (ggmModSelect)
+#' Select an unregularized Gaussian graphical model by stepwise search
 #'
-#' Selects a GGM by extended-BIC model search over edge sets generated from the
-#' glasso path, refitting the *unregularized* maximum-likelihood precision on
-#' each candidate graph, with an optional stepwise add/drop search. Unlike the
-#' graphical lasso, retained edges are not shrunk. Equivalent in purpose to
-#' `qgraph::ggmModSelect()`, but pure base R and self-certified via
-#' [ggm_support_kkt()].
+#' @description
+#' `ggm_modselect()` selects an unregularized Gaussian graphical model: it
+#' chooses which edges are present and then estimates them by maximum
+#' likelihood, so the partial correlations it reports are not shrunk. In a
+#' Gaussian graphical model variables are nodes joined by partial
+#' correlations, with a missing edge meaning conditional independence; a
+#' regularized estimate such as the graphical lasso instead shrinks every
+#' retained edge towards zero, and Williams et al. (2019) discuss when the
+#' unregularized approach is preferable to regularization.
 #'
-#' @param data Numeric data frame or matrix (rows = observations). Optional if
-#'   `cor_matrix` is supplied.
-#' @param cor_matrix Optional correlation matrix; if given, `n` is required.
-#' @param n Sample size (required when `cor_matrix` is supplied): a single
-#'   finite number >= 1.
-#' @param gamma EBIC hyperparameter. Default `0`, matching
-#'   `qgraph::ggmModSelect()`: because the selected graph is refit with the
-#'   *unregularized* MLE (no edge shrinkage), the extra EBIC penalty is not
-#'   needed, so gamma 0 (plain BIC) is the method's intended setting. (The
-#'   regularized GGMs [ebic_glasso()] and [huge_network()] keep gamma 0.5.)
-#' @param stepwise If `TRUE` (default), refine the best glasso-path graph by a
-#'   greedy single-edge add/drop search.
-#' @param nlambda Number of glasso penalties scanned for candidate graphs (a
-#'   whole number >= 2).
+#' `ggm_modselect()` generates candidate graphs from the graphical lasso over
+#' a sequence of penalties, fits the unregularized maximum-likelihood model on
+#' each candidate and keeps the one with the lowest extended Bayesian
+#' information criterion (EBIC). With `stepwise = TRUE` (default) it then
+#' adds or removes single edges as long as the EBIC improves.
+#'
+#' The returned network is the maximum-likelihood network on the selected
+#' graph, which [certificate()] checks.
+#'
+#' For a regularized network use [ebic_glasso()]; for all partial
+#' correlations without selection use [pcor_network()]. The procedure is the
+#' one of `qgraph::ggmModSelect()`.
+#'
+#' @details
+#' The EBIC of a graph with \eqn{E} edges is
+#' \eqn{-2L + E \log n + 4 \gamma E \log p}, where \eqn{L} is the
+#' log-likelihood of the maximum-likelihood fit on that graph. Because the
+#' retained edges are not shrunk, the default `gamma = 0` (the ordinary BIC)
+#' is the intended setting, as in `qgraph::ggmModSelect()`; the regularized
+#' [ebic_glasso()] and [huge_network()] default to `0.5`.
+#'
+#' The stepwise search visits every pair of variables in turn, adds or removes
+#' the edge, and keeps the change whenever the EBIC decreases; it stops when a
+#' full pass brings no improvement (at most 200 passes). A correlation matrix
+#' with no off-diagonal association returns the empty network without a
+#' search.
+#'
+#' The certificate is computed by [ggm_support_kkt()]. After a positive
+#' `threshold` it is missing; `print()` still shows the value for the network
+#' before thresholding.
+#'
+#' @param data A numeric data frame or matrix with one row per observation.
+#'   Not needed when `cor_matrix` is given.
+#' @param cor_matrix A correlation matrix to use instead of `data`; a
+#'   covariance matrix is rescaled to a correlation matrix. `n` is then
+#'   required.
+#' @param n Sample size, required with `cor_matrix`: a single finite number
+#'   >= 1. Ignored when `data` is given.
+#' @param gamma EBIC hyperparameter, a number >= 0. Default `0` (the ordinary
+#'   BIC).
+#' @param stepwise Whether to refine the best candidate graph by adding and
+#'   removing single edges. Default `TRUE`.
+#' @param nlambda Number of graphical lasso penalties used to generate
+#'   candidate graphs, a whole number >= 2. Default `100`.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest, in
-#'   (0, 1).
-#' @param threshold Partial correlations with absolute value below this are
-#'   zeroed: a single number >= 0, default 0. With a positive value `$kkt` is `NA` for the returned
-#'   graph and the pre-threshold residual is stored as `$fit_kkt`.
-#' @param cor_method Correlation used when `data` is supplied: `"pearson"`
-#'   (default), `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial,
-#'   the `qgraph`/`bootnet` default for ordinal items). See [cor_auto()].
-#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
+#'   (0, 1). Default `0.01`.
+#' @param threshold Absolute partial correlation below which an edge is set to
+#'   zero after estimation: a single number >= 0. Default `0`. A logical value
+#'   is refused. A positive value leaves the certificate missing.
+#' @param cor_method Correlation computed from `data`: `"pearson"` (default),
+#'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric and polyserial
+#'   correlations for ordinal items; see [cor_auto()]).
+#' @param na_method Handling of missing values in `data`: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
-#' @param native Solver switch for generating candidate supports: `TRUE`
-#'   (default) uses the pure-R solver; `FALSE` delegates to the `glasso` Fortran
-#'   package (in `Suggests`). The reported precision is the unregularized refit
-#'   either way. See [ebic_glasso()].
-#' @param labels Optional node labels, one unique label per network node.
-#' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
-#'   with `$precision`, `$support` (the selected graph), `$gamma`, `$ebic`,
-#'   `$cor_matrix`, and `$kkt`. Invalid arguments raise `psychnet_bad_input`.
-#'   A candidate or stepwise fit that errors is skipped and reported by one
-#'   `psychnet_fit_failed` warning; a selected fit whose certificate exceeds
-#'   `1e-6` raises a `psychnet_no_converge` warning; if no candidate can be
-#'   fitted at all the call errors (`psychnet_no_converge`).
+#' @param native Solver for the candidate graphs: `TRUE` (default) the
+#'   package's own graphical lasso, `FALSE` the `glasso` package, which must
+#'   be installed. The returned network is the unregularized fit either way.
+#' @param labels Optional node labels, one unique label per node of the
+#'   network.
+#' @return A fitted network of class `psychnet` ([psychnet-class]) whose edge
+#'   weights are partial correlations. `as.data.frame()` returns one row per
+#'   edge with columns `from`, `to` and `weight`; [certificate()] reports the
+#'   check. The object also stores the precision matrix (`precision`), the
+#'   selected graph as a logical matrix (`support`), `gamma`, the correlation
+#'   matrix (`cor_matrix`) and the EBIC of the selected graph (`ebic`).
+#' @section Conditions:
+#'   `psychnet_bad_input` when an argument is out of range, `threshold` is
+#'   logical, `cor_matrix` is not a finite, symmetric, positive semi-definite
+#'   matrix with a positive diagonal, `n` is missing with `cor_matrix`,
+#'   `data` has fewer than two usable variables, `labels` do not match the
+#'   nodes, or `native = FALSE` without the `glasso` package;
+#'   `psychnet_no_converge` (error) when no candidate graph can be fitted;
+#'   `psychnet_fit_failed` (warning) when some candidate fits failed and were
+#'   skipped; `psychnet_no_converge` (warning) when the selected fit's
+#'   certificate exceeds `1e-6`; `psychnet_constant_variable` (warning) when
+#'   a constant or all-missing column is dropped.
+#' @seealso [ebic_glasso()] for the regularized network; [certificate()] and
+#'   [ggm_support_kkt()] for the check; [psychnet()], which routes
+#'   `method = "ggm"` here; [psychnet-class] for the result.
 #' @references Williams, D. R., Rhemtulla, M., Wysocki, A. C., & Rast, P.
 #'   (2019). On nonregularized estimation of psychological networks.
 #'   *Multivariate Behavioral Research*, 54(5), 719-750.

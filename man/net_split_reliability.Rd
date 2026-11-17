@@ -4,7 +4,7 @@
 \alias{net_split_reliability}
 \alias{print.psychnet_reliability}
 \alias{plot.psychnet_reliability}
-\title{Split-half reliability of the network edge structure}
+\title{Assess the split-half reliability of a network's edge weights}
 \usage{
 net_split_reliability(
   data,
@@ -22,65 +22,103 @@ net_split_reliability(
 \method{plot}{psychnet_reliability}(x, ...)
 }
 \arguments{
-\item{data}{Data frame or matrix (rows = observations), resampled exactly as
-given (see \code{\link[=net_boot]{net_boot()}}), or a \code{psychnet_group} (split-half per level).}
+\item{data}{A data frame or matrix with one row per observation, or a
+\link{psychnet_group} estimated from a data set (assessed per group).}
 
-\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
+\item{method}{The estimator, as in \code{\link[=psychnet]{psychnet()}}. Default \code{"glasso"}.}
 
-\item{iter}{Number of split-half iterations. Default 100.}
+\item{iter}{Number of random splits. Default \code{100}.}
 
-\item{split}{Fraction of rows in the first half. Default 0.5.}
+\item{split}{Share of the rows in the first half, a number in (0, 1).
+Default \code{0.5}. Each half must keep at least two rows.}
 
-\item{cor_method}{Correlation method for the between-halves edge comparison:
-\code{"pearson"} (default), \code{"spearman"}, or \code{"kendall"}.}
+\item{cor_method}{Correlation between the edge weights of the two halves:
+\code{"pearson"} (default), \code{"spearman"} or \code{"kendall"}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one per node.}
 
-\item{estimator_args}{Named list of estimator arguments. \code{cor_method},
-\code{iter} and \code{split} are arguments of this diagnostic (the between-halves
-comparison), so an estimator's own \code{cor_method} or \code{threshold} must go
-here, e.g. \code{estimator_args = list(cor_method = "spearman")}; values in
-\code{...} with those names never reach the estimator.}
+\item{estimator_args}{Named list of arguments for the estimator. Use it for
+an estimator argument that shares a name with an argument of this
+function, e.g. \code{estimator_args = list(cor_method = "spearman")}; such
+names given in \code{...} do not reach the estimator.}
 
-\item{...}{Passed to the estimator by \code{net_split_reliability()}; ignored by
-the methods.}
+\item{...}{Further arguments for the estimator (\code{net_split_reliability()});
+ignored by the methods.}
 
 \item{x}{A \code{psychnet_reliability} object.}
 }
 \value{
-A tidy \code{data.frame} (class \code{psychnet_reliability}), one row per metric
-with columns \code{metric}, \code{mean}, \code{sd}, \code{lower}, \code{upper} (2.5\% and 97.5\%
-percentiles across splits) and \code{n_valid} (splits in which the metric was
-defined). The edge correlation is 0 for a split in which exactly one half
-has a constant edge vector (for example an empty network against a
-non-empty one, as in bootnet's \code{cor0()}), and undefined when both halves
-are constant (they agree, but no correlation exists) or fewer than two
-edges are available; undefined splits are excluded from the summary, counted out of
-\code{n_valid}, and announced by a \code{psychnet_undefined_statistic} warning. A
-metric defined in no split has \code{NA} summaries. A failed split fit raises a
-\code{psychnet_resample_failed} warning carrying the first error; a failed
-full-sample fit raises a \code{psychnet_estimation_failed} error with the
-estimator's message. The per-split draws are stored with the result for
-\code{plot()}, which draws a histogram of each metric across splits with its
-mean marked. \code{print()} and \code{plot()} return \code{x} invisibly.
+A data frame of class \code{psychnet_reliability}, one row per metric
+(\code{"mean_abs_dev"}, \code{"median_abs_dev"}, \code{"correlation"}, \code{"max_abs_dev"}),
+with columns \code{metric}, \code{mean}, \code{sd}, \code{lower} and \code{upper} (2.5th and
+97.5th percentiles across splits) and \code{n_valid} (splits in which the
+metric was defined; the summaries are \code{NA} when it was defined in none).
+The values of every split are kept with the table for \code{plot()}, which
+draws a histogram of each metric across splits with its mean marked.
+\code{print()} and \code{plot()} return \code{x} invisibly. For a \link{psychnet_group}, the
+function returns one result per group.
 }
 \description{
-Repeatedly splits the sample into two halves, estimates a network on each, and
-compares their edge-weight vectors. Reports, across splits, the edge-weight
-correlation between halves plus the mean/median/maximum absolute edge
-deviation - a psychometric reliability view of the estimated structure.
+\code{net_split_reliability()} assesses the split-half reliability of a network's
+edge weights. Split-half reliability is the agreement between networks
+estimated on two random halves of the sample, which stand in for two
+independent samples from the same population; it shows how reproducible the
+estimated structure is at that sample size. Repeating the split many times
+gives the distribution of this agreement rather than a value that depends on
+one arbitrary split.
+
+The function draws \code{iter} random splits, with a share \code{split} of the rows in
+the first half, estimates a network on each half, and compares the two
+edge-weight vectors by their correlation and by the mean, median and maximum
+absolute difference.
+
+For each of these metrics it returns the mean, the standard deviation and
+the 2.5th and 97.5th percentiles across splits.
+
+For the stability of the edge weights as cases are removed, use
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}}; for the stability of centralities, use
+\code{\link[=net_stability]{net_stability()}}; for bootstrap intervals of each edge, use \code{\link[=net_boot]{net_boot()}}.
+}
+\details{
+The edge-weight correlation of a split is 0 when exactly one half has a
+constant edge-weight vector (for example an empty network against a
+non-empty one), and undefined when both halves are constant (they agree,
+but no correlation exists) or fewer than two edges are available. Splits in
+which a metric is undefined are left out of its summary and counted in
+\code{n_valid}. Each half is passed to the estimator as the full data would be
+(see \code{\link[=net_boot]{net_boot()}}); the splits are drawn before any network is fitted, so
+the result is reproducible with \code{\link[=set.seed]{set.seed()}}.
 }
 \section{Functions}{
 \itemize{
-\item \code{print(psychnet_reliability)}: The between-halves metric table.
+\item \code{print(psychnet_reliability)}: The number of splits and the table of
+metrics.
 
-\item \code{plot(psychnet_reliability)}: Histograms of the metrics across splits.
+\item \code{plot(psychnet_reliability)}: A histogram of each metric across
+splits.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument, including a \code{split} that
+leaves fewer than two rows in a half, and for a group that was not
+estimated from a data set; \code{psychnet_estimation_failed} when, without
+\code{labels}, the network cannot be estimated on the full data;
+\code{psychnet_resample_failed} (warning) when some halves cannot be
+estimated, naming the first error, and as an error when fewer than two
+splits succeed; \code{psychnet_undefined_statistic} (warning) when a metric is
+undefined in some splits; \code{psychnet_constant_variable} (warning) when a
+constant column is dropped.
+}
+
 \examples{
-# `method` and `iter` are chosen so the example runs quickly; the defaults
-# (method = "glasso", iter = 100) are what a real assessment should use.
+# method and iter are chosen so the example runs quickly; a real analysis
+# uses the defaults (method = "glasso", iter = 100).
 sh <- net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
 sh
 plot(sh)
+}
+\seealso{
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}} and \code{\link[=net_stability]{net_stability()}} for
+case-dropping stability; \code{\link[=net_boot]{net_boot()}} for bootstrap intervals.
 }

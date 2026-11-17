@@ -7,54 +7,73 @@
 scale_within(data, id, vars = NULL, center = TRUE, scale = TRUE)
 }
 \arguments{
-\item{data}{A data frame with one row per observation (person x occasion).}
+\item{data}{A data frame with one row per observation (person by
+occasion).}
 
-\item{id}{Name of the column identifying persons. Missing identifiers are an
-error.}
+\item{id}{Name of the column identifying persons; it may not contain
+missing values.}
 
-\item{vars}{Names of the columns to center/scale. Default \code{NULL}: every
-numeric column except \code{id}. Name them explicitly when the data carry other
-numeric columns (an occasion index, a covariate) that must stay as they
-are.}
+\item{vars}{Names of the columns to center and scale. Default \code{NULL}:
+every numeric column except \code{id}. Name them explicitly when the data
+contain other numeric columns, such as an occasion index or a
+covariate, that must stay as they are.}
 
 \item{center}{Subtract each person's mean. Default \code{TRUE}.}
 
 \item{scale}{Divide by each person's standard deviation. Default \code{TRUE}.}
 }
 \value{
-A data frame with the same rows and columns as \code{data}, the \code{vars}
-columns replaced by their within-person centered (and scaled) values and
-every other column unchanged.
-
-Errors of class \code{psychnet_bad_input} for a missing \code{id} column, missing
-identifiers, or \code{vars} that are not numeric columns of \code{data}.
+A data frame with the same rows and columns as \code{data}, in which
+the \code{vars} columns hold the within-person centered (and scaled) values
+and every other column is unchanged.
 }
 \description{
-Removes each person's own mean from every variable and, by default, divides
-by that person's own standard deviation, so that every network estimated
-from the result describes \emph{within-person} associations: how a person's
-deviations from their own typical level go together. This is the
-within-person standardization of \code{mlVAR::mlVAR(scaleWithin = TRUE)}
-(centering per person, then division by the person's SD), offered as a
-standalone step so it can precede any analysis. The same scaling is built
-into \code{\link[=psychnet]{psychnet()}} as \verb{within =}, which also lets \code{\link[=net_compare]{net_compare()}} pair two
-occasions by person.
+\code{scale_within()} centers and scales variables within persons: it
+subtracts each person's mean from each variable and, by default, divides
+by that person's standard deviation, as \code{mlVAR::mlVAR(scaleWithin = TRUE)}
+does. Removing each person's own mean leaves only the within-person part
+of the associations, so a network estimated from the result describes how
+a person's deviations from their own typical level go together (Epskamp
+et al., 2018).
+
+When each person is measured on several occasions, the association
+between two variables can arise between persons (people who are high on
+one tend to be high on the other) or within persons (on occasions when a
+person is higher than usual on one, they tend to be higher than usual on
+the other). Means and standard deviations use each person's available
+values (the standard deviation with denominator n - 1, as \code{\link[stats:sd]{stats::sd()}}).
+A value is set to \code{NA} when its person has fewer than two observed values
+of the variable or, with \code{scale = TRUE}, when the person's values of it
+are constant, because there is then no within-person variation to
+describe.
+
+The result is \code{data} with the \code{vars} columns replaced by their
+within-person centered (and scaled) values.
+
+The same scaling is built into \code{\link[=psychnet]{psychnet()}} as \verb{within =}, which also lets
+\code{\link[=net_compare]{net_compare()}} pair two occasions by person. For panel data in which
+within-person effects from one wave to the next are of interest, use
+\code{\link[=panel_gvar]{panel_gvar()}}.
 }
 \details{
-Means and standard deviations use each person's available values (the SD
-has denominator n - 1, as \code{\link[stats:sd]{stats::sd()}}). A value is set to \code{NA} when its
-person has fewer than two observed values of that variable, or (with
-\code{scale = TRUE}) when the person's values of it are constant: there is no
-within-person variation to describe. Both cases raise a
-\code{psychnet_constant_within} warning with the count.
-
-\strong{Two occasions per person.} With exactly two observations, each person's
-centered deviations at the two occasions are mirror images (\code{x1 - m = -(x2 - m)}), so the networks of the two occasions are identical by construction
-and a comparison between them cannot detect anything; after scaling, every
-value is \eqn{\pm 1/\sqrt{2}}. When no person has more than two
-observations a \code{psychnet_mirror_deviations} warning says so. Within-person
-comparisons of occasions need three or more occasions per person.
+With exactly two observations per person, each person's centered values
+at the two occasions are mirror images (\eqn{x_1 - m = -(x_2 - m)}), so
+the networks of the two occasions are identical by construction and a
+comparison between them cannot detect anything; after scaling, every
+value is \eqn{\pm 1/\sqrt{2}}. Within-person comparisons of occasions need
+three or more occasions per person.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{data} is not a data frame, \code{id} does not name
+one column or has missing values, \code{vars} names a missing or non-numeric
+column or includes \code{id}, no numeric column is left to scale, or
+\code{center} or \code{scale} is not \code{TRUE} or \code{FALSE};
+\code{psychnet_mirror_deviations} (warning) when no person has more than two
+observations; \code{psychnet_constant_within} (warning) when values are set
+to \code{NA} for lack of within-person variation, with their count.
+}
+
 \examples{
 v <- c("efficacy", "planning", "effort", "enjoyment", "anxiety")
 sw <- scale_within(srl_panel, id = "student", vars = v)
@@ -71,4 +90,7 @@ Epskamp, S., Waldorp, L. J., Mottus, R., & Borsboom, D. (2018).
 The Gaussian graphical model in cross-sectional and time-series data.
 \emph{Multivariate Behavioral Research}, 53(4), 453-480.
 \doi{10.1080/00273171.2018.1454823}
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}} with \code{within}; \code{\link[=net_compare]{net_compare()}}; \code{\link[=panel_gvar]{panel_gvar()}}.
 }

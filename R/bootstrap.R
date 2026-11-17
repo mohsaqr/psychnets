@@ -88,117 +88,144 @@
   p_mat
 }
 
-#' Bootstrap a psychometric network
+#' Bootstrap the edges and centralities of a network
 #'
-#' Resamples observations with replacement, re-estimates the network on each
-#' resample, and summarizes the sampling distribution of every edge weight and
-#' node centrality (mean, percentile confidence interval, and edge inclusion
-#' proportion). An edge is flagged `significant` when its percentile interval
-#' excludes zero. The raw per-resample draws are stored on the returned object
-#' for use by [difference_test()].
+#' @description
+#' `net_boot()` bootstraps a network to show how accurately its edge weights and
+#' node centralities are estimated. The nonparametric bootstrap approximates the
+#' sampling variation of the network, whose edge weights and centralities would
+#' differ in another sample from the same population, by re-estimating it on
+#' samples drawn with replacement from the observations; the spread of the
+#' bootstrapped values shows which edges, and which differences between them,
+#' can be interpreted (Epskamp, Borsboom & Fried, 2018).
+#'
+#' The function resamples the rows of `data`, re-estimates the network with the
+#' chosen estimator on every resample, and summarizes each edge weight and each
+#' node centrality by its bootstrap mean and percentile confidence interval. For
+#' each edge it also reports the proportion of resamples in which the edge was
+#' estimated as nonzero, and flags it as `significant` when its interval
+#' excludes zero. Options add intervals for node predictability
+#' (`predictability`) and a version of the network that keeps only the edges
+#' whose interval excludes zero (`threshold`).
+#'
+#' It returns these intervals as tables read with `as.data.frame()`, and keeps
+#' the bootstrapped values on the object, so that [difference_test()] can test
+#' differences between edges, or between node centralities, without resampling
+#' again.
+#'
+#' The bootstrap describes the accuracy of estimates within one sample. For the
+#' stability of the order of centralities when cases are dropped, use
+#' [net_stability()]; for the stability of the edge weights, use
+#' [net_casedrop_reliability()] and [net_split_reliability()]; to test whether
+#' two groups have different networks, use [net_compare()].
+#'
+#' @details
+#' Each resample is passed to the estimator exactly as the full data would be,
+#' including incomplete rows and factor columns, so the estimator's own
+#' handling of missing values and variable types applies to every resample.
+#' For `method = "mgm"` the node types are decided once on the full data and
+#' kept for every resample. A resample on which a variable has no variation
+#' keeps that variable as an isolated node.
+#'
+#' All resample indices are drawn before any network is fitted, so the result
+#' is reproducible with [set.seed()] and does not depend on `cores`.
 #'
 #' For an estimator whose edge weights are non-negative by construction
-#' (`method = "relimp"`, whose weights are R^2 shares) a percentile interval
-#' excludes zero almost surely, so `significant` is `TRUE` for every edge and
-#' carries no information; `threshold = TRUE` then removes nothing. Both
-#' `threshold = TRUE` and `as.data.frame(x, significant = TRUE)` raise a
-#' `psychnet_uninformative_test` warning in that case. Pairwise difference
-#' tests ([difference_test()], `diff_test = TRUE`) remain meaningful.
+#' (`method = "relimp"`, whose weights are shares of explained variance), a
+#' percentile interval excludes zero almost surely: every edge is then flagged
+#' `significant` and `threshold = TRUE` removes nothing. Pairwise difference
+#' tests with [difference_test()] remain informative.
 #'
-#' A resample whose fit (or centrality, or predictability) errors is recorded
-#' as failed inside its worker, so the result is the same for any number of
-#' cores; failures raise one `psychnet_resample_failed` warning that carries
-#' the first error message, and fewer than two successful resamples is a
-#' `psychnet_resample_failed` error. An error in the observed fit is raised as
-#' a `psychnet_estimation_failed` error with the estimator's own message.
-#'
-#' @param data Data frame or matrix (rows = observations). Resampled exactly as
-#'   given -- factor columns and incomplete rows included -- so each draw is
-#'   handed to the estimator as the full data would be, and the estimator's own
-#'   `na_method` and type handling apply per draw. For `method = "mgm"` node
-#'   types are decided once on the full data and pinned for every draw.
-#' @param method Estimator (see [psychnet()]). Default `"glasso"`.
-#' @param n_boot Number of bootstrap resamples. Default 1000.
-#' @param ci Confidence level for percentile intervals: a single number in
-#'   (0, 1). Default 0.95.
-#' @param measures Centrality measures to bootstrap. Defaults to the two
-#'   recommended for psychometric networks (`"strength"`,
-#'   `"expected_influence"`); `"betweenness"`/`"closeness"` and custom measures
-#'   (via `centrality_fn`) are also accepted. See [net_centralities()].
-#' @param centrality_fn Optional function supplying any non-built-in `measures`
-#'   (see [net_centralities()]).
-#' @param predictability Logical; if `TRUE` and the estimator returns a
-#'   precision matrix (GGM family), bootstrap node predictability (R^2) and
-#'   report its interval (`as.data.frame(x, what = "predictability")`).
-#'   Default `FALSE`.
-#' @param threshold Logical; if `TRUE`, also return the observed network with
-#'   every edge whose bootstrap interval includes zero set to zero
-#'   (`as.data.frame(x, what = "thresholded")`). Default `FALSE`.
-#' @param diff_test Logical; if `TRUE`, also store two-sided bootstrap
-#'   difference p-value matrices for edges (`NULL` past 500 edges) and for each
-#'   centrality measure, drawn by `plot(x, type = "edge_diff")` /
-#'   `"centrality_diff"`. For the tidy pairwise table use [difference_test()].
-#'   Default `FALSE`.
-#' @param p_adjust Multiple-comparison adjustment applied to the difference
-#'   p-value matrices (any [stats::p.adjust] method). Default `"none"`.
-#' @param labels Optional node labels.
-#' @param cores Number of CPU cores for the resample loop: `NULL` (default)
-#'   uses two thirds of the detected cores; a whole number `>= 1` sets it (`1`
-#'   forces a serial run). Parallelism uses forking (`parallel::mclapply`) and
-#'   falls back to serial on Windows. Because every resample index is drawn in
-#'   the parent process before any fitting, and a failing resample is caught
-#'   inside its own worker, the result is identical for any number of cores and
-#'   reproducible from `set.seed()`.
-#' @param engine Optional estimator engine forwarded to each resample fit
-#'   (e.g. `"base"`/`"glasso"` for glasso, `"base"`/`"glmnet"` for ising/mgm).
-#'   `NULL` (default) uses the estimator's own default.
-#' @param estimator_args Named list of estimator arguments. `threshold`, `ci`,
-#'   `measures` and `labels` are arguments of the bootstrap itself, so an
-#'   estimator's own `threshold` must go here, e.g.
-#'   `estimator_args = list(threshold = TRUE)`. Values here override matching
-#'   arguments in `...`.
-#' @param ... Passed to the estimator by `net_boot()`; ignored by the methods.
+#' @param data A data frame or matrix with one row per observation, or a
+#'   [psychnet_group] estimated from a data set, in which case each group is
+#'   bootstrapped with the group's own estimator settings.
+#' @param method The estimator, as in [psychnet()]. Default `"glasso"`.
+#' @param n_boot Number of bootstrap resamples. Default `1000`.
+#' @param ci Confidence level of the percentile intervals, a number in
+#'   (0, 1). Default `0.95`.
+#' @param measures Centrality measures to bootstrap. Default
+#'   `c("strength", "expected_influence")`; any measure accepted by
+#'   [net_centralities()] can be added.
+#' @param centrality_fn Optional function supplying measures that are not
+#'   built in (see [net_centralities()]).
+#' @param predictability If `TRUE`, also bootstrap node predictability (R^2)
+#'   when the estimator returns a precision matrix (the Gaussian graphical
+#'   models). Default `FALSE`.
+#' @param threshold If `TRUE`, also keep the observed network with every edge
+#'   whose interval includes zero set to zero. Default `FALSE`.
+#' @param diff_test If `TRUE`, also store matrices of pairwise difference
+#'   p-values on the object: for the edges (up to 500 edges) and for each
+#'   centrality measure. Default `FALSE`. The tidy version of these tests is
+#'   [difference_test()].
+#' @param p_adjust Multiplicity adjustment for the matrices stored by
+#'   `diff_test`, any method of [stats::p.adjust()]. Default `"none"`.
+#' @param labels Optional node labels, one per node.
+#' @param cores Number of CPU cores. `NULL` (default) uses two thirds of the
+#'   detected cores; `1` runs serially. Runs are serial on Windows.
+#' @param engine Optional solver for every refit: `"base"` or `"glasso"` for
+#'   `method = "glasso"` or `"huge"`, `"base"` or `"glmnet"` for `"ising"` or
+#'   `"mgm"`. `NULL` (default) keeps the estimator's default.
+#' @param estimator_args Named list of arguments for the estimator. Use it for
+#'   an estimator argument that shares a name with an argument of `net_boot()`,
+#'   e.g. `estimator_args = list(threshold = TRUE)`. Values here override those
+#'   in `...`.
+#' @param ... Further arguments for the estimator (`net_boot()`); ignored by
+#'   the methods.
 #' @param x A `psychnet_bootstrap` object.
-#' @param what For `as.data.frame()`: which table to return -- `"edges"`
-#'   (default), `"centrality"`, `"predictability"` (needs
-#'   `predictability = TRUE`) or `"thresholded"` (needs `threshold = TRUE`).
+#' @param what For `as.data.frame()`: `"edges"` (default), `"centrality"`,
+#'   `"predictability"` (needs `predictability = TRUE`) or `"thresholded"`
+#'   (needs `threshold = TRUE`).
 #' @param significant For `as.data.frame()` with `what = "edges"`: if `TRUE`,
-#'   return only the edges whose confidence interval excludes zero. Default
-#'   `FALSE` (all edges).
-#' @param row.names,optional Ignored (S3 consistency).
-#' @param type For `plot()`: one of `"edges"` (default; the edge-weight
-#'   intervals sorted by observed weight, bootnet's edge-accuracy plot),
-#'   `"centrality"` (one sorted interval panel per measure), `"edge_diff"` and
-#'   `"centrality_diff"` (the bootstrapped difference "significance box" matrix
-#'   for edges or for one centrality), or `"predictability"` (node
-#'   predictability intervals; needs `predictability = TRUE`).
+#'   return only the edges whose interval excludes zero. Default `FALSE`.
+#' @param row.names,optional Ignored.
+#' @param type For `plot()`: `"edges"` (default; edge weights with their
+#'   intervals, sorted by observed weight), `"centrality"` (one panel per
+#'   measure), `"edge_diff"` or `"centrality_diff"` (the matrix of pairwise
+#'   difference tests for the edges or for one measure), or `"predictability"`
+#'   (needs `predictability = TRUE`).
 #' @param measure For `plot()` with `type = "centrality"` or
-#'   `"centrality_diff"`: which measure(s) to draw. Default: all bootstrapped
-#'   measures (`"centrality"`) or the first (`"centrality_diff"`).
-#' @return `net_boot()` returns an object of class `psychnet_bootstrap`, read
-#'   with `as.data.frame()`, `print()`, `plot()` and [difference_test()].
+#'   `"centrality_diff"`: the measure(s) to draw. Default: all bootstrapped
+#'   measures, or the first one for `"centrality_diff"`.
+#' @return `net_boot()` returns an object of class `psychnet_bootstrap`. Its
+#'   tables are read with `as.data.frame()`:
 #'
-#'   `as.data.frame(x)` (`what = "edges"`) returns one row per edge with
-#'   columns `from`, `to`, `observed`, `mean` (bootstrap mean), `lower`,
-#'   `upper` (percentile interval), `prop_nonzero` (share of resamples in which
-#'   the edge is nonzero) and `significant` (interval excludes zero). For a
-#'   directed estimator each ordered pair is its own row.
+#'   * `as.data.frame(x)` (`what = "edges"`): one row per edge, with columns
+#'     `from`, `to`, `observed`, `mean` (bootstrap mean), `lower`, `upper`
+#'     (percentile interval), `prop_nonzero` (share of resamples in which the
+#'     edge is nonzero) and `significant` (the interval excludes zero). For a
+#'     directed estimator each ordered pair is a row.
+#'   * `what = "centrality"`: one row per node, with `node` and, for each
+#'     measure, its observed value and the columns `<measure>_lower` and
+#'     `<measure>_upper`.
+#'   * `what = "predictability"`: one row per node, with `node`, `value` (the
+#'     observed R^2), `lower` and `upper`.
+#'   * `what = "thresholded"`: one row per edge, with `from`, `to`,
+#'     `observed`, `weight` (the observed weight, or 0 when its interval
+#'     includes zero) and `retained`.
 #'
-#'   `what = "centrality"` returns one row per node: `node`, then for each
-#'   bootstrapped measure its observed value and the `<measure>_lower` /
-#'   `<measure>_upper` percentile interval.
-#'
-#'   `what = "predictability"` returns one row per node: `node`, `value`
-#'   (observed R^2), `lower`, `upper`.
-#'
-#'   `what = "thresholded"` returns one row per edge: `from`, `to`,
-#'   `observed`, `weight` (the observed weight, or 0 when its interval includes
-#'   zero) and `retained`.
-#'
-#'   Asking for a table that was not computed is a `psychnet_bad_input` error.
-#'   `print()` returns `x` invisibly after printing the method, the number of
-#'   resamples, the interval level, and the counts of edges, significant edges
-#'   and nodes. `plot()` returns `x` invisibly.
+#'   The object also stores the observed network and the bootstrapped value of
+#'   every edge and centrality in every resample, which [difference_test()]
+#'   and the difference plots use. `print()` shows the estimator, the number of
+#'   resamples, the interval level and the numbers of edges, significant edges
+#'   and nodes, and returns `x` invisibly; `plot()` returns `x` invisibly. For
+#'   a [psychnet_group], `net_boot()` returns one result per group (see
+#'   [psychnet_result_group]).
+#' @section Conditions:
+#'   `psychnet_bad_input` for an invalid argument, for a group that was not
+#'   estimated from a data set, and from `as.data.frame()` or `plot()` when the
+#'   requested table was not computed; `psychnet_estimation_failed` when the
+#'   network cannot be estimated on the full data (with the estimator's
+#'   message); `psychnet_resample_failed` (warning) when some resamples fail,
+#'   naming the first error, and as an error when fewer than two succeed;
+#'   `psychnet_constant_variable` (warning) when a constant column is dropped;
+#'   `psychnet_ignored_argument` (warning) when `predictability = TRUE` but the
+#'   estimator returns no precision matrix; `psychnet_uninformative_test`
+#'   (warning) for `threshold = TRUE` or `as.data.frame(significant = TRUE)`
+#'   with `method = "relimp"`.
+#' @seealso [difference_test()] for pairwise differences;
+#'   [net_centralities()] for the measures; [net_stability()],
+#'   [net_casedrop_reliability()] and [net_split_reliability()] for
+#'   case-dropping and split-half stability; [psychnet()] for the estimators.
 #' @references Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 #'   psychological networks and their accuracy: A tutorial paper. *Behavior
 #'   Research Methods*, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
@@ -206,15 +233,15 @@
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 #' colnames(x) <- paste0("V", 1:5)
-#' # method = "pcor" keeps this example fast; the "glasso" default (and
-#' # n_boot >= 1000) is what a real analysis should use.
+#' # method = "pcor" and n_boot = 50 keep this example fast; a real analysis
+#' # uses the "glasso" default and n_boot >= 1000.
 #' bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 #' bs
 #' as.data.frame(bs)
 #' as.data.frame(bs, significant = TRUE)
 #' as.data.frame(bs, what = "centrality")
-#' plot(bs)                       # edge-weight CIs
-#' plot(bs, type = "centrality")  # centrality CIs
+#' plot(bs)                       # edge weights with their intervals
+#' plot(bs, type = "centrality")  # centralities with their intervals
 #' @export
 net_boot <- function(data, method = "glasso", n_boot = 1000L,
                      ci = 0.95, measures = c("strength", "expected_influence"),
@@ -381,31 +408,57 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
   structure(out, class = "psychnet_bootstrap")
 }
 
-#' Bootstrapped difference test for edges or centralities
+#' Test differences between edges or between centralities within a network
 #'
-#' Tests, within a single network, whether two edge weights or two node
-#' centralities differ. For every pair it forms the per-resample difference from
-#' the stored bootstrap draws, takes the percentile interval of that difference,
-#' and flags the pair `significant` when the interval excludes zero; it also
-#' reports the two-sided bootstrap p-value (Epskamp, Borsboom & Fried 2018).
-#' This is the within-network counterpart to the edge accuracy intervals
-#' reported by [net_boot()].
+#' @description
+#' `difference_test()` tests whether pairs of edges, or pairs of nodes on one
+#' centrality measure, differ within a single network. It uses the bootstrapped
+#' difference test (Epskamp, Borsboom & Fried, 2018), which computes the
+#' difference of a pair in every bootstrap resample and treats the pair as
+#' different when the resulting interval excludes zero, that is, when the
+#' difference exceeds what sampling variation alone would produce. Interpreting
+#' one edge as stronger than another, or one node as more central than another,
+#' requires such a difference.
+#'
+#' The function reads the resampled values stored by [net_boot()] and tests
+#' every pair of edges (`type = "edge"`) or every pair of nodes on one
+#' bootstrapped centrality measure.
+#'
+#' For each pair it returns the observed difference, the percentile interval of
+#' the bootstrapped difference, a two-sided bootstrap p-value and whether the
+#' interval excludes zero.
+#'
+#' The test compares estimates within one network. To compare the same edge
+#' or the global strength between two groups, use [net_compare()]; for the
+#' interval of each edge or centrality on its own, use [net_boot()].
+#'
+#' @details
+#' The p-value of a pair is twice the smaller of the shares of resamples in
+#' which the difference is positive or negative, with resamples in which it is
+#' exactly zero split evenly between the two, and capped at 1. `significant`
+#' is decided by the interval at level `ci` and is not changed by `p_adjust`,
+#' which adjusts only `p_value`.
 #'
 #' @param boot A `psychnet_bootstrap` object from [net_boot()].
-#' @param type Quantity to compare: `"edge"` (default), or any one centrality
-#'   measure bootstrapped by [net_boot()] (e.g. `"strength"`,
-#'   `"expected_influence"`).
-#' @param ci Confidence level for the difference interval: a single number in
-#'   (0, 1). Defaults to the level used by the bootstrap object.
-#' @param p_adjust Multiple-comparison adjustment for the pairwise p-values (any
-#'   [stats::p.adjust] method). Default `"none"`.
-#' @return A tidy data frame, one row per pair, with `item1`, `item2`, the two
-#'   observed values, their observed difference, the percentile interval of the
-#'   bootstrap difference (`lower`, `upper`), the two-sided `p_value`, and a
-#'   logical `significant`; class `psychnet_difference`, so `plot()` draws
-#'   it. Edges are labelled `A--B`, or `A->B` for a directed estimator. An
-#'   invalid `boot`, `type` or `ci` is a `psychnet_bad_input` error. `plot()`
-#'   returns `x` invisibly.
+#' @param type What to compare: `"edge"` (default) or one centrality measure
+#'   bootstrapped by [net_boot()], such as `"strength"` or
+#'   `"expected_influence"`.
+#' @param ci Confidence level of the difference interval, a number in (0, 1).
+#'   Default: the level used by `boot`.
+#' @param p_adjust Multiplicity adjustment for the p-values, any method of
+#'   [stats::p.adjust()]. Default `"none"`.
+#' @return A data frame of class `psychnet_difference`, one row per pair, with
+#'   columns `item1`, `item2`, `value1`, `value2` (the two observed values),
+#'   `obs_diff` (`value1 - value2`), `lower`, `upper` (percentile interval of
+#'   the bootstrapped difference), `p_value` and `significant` (the interval
+#'   excludes zero). Edges are labelled `A--B`, or `A->B` for a directed
+#'   estimator. `plot()` draws the table and returns `x` invisibly.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `boot` is not a `psychnet_bootstrap` object,
+#'   `type` is not a bootstrapped quantity, `ci` or `p_adjust` is invalid, or
+#'   fewer than two items can be compared.
+#' @seealso [net_boot()] for the resamples; [net_compare()] for differences
+#'   between groups.
 #' @references Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 #'   psychological networks and their accuracy: A tutorial paper. *Behavior
 #'   Research Methods*, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
@@ -413,13 +466,13 @@ net_boot <- function(data, method = "glasso", n_boot = 1000L,
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(150 * 5), 150, 5) %*% chol(0.4^abs(outer(1:5, 1:5, "-")))
 #' colnames(x) <- paste0("V", 1:5)
-#' # method = "pcor" keeps this example fast; the "glasso" default (and
-#' # n_boot >= 1000) is what a real analysis should use.
+#' # method = "pcor" and n_boot = 50 keep this example fast; a real analysis
+#' # uses the "glasso" default and n_boot >= 1000.
 #' bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 #' dt <- difference_test(bs, type = "strength")
 #' dt
-#' plot(dt)                   # significance-box matrix
-#' plot(dt, style = "forest") # forest plot
+#' plot(dt)                   # matrix of pairwise differences
+#' plot(dt, style = "forest") # one interval per pair
 #' @export
 difference_test <- function(boot, type = "edge", ci = NULL,
                             p_adjust = "none") {
@@ -477,9 +530,8 @@ difference_test <- function(boot, type = "edge", ci = NULL,
   out
 }
 
-#' @describeIn net_boot A tidy table: the edges (default), the centrality
-#'   intervals, the predictability intervals, or the thresholded network (see
-#'   `what`).
+#' @describeIn net_boot The edge intervals (default), the centrality or
+#'   predictability intervals, or the thresholded network, chosen by `what`.
 #' @export
 as.data.frame.psychnet_bootstrap <- function(x, row.names = NULL,
                                              optional = FALSE, ...,
@@ -522,7 +574,8 @@ as.data.frame.psychnet_bootstrap <- function(x, row.names = NULL,
     })
 }
 
-#' @describeIn net_boot Method, resamples, interval level and edge counts.
+#' @describeIn net_boot The estimator, the number of resamples, the interval
+#'   level and the edge counts.
 #' @export
 print.psychnet_bootstrap <- function(x, ...) {
   cat(sprintf("<psychnet_bootstrap> %s, %d resamples, %.0f%% CI\n",

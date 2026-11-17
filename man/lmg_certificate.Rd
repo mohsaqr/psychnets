@@ -2,30 +2,58 @@
 % Please edit documentation in R/relimp.R
 \name{lmg_certificate}
 \alias{lmg_certificate}
-\title{Relative-importance (LMG / Shapley) certificate}
+\title{Check the decomposition of a relative-importance network}
 \usage{
 lmg_certificate(x)
 }
 \arguments{
-\item{x}{A \link{psychnet} object produced by \code{\link[=relimp_network]{relimp_network()}}.}
+\item{x}{A relative-importance network from \code{\link[=relimp_network]{relimp_network()}}
+(\link[=psychnet-class]{psychnet}).}
 }
 \value{
-The larger of the two deviations (scalar); 0 = exact decomposition.
-An \code{x} that is not a relimp network is an error of class
-\code{psychnet_bad_input}.
+A single number, the larger of the two deviations; 0 for an exact
+decomposition.
 }
 \description{
-Checks two identities. By Shapley efficiency, the importance shares a node
-receives from its predictors sum exactly to that node's full-model
-R-squared; and that full-model R-squared must equal the closed form
-\eqn{1 - 1 / (S^{-1})_{jj}}. The first alone cannot detect a wrong subset
-solver (efficiency holds for any set function), so the second anchors the
-full model independently. When \code{S} is singular (reciprocal condition number
-below 1e-12) the closed form does not exist and only efficiency is checked.
-The certificate does not verify the individual subset R-squared values
-between the empty and the full model.
+\code{lmg_certificate()} checks the decomposition stored in a relative-importance
+network from \code{\link[=relimp_network]{relimp_network()}}. Such a network divides the \eqn{R^2} of
+each variable, regressed on all the others, among its predictors; it is
+defined by a decomposition rather than as the optimum of an objective, and
+two identities must hold for that decomposition to be correct.
+
+The shares a node receives must sum exactly to its \eqn{R^2}, which is the
+efficiency property of the Shapley value. And that \eqn{R^2} must be the
+one implied by the correlation matrix, which has a closed form. Together
+they show that the stored shares add up to the variance each node's
+predictors actually explain.
+
+\code{lmg_certificate()} returns the larger of the two deviations: a value near
+zero confirms the decomposition, up to numerical precision.
+
+\code{\link[=certificate]{certificate()}} reports the same value for a fitted network. The check
+does not verify the \eqn{R^2} of the individual subset
+regressions between the empty and the full model, and the sum identity
+alone would hold for any set of subset values; the closed form is what ties
+the full model to the data.
 }
+\details{
+For outcome \eqn{j} with shares \eqn{w_{kj}} and full-model \eqn{R^2_j},
+the two deviations are \eqn{\max_j |\sum_k w_{kj} - R^2_j|} and
+\eqn{\max_j |R^2_j - (1 - 1 / (S^{-1})_{jj})|}. When the correlation matrix
+\eqn{S} is singular (reciprocal condition number below \code{1e-12}) the closed
+form does not exist and only the first deviation is returned. For a
+network with \code{normalized = TRUE} the unscaled shares are used.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is not a network from \code{\link[=relimp_network]{relimp_network()}}.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:5, 1:5, "-"))
 lmg_certificate(relimp_network(cor_matrix = S))
+}
+\seealso{
+\code{\link[=relimp_network]{relimp_network()}}; \code{\link[=certificate]{certificate()}}; \code{\link[=tmfg_certificate]{tmfg_certificate()}}, the
+other structural check.
 }

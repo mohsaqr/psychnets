@@ -2,7 +2,7 @@
 % Please edit documentation in R/lasso_glm.R
 \name{glm_lasso_kkt}
 \alias{glm_lasso_kkt}
-\title{Stationarity (KKT) residual of an L1-penalized GLM fit}
+\title{Check that coefficients solve a lasso-penalized regression}
 \usage{
 glm_lasso_kkt(
   X,
@@ -16,42 +16,93 @@ glm_lasso_kkt(
 )
 }
 \arguments{
-\item{X}{Standardized predictor matrix (mean 0, unit variance columns).}
+\item{X}{Numeric predictor matrix, one row per observation, on the scale
+on which the fit was penalized.}
 
-\item{y}{Response.}
+\item{y}{Numeric response, one value per row of \code{X}; between 0 and 1 for
+\code{family = "binomial"}.}
 
-\item{b0}{Fitted intercept.}
+\item{b0}{Fitted intercept, a single finite number.}
 
-\item{beta}{Fitted (standardized) coefficients.}
+\item{beta}{Fitted coefficients, one per column of \code{X}.}
 
-\item{lambda}{Penalty.}
+\item{lambda}{The penalty: a single finite number >= 0.}
 
-\item{family}{\code{"gaussian"} or \code{"binomial"}.}
+\item{family}{\code{"gaussian"} (default, linear regression) or \code{"binomial"}
+(logistic regression).}
 
-\item{weights}{Optional observation weights (\code{NULL} = unweighted).}
+\item{weights}{Optional observation weights, finite, non-negative and not
+all zero, one per row of \code{X}. Default \code{NULL}, equal weights.}
 
-\item{active_tol}{Magnitude above which a coefficient is "active".}
+\item{active_tol}{Absolute value above which a coefficient counts as
+nonzero. Default \code{1e-8}.}
 }
 \value{
-Maximum absolute stationarity violation (scalar). Near-zero certifies
-the fit is at the penalized-likelihood optimum.
+A single number, the largest absolute violation of the optimality
+conditions; 0 at the exact optimum.
 }
 \description{
-Dependency-free correctness certificate for a nodewise lasso, analogous to
-\code{\link[=glasso_kkt]{glasso_kkt()}} for the graphical lasso. With standardized predictors \code{X} and
-fitted mean \code{mu} (identity link for gaussian, logistic for binomial), the
-subgradient conditions are \eqn{n^{-1} X_j^\top (y - \mu) = \lambda\,
-\mathrm{sign}(\beta_j)} for active coordinates and
-\eqn{|n^{-1} X_j^\top (y - \mu)| \le \lambda} otherwise. Near-zero certifies
-the penalized-likelihood optimum.
+\code{glm_lasso_kkt()} checks whether coefficients solve a lasso-penalized
+linear or logistic regression, given its predictors, response, intercept,
+coefficients and penalty. Such a regression, with a penalty on the absolute
+coefficients (the lasso), is a convex problem, and its coefficients are the
+optimum if and only if they satisfy the optimality (Karush-Kuhn-Tucker)
+conditions.
+
+Ising models and mixed graphical models are estimated node by node: each
+variable is regressed on all the others with the lasso, logistic for a
+binary variable and linear for a continuous one, and the coefficients
+become the edges of the network. Checking the conditions therefore shows
+whether a regression was solved, without fitting it a second time. In
+words, the residuals must average to zero; for every coefficient that is
+not zero, the average product of its predictor with the residuals must
+equal the penalty, with the sign of the coefficient; and for every
+coefficient that is zero it must not exceed the penalty in absolute value.
+With \code{lambda = 0} the check applies to an unpenalized maximum-likelihood
+regression.
+
+\code{glm_lasso_kkt()} returns the largest violation of the conditions for one
+regression; a value near zero shows that the coefficients are the optimum,
+up to numerical precision.
+
+\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}} and \code{\link[=mgm_fit]{mgm_fit()}} store the largest value
+over their nodewise regressions, and \code{\link[=certificate]{certificate()}} reports it. Graphical
+lasso networks are checked by \code{\link[=glasso_kkt]{glasso_kkt()}}.
 }
+\details{
+With fitted mean \eqn{\mu = \beta_0 + X\beta} (gaussian) or
+\eqn{\mu = 1 / (1 + e^{-(\beta_0 + X\beta)})} (binomial), observation
+weights \eqn{w} and \eqn{n} rows, let
+\eqn{g_j = n^{-1} \sum_i w_i x_{ij} (y_i - \mu_i)}. The conditions are
+\eqn{n^{-1} \sum_i w_i (y_i - \mu_i) = 0} for the unpenalized intercept,
+\eqn{g_j = \lambda\,\mathrm{sign}(\beta_j)} for every active coefficient,
+and \eqn{|g_j| \le \lambda} otherwise. The function returns the largest
+absolute deviation from these conditions. The penalty acts on the scale of
+\code{X}; the package's nodewise fits standardize the predictors to mean 0 and
+unit variance, so a fit is checked with its standardized predictors and
+coefficients.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{X} is not a finite numeric matrix matching \code{y},
+\code{beta} and \code{weights} in size, \code{y} is not finite (or not between 0 and 1 for
+binomial), \code{b0}, \code{lambda} or \code{active_tol} is not a valid single number,
+\code{family} is not one of the two choices, or \code{weights} contain a negative
+or non-finite value or are all zero.
+}
+
 \examples{
 set.seed(1)
 x <- scale(matrix(stats::rnorm(200 * 3), 200, 3))
 y <- as.numeric(x \%*\% c(0.5, 0, -0.3) + stats::rnorm(200))
 # x has centred columns, so the least-squares intercept is mean(y) and the
-# slopes are qr.solve(x, y): the unpenalized optimum, residual ~0.
+# slopes are qr.solve(x, y): the unpenalized optimum, violation ~0.
 glm_lasso_kkt(x, y, b0 = mean(y), beta = qr.solve(x, y), lambda = 0)
 # The generating coefficients are not the sample optimum.
 glm_lasso_kkt(x, y, b0 = mean(y), beta = c(0.5, 0, -0.3), lambda = 0)
+}
+\seealso{
+\code{\link[=certificate]{certificate()}}, which reports the stored value of a fitted
+network; \code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}} and \code{\link[=mgm_fit]{mgm_fit()}};
+\code{\link[=glasso_kkt]{glasso_kkt()}} and \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} for the other optimality checks.
 }

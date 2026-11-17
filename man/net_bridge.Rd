@@ -3,63 +3,91 @@
 \name{net_bridge}
 \alias{net_bridge}
 \alias{plot.psychnet_bridge}
-\title{Bridge centrality}
+\title{Compute bridge centrality between communities of nodes}
 \usage{
 net_bridge(x, communities, normalize = FALSE, labels = NULL)
 
 \method{plot}{psychnet_bridge}(x, measures = NULL, ...)
 }
 \arguments{
-\item{x}{A \code{psychnet} object or a square weighted adjacency matrix. For
-\code{plot()}, the \code{psychnet_bridge} table returned by \code{net_bridge()}.}
+\item{x}{An undirected fitted network (\link[=psychnet-class]{psychnet}) or a symmetric
+weighted adjacency matrix. For \code{plot()}, the table returned by
+\code{net_bridge()}.}
 
-\item{communities}{Community membership, in one of three forms: an unnamed
-vector with one entry per node, in node order; a vector named by node
-label (every node named exactly once); or a list of node-label vectors,
-one element per community (the element names are the community names),
-e.g. \code{list(anxiety = c("A1", "A2"), mood = c("M1", "M2"))}. Every node
-must belong to exactly one community: a label listed twice, a label that
-is not a node, or a node left without a community is an error of class
-\code{psychnet_bad_input}.}
+\item{communities}{The community of each node, in one of three forms: an
+unnamed vector with one entry per node, in node order; a vector named by
+node label; or a list of node-label vectors, one per community, whose
+names are the community names, e.g.
+\code{list(anxiety = c("A1", "A2"), mood = c("M1", "M2"))}. Every node must
+belong to exactly one community, and there must be at least two.}
 
-\item{normalize}{If \code{TRUE}, rescale each metric as
-\code{networktools::bridge(normalize = TRUE)} does: bridge strength and
-1-step bridge expected influence are divided by the node's number of
-other-community nodes \code{q}, bridge betweenness by \verb{(p - 1) q}, and 2-step
-bridge expected influence by \code{q + (p - 1)(q - q / (p - 1))}, where \code{p} is
-the number of nodes. Bridge closeness is already a mean and is left
+\item{normalize}{If \code{TRUE}, divide bridge strength and one-step bridge
+expected influence by the number \code{q} of nodes in other communities,
+bridge betweenness by \verb{(p - 1) q}, and two-step bridge expected influence
+by \code{q + (p - 1)(q - q / (p - 1))}, where \code{p} is the number of nodes, as
+\code{networktools::bridge(normalize = TRUE)} does. Bridge closeness is
 unchanged. Default \code{FALSE}.}
 
-\item{labels}{Optional node labels (used when \code{x} is a bare matrix): one
-unique label per node.}
+\item{labels}{Optional node labels for a bare matrix, one unique label per
+node.}
 
-\item{measures}{For \code{plot()}: which bridge columns to draw. Default: all
+\item{measures}{For \code{plot()}: the bridge columns to draw. Default: all
 five.}
 
 \item{...}{Unused.}
 }
 \value{
-A tidy \code{data.frame} (class \code{psychnet_bridge}), one row per node, with
+A data frame of class \code{psychnet_bridge}, one row per node, with
 columns \code{node}, \code{community}, \code{bridge_strength}, \code{bridge_betweenness},
-\code{bridge_closeness}, \code{bridge_ei1}, \code{bridge_ei2}. \code{plot()} draws one sorted
-horizontal panel per bridge measure, each node's point coloured (Okabe-Ito)
-\strong{and} shaped by its community with a community legend, and returns \code{x}
-invisibly. \code{plot()} raises \code{psychnet_bad_input} for a \code{measures} entry
-that is not a bridge column, skips a column with no finite value with a
-\code{psychnet_plot_skipped} warning, and errors (\code{psychnet_bad_input}) when no
-requested column has a finite value.
+\code{bridge_closeness}, \code{bridge_ei1} and \code{bridge_ei2}. \code{plot()} draws one
+sorted panel per measure, each node's point coloured and shaped by its
+community, with a legend of the communities, and returns \code{x} invisibly.
 }
 \description{
-Computes bridge centrality for an undirected weighted network: how strongly
-each node connects to communities other than its own. You supply the
-community membership; psychnets does not detect it.
+\code{net_bridge()} computes the bridge centrality of each node in a network whose
+nodes belong to known communities, such as the symptoms of two disorders or
+the items of different scales. Bridge centrality (Jones, Ma & McNally, 2021)
+describes how strongly a node is connected to the communities other than its
+own; nodes with high bridge centrality are those through which the
+communities are linked, for example symptoms that may connect two disorders
+in comorbidity.
+
+The function computes five measures for each node of an undirected network:
+bridge strength, the sum of the absolute weights of its edges to other
+communities; one-step bridge expected influence (\code{bridge_ei1}), the sum of
+the signed weights of those edges; two-step bridge expected influence
+(\code{bridge_ei2}), which adds the signed weights of the paths of two edges that
+end in another community; bridge betweenness, the number of shortest paths
+between nodes of different communities that pass through the node; and
+bridge closeness, the inverse of the mean distance from the node to the
+nodes of other communities. Shortest paths use the positive edges, with
+weights inverted to distances. The communities are given by the user;
+\code{normalize} divides the measures by the number of nodes they can involve.
+
+It returns one row per node, with its community and the five measures.
+
+For centrality without regard to communities, use \code{\link[=net_centralities]{net_centralities()}}. To
+merge each community into a single node and estimate the network between
+communities, use \code{\link[=net_aggregate]{net_aggregate()}}.
 }
 \section{Functions}{
 \itemize{
-\item \code{plot(psychnet_bridge)}: One sorted panel per bridge measure, points coloured
-and shaped by community.
+\item \code{plot(psychnet_bridge)}: One sorted panel per bridge measure, with points
+coloured and shaped by community.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is directed, is not a finite symmetric
+square matrix, or \code{labels} is invalid; when \code{communities} lists a node
+twice, names a node that is not in the network, leaves a node without a
+community, has the wrong length, or defines fewer than two communities.
+\code{plot()} raises \code{psychnet_bad_input} for a \code{measures} entry that is not a
+bridge column, \code{psychnet_plot_skipped} (warning) when it skips a measure
+without finite values, and \code{psychnet_nothing_to_plot} (an error) when no
+requested measure has one.
+}
+
 \examples{
 S <- 0.3^abs(outer(1:6, 1:6, "-"))
 fit <- ebic_glasso(cor_matrix = S, n = 400)
@@ -70,4 +98,8 @@ plot(br)
 \references{
 Jones, P. J., Ma, R., & McNally, R. J. (2021). Bridge centrality.
 \emph{Multivariate Behavioral Research}, 56(2), 353-367.
+}
+\seealso{
+\code{\link[=net_centralities]{net_centralities()}} for centrality without communities;
+\code{\link[=net_aggregate]{net_aggregate()}} for the network between communities.
 }

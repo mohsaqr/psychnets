@@ -6,7 +6,7 @@
 \alias{print.psychnet_panelgvar}
 \alias{summary.psychnet_panelgvar}
 \alias{plot.psychnet_panelgvar}
-\title{Read a panel graphical VAR fit}
+\title{Read the networks, parameters and fit of a panel graphical VAR}
 \usage{
 \method{as.data.frame}{psychnet_panelgvar}(
   x,
@@ -24,71 +24,115 @@
 \method{plot}{psychnet_panelgvar}(x, edge_labels = TRUE, ...)
 }
 \arguments{
-\item{x, object}{A \code{psychnet_panelgvar} object.}
+\item{x, object}{A \code{psychnet_panelgvar} object from \code{\link[=panel_gvar]{panel_gvar()}}.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 
-\item{...}{Passed to \code{cograph::splot()} by \code{plot()}; named arguments
-override the plotting defaults, with unique argument abbreviations
-accepted. Otherwise ignored.}
+\item{...}{For \code{plot()}, passed to \code{cograph::splot()}; named arguments
+override the plotting defaults, and unique abbreviations are accepted.
+Ignored by the other methods.}
 
-\item{what}{For \code{as.data.frame()}: \code{"edges"} (default; one row per estimated
-edge across the three networks, with standard error, p-value and 95\% Wald
-interval -- temporal rows include the autoregressive \code{from == to}
-effects), \code{"parameters"} (every model parameter, including means, scaling
-\code{delta}s, and fixed/pruned entries), \code{"fit"} (one row of fit indices), or
-\code{"diagnostics"} (one row: persons \code{n}, \code{waves}, the ML \code{score}
-certificate, \code{boundary} / \code{boundary_part}, \code{se_available}, and
-\code{starts_agree} of \code{starts} optimizer starts reaching the best optimum --
-of the saturated fit, or with \code{select = "ebic"} of the penalized solve at
-the selected lambda, or of its refit when \code{refit = TRUE}; agreement is
-judged on the unit-free standardized objective), \code{"variance"} (one row
-per variable: the model-implied
-\code{between}-person variance, the stationary \code{within}-person variance, and
-\code{share_between}, their ratio to the total -- an intraclass correlation),
-\code{"covariance"} (one row per entry of the lower triangle, diagonal
-included, of the innovation (contemporaneous) and between-person
-covariance matrices on the data scale: columns \code{matrix} (\code{"innovation"}
-or \code{"between"}), \code{row}, \code{col}, \code{value}), or \code{"path"} (\code{select = "ebic"}
-only, else a \code{psychnet_bad_input} error: one row per lambda on the
-penalty path, columns \code{lambda} (data-scale penalty), \code{ebic}, \code{edges}
-(non-zero penalized parameters), \code{kkt} (lasso KKT residual), \code{final}
-(re-solved to certification) and \code{selected} (the lambda returned)).}
+\item{what}{For \code{as.data.frame()}, the table to return:
+\describe{
+\item{\code{"edges"}}{(default) one row per estimated edge of the three
+networks, with standard error, p-value and 95\% Wald interval; the
+autoregressive effects are the temporal rows with \code{from == to}.}
+\item{\code{"parameters"}}{every model parameter, including the means, the
+scale parameters and the edges fixed to zero.}
+\item{\code{"fit"}}{one row of fit indices.}
+\item{\code{"diagnostics"}}{one row: the number of persons and waves, the
+certificate (\code{score}), whether the solution is on a boundary,
+whether standard errors are available, and how many optimizer starts
+reached the best optimum. The starts are those of the full model,
+of the penalized solution at the selected penalty with
+\code{select = "ebic"}, or of its refit with \code{refit = TRUE}.}
+\item{\code{"variance"}}{one row per variable: the model-implied
+between-person variance, the stationary within-person variance, and
+the between-person share of the total (an intraclass correlation).}
+\item{\code{"covariance"}}{one row per entry of the lower triangle,
+diagonal included, of the innovation (contemporaneous) and
+between-person covariance matrices, on the data scale.}
+\item{\code{"path"}}{only for \code{select = "ebic"}: one row per penalty value
+on the EBIC path.}
+}}
 
-\item{include_zero}{For \code{what = "edges"}: also return pruned (fixed-zero)
-edges. Default \code{FALSE}.}
+\item{include_zero}{For \code{what = "edges"}: also return edges fixed to zero
+by pruning or the penalty. Default \code{FALSE}.}
 
 \item{edge_labels}{For \code{plot()}: print each edge's weight on it. Default
 \code{TRUE}.}
 }
 \value{
-\code{as.data.frame()}: a data.frame as described under \code{what}. The edge
-table has columns \code{network}, \code{from}, \code{to}, \code{weight}, \code{se}, \code{p},
-\code{ci_lower}, \code{ci_upper}, \code{significant} (p < the fit's \code{alpha}); the
-parameter table has \code{matrix}, \code{row}, \code{col},
-\code{estimate}, \code{se}, \code{p}, \code{ci_lower}, \code{ci_upper}, \code{fixed}; the diagnostics
-row has \code{n}, \code{waves}, \code{score}, \code{boundary}, \code{boundary_part},
-\code{se_available}, \code{starts_agree}, \code{starts}; the variance table has
-\code{variable}, \code{between}, \code{within}, \code{share_between}. \code{print()} and
-\code{plot()} return \code{x} invisibly. \code{summary()} returns a data.frame with one
-row per network (\code{network}, \code{directed}, \code{nodes}, \code{edges}, \code{significant},
-\code{mean_abs_weight}).
+\code{as.data.frame()} returns a data frame:
+\describe{
+\item{edges}{columns \code{network}, \code{from}, \code{to}, \code{weight}, \code{se}, \code{p},
+\code{ci_lower}, \code{ci_upper} and \code{significant} (p < the fit's \code{alpha};
+\code{NA} for penalized estimates). A temporal edge from \code{from} to \code{to}
+is the effect of \code{from} at one wave on \code{to} at the next.}
+\item{parameters}{columns \code{matrix} (\code{mu}, \code{beta},
+\code{omega_zeta_within}, \code{delta_zeta_within}, \code{omega_zeta_between},
+\code{delta_zeta_between}), \code{row}, \code{col}, \code{estimate}, \code{se}, \code{p},
+\code{ci_lower}, \code{ci_upper} and \code{fixed}.}
+\item{fit}{columns \code{logl}, \code{npar}, \code{df}, \code{chisq}, \code{pvalue},
+\code{baseline_chisq}, \code{baseline_df}, \code{cfi}, \code{tli}, \code{rmsea}, \code{aic} and
+\code{bic}.}
+\item{diagnostics}{columns \code{n}, \code{waves}, \code{score}, \code{boundary},
+\code{boundary_part}, \code{se_available}, \code{starts_agree} and \code{starts}.}
+\item{variance}{columns \code{variable}, \code{between}, \code{within} and
+\code{share_between}.}
+\item{covariance}{columns \code{matrix} (\code{"innovation"} or \code{"between"}),
+\code{row}, \code{col} and \code{value}.}
+\item{path}{columns \code{lambda} (the penalty on the data scale), \code{ebic},
+\code{edges} (nonzero penalized parameters), \code{kkt} (the lasso
+certificate), \code{final} (re-solved to full precision) and \code{selected}
+(the penalty returned).}
+}
+\code{summary()} returns a data frame with one row per network and columns
+\code{network}, \code{directed}, \code{nodes}, \code{edges}, \code{significant} (\code{NA} for
+penalized estimates) and \code{mean_abs_weight}, autoregressive effects
+excluded. \code{print()} and
+\code{plot()} return \code{x} invisibly.
 }
 \description{
-Methods for the object returned by \code{\link[=panel_gvar]{panel_gvar()}}.
+A \code{psychnet_panelgvar} object holds the three networks of a panel
+graphical vector-autoregressive model fitted by \code{\link[=panel_gvar]{panel_gvar()}}: the
+directed temporal network of lag-1 within-person effects, the
+contemporaneous network of within-person partial correlations at the same
+wave, and the between network of partial correlations among the persons'
+stable means. Its methods read the fitted model as tidy tables, summarize
+it, and draw the three networks side by side.
+
+\code{as.data.frame()} gives the edges by default and, through \code{what}, the
+full parameter table, the fit indices, the split of each variable's
+variance into between- and within-person parts, the innovation and
+between-person covariances, the EBIC penalty path, or the diagnostics
+that include the certificate. \code{summary()} counts the edges of each
+network, and \code{plot()} draws the networks with significance shown by line
+type.
+
+\code{as.data.frame()} and \code{summary()} return data frames; \code{print()} and
+\code{plot()} return the object invisibly.
 }
 \details{
-By default, \code{plot()} draws the three networks side by side on one shared circle
-layout (so a node sits in the same place in every panel), with the
-temporal autoregressive effects as self-loops. Line type shows
-significance: solid edges have p < \code{alpha} (the fit's \code{alpha}), dashed
-edges do not (an edge without a p-value counts as not significant). Colour
-shows sign -- blue positive, vermillion negative (Okabe-Ito) -- and the
-signed weight is printed on each edge, so sign never rests on colour
-alone. A network with nothing estimated shows "no edges". It needs the
-\code{cograph} package. If \code{edge_style} is overridden, the legend no longer
-assigns significance to solid or dashed lines.
+\code{plot()} draws the three networks side by side on one circle
+layout, so each node has the same position in every panel, with the
+autoregressive effects as self-loops. Solid edges are significant at the
+fit's \code{alpha} and dashed edges are not (an edge without a p-value counts
+as not significant); for penalized estimates every selected edge is
+solid. Colour shows sign, blue for positive and vermillion for negative,
+and the signed weight is printed on each edge, so sign does not rest on
+colour alone. A network without edges is marked "no edges". Overriding
+\code{edge_style} removes the significance key from the legend. Plotting
+needs the \code{cograph} package.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{what} is not one of the listed tables,
+\code{what = "path"} is requested for a fit without \code{select = "ebic"},
+\code{plot()} is called without the \code{cograph} package, or a plotting argument
+is ambiguous or given twice.
+}
+
 \examples{
 # srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
 # effort in one week drives efficacy in the next.
@@ -101,4 +145,7 @@ as.data.frame(fit, what = "parameters")
 as.data.frame(fit, what = "diagnostics")
 as.data.frame(fit, what = "covariance")
 if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
+}
+\seealso{
+\code{\link[=panel_gvar]{panel_gvar()}} for fitting the model.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/correlation.R
 \name{cor_network}
 \alias{cor_network}
-\title{Correlation network}
+\title{Estimate a correlation network}
 \usage{
 cor_network(
   data = NULL,
@@ -17,61 +17,111 @@ cor_network(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied. Ordered-factor columns enter as their integer
-level codes; other non-numeric columns are dropped with a
-\code{psychnet_dropped_columns} message, and constant / all-missing columns
-with a \code{psychnet_constant_variable} warning.}
+\item{data}{A numeric data frame or matrix with one row per observation.
+Not needed when \code{cor_matrix} is given. Ordered factors enter as their
+level codes; other non-numeric columns are dropped with a message, and
+constant or all-missing columns with a warning.}
 
-\item{cor_matrix}{Optional precomputed correlation matrix; if given, \code{data}
-is ignored and \code{n} is required when \code{alpha} is used.}
+\item{cor_matrix}{A correlation matrix to use instead of \code{data}; a
+covariance matrix is rescaled to a correlation matrix. With \code{alpha}, \code{n}
+is then required.}
 
-\item{n}{Sample size (needed for significance testing when \code{cor_matrix} is
-supplied): a single number >= 1, and a whole number of at least 3 when
-\code{alpha} is set.}
+\item{n}{Sample size of \code{cor_matrix}, needed only for the significance test:
+a single number >= 1, and a whole number >= 3 when \code{alpha} is set.
+Ignored when \code{data} is given.}
 
-\item{cor_method}{Correlation method: \code{"pearson"} (default), \code{"spearman"},
-\code{"kendall"}, or \code{"auto"} (polychoric/polyserial for ordinal items, the
-\code{qgraph::cor_auto} default; see \code{\link[=cor_auto]{cor_auto()}}).}
+\item{cor_method}{Correlation computed from \code{data}: \code{"pearson"} (default),
+\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric and polyserial
+correlations for ordinal items; see \code{\link[=cor_auto]{cor_auto()}}).}
 
-\item{threshold}{Correlations with absolute value below this are set to zero.
-A single number >= 0; default 0. (qgraph's logical \code{threshold = TRUE} is
-refused -- use \code{alpha} for a significance rule.)}
+\item{threshold}{Absolute edge weight below which an edge is set to zero: a
+single number >= 0. Default \code{0}. A logical value (the
+\code{threshold = TRUE} rule of \code{qgraph}) is refused; use \code{alpha} for a
+significance rule.}
 
-\item{alpha}{Significance level in (0, 1); if set, correlations not
-significant at \code{alpha} are zeroed. \code{NULL} (default) keeps every edge.
-Kendall marginal correlations use a tie-corrected asymptotic test and
-require raw data. Significance testing of full-order partial Kendall
-correlations is not supported. A sample too small for the test
-(df = n - 2 - k <= 0, with k the number of variables partialled out) is an
-error of class \code{psychnet_degenerate_sample}, never an empty network.}
+\item{alpha}{Significance level in (0, 1): edges not significant at this
+level are set to zero. Default \code{NULL}, no test. A Kendall test needs raw
+\code{data}; partial Kendall correlations cannot be tested.}
 
-\item{adjust}{Multiple-comparison adjustment for the edge p-values (any
-\link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+\item{adjust}{Multiple-comparison adjustment of the edge p-values, any
+method of \code{\link[stats:p.adjust]{stats::p.adjust()}}. Default \code{"none"}.}
 
-\item{na_method}{Missing-data handling: \code{"pairwise"} (default) uses
-pairwise-complete correlations projected to the nearest positive-definite
-matrix; \code{"listwise"} drops rows with any \code{NA}. Identical when data is
-complete.}
+\item{na_method}{Handling of missing values in \code{data}: \code{"pairwise"}
+(default) uses pairwise-complete correlations adjusted to the nearest
+positive-definite matrix; \code{"listwise"} drops incomplete rows. The two
+agree for complete data.}
 
-\item{labels}{Optional node labels, one unique label per network node.}
+\item{labels}{Optional node labels, one unique label per node of the
+network.}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the thresholded correlation
-matrix, with \verb{$cor_matrix}, \verb{$n_eff}, \verb{$na_method} (and \verb{$p_values} when
-\code{alpha} is used). \verb{$n_pair} (the pairwise co-observation counts) is present
-only when the network is estimated from \code{data}. Node order in \verb{$weights}
-and \verb{$nodes} is always the column order of the input \code{data} /
-\code{cor_matrix}, never sorted. Invalid arguments raise errors of class
-\code{psychnet_bad_input}.
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}) whose edge
+weights are correlations. \code{as.data.frame()} returns one row per edge
+with columns \code{from}, \code{to} and \code{weight}; \code{\link[=certificate]{certificate()}} reports that the
+network has no certificate. The object also stores the correlation
+matrix (\code{cor_matrix}), the sample size (\code{n_eff}; with pairwise data, the
+median number of observations per pair), the missing-data handling used
+(\code{na_method}; \code{"none"} with \code{cor_matrix}), the observations per pair when
+estimated from \code{data} (\code{n_pair}) and, with \code{alpha}, the unadjusted
+p-values (\code{p_values}). Nodes keep the column order of the input.
 }
 \description{
-Marginal (zero-order) association network: the correlation matrix of the
-chosen \code{cor_method} (Pearson by default) with the diagonal removed.
-Equivalent to \code{bootnet}'s \code{"cor"} default.
+\code{cor_network()} estimates a correlation network, in which each pair of
+variables is joined by their marginal (zero-order) correlation. An edge
+shows that two variables covary without controlling for any other variable,
+so it also reflects associations that run through other variables in the
+network.
+
+The correlations are computed from raw data, or taken from a supplied
+correlation matrix. \code{cor_method} chooses Pearson, Spearman, Kendall or
+polychoric and polyserial correlations; \code{alpha} keeps only correlations
+that differ significantly from zero, with an optional multiple-comparison
+adjustment (\code{adjust}); \code{threshold} removes weak correlations.
+
+\code{cor_network()} returns the correlation matrix as a network; the network
+involves no optimization and has no certificate.
+
+The network gives a descriptive overview of the association structure,
+such as the clustering of items or symptoms, but it does not separate
+direct from indirect associations. For associations that control for the
+other variables use \code{\link[=pcor_network]{pcor_network()}} (all partial correlations) or
+\code{\link[=ebic_glasso]{ebic_glasso()}} (a regularized partial-correlation network);
+\code{\link[=tmfg_network]{tmfg_network()}} filters the correlations to a sparse backbone. The network
+is the \code{"cor"} estimator of \code{bootnet}.
 }
+\details{
+Each correlation is tested against zero with the statistic
+\eqn{t = r \sqrt{df / (1 - r^2)}} on \eqn{df = n - 2} degrees of freedom
+for a correlation and \eqn{df = n - p} for a full-order partial
+correlation of \eqn{p} variables. With \code{na_method = "pairwise"} and
+incomplete data, a correlation is tested with the number of observations
+available for that pair. Kendall correlations use a tie-corrected
+asymptotic test of the raw data. The p-values are adjusted over the
+distinct pairs and are computed from the correlations before \code{threshold}
+is applied; an edge is kept only if it passes both rules.
+}
+\section{Conditions}{
+
+\code{psychnet_degenerate_sample} (error, also of class
+\code{psychnet_bad_input}) when the sample is too small for the test
+(\eqn{df \le 0}); \code{psychnet_bad_input} when an argument is out of range,
+\code{threshold} is logical, \code{cor_matrix} is not a finite, symmetric, positive
+semi-definite matrix with a positive diagonal, \code{n} is missing with
+\code{cor_matrix} and \code{alpha}, a Kendall test is requested with
+\code{cor_matrix}, \code{data} has fewer than two usable variables, a pair of
+variables is never observed together, or \code{labels} do not match the
+nodes; \code{psychnet_constant_variable} (warning) when a constant or
+all-missing column is dropped. A \code{psychnet_dropped_columns} message
+names non-numeric columns that were dropped.
+}
+
 \examples{
 x <- matrix(stats::rnorm(200 * 4), 200, 4)
 cor_network(x)
 cor_network(x, alpha = 0.05, adjust = "BH")
+}
+\seealso{
+\code{\link[=pcor_network]{pcor_network()}}; \code{\link[=ebic_glasso]{ebic_glasso()}}; \code{\link[=tmfg_network]{tmfg_network()}};
+\code{\link[=psychnet]{psychnet()}}, which routes \code{method = "cor"} here; \link[=psychnet-class]{psychnet} for
+the result.
 }

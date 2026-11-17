@@ -2,7 +2,7 @@
 % Please edit documentation in R/glasso.R
 \name{glasso_kkt}
 \alias{glasso_kkt}
-\title{Graphical-lasso stationarity (KKT) residual}
+\title{Check that a precision matrix solves the graphical lasso}
 \usage{
 glasso_kkt(
   theta,
@@ -13,50 +13,87 @@ glasso_kkt(
 )
 }
 \arguments{
-\item{theta}{Precision matrix to test.}
+\item{theta}{The precision matrix to check: a finite, square numeric
+matrix.}
 
-\item{cor_matrix}{Correlation / covariance the model was fit to.}
+\item{cor_matrix}{The correlation or covariance matrix the model was fitted
+to, of the same size as \code{theta}.}
 
-\item{rho}{Scalar penalty, a single finite number >= 0.}
+\item{rho}{The penalty: a single finite number >= 0.}
 
-\item{active_tol}{Magnitude above which an off-diagonal entry is "active".}
+\item{active_tol}{Absolute value above which an off-diagonal entry of
+\code{theta} counts as an edge. Default \code{1e-8}.}
 
-\item{penalize_diagonal}{Was the diagonal penalized in the fit being graded?
-Default \code{FALSE}, matching \code{\link[=ebic_glasso]{ebic_glasso()}}'s default.}
+\item{penalize_diagonal}{Whether the fit being checked also penalized the
+diagonal. Default \code{FALSE}, the default of \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 }
 \value{
-Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-\code{Inf} for an asymmetric or non-positive-definite \code{theta}. Malformed input
-(non-square or non-finite matrices, a negative or missing \code{rho}) is an
-error of class \code{psychnet_bad_input}.
+A single number, the largest absolute violation of the optimality
+conditions: 0 at the exact optimum, \code{Inf} for an asymmetric or
+non-positive-definite \code{theta}.
 }
 \description{
-A dependency-free correctness certificate for a fitted Gaussian graphical
-model. For the convex objective
-\deqn{\min_{\Theta \succ 0} -\log\det\Theta + \mathrm{tr}(S\Theta) +
-      \rho \sum_{i \neq j} |\Theta_{ij}|}
-(off-diagonal penalty), let \eqn{W = \Theta^{-1}}. The subgradient
-optimality conditions are \eqn{W_{ii} = S_{ii}};
-\eqn{W_{ij} - S_{ij} = \rho\,\mathrm{sign}(\Theta_{ij})} where
-\eqn{\Theta_{ij} \neq 0}; and \eqn{|W_{ij} - S_{ij}| \le \rho} otherwise. By
-strict convexity, a precision matrix with zero violation is the unique global
-optimum, so a near-zero return certifies correctness independently of any
-reference solver.
+\code{glasso_kkt()} checks whether a precision matrix solves the graphical lasso
+for a given correlation or covariance matrix and penalty. The graphical
+lasso estimates a Gaussian graphical model as the precision (inverse
+covariance) matrix that maximizes the Gaussian likelihood minus a penalty
+on the absolute partial associations (Friedman et al., 2008), and a matrix
+is its solution if and only if it satisfies the optimality
+(Karush-Kuhn-Tucker) conditions of the problem.
+
+The objective is strictly convex, so it has exactly one optimum, and
+checking the conditions shows whether a network is the graphical lasso
+solution without solving the problem a second time. In words, the
+covariance implied by the precision matrix must equal the observed
+covariance on the diagonal, differ from it by exactly the penalty for every
+pair joined by an edge, and by at most the penalty for every pair that is
+not.
+
+\code{glasso_kkt()} returns the largest violation of the conditions; a value
+near zero shows that the matrix is the optimum, up to numerical precision.
+
+Networks from \code{\link[=ebic_glasso]{ebic_glasso()}} and \code{\link[=huge_network]{huge_network()}} store this value, and
+\code{\link[=certificate]{certificate()}} reports it. Unpenalized networks restricted to a graph are
+checked by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}, and nodewise Ising and mixed graphical
+models by \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}}.
 }
 \details{
+The objective, with the penalty on the off-diagonal entries, is
+\deqn{\min_{\Theta \succ 0} -\log\det\Theta + \mathrm{tr}(S\Theta) +
+      \rho \sum_{i \neq j} |\Theta_{ij}|.}
+With \eqn{W = \Theta^{-1}}, the optimality conditions are
+\eqn{W_{ii} = S_{ii}};
+\eqn{W_{ij} - S_{ij} = \rho\,\mathrm{sign}(\Theta_{ij})} where
+\eqn{\Theta_{ij} \neq 0}; and \eqn{|W_{ij} - S_{ij}| \le \rho} otherwise.
+The function returns the largest absolute deviation from these conditions.
+Because the objective is strictly convex, a precision matrix with zero
+violation is its unique global optimum.
+
 When the penalty also applies to the diagonal (\code{penalize_diagonal = TRUE},
 the objective adds \eqn{\rho \sum_i |\Theta_{ii}|}), the diagonal condition
-becomes \eqn{W_{ii} = S_{ii} + \rho}. Grading a diagonally-penalized fit with
-the default would report a spurious violation of exactly \eqn{\rho}, so this
-flag must match the fit being tested.
+becomes \eqn{W_{ii} = S_{ii} + \rho}. Checking a diagonally penalized fit
+with the default would report a violation of exactly \eqn{\rho}, so this
+argument must match the fit being checked.
+
+The objective is defined only for symmetric positive-definite matrices, so
+a \code{theta} that is asymmetric (by more than \code{1e-8}) or not positive definite
+is not a solution and returns \code{Inf}.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{theta} is not a finite square numeric matrix,
+\code{cor_matrix} is not a finite matrix of the same size, \code{rho} or
+\code{active_tol} is not a single finite number >= 0, or \code{penalize_diagonal}
+is not \code{TRUE} or \code{FALSE}.
+}
+
 \examples{
 S <- 0.5^abs(outer(1:5, 1:5, "-"))
-# At rho = 0 the optimum is the inverse of S, so its residual is ~0 ...
+# At rho = 0 the optimum is the inverse of S, so the violation is ~0 ...
 glasso_kkt(solve(S), S, rho = 0)
 # ... and a perturbed precision matrix violates the conditions.
 glasso_kkt(solve(S) + diag(0.1, 5), S, rho = 0)
-# A fitted network reports the same residual through certificate().
+# A fitted network reports the same value through certificate().
 certificate(ebic_glasso(cor_matrix = S, n = 200))
 }
 \references{
@@ -65,5 +102,7 @@ covariance estimation with the graphical lasso. \emph{Biostatistics}, 9(3),
 432-441. \doi{10.1093/biostatistics/kxm045}
 }
 \seealso{
-\code{\link[=certificate]{certificate()}}, which reads the stored residual of a fitted network.
+\code{\link[=certificate]{certificate()}}, which reports the stored value of a fitted
+network; \code{\link[=ebic_glasso]{ebic_glasso()}} and \code{\link[=huge_network]{huge_network()}}; \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} and
+\code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} for the other optimality checks.
 }

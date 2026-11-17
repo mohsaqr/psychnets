@@ -2,7 +2,7 @@
 % Please edit documentation in R/psychnet.R
 \name{psychnet}
 \alias{psychnet}
-\title{Estimate a psychometric network}
+\title{Estimate a psychometric network with any of the package's estimators}
 \usage{
 psychnet(
   data,
@@ -27,107 +27,119 @@ psychnet(
 )
 }
 \arguments{
-\item{data}{A numeric data frame / matrix (rows = observations), or a long
-event log when \code{actor} is supplied.}
+\item{data}{A data frame or matrix with one row per observation and one
+column per variable, or a long event log (one row per event).}
 
-\item{method}{Estimator, a single name. One of \code{"glasso"} (default),
-\code{"ggm"}, \code{"tmfg"}, \code{"logo"}, \code{"relimp"}, \code{"ising"}, \code{"ising_sampler"},
-\code{"huge"}, \code{"mgm"}, \code{"cor"}, \code{"pcor"}; several names at once are an error
-(\code{psychnet_bad_input}). The \code{qgraph}/\code{bootnet} names are accepted as aliases
-(e.g. \code{"EBICglasso"} -> \code{"glasso"}, \code{"ggmModSelect"} -> \code{"ggm"}).
-Event data is restricted to the Gaussian graphical methods.}
+\item{method}{The estimator, a single name: \code{"glasso"} (default), \code{"ggm"},
+\code{"huge"}, \code{"tmfg"}, \code{"logo"}, \code{"relimp"}, \code{"cor"}, \code{"pcor"}, \code{"ising"},
+\code{"ising_sampler"} or \code{"mgm"}, or a \code{qgraph}/\code{bootnet} alias. Event data
+accept \code{"glasso"}, \code{"pcor"}, \code{"ggm"}, \code{"huge"}, \code{"tmfg"} and \code{"logo"}.}
 
-\item{threshold}{Absolute-weight threshold below which edges are zeroed for
-\code{cor}, \code{pcor}, \code{glasso}, \code{huge}, \code{ggm}, and \code{logo}: a single number >= 0
-(validated by the estimator). For \code{mgm}, supply its character rule
-(\code{"LW"}, \code{"HW"}, or \code{"none"}); the numeric default leaves \code{mgm_fit()}'s
-own default unchanged. A non-zero value for any other method is ignored
-with a \code{psychnet_ignored_argument} warning.}
+\item{threshold}{Absolute edge weight below which edges are set to zero, for
+\code{"cor"}, \code{"pcor"}, \code{"glasso"}, \code{"huge"}, \code{"ggm"} and \code{"logo"}: a single
+number >= 0 (default \code{0}). For \code{"mgm"}, give its rule (\code{"LW"}, \code{"HW"} or
+\code{"none"}); the default \code{0} leaves the \code{\link[=mgm_fit]{mgm_fit()}} default in place.}
 
-\item{gamma}{EBIC hyperparameter. \code{NULL} (default) keeps each method's own
-default (0.5 for the regularized Gaussian graphical models, 0 for \code{ggm},
-0.25 for \code{ising}/\code{mgm}); set it to override. Forwarded only to the
-regularized methods; a value given for another method is ignored with a
-\code{psychnet_ignored_argument} warning.}
+\item{gamma}{EBIC hyperparameter for \code{"glasso"}, \code{"huge"}, \code{"ggm"},
+\code{"ising"} and \code{"mgm"}. \code{NULL} (default) keeps each method's own default.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one per node.}
 
-\item{vars}{Which variables to build the network on. Defaults to every
-variable. Selected the tidy way: a name range (\code{motivation:regulation}),
-a column-index range (\code{3:9}), a vector of names (\code{c(joy, fear)} or
-\code{c("joy", "fear")}), or a single name -- the same grammar as \code{subset()}'s
-\verb{select=}. (For an event log, actions become the variables, so \code{vars}
-selects feature columns only when \code{data} is already a numeric table.)}
+\item{vars}{The variables to use as nodes (default: all). A name range
+(\code{motivation:regulation}), an index range (\code{3:9}), names (\code{c(joy, fear)}
+or \code{c("joy", "fear")}) or a single name, as in the \code{select} argument of
+\code{\link[=subset]{subset()}}. For an event log the actions are the nodes.}
 
-\item{group}{Optional grouping column(s). When supplied, one network is
-estimated per level of \code{group} and a \code{psychnet_group} (a named list of
-networks) is returned, which plots as a grid and is iterated per level by
-the framework verbs.}
+\item{group}{Optional grouping column(s). One network is estimated per
+level and a \link{psychnet_group} is returned.}
 
-\item{within}{Optional name of a person-identifier column. When supplied,
-every network variable is centered and scaled \emph{within persons} first (see
-\code{\link[=scale_within]{scale_within()}}; mlVAR's \code{scaleWithin}), over all rows -- so with \code{group}
-(e.g. occasions) the person means and SDs use every occasion -- and the
-person column is not a node. With \code{group}, the result remembers which
-person each row is, so \code{net_compare(x, levels, paired = TRUE)} pairs the
-two levels by person. Without \code{group}, rows of the same person are pooled
-and are not independent. Cross-sectional data only.}
+\item{within}{Optional person-identifier column. Each variable is centred
+and scaled within persons over all rows before estimation (see
+\code{\link[=scale_within]{scale_within()}}), and the person column is not a node. With \code{group},
+rows are matched by person so that \code{\link[=net_compare]{net_compare()}} can pair two levels
+(\code{paired = TRUE}). Without \code{group}, a person's rows are pooled and are
+not independent. Numeric tables only.}
 
-\item{source}{Input kind: \code{"auto"} (default; an event log when \code{actor} is
-given, otherwise a numeric table), \code{"data"}, or \code{"eventdata"}.}
+\item{source}{Kind of input: \code{"auto"} (default; an event log when \code{actor}
+or \code{id} is given, otherwise a numeric table), \code{"data"} or \code{"eventdata"}.}
 
-\item{actor, action, session, time}{Event-log columns. \code{actor} (and, by default,
-\code{action = "Action"}) name the subject and the event; \code{session} is an
-explicit within-actor grouping, and \code{time} is used only to compute sessions
-from gaps. Supplying \code{actor} selects \code{source = "eventdata"}.}
+\item{actor, action, session, time}{Event-log columns: the actor, the action
+(default \code{"Action"}), an optional session within actor, and an optional
+time used only to split actors into sessions. Giving \code{actor} selects
+event data.}
 
-\item{compute_sessions, time_threshold}{Split each actor into sessions from
-\code{time} gaps (a new session starts when the gap exceeds \code{time_threshold},
-default 900 s). \code{compute_sessions} defaults to \code{TRUE}; it is a no-op when no
-\code{time} is supplied.}
+\item{compute_sessions, time_threshold}{Whether to split each actor into
+sessions where the gap in \code{time} exceeds \code{time_threshold} (defaults
+\code{TRUE} and 900, i.e. 15 minutes for times in seconds). Has no effect
+without \code{time}.}
 
-\item{id}{Actor column when an event log has already been reduced to a numeric
-feature table (one row per occasion) rather than raw events.}
+\item{id}{Actor column of an event log already reduced to a numeric table
+with one row per occasion.}
 
-\item{standardize}{For nested event data (several occasions per actor),
-\code{TRUE} (default) removes the actor clustering by person-centering and fits a
-single network; \code{FALSE} returns the within/between pair instead.}
+\item{standardize}{For event data with several occasions per actor: \code{TRUE}
+(default) centres each actor's occasions and fits one network; \code{FALSE}
+returns separate within-actor and between-actor networks.}
 
-\item{...}{Passed to the underlying estimator (e.g. \verb{cor_method=} for the
-correlation-based methods, \verb{npn=} for \code{"huge"}, \verb{rule=} for the Ising
-methods, \verb{alpha=} for the correlation / \code{"ising_sampler"} methods).
-For event feature tables, \code{na_method = "listwise"} removes incomplete
-rows before person-centering; \code{"pairwise"} (default) uses available
-observations for each person's variable means and each correlation.}
+\item{...}{Further arguments for the estimator, such as \code{cor_method} for
+the correlation-based methods, \code{npn} for \code{"huge"}, \code{rule} for the Ising
+methods and \code{alpha} for \code{"cor"}, \code{"pcor"} and \code{"ising_sampler"}. For an
+event table, \code{na_method = "listwise"} removes incomplete rows before
+centring; \code{"pairwise"} (default) uses the available values.}
 }
 \value{
-A \code{psychnet} object; a \code{psychnet_group} (named list of networks) when
-\code{group} is supplied; or, for nested event data with \code{standardize = FALSE}, a
-\code{psychnet_multilevel} object carrying \verb{$within} and \verb{$between} networks.
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}); with
+\code{group}, a \link{psychnet_group} with one network per level; for event data
+with several occasions per actor and \code{standardize = FALSE}, a
+\link{psychnet_multilevel} pair of within-actor and between-actor networks.
+Edges are read with \code{as.data.frame()}.
 }
 \description{
-The package's main entry point. Supply \code{data} and a \code{method}; everything else
-is optional fine-grained control. \code{psychnet()} reads two kinds of input and
-picks the right one automatically (\code{source = "auto"}):
+\code{psychnet()} estimates a psychometric network with any of the
+cross-sectional estimators, selected by \code{method}. A psychometric network
+represents variables, such as
+questionnaire items, symptoms or behaviours, as nodes and their conditional
+or marginal associations as edges.
+
+The estimators differ in what an edge means: partial-correlation networks
+describe the association between two variables after controlling for all
+others, regularized networks retain only the associations the data support,
+and Ising and mixed graphical models apply the same idea to binary and
+mixed data. Besides \code{method}, the arguments select the variables (\code{vars}),
+estimate one network per group (\code{group}), scale each variable within
+persons first (\code{within}), or treat \code{data} as an event log (\code{actor},
+\code{action}, \code{session}, \code{time}), which is converted to action frequencies per
+occasion before a network is estimated.
+
+\code{psychnet()} returns a fitted network; with \code{group}, one network per
+group, and for some event data a pair of within-actor and between-actor
+networks.
+
+Each method can also be called directly, which exposes its full set of
+options. Panel data measured in a few waves are modelled by
+\code{\link[=panel_gvar]{panel_gvar()}}, which \code{psychnet()} does not route. The method-specific
+pages describe each model: \code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=ggm_modselect]{ggm_modselect()}}, \code{\link[=huge_network]{huge_network()}}, \code{\link[=tmfg_network]{tmfg_network()}},
+\code{\link[=logo_network]{logo_network()}}, \code{\link[=relimp_network]{relimp_network()}}, \code{\link[=cor_network]{cor_network()}}, \code{\link[=pcor_network]{pcor_network()}},
+\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}} and \code{\link[=mgm_fit]{mgm_fit()}}.
 }
 \details{
-\itemize{
-\item \strong{a numeric table} (\code{source = "data"}) -- the ordinary cross-sectional
-case: one row per observation, one column per variable;
-\item \strong{a long event log} (\code{source = "eventdata"}) -- one row per event, with an
-\code{actor} and an \code{action} column (and optionally \code{session} / \code{time}). The log
-is converted to action frequencies with \code{\link[=event_frequencies]{event_frequencies()}} and, when
-actors contribute several occasions, decomposed into within- and
-between-actor networks. Passing \code{actor} switches this on automatically.
+\code{method} accepts the package's short names and the names used by \code{qgraph}
+and \code{bootnet} (\code{"EBICglasso"}, \code{"ggmModSelect"}, \code{"TMFG"}, \code{"LoGo"},
+\code{"IsingFit"}, \code{"IsingSampler"}), ignoring case and separators; all resolve
+to the same estimators, and the fitted network records the short name.
+\code{\link[=net_crosswalk]{net_crosswalk()}} maps the arguments of the reference packages to those of
+this package.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{method} has several values or is unknown,
+\code{vars} names a missing column, \code{within} does not name one column of a
+numeric table, or event data are combined with a method other than the
+Gaussian ones; \code{psychnet_ignored_argument} (warning) when \code{threshold} or
+\code{gamma} is set for a method that does not use it. With \code{group}, the
+conditions listed in \link{psychnet_group}. The chosen estimator raises its
+own conditions.
 }
 
-\code{method} speaks the package's own short vocabulary -- \code{"glasso"}, \code{"ggm"},
-\code{"tmfg"}, \code{"logo"}, \code{"relimp"}, \code{"ising"}, \code{"ising_sampler"}, \code{"huge"},
-\code{"mgm"}, \code{"cor"}, \code{"pcor"}. For interoperability it \strong{also} accepts the
-\code{qgraph}/\code{bootnet} spellings (\code{"EBICglasso"}, \code{"ggmModSelect"}, \code{"TMFG"},
-\code{"LoGo"}, \code{"IsingFit"}, \code{"IsingSampler"}), which resolve to the same
-estimators. Whichever you pass in, the stored \verb{$method} is the short name.
-}
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(200 * 5), 200, 5)
@@ -154,4 +166,10 @@ nets <- psychnet(srl_panel, vars = efficacy:anxiety, group = "week",
 nets
 set.seed(1)
 net_compare(nets, c(1, 4), iter = 3)  # iter >= 1000 in practice
+}
+\seealso{
+\link[=psychnet-class]{psychnet} for the fitted object; \code{\link[=certificate]{certificate()}} to check
+a regularized fit; \code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_boot]{net_boot()}} and
+\code{\link[=net_compare]{net_compare()}} for analyses of fitted networks; \code{\link[=event_frequencies]{event_frequencies()}}
+for the event-log conversion.
 }

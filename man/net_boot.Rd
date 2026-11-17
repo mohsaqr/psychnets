@@ -5,7 +5,7 @@
 \alias{as.data.frame.psychnet_bootstrap}
 \alias{print.psychnet_bootstrap}
 \alias{plot.psychnet_bootstrap}
-\title{Bootstrap a psychometric network}
+\title{Bootstrap the edges and centralities of a network}
 \usage{
 net_boot(
   data,
@@ -44,169 +44,201 @@ net_boot(
 )
 }
 \arguments{
-\item{data}{Data frame or matrix (rows = observations). Resampled exactly as
-given -- factor columns and incomplete rows included -- so each draw is
-handed to the estimator as the full data would be, and the estimator's own
-\code{na_method} and type handling apply per draw. For \code{method = "mgm"} node
-types are decided once on the full data and pinned for every draw.}
+\item{data}{A data frame or matrix with one row per observation, or a
+\link{psychnet_group} estimated from a data set, in which case each group is
+bootstrapped with the group's own estimator settings.}
 
-\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
+\item{method}{The estimator, as in \code{\link[=psychnet]{psychnet()}}. Default \code{"glasso"}.}
 
-\item{n_boot}{Number of bootstrap resamples. Default 1000.}
+\item{n_boot}{Number of bootstrap resamples. Default \code{1000}.}
 
-\item{ci}{Confidence level for percentile intervals: a single number in
-(0, 1). Default 0.95.}
+\item{ci}{Confidence level of the percentile intervals, a number in
+(0, 1). Default \code{0.95}.}
 
-\item{measures}{Centrality measures to bootstrap. Defaults to the two
-recommended for psychometric networks (\code{"strength"},
-\code{"expected_influence"}); \code{"betweenness"}/\code{"closeness"} and custom measures
-(via \code{centrality_fn}) are also accepted. See \code{\link[=net_centralities]{net_centralities()}}.}
+\item{measures}{Centrality measures to bootstrap. Default
+\code{c("strength", "expected_influence")}; any measure accepted by
+\code{\link[=net_centralities]{net_centralities()}} can be added.}
 
-\item{centrality_fn}{Optional function supplying any non-built-in \code{measures}
-(see \code{\link[=net_centralities]{net_centralities()}}).}
+\item{centrality_fn}{Optional function supplying measures that are not
+built in (see \code{\link[=net_centralities]{net_centralities()}}).}
 
-\item{predictability}{Logical; if \code{TRUE} and the estimator returns a
-precision matrix (GGM family), bootstrap node predictability (R^2) and
-report its interval (\code{as.data.frame(x, what = "predictability")}).
-Default \code{FALSE}.}
+\item{predictability}{If \code{TRUE}, also bootstrap node predictability (R^2)
+when the estimator returns a precision matrix (the Gaussian graphical
+models). Default \code{FALSE}.}
 
-\item{threshold}{Logical; if \code{TRUE}, also return the observed network with
-every edge whose bootstrap interval includes zero set to zero
-(\code{as.data.frame(x, what = "thresholded")}). Default \code{FALSE}.}
+\item{threshold}{If \code{TRUE}, also keep the observed network with every edge
+whose interval includes zero set to zero. Default \code{FALSE}.}
 
-\item{diff_test}{Logical; if \code{TRUE}, also store two-sided bootstrap
-difference p-value matrices for edges (\code{NULL} past 500 edges) and for each
-centrality measure, drawn by \code{plot(x, type = "edge_diff")} /
-\code{"centrality_diff"}. For the tidy pairwise table use \code{\link[=difference_test]{difference_test()}}.
-Default \code{FALSE}.}
+\item{diff_test}{If \code{TRUE}, also store matrices of pairwise difference
+p-values on the object: for the edges (up to 500 edges) and for each
+centrality measure. Default \code{FALSE}. The tidy version of these tests is
+\code{\link[=difference_test]{difference_test()}}.}
 
-\item{p_adjust}{Multiple-comparison adjustment applied to the difference
-p-value matrices (any \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+\item{p_adjust}{Multiplicity adjustment for the matrices stored by
+\code{diff_test}, any method of \code{\link[stats:p.adjust]{stats::p.adjust()}}. Default \code{"none"}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one per node.}
 
-\item{cores}{Number of CPU cores for the resample loop: \code{NULL} (default)
-uses two thirds of the detected cores; a whole number \verb{>= 1} sets it (\code{1}
-forces a serial run). Parallelism uses forking (\code{parallel::mclapply}) and
-falls back to serial on Windows. Because every resample index is drawn in
-the parent process before any fitting, and a failing resample is caught
-inside its own worker, the result is identical for any number of cores and
-reproducible from \code{set.seed()}.}
+\item{cores}{Number of CPU cores. \code{NULL} (default) uses two thirds of the
+detected cores; \code{1} runs serially. Runs are serial on Windows.}
 
-\item{engine}{Optional estimator engine forwarded to each resample fit
-(e.g. \code{"base"}/\code{"glasso"} for glasso, \code{"base"}/\code{"glmnet"} for ising/mgm).
-\code{NULL} (default) uses the estimator's own default.}
+\item{engine}{Optional solver for every refit: \code{"base"} or \code{"glasso"} for
+\code{method = "glasso"} or \code{"huge"}, \code{"base"} or \code{"glmnet"} for \code{"ising"} or
+\code{"mgm"}. \code{NULL} (default) keeps the estimator's default.}
 
-\item{estimator_args}{Named list of estimator arguments. \code{threshold}, \code{ci},
-\code{measures} and \code{labels} are arguments of the bootstrap itself, so an
-estimator's own \code{threshold} must go here, e.g.
-\code{estimator_args = list(threshold = TRUE)}. Values here override matching
-arguments in \code{...}.}
+\item{estimator_args}{Named list of arguments for the estimator. Use it for
+an estimator argument that shares a name with an argument of \code{net_boot()},
+e.g. \code{estimator_args = list(threshold = TRUE)}. Values here override those
+in \code{...}.}
 
-\item{...}{Passed to the estimator by \code{net_boot()}; ignored by the methods.}
+\item{...}{Further arguments for the estimator (\code{net_boot()}); ignored by
+the methods.}
 
 \item{x}{A \code{psychnet_bootstrap} object.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 
-\item{what}{For \code{as.data.frame()}: which table to return -- \code{"edges"}
-(default), \code{"centrality"}, \code{"predictability"} (needs
-\code{predictability = TRUE}) or \code{"thresholded"} (needs \code{threshold = TRUE}).}
+\item{what}{For \code{as.data.frame()}: \code{"edges"} (default), \code{"centrality"},
+\code{"predictability"} (needs \code{predictability = TRUE}) or \code{"thresholded"}
+(needs \code{threshold = TRUE}).}
 
 \item{significant}{For \code{as.data.frame()} with \code{what = "edges"}: if \code{TRUE},
-return only the edges whose confidence interval excludes zero. Default
-\code{FALSE} (all edges).}
+return only the edges whose interval excludes zero. Default \code{FALSE}.}
 
-\item{type}{For \code{plot()}: one of \code{"edges"} (default; the edge-weight
-intervals sorted by observed weight, bootnet's edge-accuracy plot),
-\code{"centrality"} (one sorted interval panel per measure), \code{"edge_diff"} and
-\code{"centrality_diff"} (the bootstrapped difference "significance box" matrix
-for edges or for one centrality), or \code{"predictability"} (node
-predictability intervals; needs \code{predictability = TRUE}).}
+\item{type}{For \code{plot()}: \code{"edges"} (default; edge weights with their
+intervals, sorted by observed weight), \code{"centrality"} (one panel per
+measure), \code{"edge_diff"} or \code{"centrality_diff"} (the matrix of pairwise
+difference tests for the edges or for one measure), or \code{"predictability"}
+(needs \code{predictability = TRUE}).}
 
 \item{measure}{For \code{plot()} with \code{type = "centrality"} or
-\code{"centrality_diff"}: which measure(s) to draw. Default: all bootstrapped
-measures (\code{"centrality"}) or the first (\code{"centrality_diff"}).}
+\code{"centrality_diff"}: the measure(s) to draw. Default: all bootstrapped
+measures, or the first one for \code{"centrality_diff"}.}
 }
 \value{
-\code{net_boot()} returns an object of class \code{psychnet_bootstrap}, read
-with \code{as.data.frame()}, \code{print()}, \code{plot()} and \code{\link[=difference_test]{difference_test()}}.
+\code{net_boot()} returns an object of class \code{psychnet_bootstrap}. Its
+tables are read with \code{as.data.frame()}:
+\itemize{
+\item \code{as.data.frame(x)} (\code{what = "edges"}): one row per edge, with columns
+\code{from}, \code{to}, \code{observed}, \code{mean} (bootstrap mean), \code{lower}, \code{upper}
+(percentile interval), \code{prop_nonzero} (share of resamples in which the
+edge is nonzero) and \code{significant} (the interval excludes zero). For a
+directed estimator each ordered pair is a row.
+\item \code{what = "centrality"}: one row per node, with \code{node} and, for each
+measure, its observed value and the columns \verb{<measure>_lower} and
+\verb{<measure>_upper}.
+\item \code{what = "predictability"}: one row per node, with \code{node}, \code{value} (the
+observed R^2), \code{lower} and \code{upper}.
+\item \code{what = "thresholded"}: one row per edge, with \code{from}, \code{to},
+\code{observed}, \code{weight} (the observed weight, or 0 when its interval
+includes zero) and \code{retained}.
+}
 
-\code{as.data.frame(x)} (\code{what = "edges"}) returns one row per edge with
-columns \code{from}, \code{to}, \code{observed}, \code{mean} (bootstrap mean), \code{lower},
-\code{upper} (percentile interval), \code{prop_nonzero} (share of resamples in which
-the edge is nonzero) and \code{significant} (interval excludes zero). For a
-directed estimator each ordered pair is its own row.
-
-\code{what = "centrality"} returns one row per node: \code{node}, then for each
-bootstrapped measure its observed value and the \verb{<measure>_lower} /
-\verb{<measure>_upper} percentile interval.
-
-\code{what = "predictability"} returns one row per node: \code{node}, \code{value}
-(observed R^2), \code{lower}, \code{upper}.
-
-\code{what = "thresholded"} returns one row per edge: \code{from}, \code{to},
-\code{observed}, \code{weight} (the observed weight, or 0 when its interval includes
-zero) and \code{retained}.
-
-Asking for a table that was not computed is a \code{psychnet_bad_input} error.
-\code{print()} returns \code{x} invisibly after printing the method, the number of
-resamples, the interval level, and the counts of edges, significant edges
-and nodes. \code{plot()} returns \code{x} invisibly.
+The object also stores the observed network and the bootstrapped value of
+every edge and centrality in every resample, which \code{\link[=difference_test]{difference_test()}}
+and the difference plots use. \code{print()} shows the estimator, the number of
+resamples, the interval level and the numbers of edges, significant edges
+and nodes, and returns \code{x} invisibly; \code{plot()} returns \code{x} invisibly. For
+a \link{psychnet_group}, \code{net_boot()} returns one result per group (see
+\link{psychnet_result_group}).
 }
 \description{
-Resamples observations with replacement, re-estimates the network on each
-resample, and summarizes the sampling distribution of every edge weight and
-node centrality (mean, percentile confidence interval, and edge inclusion
-proportion). An edge is flagged \code{significant} when its percentile interval
-excludes zero. The raw per-resample draws are stored on the returned object
-for use by \code{\link[=difference_test]{difference_test()}}.
+\code{net_boot()} bootstraps a network to show how accurately its edge weights and
+node centralities are estimated. The nonparametric bootstrap approximates the
+sampling variation of the network, whose edge weights and centralities would
+differ in another sample from the same population, by re-estimating it on
+samples drawn with replacement from the observations; the spread of the
+bootstrapped values shows which edges, and which differences between them,
+can be interpreted (Epskamp, Borsboom & Fried, 2018).
+
+The function resamples the rows of \code{data}, re-estimates the network with the
+chosen estimator on every resample, and summarizes each edge weight and each
+node centrality by its bootstrap mean and percentile confidence interval. For
+each edge it also reports the proportion of resamples in which the edge was
+estimated as nonzero, and flags it as \code{significant} when its interval
+excludes zero. Options add intervals for node predictability
+(\code{predictability}) and a version of the network that keeps only the edges
+whose interval excludes zero (\code{threshold}).
+
+It returns these intervals as tables read with \code{as.data.frame()}, and keeps
+the bootstrapped values on the object, so that \code{\link[=difference_test]{difference_test()}} can test
+differences between edges, or between node centralities, without resampling
+again.
+
+The bootstrap describes the accuracy of estimates within one sample. For the
+stability of the order of centralities when cases are dropped, use
+\code{\link[=net_stability]{net_stability()}}; for the stability of the edge weights, use
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}} and \code{\link[=net_split_reliability]{net_split_reliability()}}; to test whether
+two groups have different networks, use \code{\link[=net_compare]{net_compare()}}.
 }
 \details{
-For an estimator whose edge weights are non-negative by construction
-(\code{method = "relimp"}, whose weights are R^2 shares) a percentile interval
-excludes zero almost surely, so \code{significant} is \code{TRUE} for every edge and
-carries no information; \code{threshold = TRUE} then removes nothing. Both
-\code{threshold = TRUE} and \code{as.data.frame(x, significant = TRUE)} raise a
-\code{psychnet_uninformative_test} warning in that case. Pairwise difference
-tests (\code{\link[=difference_test]{difference_test()}}, \code{diff_test = TRUE}) remain meaningful.
+Each resample is passed to the estimator exactly as the full data would be,
+including incomplete rows and factor columns, so the estimator's own
+handling of missing values and variable types applies to every resample.
+For \code{method = "mgm"} the node types are decided once on the full data and
+kept for every resample. A resample on which a variable has no variation
+keeps that variable as an isolated node.
 
-A resample whose fit (or centrality, or predictability) errors is recorded
-as failed inside its worker, so the result is the same for any number of
-cores; failures raise one \code{psychnet_resample_failed} warning that carries
-the first error message, and fewer than two successful resamples is a
-\code{psychnet_resample_failed} error. An error in the observed fit is raised as
-a \code{psychnet_estimation_failed} error with the estimator's own message.
+All resample indices are drawn before any network is fitted, so the result
+is reproducible with \code{\link[=set.seed]{set.seed()}} and does not depend on \code{cores}.
+
+For an estimator whose edge weights are non-negative by construction
+(\code{method = "relimp"}, whose weights are shares of explained variance), a
+percentile interval excludes zero almost surely: every edge is then flagged
+\code{significant} and \code{threshold = TRUE} removes nothing. Pairwise difference
+tests with \code{\link[=difference_test]{difference_test()}} remain informative.
 }
 \section{Functions}{
 \itemize{
-\item \code{as.data.frame(psychnet_bootstrap)}: A tidy table: the edges (default), the centrality
-intervals, the predictability intervals, or the thresholded network (see
-\code{what}).
+\item \code{as.data.frame(psychnet_bootstrap)}: The edge intervals (default), the centrality or
+predictability intervals, or the thresholded network, chosen by \code{what}.
 
-\item \code{print(psychnet_bootstrap)}: Method, resamples, interval level and edge counts.
+\item \code{print(psychnet_bootstrap)}: The estimator, the number of resamples, the interval
+level and the edge counts.
 
-\item \code{plot(psychnet_bootstrap)}: Edge, centrality, difference or predictability
-intervals (see \code{type}). Significant edges are filled points on solid
-segments, non-significant ones open points on dashed segments.
+\item \code{plot(psychnet_bootstrap)}: Edge, centrality or predictability intervals, or a
+matrix of pairwise difference tests (see \code{type}). Edges whose interval
+excludes zero are filled points on solid segments, the others open points
+on dashed segments.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument, for a group that was not
+estimated from a data set, and from \code{as.data.frame()} or \code{plot()} when the
+requested table was not computed; \code{psychnet_estimation_failed} when the
+network cannot be estimated on the full data (with the estimator's
+message); \code{psychnet_resample_failed} (warning) when some resamples fail,
+naming the first error, and as an error when fewer than two succeed;
+\code{psychnet_constant_variable} (warning) when a constant column is dropped;
+\code{psychnet_ignored_argument} (warning) when \code{predictability = TRUE} but the
+estimator returns no precision matrix; \code{psychnet_uninformative_test}
+(warning) for \code{threshold = TRUE} or \code{as.data.frame(significant = TRUE)}
+with \code{method = "relimp"}.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(150 * 5), 150, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-# method = "pcor" keeps this example fast; the "glasso" default (and
-# n_boot >= 1000) is what a real analysis should use.
+# method = "pcor" and n_boot = 50 keep this example fast; a real analysis
+# uses the "glasso" default and n_boot >= 1000.
 bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 bs
 as.data.frame(bs)
 as.data.frame(bs, significant = TRUE)
 as.data.frame(bs, what = "centrality")
-plot(bs)                       # edge-weight CIs
-plot(bs, type = "centrality")  # centrality CIs
+plot(bs)                       # edge weights with their intervals
+plot(bs, type = "centrality")  # centralities with their intervals
 }
 \references{
 Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 psychological networks and their accuracy: A tutorial paper. \emph{Behavior
 Research Methods}, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
+}
+\seealso{
+\code{\link[=difference_test]{difference_test()}} for pairwise differences;
+\code{\link[=net_centralities]{net_centralities()}} for the measures; \code{\link[=net_stability]{net_stability()}},
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}} and \code{\link[=net_split_reliability]{net_split_reliability()}} for
+case-dropping and split-half stability; \code{\link[=psychnet]{psychnet()}} for the estimators.
 }

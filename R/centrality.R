@@ -85,30 +85,45 @@
   EB
 }
 
-#' Edge betweenness centrality
+#' Compute the edge betweenness of a network
 #'
-#' For each edge, the number of weighted shortest paths (across all node
-#' pairs) that pass through it - a high value marks an edge that bridges
-#' otherwise distant parts of the network. When a pair is joined by several
-#' equally short paths each counts as its share (`1 / number of geodesics`), so
-#' the value is the raw, unnormalized edge betweenness (igraph's
-#' `edge_betweenness()`), not a proportion: on the path `a-b-c-d-e` the four
-#' edges score 4, 6, 6, 4. Geodesics are computed on inverse absolute
-#' weights, so strong edges count as short, matching [net_centralities()]'s node
-#' betweenness/closeness.
+#' @description
+#' `net_edge_betweenness()` computes the betweenness of each edge in a network.
+#' Edge betweenness describes the role of an edge in connecting the network: it
+#' counts how many of the shortest paths between pairs of nodes run through the
+#' edge. An edge with high betweenness links parts of the network that would
+#' otherwise be far apart, for example two groups of closely related symptoms.
 #'
-#' @param x A `psychnet` object or a square weighted adjacency matrix. A
-#'   `psychnet` is directed when its `directed` field says so; a bare matrix is
-#'   treated as directed when it is not symmetric (`isSymmetric()`), with
-#'   `x[i, j]` the edge `i -> j`.
-#' @param invert If `TRUE` (default) edge weights are inverted to distances
-#'   (strong association = short path). Set `FALSE` to treat weights as distances.
-#' @param labels Optional node labels (used when `x` is a bare matrix): one
-#'   unique label per node.
-#' @return A tidy `data.frame`, one row per edge: `from`, `to`,
-#'   `edge_betweenness` (count of shortest paths through the edge). Undirected
-#'   networks give one row per unordered edge (counting each unordered node
-#'   pair once); directed networks one row per arc, counting ordered pairs.
+#' The function finds shortest paths on the absolute edge weights, inverted to
+#' distances so that a strong association is a short step (with
+#' `invert = FALSE` the weights are used as distances). When two nodes are
+#' joined by several equally short paths, each path counts as its share,
+#' 1 / (number of such paths).
+#'
+#' It returns one row per edge. The value is a count, as returned by
+#' `igraph::edge_betweenness()`, not a proportion: on the path a-b-c-d-e the
+#' four edges score 4, 6, 6 and 4.
+#'
+#' For the betweenness of nodes, use [net_centralities()]; for the connections
+#' of nodes to predefined communities, use [net_bridge()].
+#'
+#' @param x A fitted network ([psychnet-class]) or a square weighted adjacency
+#'   matrix. A bare matrix that is not symmetric is treated as directed, the
+#'   entry in row i and column j being the edge from node i to node j.
+#' @param invert If `TRUE` (default), edge weights are inverted to distances
+#'   (strong association = short path); if `FALSE`, weights are distances.
+#' @param labels Optional node labels for a bare matrix, one unique label per
+#'   node.
+#' @return A data frame with one row per edge and columns `from`, `to` and
+#'   `edge_betweenness` (the number of shortest paths through the edge). An
+#'   undirected network has one row per edge, counting each pair of nodes
+#'   once; a directed network has one row per arc, counting ordered pairs.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `x` is not a fitted network or a square numeric
+#'   matrix, contains non-finite weights, or `labels` does not give one unique
+#'   label per node.
+#' @seealso [net_centralities()] for node betweenness and other measures;
+#'   [net_bridge()] for bridge centrality.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' net_edge_betweenness(ebic_glasso(cor_matrix = S, n = 400))
@@ -182,57 +197,84 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
   stats::setNames(as.numeric(v[labs]), labs)
 }
 
-#' Node centrality
+#' Compute the centrality of each node in a network
 #'
-#' Summarizes each node's position in a fitted network as a tidy table. For
-#' psychometric networks the recommended measures are strength (the sum of
-#' absolute edge weights) and expected influence (the signed sum, so negative
-#' edges offset positive ones; Robinaugh, Millner & McNally 2016). Betweenness
-#' and closeness follow Opsahl, Agneessens and Skvoretz (2010) on the
-#' inverted absolute weights. For a directed network (e.g. [relimp_network()])
-#' strength and expected influence sum the outgoing edges.
+#' @description
+#' `net_centralities()` computes the centrality of each node in a network, by
+#' default its strength and expected influence. Centrality indices summarize the
+#' position of each node in a network; for psychometric networks, whose edges
+#' are signed and weighted, the most informative are strength, the sum of the
+#' absolute weights of a node's edges, and expected influence, the sum of their
+#' signed weights, in which negative edges offset positive ones (Robinaugh,
+#' Millner & McNally, 2016). A node with high strength is strongly connected to
+#' the other variables; expected influence also shows whether these connections
+#' are, on balance, positive or negative.
 #'
-#' **Scaling of betweenness and closeness.** Both are *normalized*, as igraph's
-#' `betweenness(normalized = TRUE)` / `closeness(normalized = TRUE)`:
-#' betweenness is divided by the number of node pairs not involving the node,
-#' `(p - 1)(p - 2) / 2`, and closeness is the number of reachable nodes over
-#' the sum of distances to them (the inverse mean distance). They therefore
-#' differ from `qgraph::centrality_auto()`, which reports raw betweenness
-#' (path counts) and closeness as `1 / sum(distances)`.
+#' On request the function adds two-step expected influence, which also counts
+#' the expected influence a node passes on through its neighbours, and
+#' betweenness and closeness, which are computed on shortest paths through the
+#' absolute edge weights, inverted to distances (Opsahl, Agneessens & Skvoretz,
+#' 2010). Because betweenness and closeness ignore the sign of an edge, they are
+#' less suited to signed networks. Further measures can be supplied as a
+#' function (`centrality_fn`). For a directed network, such as one from
+#' [relimp_network()], strength and expected influence sum a node's outgoing
+#' edges.
 #'
-#' @param x A [psychnet] object or a weighted adjacency matrix. For `plot()`,
-#'   the `psychnet_centrality` table returned by `net_centralities()`.
-#' @param measures Character vector of measures to return (for `plot()`: which
-#'   of the returned measure columns to draw; default all). Any of `"strength"`,
-#'   `"expected_influence"` (the defaults, recommended for psychometric
-#'   networks), `"expected_influence_2step"` (a node's one-step expected
-#'   influence plus the one-step expected influence it transmits through its
-#'   neighbours), `"betweenness"`, `"closeness"`, plus any names supplied via
-#'   `centrality_fn`. Betweenness and closeness are computed on the absolute,
-#'   inverted-weight graph and are not generally meaningful on signed networks --
-#'   request them only when a downstream comparison needs them.
-#' @param centrality_fn Optional function taking the weighted adjacency matrix
-#'   (with node-label dimnames) and returning a named list of node-centrality
-#'   vectors, used to supply any `measures` not built in. Each vector must have
-#'   one numeric value per node. A *named* vector is aligned to the nodes by
-#'   label (its names must be exactly the node labels, in any order); an
-#'   unnamed vector is taken in node order. A wrong length, missing or extra
-#'   names, or a non-numeric value is an error of class `psychnet_bad_input`.
-#' @param type For `plot()`: `"bar"` (default; one sorted lollipop panel per
-#'   measure) or `"line"` (the qgraph/bootnet centrality plot: one panel per
-#'   measure, nodes on a shared vertical axis).
-#' @param scale For `plot(type = "line")`: the per-measure transform, `"raw"`
-#'   (default; each panel keeps its own axis), `"z"` (z-score per measure) or
-#'   `"relative"` (min-max scaled to \[0, 1\]). `type = "bar"` always shows
-#'   raw values.
+#' It returns one row per node, with one column per requested measure.
+#'
+#' Whether differences in centrality can be interpreted depends on their
+#' accuracy and stability; see [net_boot()], [difference_test()] and
+#' [net_stability()]. Centrality with respect to communities is computed by
+#' [net_bridge()], and the betweenness of edges by [net_edge_betweenness()].
+#'
+#' @details
+#' Two-step expected influence is the node's expected influence plus the sum,
+#' over its neighbours, of each edge weight times that neighbour's expected
+#' influence.
+#'
+#' Betweenness and closeness are normalized, as in igraph's
+#' `betweenness(normalized = TRUE)` and `closeness(normalized = TRUE)`:
+#' betweenness is divided by the number of pairs of other nodes,
+#' `(p - 1)(p - 2) / 2`, and closeness is the number of reachable nodes divided
+#' by the sum of the distances to them (the inverse mean distance). They
+#' therefore differ from `qgraph::centrality_auto()`, which reports
+#' betweenness as a count of paths and closeness as `1 / sum(distances)`.
+#'
+#' @param x A fitted network ([psychnet-class]), a weighted adjacency matrix,
+#'   or a [psychnet_group] (one table per group). For `plot()`, the table
+#'   returned by `net_centralities()`.
+#' @param measures Measures to compute: any of `"strength"`,
+#'   `"expected_influence"` (the defaults), `"expected_influence_2step"`,
+#'   `"betweenness"`, `"closeness"`, and names supplied by `centrality_fn`. For
+#'   `plot()`: the measure columns to draw (default: all).
+#' @param centrality_fn Optional function that takes the weighted adjacency
+#'   matrix (with node labels as dimnames) and returns a named list of
+#'   centrality vectors, one numeric value per node, for measures that are not
+#'   built in. A named vector is matched to the nodes by label; an unnamed one
+#'   is taken in node order.
+#' @param type For `plot()`: `"bar"` (default; one sorted panel per measure)
+#'   or `"line"` (one panel per measure, with the nodes in a shared order).
+#' @param scale For `plot(type = "line")`: `"raw"` (default), `"z"` (z-scores
+#'   per measure) or `"relative"` (rescaled to 0-1 per measure). `type = "bar"`
+#'   always shows raw values.
 #' @param ... Unused.
-#' @return A tidy `data.frame` of class `c("psychnet_centrality",
-#'   "data.frame")`, one row per node, with a `node` column and one column per
-#'   requested measure (`strength` = sum of absolute edge weights,
-#'   `expected_influence` = sum of signed edge weights, by default;
-#'   `betweenness` and `closeness` are normalized, see Details); `plot()`
-#'   draws it and returns it invisibly. For a [psychnet_group] the result is a
-#'   per-group list (see [psychnet_result_group]).
+#' @return A data frame of class `psychnet_centrality`, one row per node, with
+#'   a `node` column and one column per requested measure, named as in
+#'   `measures`. `plot()` draws it and returns it invisibly. For a
+#'   [psychnet_group], one table per group (see [psychnet_result_group]).
+#' @section Conditions:
+#'   `psychnet_bad_input` when `x` is not a fitted network or a square numeric
+#'   matrix, a measure is not built in and `centrality_fn` does not supply it,
+#'   `centrality_fn` returns something other than a named list of one numeric
+#'   value per node (or names that are not the node labels), or a group holds
+#'   within- and between-person networks. `plot()` raises `psychnet_bad_input`
+#'   for a `measures` entry that is not a measure column,
+#'   `psychnet_plot_skipped` (warning) when it skips a measure without finite
+#'   values, and `psychnet_nothing_to_plot` (an error) when no requested
+#'   measure has one.
+#' @seealso [net_boot()] and [net_stability()] for the accuracy and stability
+#'   of centralities; [net_bridge()]; [net_edge_betweenness()];
+#'   [net_predict()] for node predictability.
 #' @references Robinaugh, D. J., Millner, A. J., & McNally, R. J. (2016).
 #'   Identifying highly influential nodes in the complicated grief network.
 #'   *Journal of Abnormal Psychology*, 125(6), 747-757.

@@ -342,48 +342,86 @@
   (x + t(x)) / 2 + 0
 }
 
-#' Graphical-lasso stationarity (KKT) residual
+#' Check that a precision matrix solves the graphical lasso
 #'
-#' A dependency-free correctness certificate for a fitted Gaussian graphical
-#' model. For the convex objective
+#' @description
+#' `glasso_kkt()` checks whether a precision matrix solves the graphical lasso
+#' for a given correlation or covariance matrix and penalty. The graphical
+#' lasso estimates a Gaussian graphical model as the precision (inverse
+#' covariance) matrix that maximizes the Gaussian likelihood minus a penalty
+#' on the absolute partial associations (Friedman et al., 2008), and a matrix
+#' is its solution if and only if it satisfies the optimality
+#' (Karush-Kuhn-Tucker) conditions of the problem.
+#'
+#' The objective is strictly convex, so it has exactly one optimum, and
+#' checking the conditions shows whether a network is the graphical lasso
+#' solution without solving the problem a second time. In words, the
+#' covariance implied by the precision matrix must equal the observed
+#' covariance on the diagonal, differ from it by exactly the penalty for every
+#' pair joined by an edge, and by at most the penalty for every pair that is
+#' not.
+#'
+#' `glasso_kkt()` returns the largest violation of the conditions; a value
+#' near zero shows that the matrix is the optimum, up to numerical precision.
+#'
+#' Networks from [ebic_glasso()] and [huge_network()] store this value, and
+#' [certificate()] reports it. Unpenalized networks restricted to a graph are
+#' checked by [ggm_support_kkt()], and nodewise Ising and mixed graphical
+#' models by [glm_lasso_kkt()].
+#'
+#' @details
+#' The objective, with the penalty on the off-diagonal entries, is
 #' \deqn{\min_{\Theta \succ 0} -\log\det\Theta + \mathrm{tr}(S\Theta) +
-#'       \rho \sum_{i \neq j} |\Theta_{ij}|}
-#' (off-diagonal penalty), let \eqn{W = \Theta^{-1}}. The subgradient
-#' optimality conditions are \eqn{W_{ii} = S_{ii}};
+#'       \rho \sum_{i \neq j} |\Theta_{ij}|.}
+#' With \eqn{W = \Theta^{-1}}, the optimality conditions are
+#' \eqn{W_{ii} = S_{ii}};
 #' \eqn{W_{ij} - S_{ij} = \rho\,\mathrm{sign}(\Theta_{ij})} where
-#' \eqn{\Theta_{ij} \neq 0}; and \eqn{|W_{ij} - S_{ij}| \le \rho} otherwise. By
-#' strict convexity, a precision matrix with zero violation is the unique global
-#' optimum, so a near-zero return certifies correctness independently of any
-#' reference solver.
+#' \eqn{\Theta_{ij} \neq 0}; and \eqn{|W_{ij} - S_{ij}| \le \rho} otherwise.
+#' The function returns the largest absolute deviation from these conditions.
+#' Because the objective is strictly convex, a precision matrix with zero
+#' violation is its unique global optimum.
 #'
 #' When the penalty also applies to the diagonal (`penalize_diagonal = TRUE`,
 #' the objective adds \eqn{\rho \sum_i |\Theta_{ii}|}), the diagonal condition
-#' becomes \eqn{W_{ii} = S_{ii} + \rho}. Grading a diagonally-penalized fit with
-#' the default would report a spurious violation of exactly \eqn{\rho}, so this
-#' flag must match the fit being tested.
+#' becomes \eqn{W_{ii} = S_{ii} + \rho}. Checking a diagonally penalized fit
+#' with the default would report a violation of exactly \eqn{\rho}, so this
+#' argument must match the fit being checked.
 #'
-#' @param theta Precision matrix to test.
-#' @param cor_matrix Correlation / covariance the model was fit to.
-#' @param rho Scalar penalty, a single finite number >= 0.
-#' @param active_tol Magnitude above which an off-diagonal entry is "active".
-#' @param penalize_diagonal Was the diagonal penalized in the fit being graded?
-#'   Default `FALSE`, matching [ebic_glasso()]'s default.
-#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-#'   `Inf` for an asymmetric or non-positive-definite `theta`. Malformed input
-#'   (non-square or non-finite matrices, a negative or missing `rho`) is an
-#'   error of class `psychnet_bad_input`.
+#' The objective is defined only for symmetric positive-definite matrices, so
+#' a `theta` that is asymmetric (by more than `1e-8`) or not positive definite
+#' is not a solution and returns `Inf`.
+#'
+#' @param theta The precision matrix to check: a finite, square numeric
+#'   matrix.
+#' @param cor_matrix The correlation or covariance matrix the model was fitted
+#'   to, of the same size as `theta`.
+#' @param rho The penalty: a single finite number >= 0.
+#' @param active_tol Absolute value above which an off-diagonal entry of
+#'   `theta` counts as an edge. Default `1e-8`.
+#' @param penalize_diagonal Whether the fit being checked also penalized the
+#'   diagonal. Default `FALSE`, the default of [ebic_glasso()].
+#' @return A single number, the largest absolute violation of the optimality
+#'   conditions: 0 at the exact optimum, `Inf` for an asymmetric or
+#'   non-positive-definite `theta`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `theta` is not a finite square numeric matrix,
+#'   `cor_matrix` is not a finite matrix of the same size, `rho` or
+#'   `active_tol` is not a single finite number >= 0, or `penalize_diagonal`
+#'   is not `TRUE` or `FALSE`.
 #' @references
 #'   Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
 #'   covariance estimation with the graphical lasso. *Biostatistics*, 9(3),
 #'   432-441. \doi{10.1093/biostatistics/kxm045}
-#' @seealso [certificate()], which reads the stored residual of a fitted network.
+#' @seealso [certificate()], which reports the stored value of a fitted
+#'   network; [ebic_glasso()] and [huge_network()]; [ggm_support_kkt()] and
+#'   [glm_lasso_kkt()] for the other optimality checks.
 #' @examples
 #' S <- 0.5^abs(outer(1:5, 1:5, "-"))
-#' # At rho = 0 the optimum is the inverse of S, so its residual is ~0 ...
+#' # At rho = 0 the optimum is the inverse of S, so the violation is ~0 ...
 #' glasso_kkt(solve(S), S, rho = 0)
 #' # ... and a perturbed precision matrix violates the conditions.
 #' glasso_kkt(solve(S) + diag(0.1, 5), S, rho = 0)
-#' # A fitted network reports the same residual through certificate().
+#' # A fitted network reports the same value through certificate().
 #' certificate(ebic_glasso(cor_matrix = S, n = 200))
 #' @export
 glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
@@ -413,29 +451,63 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
   max(diag_v, v_a, v_i)
 }
 
-#' Constrained Gaussian-MRF (graph-restricted MLE) stationarity residual
+#' Check that a precision matrix is the maximum-likelihood network on a graph
 #'
-#' Certificate for an *unregularized* Gaussian graphical model whose precision
-#' is constrained to a fixed graph (the estimator behind [ggm_modselect()] and
-#' [logo_network()]). The maximum-likelihood / maximum-entropy conditions for a
-#' Gaussian Markov random field on a graph \eqn{G} are exact:
-#' \eqn{W_{ij} = S_{ij}} for every \eqn{(i,j)} on the graph and on the diagonal
-#' (\eqn{W = \Theta^{-1}}), and \eqn{\Theta_{ij} = 0} for every \eqn{(i,j)} not
-#' on the graph. A near-zero return certifies the constrained optimum with no
-#' reference solver.
+#' @description
+#' `ggm_support_kkt()` checks whether a precision matrix is the
+#' maximum-likelihood Gaussian graphical model on a given graph, for the
+#' correlation or covariance matrix it was fitted to. Some Gaussian graphical
+#' models are estimated without a penalty: a graph is chosen first, and the
+#' precision matrix is then the maximum-likelihood estimate under the
+#' constraint that every pair of variables not joined by an edge has a
+#' partial correlation of zero.
 #'
-#' @param theta Precision matrix to test.
-#' @param cor_matrix Correlation / covariance the model was fit to.
-#' @param support Logical p x p matrix; `TRUE` where an edge is allowed. It is
-#'   symmetrized (`support | t(support)`), so an upper- or lower-triangular
-#'   support describes the same undirected graph; the diagonal is ignored.
-#' @param active_tol Magnitude above which an off-support entry counts as a
-#'   nonzero violation.
-#' @return Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-#'   `Inf` for an asymmetric or non-positive-definite `theta`. A `support` that
-#'   is not a logical matrix of the right size, or contains `NA`, is an error
-#'   of class `psychnet_bad_input`.
-#' @seealso [certificate()], which reads the stored residual of a fitted network.
+#' This constrained estimate is unique and is characterized by two
+#' conditions: the covariance implied by the model reproduces the observed
+#' covariance for every pair joined by an edge and for every variance, and the
+#' precision matrix is zero for every pair that is not joined. A matrix
+#' meeting both conditions is the maximum-likelihood network on that graph.
+#'
+#' `ggm_support_kkt()` returns the largest violation of these conditions; a
+#' value near zero shows that the matrix is the constrained optimum, up to
+#' numerical precision.
+#'
+#' Networks from [ggm_modselect()], [logo_network()] and
+#' `ebic_glasso(refit = "unregularized")` store this value, and
+#' [certificate()] reports it. Penalized graphical lasso networks are checked
+#' by [glasso_kkt()].
+#'
+#' @details
+#' For a Gaussian graphical model on a graph \eqn{G}, with
+#' \eqn{W = \Theta^{-1}}, the maximum-likelihood conditions are
+#' \eqn{W_{ij} = S_{ij}} for every \eqn{(i,j)} in \eqn{G} and on the diagonal,
+#' and \eqn{\Theta_{ij} = 0} for every \eqn{(i,j)} not in \eqn{G}. The function
+#' returns the largest absolute deviation from these conditions; a `theta`
+#' that is asymmetric (by more than `1e-8`) or not positive definite returns
+#' `Inf`.
+#'
+#' @param theta The precision matrix to check: a finite, square numeric
+#'   matrix.
+#' @param cor_matrix The correlation or covariance matrix the model was fitted
+#'   to, of the same size as `theta`.
+#' @param support A logical matrix of the same size, `TRUE` where an edge is
+#'   allowed, with no missing values. It is made symmetric, so an upper- or
+#'   lower-triangular matrix describes the same graph; the diagonal is
+#'   ignored.
+#' @param active_tol A single finite number >= 0 (default `1e-8`). It is
+#'   checked but does not affect the result: every entry of `theta` outside
+#'   the graph counts as a violation of its absolute size.
+#' @return A single number, the largest absolute violation of the conditions:
+#'   0 at the exact constrained optimum, `Inf` for an asymmetric or
+#'   non-positive-definite `theta`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `theta` is not a finite square numeric matrix,
+#'   `cor_matrix` is not a finite matrix of the same size, `support` is not a
+#'   logical matrix of that size without missing values, or `active_tol` is
+#'   not a single finite number >= 0.
+#' @seealso [certificate()], which reports the stored value of a fitted
+#'   network; [ggm_modselect()] and [logo_network()]; [glasso_kkt()] for
+#'   penalized networks.
 #' @examples
 #' S <- 0.4^abs(outer(1:6, 1:6, "-"))
 #' # An AR(1) correlation has a tridiagonal inverse: the chain graph is exact.
@@ -443,7 +515,7 @@ glasso_kkt <- function(theta, cor_matrix, rho, active_tol = 1e-8,
 #' ggm_support_kkt(solve(S), S, support = chain)
 #' # The same precision violates an empty-graph (diagonal) constraint.
 #' ggm_support_kkt(solve(S), S, support = diag(6) > 0)
-#' # A fitted network reports its residual through certificate().
+#' # A fitted network reports its value through certificate().
 #' certificate(ggm_modselect(cor_matrix = S, n = 250))
 #' @export
 ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
@@ -475,73 +547,130 @@ ggm_support_kkt <- function(theta, cor_matrix, support, active_tol = 1e-8) {
   max(diag_v, v_match, v_zero)
 }
 
-#' EBIC-regularized Gaussian graphical model (graphical lasso)
+#' Estimate a Gaussian graphical model with the EBIC graphical lasso
 #'
-#' Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a
-#' log-spaced path, then refits the chosen penalty to machine precision so the
-#' fitted precision matrix is the certified global optimum of the convex objective.
-#' Equivalent in purpose to `qgraph::EBICglasso()` / `bootnet`'s `"EBICglasso"`
-#' default, but pure base R and self-certified (see [glasso_kkt()]).
+#' @description
+#' `ebic_glasso()` estimates a Gaussian graphical model: a network in which
+#' variables are nodes joined by partial correlations, and a missing edge means
+#' two variables are independent given all the others. It fits the graphical
+#' lasso, which shrinks weak partial correlations to zero, and chooses the
+#' penalty by the extended Bayesian information criterion (Epskamp & Fried,
+#' 2018).
 #'
-#' @param data Numeric data frame or matrix (rows = observations). Optional if
-#'   `cor_matrix` is supplied.
-#' @param cor_matrix Optional correlation matrix; if given, `n` is required and
-#'   `data` is ignored.
-#' @param n Sample size (required when `cor_matrix` is supplied): a single
-#'   finite number >= 1.
-#' @param gamma EBIC hyperparameter. Default 0.5.
-#' @param nlambda Number of penalties on the path. Default 100.
-#' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
-#'   Default 0.01.
-#' @param threshold Partial correlations with absolute value below this are set
-#'   to zero: a single number >= 0, default 0 (qgraph's logical
-#'   `threshold = TRUE` rule is refused). A positive value is post-estimation processing, so the
-#'   returned graph has `$kkt = NA`; the fitted precision's residual remains in
-#'   `$fit_kkt`.
-#' @param cor_method Correlation used when `data` is supplied: `"pearson"`
-#'   (default), `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial
-#'   for ordinal items, the `qgraph::cor_auto` / `bootnet` default). See
-#'   [cor_auto()].
-#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
-#'   (default, pairwise-complete correlations + nearest-PD projection) or
-#'   `"listwise"` (drop incomplete rows). Identical for complete data.
-#' @param native Solver switch. `TRUE` (default) uses psychnet's own pure-R,
-#'   dependency-free, self-certified solver. `FALSE` delegates each fixed-penalty
-#'   solve to the established `glasso` Fortran package (in `Suggests`) for speed
-#'   and byte-identical `glasso`/`qgraph` output, at its looser convergence (the
-#'   reported `$kkt` then shows glasso's tolerance rather than ~1e-11).
-#' @param lambda_path Optional numeric vector of penalties to scan, in the order
-#'   given. When supplied it overrides `nlambda` / `lambda_min_ratio` and is
-#'   echoed back unchanged. Intended for resampling callers: computing the path
-#'   once from the original correlation matrix and reusing it for every resample
-#'   keeps the selected penalties comparable across draws, whereas recomputing
-#'   the path per resample lets the grid drift with each sample's largest
-#'   absolute correlation.
-#' @param penalize_diagonal Apply the L1 penalty to the diagonal of the
-#'   precision matrix as well. Default `FALSE` (the working covariance diagonal
-#'   is held at `diag(S)`); `TRUE` holds it at `diag(S) + lambda`, and `$kkt` is
-#'   graded against the matching optimality condition.
-#' @param refit What to return at the selected penalty. `TRUE` (default)
-#'   re-solves it to machine precision, so the returned network is the certified
-#'   optimum. `FALSE` returns the path fit exactly as scanned (at the loose scan
-#'   tolerance). This is a bit-compatibility switch, not a speed one: the refit
-#'   is the strictly better answer and costs little, but a consumer holding
-#'   frozen baselines against an unrefitted path scan needs the scanned matrix to
-#'   reproduce them. `"unregularized"` keeps the selected support and refits the
-#'   *unpenalized* graph-restricted MLE on it, which is no longer a penalized
-#'   optimum and is therefore certified by [ggm_support_kkt()] instead.
-#' @param labels Optional node labels, one unique label per network node (the
-#'   columns that survive constant / non-numeric column removal).
-#' @return A `psychnet` object whose `$weights` is the partial-correlation matrix,
-#'   with `$precision`, `$lambda`, `$gamma`, `$cor_matrix`, `$ebic`, `$native`,
-#'   and `$kkt` (the stationarity residual, or `NA` after thresholding). Node order
-#'   in `$weights`, `$nodes`, and `$precision` is always the column order of the
-#'   input `data` / `cor_matrix`, never sorted. With `refit = "unregularized"`
-#'   the object also carries `$support`, and `$kkt` is a [ggm_support_kkt()]
-#'   residual; with `refit = FALSE` the reported `$kkt` reflects the loose scan
-#'   tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
-#'   `as.data.frame()` (see [psychnet-class]) and the certificate
-#'   with [certificate()].
+#' An edge is the association between two variables after controlling for all
+#' other variables in the network. The penalty sets weak partial correlations
+#' to exactly zero, so that only the associations supported by the data are
+#' retained, and the EBIC balances the fit of the model against the number of
+#' edges. `ebic_glasso()` fits the graphical lasso over a sequence of
+#' penalties, selects the penalty with the lowest EBIC and returns the
+#' partial-correlation network at that penalty. It takes raw data, or a
+#' correlation matrix together with its sample size. `gamma` sets how strongly
+#' the EBIC favours sparse networks, `refit = "unregularized"` keeps the
+#' selected edges but estimates them without shrinkage, and `threshold`
+#' removes weak edges after estimation.
+#'
+#' The returned network is the optimum of the penalized likelihood at the
+#' selected penalty, which [certificate()] checks.
+#'
+#' This regularized partial-correlation network is the standard estimator for
+#' continuous and ordinal data in psychological network analysis. For data far
+#' from normality, [huge_network()] fits the same model after a
+#' rank-based transformation. [ggm_modselect()] selects an unregularized
+#' network by stepwise search, [pcor_network()] keeps every partial
+#' correlation, and [ising_fit()] and [mgm_fit()] estimate networks of binary
+#' and mixed variables. The model is the one fitted by `qgraph::EBICglasso()`.
+#'
+#' @details
+#' For a precision matrix \eqn{\Theta} with \eqn{E} nonzero off-diagonal
+#' entries, fitted to a correlation matrix \eqn{S} of \eqn{p} variables and
+#' \eqn{n} observations, the criterion is
+#' \deqn{\mathrm{EBIC} = -2L + E \log n + 4 \gamma E \log p, \quad
+#'       L = \frac{n}{2}\left(\log\det\Theta - \mathrm{tr}(S\Theta)\right).}
+#' The penalties form a log-spaced sequence of `nlambda` values from the
+#' largest absolute off-diagonal correlation, at which the network is empty,
+#' down to `lambda_min_ratio` times that value. When two penalties give the
+#' same EBIC, the one earlier in the path is selected, which on the default
+#' path is the larger penalty and the sparser network. Unless `lambda_path` is
+#' given, a correlation matrix with no off-diagonal association returns the
+#' empty network with penalty 0.
+#'
+#' With `na_method = "pairwise"` and incomplete data, the sample size entering
+#' the EBIC is the median number of observations available for a pair of
+#' variables.
+#'
+#' The certificate is computed by [glasso_kkt()]. With
+#' `refit = "unregularized"` the network is no longer a penalized optimum and
+#' is checked by [ggm_support_kkt()] instead. With `refit = FALSE` or
+#' `native = FALSE` the network is solved to a looser tolerance, and its
+#' certificate can exceed the default tolerance of [certificate()]. After a
+#' positive `threshold` the certificate is missing; `print()` still shows the
+#' value for the network before thresholding.
+#'
+#' @param data A numeric data frame or matrix with one row per observation.
+#'   Not needed when `cor_matrix` is given.
+#' @param cor_matrix A correlation matrix to use instead of `data`; a
+#'   covariance matrix is rescaled to a correlation matrix. It must be
+#'   symmetric and positive semi-definite. `n` is then required.
+#' @param n Sample size, required with `cor_matrix`: a single finite number
+#'   >= 1. Ignored when `data` is given.
+#' @param gamma EBIC hyperparameter, a number >= 0; larger values favour
+#'   sparser networks and 0 gives the ordinary BIC. Default `0.5`.
+#' @param nlambda Number of penalties scanned, a whole number >= 2. Default
+#'   `100`.
+#' @param lambda_min_ratio Smallest penalty as a fraction of the largest, in
+#'   (0, 1). Default `0.01`.
+#' @param threshold Absolute partial correlation below which an edge is set to
+#'   zero after estimation: a single number >= 0. Default `0`. A logical value
+#'   (the `threshold = TRUE` rule of `qgraph`) is refused. A positive value
+#'   leaves the certificate missing.
+#' @param cor_method Correlation computed from `data`: `"pearson"` (default),
+#'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric and polyserial
+#'   correlations for ordinal items; see [cor_auto()]).
+#' @param na_method Handling of missing values in `data`: `"pairwise"`
+#'   (default) uses pairwise-complete correlations adjusted to the nearest
+#'   positive-definite matrix; `"listwise"` drops incomplete rows. The two
+#'   agree for complete data.
+#' @param native `TRUE` (default) uses the package's own solver. `FALSE`
+#'   solves each penalty with the `glasso` package, which must be installed,
+#'   to reproduce results of the `glasso` and `qgraph` packages.
+#' @param lambda_path Optional numeric vector of positive penalties to scan,
+#'   in the given order, replacing `nlambda` and `lambda_min_ratio`. Useful
+#'   when resampling: the path of the full data, reused for every resample,
+#'   keeps the selected penalties comparable. Default `NULL`.
+#' @param penalize_diagonal Whether the penalty also applies to the diagonal
+#'   of the precision matrix. Default `FALSE`.
+#' @param refit What to return at the selected penalty: `TRUE` (default) the
+#'   optimum at that penalty; `FALSE` the fit obtained while scanning the
+#'   penalties, less precise and kept to reproduce earlier results;
+#'   `"unregularized"` the unpenalized maximum-likelihood network restricted
+#'   to the selected edges, without shrinkage.
+#' @param labels Optional node labels, one unique label per node of the
+#'   network (the columns left after non-numeric and constant columns are
+#'   dropped).
+#' @return A fitted network of class `psychnet` ([psychnet-class]) whose edge
+#'   weights are partial correlations. `as.data.frame()` returns one row per
+#'   edge with columns `from`, `to` and `weight`; `print()` shows the selected
+#'   penalty and the certificate; [certificate()] reports the check. The
+#'   object also stores the precision matrix (`precision`), the selected
+#'   penalty (`lambda`), `gamma`, the correlation matrix used (`cor_matrix`),
+#'   the EBIC of the selected network (`ebic`), the penalties scanned and
+#'   their EBIC (`lambda_path`, `ebic_path`) and, with
+#'   `refit = "unregularized"`, the selected graph (`support`). Nodes keep the
+#'   column order of the input.
+#' @section Conditions:
+#'   `psychnet_bad_input` when an argument is out of range, `threshold` is
+#'   logical, `cor_matrix` is not a finite, symmetric, positive semi-definite
+#'   matrix with a positive diagonal, `n` is missing with `cor_matrix`,
+#'   `data` has fewer than two usable variables, a pair of variables is never
+#'   observed together, `labels` do not match the nodes, `native = FALSE`
+#'   without the `glasso` package, or every penalty fails to fit;
+#'   `psychnet_constant_variable` (warning) when a constant or all-missing
+#'   column is dropped. A `psychnet_dropped_columns` message names
+#'   non-numeric columns that were dropped.
+#' @seealso [certificate()] and [glasso_kkt()] for the check;
+#'   [huge_network()], [ggm_modselect()] and [pcor_network()] for related
+#'   Gaussian networks; [psychnet()], which routes `method = "glasso"` here;
+#'   [psychnet-class] for the result.
 #' @references
 #'   Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
 #'   covariance estimation with the graphical lasso. *Biostatistics*, 9(3),

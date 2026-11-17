@@ -2,25 +2,60 @@
 % Please edit documentation in R/tmfg.R
 \name{tmfg_certificate}
 \alias{tmfg_certificate}
-\title{Structural certificate for a TMFG network}
+\title{Check that a network has the structure of a TMFG}
 \usage{
 tmfg_certificate(x)
 }
 \arguments{
-\item{x}{A \link{psychnet} object produced by \code{\link[=tmfg_network]{tmfg_network()}}.}
+\item{x}{A TMFG network from \code{\link[=tmfg_network]{tmfg_network()}} (\link[=psychnet-class]{psychnet}).}
 }
 \value{
-Scalar; \code{0} certifies a valid TMFG (correct edge count, connected,
-chordal and planar), otherwise a positive integer counting the violated invariants.
+A single integer from 0 to 4, the number of violated properties;
+0 confirms a valid TMFG.
 }
 \description{
-A TMFG has no convex objective, so its correctness is certified structurally:
-a valid TMFG on \code{p >= 3} nodes has exactly \code{3(p - 2)} edges, is connected,
-planar, and chordal (every cycle of length >= 4 has a chord). Returns a non-negative
-score that is \code{0} for a valid TMFG.
+\code{tmfg_certificate()} checks that a network from \code{\link[=tmfg_network]{tmfg_network()}} has the
+structure of a triangulated maximally filtered graph (TMFG). A TMFG is
+defined by its structure rather than as the optimum of an objective: for
+\eqn{p} variables it is a connected planar graph with exactly
+\eqn{3(p - 2)} edges that is chordal (every cycle of four or more nodes has
+a chord) and is built from four-variable cliques (Massara et al., 2016).
+
+These properties are what make the graph a TMFG and what the LoGo model
+(\code{\link[=logo_network]{logo_network()}}) relies on, so checking them shows that a returned
+network is a valid TMFG, for instance that no edge was lost or added.
+\code{tmfg_certificate()} counts how many of the defining properties the network
+violates.
+
+It returns that count: 0 confirms a valid TMFG.
+
+\code{\link[=certificate]{certificate()}} reports the same value for a fitted TMFG network. The
+check does not assess which correlations the construction chose to retain.
 }
+\details{
+Four properties are checked on the stored graph: the number of edges is
+\eqn{3(p - 2)}; the graph is chordal, tested by maximum-cardinality search;
+it is connected; and it is planar. For a connected chordal graph with
+\eqn{3(p - 2)} edges, planarity is checked as the structure of a stacked
+triangulation: no triangle has more than two common neighbours, and no
+triangle has two common neighbours that are adjacent to each other.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is not a network from \code{\link[=tmfg_network]{tmfg_network()}}.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(200 * 6), 200, 6)
 tmfg_certificate(tmfg_network(x))
+}
+\references{
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network
+filtering for big data: Triangulated maximally filtered graph. \emph{Journal of
+Complex Networks}, 5(2), 161-178. \doi{10.1093/comnet/cnw015}
+}
+\seealso{
+\code{\link[=tmfg_network]{tmfg_network()}}; \code{\link[=certificate]{certificate()}}; \code{\link[=lmg_certificate]{lmg_certificate()}}, the other
+structural check.
 }

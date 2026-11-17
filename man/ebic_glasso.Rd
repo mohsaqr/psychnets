@@ -2,7 +2,7 @@
 % Please edit documentation in R/glasso.R
 \name{ebic_glasso}
 \alias{ebic_glasso}
-\title{EBIC-regularized Gaussian graphical model (graphical lasso)}
+\title{Estimate a Gaussian graphical model with the EBIC graphical lasso}
 \usage{
 ebic_glasso(
   data = NULL,
@@ -22,88 +22,142 @@ ebic_glasso(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied.}
+\item{data}{A numeric data frame or matrix with one row per observation.
+Not needed when \code{cor_matrix} is given.}
 
-\item{cor_matrix}{Optional correlation matrix; if given, \code{n} is required and
-\code{data} is ignored.}
+\item{cor_matrix}{A correlation matrix to use instead of \code{data}; a
+covariance matrix is rescaled to a correlation matrix. It must be
+symmetric and positive semi-definite. \code{n} is then required.}
 
-\item{n}{Sample size (required when \code{cor_matrix} is supplied): a single
-finite number >= 1.}
+\item{n}{Sample size, required with \code{cor_matrix}: a single finite number= 1. Ignored when data is given.}
 
-\item{gamma}{EBIC hyperparameter. Default 0.5.}
+\item{gamma}{EBIC hyperparameter, a number >= 0; larger values favour
+sparser networks and 0 gives the ordinary BIC. Default \code{0.5}.}
 
-\item{nlambda}{Number of penalties on the path. Default 100.}
+\item{nlambda}{Number of penalties scanned, a whole number >= 2. Default
+\code{100}.}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.
-Default 0.01.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
+(0, 1). Default \code{0.01}.}
 
-\item{threshold}{Partial correlations with absolute value below this are set
-to zero: a single number >= 0, default 0 (qgraph's logical
-\code{threshold = TRUE} rule is refused). A positive value is post-estimation processing, so the
-returned graph has \verb{$kkt = NA}; the fitted precision's residual remains in
-\verb{$fit_kkt}.}
+\item{threshold}{Absolute partial correlation below which an edge is set to
+zero after estimation: a single number >= 0. Default \code{0}. A logical value
+(the \code{threshold = TRUE} rule of \code{qgraph}) is refused. A positive value
+leaves the certificate missing.}
 
-\item{cor_method}{Correlation used when \code{data} is supplied: \code{"pearson"}
-(default), \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial
-for ordinal items, the \code{qgraph::cor_auto} / \code{bootnet} default). See
-\code{\link[=cor_auto]{cor_auto()}}.}
+\item{cor_method}{Correlation computed from \code{data}: \code{"pearson"} (default),
+\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric and polyserial
+correlations for ordinal items; see \code{\link[=cor_auto]{cor_auto()}}).}
 
-\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
-(default, pairwise-complete correlations + nearest-PD projection) or
-\code{"listwise"} (drop incomplete rows). Identical for complete data.}
+\item{na_method}{Handling of missing values in \code{data}: \code{"pairwise"}
+(default) uses pairwise-complete correlations adjusted to the nearest
+positive-definite matrix; \code{"listwise"} drops incomplete rows. The two
+agree for complete data.}
 
-\item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
-dependency-free, self-certified solver. \code{FALSE} delegates each fixed-penalty
-solve to the established \code{glasso} Fortran package (in \code{Suggests}) for speed
-and byte-identical \code{glasso}/\code{qgraph} output, at its looser convergence (the
-reported \verb{$kkt} then shows glasso's tolerance rather than ~1e-11).}
+\item{native}{\code{TRUE} (default) uses the package's own solver. \code{FALSE}
+solves each penalty with the \code{glasso} package, which must be installed,
+to reproduce results of the \code{glasso} and \code{qgraph} packages.}
 
-\item{lambda_path}{Optional numeric vector of penalties to scan, in the order
-given. When supplied it overrides \code{nlambda} / \code{lambda_min_ratio} and is
-echoed back unchanged. Intended for resampling callers: computing the path
-once from the original correlation matrix and reusing it for every resample
-keeps the selected penalties comparable across draws, whereas recomputing
-the path per resample lets the grid drift with each sample's largest
-absolute correlation.}
+\item{lambda_path}{Optional numeric vector of positive penalties to scan,
+in the given order, replacing \code{nlambda} and \code{lambda_min_ratio}. Useful
+when resampling: the path of the full data, reused for every resample,
+keeps the selected penalties comparable. Default \code{NULL}.}
 
-\item{penalize_diagonal}{Apply the L1 penalty to the diagonal of the
-precision matrix as well. Default \code{FALSE} (the working covariance diagonal
-is held at \code{diag(S)}); \code{TRUE} holds it at \code{diag(S) + lambda}, and \verb{$kkt} is
-graded against the matching optimality condition.}
+\item{penalize_diagonal}{Whether the penalty also applies to the diagonal
+of the precision matrix. Default \code{FALSE}.}
 
-\item{refit}{What to return at the selected penalty. \code{TRUE} (default)
-re-solves it to machine precision, so the returned network is the certified
-optimum. \code{FALSE} returns the path fit exactly as scanned (at the loose scan
-tolerance). This is a bit-compatibility switch, not a speed one: the refit
-is the strictly better answer and costs little, but a consumer holding
-frozen baselines against an unrefitted path scan needs the scanned matrix to
-reproduce them. \code{"unregularized"} keeps the selected support and refits the
-\emph{unpenalized} graph-restricted MLE on it, which is no longer a penalized
-optimum and is therefore certified by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} instead.}
+\item{refit}{What to return at the selected penalty: \code{TRUE} (default) the
+optimum at that penalty; \code{FALSE} the fit obtained while scanning the
+penalties, less precise and kept to reproduce earlier results;
+\code{"unregularized"} the unpenalized maximum-likelihood network restricted
+to the selected edges, without shrinkage.}
 
-\item{labels}{Optional node labels, one unique label per network node (the
-columns that survive constant / non-numeric column removal).}
+\item{labels}{Optional node labels, one unique label per node of the
+network (the columns left after non-numeric and constant columns are
+dropped).}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
-with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix}, \verb{$ebic}, \verb{$native},
-and \verb{$kkt} (the stationarity residual, or \code{NA} after thresholding). Node order
-in \verb{$weights}, \verb{$nodes}, and \verb{$precision} is always the column order of the
-input \code{data} / \code{cor_matrix}, never sorted. With \code{refit = "unregularized"}
-the object also carries \verb{$support}, and \verb{$kkt} is a \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}
-residual; with \code{refit = FALSE} the reported \verb{$kkt} reflects the loose scan
-tolerance (~1e-4) rather than the refit's ~1e-11. Read the edge table with
-\code{as.data.frame()} (see \linkS4class{psychnet}) and the certificate
-with \code{\link[=certificate]{certificate()}}.
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}) whose edge
+weights are partial correlations. \code{as.data.frame()} returns one row per
+edge with columns \code{from}, \code{to} and \code{weight}; \code{print()} shows the selected
+penalty and the certificate; \code{\link[=certificate]{certificate()}} reports the check. The
+object also stores the precision matrix (\code{precision}), the selected
+penalty (\code{lambda}), \code{gamma}, the correlation matrix used (\code{cor_matrix}),
+the EBIC of the selected network (\code{ebic}), the penalties scanned and
+their EBIC (\code{lambda_path}, \code{ebic_path}) and, with
+\code{refit = "unregularized"}, the selected graph (\code{support}). Nodes keep the
+column order of the input.
 }
 \description{
-Selects an L1 penalty by the extended BIC (Foygel & Drton 2010) over a
-log-spaced path, then refits the chosen penalty to machine precision so the
-fitted precision matrix is the certified global optimum of the convex objective.
-Equivalent in purpose to \code{qgraph::EBICglasso()} / \code{bootnet}'s \code{"EBICglasso"}
-default, but pure base R and self-certified (see \code{\link[=glasso_kkt]{glasso_kkt()}}).
+\code{ebic_glasso()} estimates a Gaussian graphical model: a network in which
+variables are nodes joined by partial correlations, and a missing edge means
+two variables are independent given all the others. It fits the graphical
+lasso, which shrinks weak partial correlations to zero, and chooses the
+penalty by the extended Bayesian information criterion (Epskamp & Fried,
+2018).
+
+An edge is the association between two variables after controlling for all
+other variables in the network. The penalty sets weak partial correlations
+to exactly zero, so that only the associations supported by the data are
+retained, and the EBIC balances the fit of the model against the number of
+edges. \code{ebic_glasso()} fits the graphical lasso over a sequence of
+penalties, selects the penalty with the lowest EBIC and returns the
+partial-correlation network at that penalty. It takes raw data, or a
+correlation matrix together with its sample size. \code{gamma} sets how strongly
+the EBIC favours sparse networks, \code{refit = "unregularized"} keeps the
+selected edges but estimates them without shrinkage, and \code{threshold}
+removes weak edges after estimation.
+
+The returned network is the optimum of the penalized likelihood at the
+selected penalty, which \code{\link[=certificate]{certificate()}} checks.
+
+This regularized partial-correlation network is the standard estimator for
+continuous and ordinal data in psychological network analysis. For data far
+from normality, \code{\link[=huge_network]{huge_network()}} fits the same model after a
+rank-based transformation. \code{\link[=ggm_modselect]{ggm_modselect()}} selects an unregularized
+network by stepwise search, \code{\link[=pcor_network]{pcor_network()}} keeps every partial
+correlation, and \code{\link[=ising_fit]{ising_fit()}} and \code{\link[=mgm_fit]{mgm_fit()}} estimate networks of binary
+and mixed variables. The model is the one fitted by \code{qgraph::EBICglasso()}.
 }
+\details{
+For a precision matrix \eqn{\Theta} with \eqn{E} nonzero off-diagonal
+entries, fitted to a correlation matrix \eqn{S} of \eqn{p} variables and
+\eqn{n} observations, the criterion is
+\deqn{\mathrm{EBIC} = -2L + E \log n + 4 \gamma E \log p, \quad
+      L = \frac{n}{2}\left(\log\det\Theta - \mathrm{tr}(S\Theta)\right).}
+The penalties form a log-spaced sequence of \code{nlambda} values from the
+largest absolute off-diagonal correlation, at which the network is empty,
+down to \code{lambda_min_ratio} times that value. When two penalties give the
+same EBIC, the one earlier in the path is selected, which on the default
+path is the larger penalty and the sparser network. Unless \code{lambda_path} is
+given, a correlation matrix with no off-diagonal association returns the
+empty network with penalty 0.
+
+With \code{na_method = "pairwise"} and incomplete data, the sample size entering
+the EBIC is the median number of observations available for a pair of
+variables.
+
+The certificate is computed by \code{\link[=glasso_kkt]{glasso_kkt()}}. With
+\code{refit = "unregularized"} the network is no longer a penalized optimum and
+is checked by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} instead. With \code{refit = FALSE} or
+\code{native = FALSE} the network is solved to a looser tolerance, and its
+certificate can exceed the default tolerance of \code{\link[=certificate]{certificate()}}. After a
+positive \code{threshold} the certificate is missing; \code{print()} still shows the
+value for the network before thresholding.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when an argument is out of range, \code{threshold} is
+logical, \code{cor_matrix} is not a finite, symmetric, positive semi-definite
+matrix with a positive diagonal, \code{n} is missing with \code{cor_matrix},
+\code{data} has fewer than two usable variables, a pair of variables is never
+observed together, \code{labels} do not match the nodes, \code{native = FALSE}
+without the \code{glasso} package, or every penalty fails to fit;
+\code{psychnet_constant_variable} (warning) when a constant or all-missing
+column is dropped. A \code{psychnet_dropped_columns} message names
+non-numeric columns that were dropped.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 fit <- ebic_glasso(cor_matrix = S, n = 250)
@@ -123,4 +177,10 @@ Systems}, 23, 604-612.
 Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
 correlation networks. \emph{Psychological Methods}, 23(4), 617-634.
 \doi{10.1037/met0000167}
+}
+\seealso{
+\code{\link[=certificate]{certificate()}} and \code{\link[=glasso_kkt]{glasso_kkt()}} for the check;
+\code{\link[=huge_network]{huge_network()}}, \code{\link[=ggm_modselect]{ggm_modselect()}} and \code{\link[=pcor_network]{pcor_network()}} for related
+Gaussian networks; \code{\link[=psychnet]{psychnet()}}, which routes \code{method = "glasso"} here;
+\link[=psychnet-class]{psychnet} for the result.
 }

@@ -5,7 +5,7 @@
 \alias{net_stability}
 \alias{print.psychnet_stability}
 \alias{as.data.frame.psychnet_stability}
-\title{Centrality-stability coefficient (case-dropping subset bootstrap)}
+\title{Assess the stability of centralities when cases are dropped}
 \usage{
 \method{plot}{psychnet_stability}(x, ...)
 
@@ -37,112 +37,149 @@ net_stability(
 \arguments{
 \item{x}{A \code{psychnet_stability} object.}
 
-\item{...}{Passed to the estimator by \code{net_stability()}; ignored by the
-methods.}
+\item{...}{Further arguments for the estimator (\code{net_stability()}); ignored
+by the methods.}
 
-\item{data}{Data frame or matrix (rows = observations), resampled exactly as
-given (see \code{\link[=net_boot]{net_boot()}}).}
+\item{data}{A data frame or matrix with one row per observation, or a
+\link{psychnet_group} estimated from a data set (assessed per group).}
 
-\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
+\item{method}{The estimator, as in \code{\link[=psychnet]{psychnet()}}. Default \code{"glasso"}.}
 
-\item{measures}{Centrality measures to assess. Defaults to the two
-recommended for psychometric networks (\code{c("strength", "expected_influence")}); \code{"betweenness"}/\code{"closeness"} and custom measures
-(via \code{centrality_fn}) are also accepted. See \code{\link[=net_centralities]{net_centralities()}}.}
+\item{measures}{Centrality measures to assess. Default
+\code{c("strength", "expected_influence")}; any measure accepted by
+\code{\link[=net_centralities]{net_centralities()}} can be added.}
 
-\item{centrality_fn}{Optional function supplying any non-built-in \code{measures}
-(see \code{\link[=net_centralities]{net_centralities()}}).}
+\item{centrality_fn}{Optional function supplying measures that are not
+built in (see \code{\link[=net_centralities]{net_centralities()}}).}
 
-\item{drop_prop}{Proportions of cases to drop. Default \code{seq(0.1, 0.9, 0.1)}.}
+\item{drop_prop}{Proportions of cases to drop, each in (0, 1). Default
+\code{seq(0.1, 0.9, by = 0.1)}. Each must remove at least one case and keep at
+least two.}
 
-\item{iter}{Subsets per proportion. Default 100.}
+\item{iter}{Number of subsets per proportion. Default \code{100}.}
 
-\item{threshold}{Correlation a subset must exceed (strictly) to count as
-stable. A single number in (0, 1). Default 0.7.}
+\item{threshold}{Correlation a subset must exceed to count as stable, a
+number in (0, 1). Default \code{0.7}.}
 
-\item{certainty}{Share of stable subsets that must be exceeded (strictly).
-A single number in (0, 1). Default 0.95.}
+\item{certainty}{Share of stable subsets that must be exceeded, a number in
+(0, 1). Default \code{0.95}.}
 
 \item{cor_method}{Correlation between subset and full-sample centralities:
-\code{"pearson"} (default, as in bootnet) or \code{"spearman"} (rank stability).}
+\code{"pearson"} (default, as in \code{bootnet}) or \code{"spearman"} (stability of the
+ranking).}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one per node.}
 
-\item{estimator_args}{Named list of estimator arguments. \code{threshold},
-\code{cor_method} and \code{iter} are arguments of this diagnostic, so an
-estimator's own \code{threshold} or \code{cor_method} must go here, e.g.
-\code{estimator_args = list(threshold = TRUE)}.}
+\item{estimator_args}{Named list of arguments for the estimator. Use it for
+an estimator argument that shares a name with an argument of
+\code{net_stability()}, e.g. \code{estimator_args = list(threshold = TRUE)}.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 
-\item{what}{For \code{as.data.frame()}: \code{"table"} (default) for the
-case-dropping table, \code{"cs"} for the CS-coefficients, or
-\code{"correlations"} for every subset's correlation.}
+\item{what}{For \code{as.data.frame()}: \code{"table"} (default), \code{"cs"} or
+\code{"correlations"}.}
 }
 \value{
-\code{net_stability()} returns an object of class \code{psychnet_stability},
-read with \code{as.data.frame()}, \code{print()} and \code{plot()}.
-
-\code{as.data.frame(x)} (\code{what = "table"}) returns one row per measure per drop
-proportion with columns \code{measure}, \code{drop_prop} (nominal), \code{actual_drop}
-(the proportion actually dropped after rounding to whole cases),
-\code{mean_cor}, \code{sd_cor} (over the defined correlations), \code{prop_above} (share
-of subsets with correlation strictly above \code{threshold}; undefined
-correlations and failed fits count as not above) and \code{n_valid} (subsets
-with a defined correlation). \code{as.data.frame(x, what = "cs")} returns one
-row per measure with columns \code{measure} and \code{cs}.
-\code{as.data.frame(x, what = "correlations")} returns one row per measure per
-subset with columns \code{measure}, \code{drop_prop}, \code{subset} and \code{correlation}
-(\code{NA} when undefined or when the subset fit failed), from which the
+\code{net_stability()} returns an object of class \code{psychnet_stability}.
+Its tables are read with \code{as.data.frame()}:
+\itemize{
+\item \code{as.data.frame(x)} (\code{what = "table"}): one row per measure and drop
+proportion, with columns \code{measure}, \code{drop_prop} (nominal),
+\code{actual_drop} (the proportion dropped after rounding to whole cases),
+\code{mean_cor} and \code{sd_cor} (over the defined correlations), \code{prop_above}
+(share of subsets with a correlation above \code{threshold}) and \code{n_valid}
+(subsets with a defined correlation).
+\item \code{what = "cs"}: one row per measure, with columns \code{measure} and \code{cs}.
+\item \code{what = "correlations"}: one row per measure and subset, with columns
+\code{measure}, \code{drop_prop}, \code{subset} and \code{correlation} (\code{NA} when undefined
+or when the subset could not be estimated), from which the
 CS-coefficient can be recomputed.
+}
 
-A failed subset fit raises a \code{psychnet_resample_failed} warning carrying
-the first error; a failed full-sample fit raises a
-\code{psychnet_estimation_failed} error with the estimator's message.
-\code{print()} shows the method, the subsets per drop proportion and each
-CS-coefficient; \code{plot()} draws the mean correlation against the
-proportion dropped, one line per measure with a +/- 1 SD band, the
-threshold, and the CS-coefficients in the legend. Both return \code{x}
-invisibly.
+\code{print()} shows the estimator, the number of subsets per proportion and
+the CS-coefficient of each measure; \code{print()} and \code{plot()} return \code{x}
+invisibly. For a \link{psychnet_group}, \code{net_stability()} returns one result
+per group (see \link{psychnet_result_group}).
 }
 \description{
-Asks how far the sample can shrink before the ranking of node centralities
-changes. For each drop proportion the network is re-estimated on \code{iter}
-random subsets without replacement, and each subset's centralities are
-correlated with the full-sample centralities. The CS-coefficient of a
-measure is the largest drop proportion at which the share of subsets whose
-correlation is strictly greater than \code{threshold} is itself strictly greater
-than \code{certainty}, the rule of \code{bootnet::corStability()}; Epskamp, Borsboom
-and Fried (2018) suggest that it should not fall below 0.25 and preferably
-exceed 0.5 before centrality differences are interpreted.
+\code{net_stability()} assesses how stable the centralities of a network are when
+cases are dropped, using the case-dropping bootstrap (Epskamp, Borsboom &
+Fried, 2018). The network is re-estimated on subsets of the data from which
+an increasing proportion of cases has been removed, the centralities of each
+subset are correlated with those of the full sample, and the
+correlation-stability coefficient (CS-coefficient) summarizes the result:
+the largest proportion of cases that can be dropped while the subset
+centralities still correlate highly with the full-sample centralities in
+nearly all subsets.
+
+Centrality indices are often used to rank the nodes of a psychometric
+network, for example to identify the symptoms most strongly connected to the
+others, and such a ranking is informative only if a similar ranking would be
+found in another sample. Epskamp, Borsboom and Fried (2018) suggest that the
+CS-coefficient should not be below 0.25, and preferably above 0.5, before
+differences in centrality are interpreted.
+
+The function draws \code{iter} subsets without replacement at every proportion in
+\code{drop_prop}, re-estimates the network on each, and correlates each subset's
+centralities with the full-sample centralities, for every measure in
+\code{measures}. The CS-coefficient of a measure is the largest proportion at
+which the share of subsets whose correlation exceeds \code{threshold} itself
+exceeds \code{certainty}, or 0 when no proportion qualifies.
+
+It returns the summary by drop proportion, the CS-coefficient of each
+measure and the correlation of every subset, read with \code{as.data.frame()}.
+
+For the stability of the edge weights rather than the centralities, use
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}}; for intervals around each edge and
+centrality, use \code{\link[=net_boot]{net_boot()}}.
 }
 \details{
-The correlation follows bootnet's \code{cor0()}: 0 when either centrality vector
-is constant across nodes, undefined when fewer than two values are
-available. Unlike bootnet, which drops undefined correlations from the share
-(\code{na.rm = TRUE}), psychnets counts an undefined correlation (and a failed
-subset fit) as failing, so the CS-coefficient is never raised by subsets
-that could not be compared. A measure whose full-sample centrality is
-constant (for example strength in a two-node network) has CS 0 and raises a
-\code{psychnet_constant_centrality} warning.
+Both comparisons in the CS rule are strict, as in \code{bootnet::corStability()}.
+The correlation of a subset is 0 when either centrality vector is constant
+across nodes, and undefined when fewer than two values are available. An
+undefined correlation, or a subset on which the network could not be
+estimated, counts as not exceeding \code{threshold}, so such subsets never raise
+the CS-coefficient (\code{bootnet} instead leaves undefined correlations out). A
+measure whose full-sample centrality is constant has a CS-coefficient of 0.
+
+Each subset is passed to the estimator as the full data would be (see
+\code{\link[=net_boot]{net_boot()}}). The subsets are drawn before any network is fitted, so the
+result is reproducible with \code{\link[=set.seed]{set.seed()}}.
 }
 \section{Functions}{
 \itemize{
-\item \code{plot(psychnet_stability)}: Case-dropping curves with the CS-coefficients;
-each measure has its own Okabe-Ito colour, line type and point shape.
+\item \code{plot(psychnet_stability)}: The mean correlation with the full-sample
+centralities against the proportion of cases dropped, one line per
+measure (each with its own colour, line type and point shape) with a
+band of +/- 1 SD, the \code{threshold} as a dashed line, and each measure's
+CS-coefficient in the legend.
 
-\item \code{print(psychnet_stability)}: Method, subsets and CS-coefficient per measure.
+\item \code{print(psychnet_stability)}: The estimator, the subsets per proportion and the
+CS-coefficient of each measure.
 
-\item \code{as.data.frame(psychnet_stability)}: The case-dropping table (\code{what = "table"}),
-the CS-coefficient per measure (\code{what = "cs"}), or every subset's
-correlation (\code{what = "correlations"}).
+\item \code{as.data.frame(psychnet_stability)}: The summary by drop proportion
+(\code{what = "table"}), the CS-coefficient of each measure (\code{what = "cs"}),
+or the correlation of every subset (\code{what = "correlations"}).
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument, including drop proportions
+that remove no case or keep fewer than two, and for a group that was not
+estimated from a data set; \code{psychnet_estimation_failed} when the network
+cannot be estimated on the full data; \code{psychnet_resample_failed} (warning)
+when some subsets cannot be estimated, naming the first error, and as an
+error when none can; \code{psychnet_constant_centrality} (warning) when a
+full-sample centrality is constant across nodes;
+\code{psychnet_constant_variable} (warning) when a constant column is dropped.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(200 * 5), 200, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-# method = "pcor" and small iter keep this example fast; the "glasso"
-# default and iter = 100 are what a real analysis should use.
+# method = "pcor" and a small iter keep this example fast; a real analysis
+# uses the "glasso" default and iter = 100.
 cs <- net_stability(x, method = "pcor", drop_prop = c(0.3, 0.6), iter = 10)
 cs                              # the CS-coefficient of each measure
 as.data.frame(cs, what = "cs")  # the same, as a data frame
@@ -153,4 +190,8 @@ plot(cs)                        # mean correlation by drop proportion
 Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 psychological networks and their accuracy: A tutorial paper. \emph{Behavior
 Research Methods}, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
+}
+\seealso{
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}} for the edge weights; \code{\link[=net_boot]{net_boot()}}
+for bootstrap intervals; \code{\link[=net_centralities]{net_centralities()}} for the measures.
 }

@@ -2,38 +2,72 @@
 % Please edit documentation in R/glasso.R
 \name{ggm_support_kkt}
 \alias{ggm_support_kkt}
-\title{Constrained Gaussian-MRF (graph-restricted MLE) stationarity residual}
+\title{Check that a precision matrix is the maximum-likelihood network on a graph}
 \usage{
 ggm_support_kkt(theta, cor_matrix, support, active_tol = 1e-08)
 }
 \arguments{
-\item{theta}{Precision matrix to test.}
+\item{theta}{The precision matrix to check: a finite, square numeric
+matrix.}
 
-\item{cor_matrix}{Correlation / covariance the model was fit to.}
+\item{cor_matrix}{The correlation or covariance matrix the model was fitted
+to, of the same size as \code{theta}.}
 
-\item{support}{Logical p x p matrix; \code{TRUE} where an edge is allowed. It is
-symmetrized (\code{support | t(support)}), so an upper- or lower-triangular
-support describes the same undirected graph; the diagonal is ignored.}
+\item{support}{A logical matrix of the same size, \code{TRUE} where an edge is
+allowed, with no missing values. It is made symmetric, so an upper- or
+lower-triangular matrix describes the same graph; the diagonal is
+ignored.}
 
-\item{active_tol}{Magnitude above which an off-support entry counts as a
-nonzero violation.}
+\item{active_tol}{A single finite number >= 0 (default \code{1e-8}). It is
+checked but does not affect the result: every entry of \code{theta} outside
+the graph counts as a violation of its absolute size.}
 }
 \value{
-Maximum absolute stationarity violation (scalar); 0 = exact optimum,
-\code{Inf} for an asymmetric or non-positive-definite \code{theta}. A \code{support} that
-is not a logical matrix of the right size, or contains \code{NA}, is an error
-of class \code{psychnet_bad_input}.
+A single number, the largest absolute violation of the conditions:
+0 at the exact constrained optimum, \code{Inf} for an asymmetric or
+non-positive-definite \code{theta}.
 }
 \description{
-Certificate for an \emph{unregularized} Gaussian graphical model whose precision
-is constrained to a fixed graph (the estimator behind \code{\link[=ggm_modselect]{ggm_modselect()}} and
-\code{\link[=logo_network]{logo_network()}}). The maximum-likelihood / maximum-entropy conditions for a
-Gaussian Markov random field on a graph \eqn{G} are exact:
-\eqn{W_{ij} = S_{ij}} for every \eqn{(i,j)} on the graph and on the diagonal
-(\eqn{W = \Theta^{-1}}), and \eqn{\Theta_{ij} = 0} for every \eqn{(i,j)} not
-on the graph. A near-zero return certifies the constrained optimum with no
-reference solver.
+\code{ggm_support_kkt()} checks whether a precision matrix is the
+maximum-likelihood Gaussian graphical model on a given graph, for the
+correlation or covariance matrix it was fitted to. Some Gaussian graphical
+models are estimated without a penalty: a graph is chosen first, and the
+precision matrix is then the maximum-likelihood estimate under the
+constraint that every pair of variables not joined by an edge has a
+partial correlation of zero.
+
+This constrained estimate is unique and is characterized by two
+conditions: the covariance implied by the model reproduces the observed
+covariance for every pair joined by an edge and for every variance, and the
+precision matrix is zero for every pair that is not joined. A matrix
+meeting both conditions is the maximum-likelihood network on that graph.
+
+\code{ggm_support_kkt()} returns the largest violation of these conditions; a
+value near zero shows that the matrix is the constrained optimum, up to
+numerical precision.
+
+Networks from \code{\link[=ggm_modselect]{ggm_modselect()}}, \code{\link[=logo_network]{logo_network()}} and
+\code{ebic_glasso(refit = "unregularized")} store this value, and
+\code{\link[=certificate]{certificate()}} reports it. Penalized graphical lasso networks are checked
+by \code{\link[=glasso_kkt]{glasso_kkt()}}.
 }
+\details{
+For a Gaussian graphical model on a graph \eqn{G}, with
+\eqn{W = \Theta^{-1}}, the maximum-likelihood conditions are
+\eqn{W_{ij} = S_{ij}} for every \eqn{(i,j)} in \eqn{G} and on the diagonal,
+and \eqn{\Theta_{ij} = 0} for every \eqn{(i,j)} not in \eqn{G}. The function
+returns the largest absolute deviation from these conditions; a \code{theta}
+that is asymmetric (by more than \code{1e-8}) or not positive definite returns
+\code{Inf}.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{theta} is not a finite square numeric matrix,
+\code{cor_matrix} is not a finite matrix of the same size, \code{support} is not a
+logical matrix of that size without missing values, or \code{active_tol} is
+not a single finite number >= 0.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 # An AR(1) correlation has a tridiagonal inverse: the chain graph is exact.
@@ -41,9 +75,11 @@ chain <- abs(row(S) - col(S)) <= 1
 ggm_support_kkt(solve(S), S, support = chain)
 # The same precision violates an empty-graph (diagonal) constraint.
 ggm_support_kkt(solve(S), S, support = diag(6) > 0)
-# A fitted network reports its residual through certificate().
+# A fitted network reports its value through certificate().
 certificate(ggm_modselect(cor_matrix = S, n = 250))
 }
 \seealso{
-\code{\link[=certificate]{certificate()}}, which reads the stored residual of a fitted network.
+\code{\link[=certificate]{certificate()}}, which reports the stored value of a fitted
+network; \code{\link[=ggm_modselect]{ggm_modselect()}} and \code{\link[=logo_network]{logo_network()}}; \code{\link[=glasso_kkt]{glasso_kkt()}} for
+penalized networks.
 }

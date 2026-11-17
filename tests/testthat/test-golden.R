@@ -59,9 +59,21 @@ test_that("ising_fit glmnet output is unchanged", {
 })
 
 # panel_gvar(): a separate fixture so adding the estimator did not touch the
-# frozen estimator baselines above. 1e-10 is the policy's own threshold; the ML
-# fit is polished to a score of ~1e-13, so the estimate is reproducible far
-# below it. Data from helper-panelgvar.R; regenerate with make-panelgvar.R.
+# frozen estimator baselines above. 1e-10 is the policy's own threshold; an
+# interior ML fit is polished to a score of ~1e-13, so the estimate is
+# reproducible far below it. Data from helper-panelgvar.R; regenerate with
+# make-panelgvar.R.
+#
+# One exception: the saturated fit of the n = 45 design (stepup_small) is a
+# boundary solution (all between-person variances approach zero; score ~5.6e-5,
+# no standard errors). The likelihood is flat there, so the estimates are set by
+# where the optimizer stops and differ across platforms and R versions
+# (max |difference| from the fixture 6.2e-5 on macOS R 4.6, 6.8e-5 on Linux
+# R 4.5.2), while the maximum itself is well determined: the log-likelihood
+# agrees to 9.5e-9 between the two (expected size: score x estimate error, about
+# 4e-9). That fit is therefore checked by its boundary flag and log-likelihood
+# (relative 1e-10, about 1.1e-7 absolute), with the estimates only to 1e-3.
+# Its pruned and step-up fits are interior and keep the 1e-10 comparison.
 golden_pgv <- readRDS(test_path("fixtures", "golden-panelgvar.rds"))
 
 test_that("panel_gvar output is unchanged", {
@@ -90,8 +102,17 @@ test_that("panel_gvar output is unchanged", {
                             stepup = FALSE))
     up <- quiet(panel_gvar(w$data, vars = w$design, select = "prune",
                            alpha = cs$alpha, adjust = cs$adjust))
-    expect_equal(as.data.frame(sat, what = "parameters")$estimate,
-                 golden_pgv[[nm]]$saturated, tolerance = 1e-10, label = nm)
+    if (identical(nm, "stepup_small")) {
+      expect_true(as.data.frame(sat, what = "diagnostics")$boundary,
+                  label = nm)
+      expect_equal(as.data.frame(sat, what = "fit")$logl, -1098.25044401848,
+                   tolerance = 1e-10, label = nm)
+      expect_equal(as.data.frame(sat, what = "parameters")$estimate,
+                   golden_pgv[[nm]]$saturated, tolerance = 1e-3, label = nm)
+    } else {
+      expect_equal(as.data.frame(sat, what = "parameters")$estimate,
+                   golden_pgv[[nm]]$saturated, tolerance = 1e-10, label = nm)
+    }
     expect_equal(as.data.frame(pru, what = "parameters")$estimate,
                  golden_pgv[[nm]]$pruned, tolerance = 1e-10, label = nm)
     expect_equal(as.data.frame(up, what = "parameters")$estimate,

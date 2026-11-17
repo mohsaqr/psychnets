@@ -2,7 +2,7 @@
 % Please edit documentation in R/tmfg.R
 \name{tmfg_network}
 \alias{tmfg_network}
-\title{Triangulated Maximally Filtered Graph (TMFG)}
+\title{Filter a correlation network with the triangulated maximally filtered graph}
 \usage{
 tmfg_network(
   data = NULL,
@@ -14,45 +14,84 @@ tmfg_network(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied.}
+\item{data}{A numeric data frame or matrix with one row per observation.
+Not needed when \code{cor_matrix} is given.}
 
-\item{cor_matrix}{Optional correlation matrix.}
+\item{cor_matrix}{A correlation matrix to use instead of \code{data}; a
+covariance matrix is rescaled to a correlation matrix.}
 
-\item{n}{Accepted and ignored. TMFG is a structural filter and needs no
-sample size; the argument exists only so a uniform \verb{(cor_matrix=, n=)} call
-shared with the other estimators does not partial-match \code{na_method}.}
+\item{n}{Accepted and ignored: the TMFG needs no sample size. It exists so
+that a call written for the other estimators, \verb{(cor_matrix = , n = )},
+also works here.}
 
-\item{cor_method}{Correlation when \code{data} is supplied: \code{"pearson"} (default),
-\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial; see \code{\link[=cor_auto]{cor_auto()}}).}
+\item{cor_method}{Correlation computed from \code{data}: \code{"pearson"} (default),
+\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric and polyserial
+correlations for ordinal items; see \code{\link[=cor_auto]{cor_auto()}}).}
 
-\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+\item{na_method}{Handling of missing values in \code{data}: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels, one unique label per network node.}
+\item{labels}{Optional node labels, one unique label per node of the
+network.}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the filtered (signed)
-correlation matrix on the retained edges, with \verb{$adjacency} (the
-\code{3(p - 2)}-edge TMFG graph, including any retained edge of weight 0),
-\verb{$cliques}, \verb{$separators} (the chordal decomposition used by
-\code{\link[=logo_network]{logo_network()}}), and \verb{$cor_matrix}.
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}) whose edge
+weights are the signed correlations on the retained edges.
+\code{as.data.frame()} returns one row per edge with columns \code{from}, \code{to} and
+\code{weight}; \code{\link[=certificate]{certificate()}} reports the structural check. The object also
+stores the TMFG graph as a logical matrix, including any retained edge of
+weight 0 (\code{adjacency}), its four-variable cliques and three-variable
+separators (\code{cliques}, \code{separators}; used by \code{\link[=logo_network]{logo_network()}}) and the
+correlation matrix (\code{cor_matrix}). The sample size is recorded when the
+network is built from \code{data} and is \code{NA} with \code{cor_matrix}.
 }
 \description{
-Builds a sparse, planar, chordal association network by greedily retaining
-the \code{3(p - 2)} most informative edges (Massara et al. 2016). Equivalent in
-purpose to \code{NetworkToolbox::TMFG()} / \code{bootnet}'s \code{"TMFG"} default, pure base
-R; correctness is certified structurally by \code{\link[=tmfg_certificate]{tmfg_certificate()}}.
+\code{tmfg_network()} filters a correlation matrix to a sparse backbone with the
+triangulated maximally filtered graph (TMFG). The TMFG retains, for
+\eqn{p} variables, exactly \eqn{3(p - 2)} edges, chosen greedily to carry
+as much of the absolute correlation as possible while the graph stays
+planar and built from tetrahedra (four-variable cliques) (Massara et al.,
+2016).
+
+Like other information-filtering networks, the TMFG keeps the strongest
+associations while imposing a fixed, interpretable structure. It shows
+which associations form the core of the correlation structure, without a
+sample-size-dependent selection rule. \code{tmfg_network()} builds the TMFG from
+raw data or a correlation matrix.
+
+It returns the graph with the signed correlation of each retained pair as
+the edge weight; the edges are marginal correlations, not partial
+correlations. The structure that defines the graph is checked by
+\code{\link[=certificate]{certificate()}}.
+
+For a Gaussian graphical model with partial correlations on the TMFG graph
+use \code{\link[=logo_network]{logo_network()}}; for an unfiltered correlation network use
+\code{\link[=cor_network]{cor_network()}}. The graph is the one built by \code{NetworkToolbox::TMFG()}.
 }
 \details{
-The graph always has exactly \code{3(p - 2)} edges in \verb{$adjacency}
-(that is what \code{\link[=tmfg_certificate]{tmfg_certificate()}} checks). \verb{$weights} carries the signed
-correlation on each retained edge, so a retained edge whose correlation is
-exactly zero is in \verb{$adjacency} but has weight 0 and therefore does not
-appear in \verb{$edges}, in \code{as.data.frame()}, or in the printed edge count.
-With continuous data this happens only for a correlation matrix that has
-exact zeros (for example a hand-built or block-diagonal \code{cor_matrix}).
+The construction starts from the four variables with the largest sums of
+above-average absolute correlations, joined as a tetrahedron. It then adds
+the remaining variables one at a time, each time choosing the variable and
+the triangular face of the current graph for which the variable's summed
+absolute correlation with the face's three variables is largest, and
+joining the variable to those three. The result is a chordal planar graph
+with \eqn{3(p - 2)} edges, which \code{\link[=tmfg_certificate]{tmfg_certificate()}} verifies.
+
+The graph always has \eqn{3(p - 2)} edges, but a retained pair whose
+correlation is exactly zero has edge weight 0 and is therefore absent from
+\code{as.data.frame()} and from the printed edge count. With continuous data this
+happens only for a correlation matrix with exact zeros, such as a
+constructed or block-diagonal \code{cor_matrix}.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when there are fewer than four variables,
+\code{cor_matrix} is not a finite, symmetric, positive semi-definite matrix
+with a positive diagonal, an argument is invalid, or \code{labels} do not
+match the nodes; \code{psychnet_constant_variable} (warning) when a constant
+or all-missing column is dropped.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(200 * 6), 200, 6)
@@ -62,4 +101,10 @@ tmfg_network(x)
 Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network
 filtering for big data: Triangulated maximally filtered graph. \emph{Journal of
 Complex Networks}, 5(2), 161-178. \doi{10.1093/comnet/cnw015}
+}
+\seealso{
+\code{\link[=tmfg_certificate]{tmfg_certificate()}} and \code{\link[=certificate]{certificate()}} for the check;
+\code{\link[=logo_network]{logo_network()}} for the Gaussian graphical model on this graph;
+\code{\link[=psychnet]{psychnet()}}, which routes \code{method = "tmfg"} here; \link[=psychnet-class]{psychnet} for
+the result.
 }

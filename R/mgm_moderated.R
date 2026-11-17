@@ -409,51 +409,74 @@
   wadj
 }
 
-#' Condition a moderated network at a moderator value
+#' Read a moderated mixed graphical model at a value of the moderator
 #'
-#' Extracts the effective pairwise network implied by a moderated MGM
-#' ([mgm_fit()] with `moderators`) at a given value of the moderator, mirroring
-#' `mgm::condition()`: it applies the AND-rule pre-filter, absorbs the moderator
-#' value into the main-effect coefficients, and re-aggregates the pairwise edges.
+#' @description
+#' `condition()` reads a moderated mixed graphical model at one value of the
+#' moderator and returns that network as an ordinary `psychnet`;
+#' `as.data.frame()` and `print()` read the moderated fit itself. In a
+#' moderated network model, fitted by [mgm_fit()] with `moderators`, the
+#' strength of an edge between two variables can depend on the value of a
+#' third variable, the moderator, so each pairwise association has a main
+#' effect and an interaction with the moderator.
 #'
-#' `value` is always read on the moderator's **own** scale. For a categorical
-#' moderator it is one of the levels observed in the data, in the coding the
-#' data used: `1`/`2` for a moderator coded 1/2, `"treat"` for a factor level
-#' `"treat"` (the internal 0-based level code is never exposed). For a
-#' continuous moderator it is a value on the raw scale; the moderator is
-#' standardized internally (mgm's `scale = TRUE`), and the value is mapped to
-#' `(value - mean) / sd` before conditioning, so `value = mean(moderator)` gives
-#' the network at the average moderator. (`mgm::condition()` instead takes the
-#' value on its internal standardized scale: `condition(fit, v)` here equals
-#' `mgm::condition(ref, list(k = (v - mean) / sd))`.)
+#' The network at a given moderator value, for example in a treatment group
+#' compared with a control group, or at low compared with high stress, shows
+#' how the conditional associations among the other variables differ across
+#' the moderator. For each pair, `condition()` takes the main effect plus the
+#' interaction evaluated at `value`, aggregated over the two nodewise
+#' regressions and combined by the AND or OR rule. Pairs whose main effect or
+#' interaction did not survive the rule at fitting time contribute nothing.
+#' The moderator itself carries no edges, and edge weights are magnitudes
+#' (non-negative), as in `mgm::condition()`. `as.data.frame()` on the
+#' moderated fit lists the size of the main effect and of the moderation
+#' effect of every pair with a nonzero effect, or, with `value`, the edges of
+#' the conditioned network.
 #'
-#' @param object A `psychnet_moderated` object from `mgm_fit(..., moderators=)`.
-#' @param value A single moderator value to condition on: a level of a
-#'   categorical moderator (number, label, factor or logical, as coded in the
-#'   data), or a finite number on the raw scale of a continuous one.
-#' @param rule Symmetrization rule; defaults to the rule used at fit time.
-#' @param x A `psychnet_moderated` object.
-#' @param row.names,optional Standard [as.data.frame()] arguments; ignored.
+#' `value` is read on the moderator's own scale: a level of a categorical
+#' moderator as coded in the data (`1` or `2` for a moderator coded 1/2,
+#' `"treat"` for a factor level `"treat"`), or a raw value of a continuous
+#' moderator, so that `value = mean(moderator)` gives the network at the
+#' average moderator. The conditioned network is computed from the fit rather
+#' than estimated, so [certificate()] reports its certificate as missing.
+#'
+#' `condition()` returns an undirected network of class `psychnet`
+#' ([psychnet-class]).
+#'
+#' To fit the moderated model, use [mgm_fit()] with `moderators`.
+#'
+#' @param object A `psychnet_moderated` fit from [mgm_fit()] with
+#'   `moderators`.
+#' @param value A single moderator value: a level of a categorical moderator
+#'   (number, label, factor or logical, as coded in the data), or a finite
+#'   number on the raw scale of a continuous one. For `as.data.frame()`,
+#'   `NULL` (default) gives the table of main and moderation effects.
+#' @param rule `"AND"` or `"OR"` combination of the two conditioned nodewise
+#'   estimates of each pair. Default `NULL` uses the rule of the fit.
+#' @param x A `psychnet_moderated` fit.
+#' @param row.names,optional Ignored.
 #' @param ... Unused.
-#' @return `condition()` returns a `psychnet` network object (the moderator node
-#'   carries no edges), with `$mod_value` the value conditioned on.
+#' @return `condition()` returns an undirected network of class `psychnet`
+#'   ([psychnet-class]); the value conditioned on is stored as `mod_value`.
 #'
 #'   `as.data.frame()` on the moderated fit returns, with `value = NULL`, one
-#'   row per pair of nodes joined by a main effect or a moderation effect, with
-#'   columns `from`, `to`, `main_effect` (aggregated magnitude of the pairwise
-#'   main effect, mgm convention: mean absolute nodewise estimate, zero when the
-#'   pair does not survive `rule`), `interaction` (aggregated magnitude of the
-#'   moderator x pair three-way interaction, `NA` for a pair that includes the
-#'   moderator itself), `moderated` (logical: `interaction > 0`) and
-#'   `involves_moderator`. With a `value`, it returns the tidy edge list
-#'   (`from`, `to`, `weight`) of `condition(x, value)`.
+#'   row per pair of nodes joined by a main effect or a moderation effect,
+#'   with columns `from`, `to`, `main_effect` (magnitude of the pairwise main
+#'   effect: the mean absolute nodewise estimate, zero when the pair does not
+#'   survive the rule), `interaction` (magnitude of the moderator-by-pair
+#'   interaction, `NA` for a pair that includes the moderator), `moderated`
+#'   (`interaction > 0`, `NA` for a pair that includes the moderator) and
+#'   `involves_moderator`. With a `value`, it returns the edge list (`from`,
+#'   `to`, `weight`) of `condition(x, value)`.
 #'
-#'   `print()` on the moderated fit shows the number of nodes, the moderator
-#'   and the fit settings, and returns `x` invisibly.
-#'
-#'   Errors of class `psychnet_bad_input` when `value` is missing, not length
-#'   one, not a level of a categorical moderator, or not a finite number for a
-#'   continuous one.
+#'   `print()` shows the number of nodes, the moderator and the fit settings,
+#'   and returns `x` invisibly.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `object` is not a moderated fit, `rule` is not
+#'   `"AND"` or `"OR"`, or `value` is missing, not of length one, not a level
+#'   of a categorical moderator, or not a finite number for a continuous one.
+#' @seealso [mgm_fit()] for fitting the moderated model; [psychnet-class] for
+#'   the conditioned network.
 #' @examples
 #' set.seed(1)
 #' x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
@@ -465,7 +488,7 @@
 #' as.data.frame(fit)            # main and moderation effects per edge
 #' condition(fit, value = 1)     # no x1-y edge
 #' condition(fit, value = 2)     # the x1-y edge appears
-#' as.data.frame(fit, value = 2) # the same network as a tidy edge list
+#' as.data.frame(fit, value = 2) # the same network as an edge list
 #' @export
 condition <- function(object, value, rule = NULL) {
   if (!inherits(object, "psychnet_moderated")) {
@@ -482,8 +505,8 @@ condition <- function(object, value, rule = NULL) {
                              rule = rule))
 }
 
-#' @describeIn condition Tidy table of the moderated fit: per-edge main and
-#'   moderation effects, or (with `value`) the conditioned edge list.
+#' @describeIn condition Main and moderation effects of every pair, or (with
+#'   `value`) the edge list of the conditioned network.
 #' @export
 as.data.frame.psychnet_moderated <- function(x, row.names = NULL,
                                              optional = FALSE, ...,
@@ -511,7 +534,7 @@ as.data.frame.psychnet_moderated <- function(x, row.names = NULL,
   out
 }
 
-#' @describeIn condition The moderated fit: nodes, moderator and settings.
+#' @describeIn condition Print the nodes, the moderator and the fit settings.
 #' @export
 print.psychnet_moderated <- function(x, ...) {
   cat(sprintf("<psychnet_moderated> %d nodes, moderator = %s\n",

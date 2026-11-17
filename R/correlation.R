@@ -427,49 +427,95 @@
   list(S = S, n = n, n_pair = NULL, na_used = "none", labels = labels)
 }
 
-#' Correlation network
+#' Estimate a correlation network
 #'
-#' Marginal (zero-order) association network: the correlation matrix of the
-#' chosen `cor_method` (Pearson by default) with the diagonal removed.
-#' Equivalent to `bootnet`'s `"cor"` default.
+#' @description
+#' `cor_network()` estimates a correlation network, in which each pair of
+#' variables is joined by their marginal (zero-order) correlation. An edge
+#' shows that two variables covary without controlling for any other variable,
+#' so it also reflects associations that run through other variables in the
+#' network.
 #'
-#' @param data Numeric data frame or matrix (rows = observations). Optional if
-#'   `cor_matrix` is supplied. Ordered-factor columns enter as their integer
-#'   level codes; other non-numeric columns are dropped with a
-#'   `psychnet_dropped_columns` message, and constant / all-missing columns
-#'   with a `psychnet_constant_variable` warning.
-#' @param cor_matrix Optional precomputed correlation matrix; if given, `data`
-#'   is ignored and `n` is required when `alpha` is used.
-#' @param n Sample size (needed for significance testing when `cor_matrix` is
-#'   supplied): a single number >= 1, and a whole number of at least 3 when
-#'   `alpha` is set.
-#' @param cor_method Correlation method: `"pearson"` (default), `"spearman"`,
-#'   `"kendall"`, or `"auto"` (polychoric/polyserial for ordinal items, the
-#'   `qgraph::cor_auto` default; see [cor_auto()]).
-#' @param threshold Correlations with absolute value below this are set to zero.
-#'   A single number >= 0; default 0. (qgraph's logical `threshold = TRUE` is
-#'   refused -- use `alpha` for a significance rule.)
-#' @param alpha Significance level in (0, 1); if set, correlations not
-#'   significant at `alpha` are zeroed. `NULL` (default) keeps every edge.
-#'   Kendall marginal correlations use a tie-corrected asymptotic test and
-#'   require raw data. Significance testing of full-order partial Kendall
-#'   correlations is not supported. A sample too small for the test
-#'   (df = n - 2 - k <= 0, with k the number of variables partialled out) is an
-#'   error of class `psychnet_degenerate_sample`, never an empty network.
-#' @param adjust Multiple-comparison adjustment for the edge p-values (any
-#'   [stats::p.adjust] method). Default `"none"`.
-#' @param na_method Missing-data handling: `"pairwise"` (default) uses
-#'   pairwise-complete correlations projected to the nearest positive-definite
-#'   matrix; `"listwise"` drops rows with any `NA`. Identical when data is
-#'   complete.
-#' @param labels Optional node labels, one unique label per network node.
-#' @return A `psychnet` object whose `$weights` is the thresholded correlation
-#'   matrix, with `$cor_matrix`, `$n_eff`, `$na_method` (and `$p_values` when
-#'   `alpha` is used). `$n_pair` (the pairwise co-observation counts) is present
-#'   only when the network is estimated from `data`. Node order in `$weights`
-#'   and `$nodes` is always the column order of the input `data` /
-#'   `cor_matrix`, never sorted. Invalid arguments raise errors of class
-#'   `psychnet_bad_input`.
+#' The correlations are computed from raw data, or taken from a supplied
+#' correlation matrix. `cor_method` chooses Pearson, Spearman, Kendall or
+#' polychoric and polyserial correlations; `alpha` keeps only correlations
+#' that differ significantly from zero, with an optional multiple-comparison
+#' adjustment (`adjust`); `threshold` removes weak correlations.
+#'
+#' `cor_network()` returns the correlation matrix as a network; the network
+#' involves no optimization and has no certificate.
+#'
+#' The network gives a descriptive overview of the association structure,
+#' such as the clustering of items or symptoms, but it does not separate
+#' direct from indirect associations. For associations that control for the
+#' other variables use [pcor_network()] (all partial correlations) or
+#' [ebic_glasso()] (a regularized partial-correlation network);
+#' [tmfg_network()] filters the correlations to a sparse backbone. The network
+#' is the `"cor"` estimator of `bootnet`.
+#'
+#' @details
+#' Each correlation is tested against zero with the statistic
+#' \eqn{t = r \sqrt{df / (1 - r^2)}} on \eqn{df = n - 2} degrees of freedom
+#' for a correlation and \eqn{df = n - p} for a full-order partial
+#' correlation of \eqn{p} variables. With `na_method = "pairwise"` and
+#' incomplete data, a correlation is tested with the number of observations
+#' available for that pair. Kendall correlations use a tie-corrected
+#' asymptotic test of the raw data. The p-values are adjusted over the
+#' distinct pairs and are computed from the correlations before `threshold`
+#' is applied; an edge is kept only if it passes both rules.
+#'
+#' @param data A numeric data frame or matrix with one row per observation.
+#'   Not needed when `cor_matrix` is given. Ordered factors enter as their
+#'   level codes; other non-numeric columns are dropped with a message, and
+#'   constant or all-missing columns with a warning.
+#' @param cor_matrix A correlation matrix to use instead of `data`; a
+#'   covariance matrix is rescaled to a correlation matrix. With `alpha`, `n`
+#'   is then required.
+#' @param n Sample size of `cor_matrix`, needed only for the significance test:
+#'   a single number >= 1, and a whole number >= 3 when `alpha` is set.
+#'   Ignored when `data` is given.
+#' @param cor_method Correlation computed from `data`: `"pearson"` (default),
+#'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric and polyserial
+#'   correlations for ordinal items; see [cor_auto()]).
+#' @param threshold Absolute edge weight below which an edge is set to zero: a
+#'   single number >= 0. Default `0`. A logical value (the
+#'   `threshold = TRUE` rule of `qgraph`) is refused; use `alpha` for a
+#'   significance rule.
+#' @param alpha Significance level in (0, 1): edges not significant at this
+#'   level are set to zero. Default `NULL`, no test. A Kendall test needs raw
+#'   `data`; partial Kendall correlations cannot be tested.
+#' @param adjust Multiple-comparison adjustment of the edge p-values, any
+#'   method of [stats::p.adjust()]. Default `"none"`.
+#' @param na_method Handling of missing values in `data`: `"pairwise"`
+#'   (default) uses pairwise-complete correlations adjusted to the nearest
+#'   positive-definite matrix; `"listwise"` drops incomplete rows. The two
+#'   agree for complete data.
+#' @param labels Optional node labels, one unique label per node of the
+#'   network.
+#' @return A fitted network of class `psychnet` ([psychnet-class]) whose edge
+#'   weights are correlations. `as.data.frame()` returns one row per edge
+#'   with columns `from`, `to` and `weight`; [certificate()] reports that the
+#'   network has no certificate. The object also stores the correlation
+#'   matrix (`cor_matrix`), the sample size (`n_eff`; with pairwise data, the
+#'   median number of observations per pair), the missing-data handling used
+#'   (`na_method`; `"none"` with `cor_matrix`), the observations per pair when
+#'   estimated from `data` (`n_pair`) and, with `alpha`, the unadjusted
+#'   p-values (`p_values`). Nodes keep the column order of the input.
+#' @section Conditions:
+#'   `psychnet_degenerate_sample` (error, also of class
+#'   `psychnet_bad_input`) when the sample is too small for the test
+#'   (\eqn{df \le 0}); `psychnet_bad_input` when an argument is out of range,
+#'   `threshold` is logical, `cor_matrix` is not a finite, symmetric, positive
+#'   semi-definite matrix with a positive diagonal, `n` is missing with
+#'   `cor_matrix` and `alpha`, a Kendall test is requested with
+#'   `cor_matrix`, `data` has fewer than two usable variables, a pair of
+#'   variables is never observed together, or `labels` do not match the
+#'   nodes; `psychnet_constant_variable` (warning) when a constant or
+#'   all-missing column is dropped. A `psychnet_dropped_columns` message
+#'   names non-numeric columns that were dropped.
+#' @seealso [pcor_network()]; [ebic_glasso()]; [tmfg_network()];
+#'   [psychnet()], which routes `method = "cor"` here; [psychnet-class] for
+#'   the result.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 4), 200, 4)
 #' cor_network(x)
@@ -513,23 +559,72 @@ cor_network <- function(data = NULL, cor_matrix = NULL, n = NULL,
                 n_obs = n, extra = extra)
 }
 
-#' Partial correlation network
+#' Estimate a partial correlation network
 #'
-#' Conditional (full-order) association network: each edge is the correlation
-#' between two variables with all others partialled out, obtained from the
-#' inverse correlation matrix. Equivalent to `bootnet`'s `"pcor"` default.
+#' @description
+#' `pcor_network()` estimates a partial correlation network, in which each
+#' pair of variables is joined by their correlation after controlling for all
+#' other variables in the network. An edge is therefore an association that
+#' the remaining variables do not account for, and for normally distributed
+#' data a partial correlation of zero means that the two variables are
+#' conditionally independent.
 #'
-#' Full-order partial correlations need an invertible correlation matrix. With
-#' fewer observations than variables, or collinear / duplicate columns, they
-#' are not identified: the nearest positive-definite matrix is inverted so a
-#' network is still returned, and a `psychnet_singular` warning says its edges
-#' are not interpretable (use a regularized estimator such as [ebic_glasso()]).
+#' This is the unregularized Gaussian graphical model, in which every partial
+#' correlation is estimated and none is set to zero by the model itself. The
+#' partial correlations are computed from the inverse of the correlation
+#' matrix of raw data or of a supplied correlation matrix. `alpha` keeps only
+#' partial correlations that differ significantly from zero, with an optional
+#' multiple-comparison adjustment (`adjust`), and `threshold` removes weak
+#' ones.
+#'
+#' `pcor_network()` returns the partial correlations as a network; the
+#' network involves no optimization and has no certificate.
+#'
+#' With many variables relative to the sample size, partial correlations are
+#' estimated with large error, and with fewer observations than variables they
+#' are not identified. [ebic_glasso()] and [ggm_modselect()] then estimate a
+#' sparse network instead; [cor_network()] gives the marginal correlations.
+#' The network is the `"pcor"` estimator of `bootnet`.
+#'
+#' @details
+#' With \eqn{\Theta} the inverse correlation matrix, the partial correlation
+#' of variables \eqn{i} and \eqn{j} is
+#' \eqn{-\Theta_{ij} / \sqrt{\Theta_{ii}\Theta_{jj}}}. The significance test
+#' is described in [cor_network()]; for \eqn{p} variables it has
+#' \eqn{n - p} degrees of freedom. It needs a single sample size, so with
+#' pairwise data whose pairs have different numbers of observations `alpha` is
+#' refused.
+#'
+#' When the correlation matrix is singular, as with fewer observations than
+#' variables or with collinear or duplicate columns, the nearest
+#' positive-definite matrix is inverted so that a network is still returned,
+#' and a warning says that its edges are not interpretable.
 #'
 #' @inheritParams cor_network
-#' @return A `psychnet` object whose `$weights` is the thresholded
-#'   partial-correlation matrix, with `$precision`, `$cor_matrix` (and
-#'   `$p_values` when `alpha` is used). Node order in `$weights` and `$nodes` is
-#'   always the column order of the input `data` / `cor_matrix`, never sorted.
+#' @return A fitted network of class `psychnet` ([psychnet-class]) whose edge
+#'   weights are partial correlations. `as.data.frame()` returns one row per
+#'   edge with columns `from`, `to` and `weight`; [certificate()] reports that
+#'   the network has no certificate. The object also stores the precision
+#'   matrix (`precision`), the correlation matrix (`cor_matrix`), the sample
+#'   size (`n_eff`), the missing-data handling used (`na_method`), the
+#'   observations per pair when estimated from `data` (`n_pair`) and, with
+#'   `alpha`, the unadjusted p-values (`p_values`). Nodes keep the column order
+#'   of the input.
+#' @section Conditions:
+#'   `psychnet_singular` (warning) when the correlation matrix is singular or
+#'   nearly so; `psychnet_degenerate_sample` (error, also of class
+#'   `psychnet_bad_input`) when the sample is too small for the test
+#'   (\eqn{n \le p}); `psychnet_bad_input` when an argument is out of range,
+#'   `threshold` is logical, `alpha` is combined with Kendall correlations or
+#'   with unequal pairwise sample sizes, `cor_matrix` is not a finite,
+#'   symmetric, positive semi-definite matrix with a positive diagonal, `n` is
+#'   missing with `cor_matrix` and `alpha`, `data` has fewer than two usable
+#'   variables, or `labels` do not match the nodes;
+#'   `psychnet_constant_variable` (warning) when a constant or all-missing
+#'   column is dropped.
+#' @seealso [cor_network()]; [ebic_glasso()] and [ggm_modselect()] for sparse
+#'   networks; [psychnet()], which routes `method = "pcor"` here;
+#'   [psychnet-class] for the result.
 #' @examples
 #' x <- matrix(stats::rnorm(200 * 4), 200, 4)
 #' pcor_network(x)

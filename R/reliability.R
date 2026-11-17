@@ -253,67 +253,100 @@
 
 # ---- edge-weight case-dropping stability -----------------------------------
 
-#' Edge-weight stability coefficient (case-dropping subset bootstrap)
+#' Assess the stability of edge weights when cases are dropped
 #'
-#' The edge-vector complement to [net_stability()]. For each drop proportion the
-#' network is re-estimated on random case-dropped subsets and the subset
-#' edge-weight vector is compared with the full-sample one. The edge-weight
-#' CS-coefficient follows the rule of `bootnet::corStability()` (Epskamp,
-#' Borsboom & Fried 2018): a subset is stable when its edge-vector correlation
-#' is strictly greater than `threshold`, and the CS-coefficient is the largest
-#' drop proportion at which the share of stable subsets is strictly greater
-#' than `certainty` (0 when no proportion qualifies).
+#' @description
+#' `net_casedrop_reliability()` assesses how stable the edge weights of a
+#' network are when cases are dropped. It applies the case-dropping procedure
+#' of Epskamp, Borsboom and Fried (2018) to the edge weights rather than to node
+#' centralities: the network is re-estimated on subsets from which an
+#' increasing proportion of cases has been removed, and each subset's edge
+#' weights are compared with the full-sample edge weights. The edge weights
+#' state which variables are associated, and how strongly; if the network
+#' describes the population rather than the particular sample, the edge weights
+#' estimated from a subset of the cases should resemble those of the full
+#' sample.
 #'
-#' The correlation follows bootnet's `cor0()`: 0 when either edge vector is
-#' constant (for example an empty subset network), undefined when fewer than
-#' two edges are available. Unlike bootnet, which drops undefined correlations
-#' from the share (`na.rm = TRUE`), psychnets counts an undefined correlation
-#' (and a failed subset fit) as failing, so the CS-coefficient is never raised
-#' by subsets that could not be compared.
+#' The function draws `iter` subsets without replacement at every proportion in
+#' `drop_prop`, re-estimates the network on each, and compares the subset and
+#' full-sample edge weights by their correlation and by the mean, median and
+#' maximum absolute difference. It summarizes each of these metrics by drop
+#' proportion and computes an edge-weight CS-coefficient: the largest
+#' proportion at which the share of subsets whose edge-weight correlation
+#' exceeds `threshold` itself exceeds `certainty`, or 0 when no proportion
+#' qualifies.
 #'
-#' @param data Data frame or matrix (rows = observations), resampled exactly as
-#'   given (see [net_boot()]), or a `psychnet_group` (case-dropped per level).
-#' @param method Estimator (see [psychnet()]). Default `"glasso"`.
-#' @param drop_prop Proportions of cases to drop. Default `seq(0.1, 0.9, 0.1)`.
-#' @param iter Subsets per proportion. Default 100.
-#' @param threshold Correlation a subset must exceed (strictly) to count as
-#'   stable. A single number in (0, 1). Default 0.7.
-#' @param certainty Share of stable subsets that must be exceeded (strictly).
-#'   A single number in (0, 1). Default 0.95.
-#' @param cor_method Correlation method for the edge-vector comparison:
-#'   `"pearson"` (default, as in bootnet), `"spearman"`, or `"kendall"`.
-#' @param labels Optional node labels.
-#' @param estimator_args Named list of estimator arguments. `cor_method`,
-#'   `iter`, `threshold` and `drop_prop` are arguments of this diagnostic (the
-#'   edge comparison), so an estimator's own `cor_method` or `threshold` must
-#'   go here, e.g. `estimator_args = list(cor_method = "spearman")`; values in
-#'   `...` with those names never reach the estimator.
-#' @param ... Passed to the estimator by `net_casedrop_reliability()`;
-#'   ignored by the methods.
+#' It returns one row per metric and drop proportion, with the edge-weight
+#' CS-coefficient kept alongside the table.
+#'
+#' [net_stability()] applies the same procedure to node centralities, and
+#' [net_split_reliability()] compares networks estimated on two halves of the
+#' sample.
+#'
+#' @details
+#' Both comparisons in the CS rule are strict, as in `bootnet::corStability()`.
+#' The edge-weight correlation of a subset is 0 when either edge-weight vector
+#' is constant (for example an empty subset network), and undefined when fewer
+#' than two edges are available. An undefined correlation, or a subset on
+#' which the network could not be estimated, counts as not exceeding
+#' `threshold`, so such subsets never raise the CS-coefficient (`bootnet`
+#' instead leaves undefined correlations out). Each subset is passed to the
+#' estimator as the full data would be (see [net_boot()]).
+#'
+#' @param data A data frame or matrix with one row per observation, or a
+#'   [psychnet_group] estimated from a data set (assessed per group).
+#' @param method The estimator, as in [psychnet()]. Default `"glasso"`.
+#' @param drop_prop Proportions of cases to drop, each in (0, 1). Default
+#'   `seq(0.1, 0.9, by = 0.1)`. Each must remove at least one case and keep at
+#'   least two.
+#' @param iter Number of subsets per proportion. Default `100`.
+#' @param threshold Edge-weight correlation a subset must exceed to count as
+#'   stable, a number in (0, 1). Default `0.7`.
+#' @param certainty Share of stable subsets that must be exceeded, a number in
+#'   (0, 1). Default `0.95`.
+#' @param cor_method Correlation between subset and full-sample edge weights:
+#'   `"pearson"` (default, as in `bootnet`), `"spearman"` or `"kendall"`.
+#' @param labels Optional node labels, one per node.
+#' @param estimator_args Named list of arguments for the estimator. Use it for
+#'   an estimator argument that shares a name with an argument of this
+#'   function, e.g. `estimator_args = list(cor_method = "spearman")`; such
+#'   names given in `...` do not reach the estimator.
+#' @param ... Further arguments for the estimator
+#'   (`net_casedrop_reliability()`); ignored by the methods.
 #' @param x A `psychnet_casedrop` object.
-#' @return A tidy `data.frame` (class `psychnet_casedrop`), one row per metric
-#'   per drop proportion, with columns `metric`, `drop_prop` (nominal),
-#'   `actual_drop` (the proportion actually dropped after rounding to whole
+#' @return A data frame of class `psychnet_casedrop`, one row per metric and
+#'   drop proportion, with columns `metric` (`"correlation"`,
+#'   `"mean_abs_dev"`, `"median_abs_dev"` or `"max_abs_dev"`), `drop_prop`
+#'   (nominal), `actual_drop` (the proportion dropped after rounding to whole
 #'   cases), `mean`, `sd` and `n_valid` (subsets in which the metric was
-#'   defined; `mean`/`sd` are `NA` when too few were). The edge-weight
-#'   CS-coefficient is stored with it and shown when the result is printed.
-#'   Undefined correlations raise a `psychnet_undefined_statistic` warning; a
-#'   constant full-sample edge vector (e.g. an empty network) raises a
-#'   `psychnet_constant_centrality` warning (its CS-coefficient is 0).
-#'   A failed subset fit raises a `psychnet_resample_failed` warning carrying
-#'   the first error; a failed full-sample fit raises a
-#'   `psychnet_estimation_failed` error with the estimator's message. `plot()`
-#'   draws the four similarity metrics (correlation, mean/median/max absolute
-#'   deviation) against the proportion dropped, each with a +/- 1 SD band, the
-#'   correlation panel carrying the threshold and the CS-coefficient. `print()`
-#'   and `plot()` return `x` invisibly.
+#'   defined; `mean` and `sd` are `NA` when too few were). The edge-weight
+#'   CS-coefficient and the correlation of every subset are kept with the
+#'   table; `print()` shows the CS-coefficient above the table. `plot()` draws
+#'   the four metrics against the proportion dropped, each with a band of
+#'   +/- 1 SD, and marks `threshold` and the CS-coefficient on the correlation
+#'   panel. `print()` and `plot()` return `x` invisibly. For a
+#'   [psychnet_group], the function returns one result per group.
+#' @section Conditions:
+#'   `psychnet_bad_input` for an invalid argument, including drop proportions
+#'   that remove no case or keep fewer than two, and for a group that was not
+#'   estimated from a data set; `psychnet_estimation_failed` when the network
+#'   cannot be estimated on the full data; `psychnet_resample_failed` (warning)
+#'   when some subsets cannot be estimated, naming the first error, and as an
+#'   error when none can; `psychnet_undefined_statistic` (warning) when the
+#'   edge-weight correlation is undefined in some subsets;
+#'   `psychnet_constant_centrality` (warning) when the full-sample edge weights
+#'   are all equal (for example an empty network), which makes the
+#'   CS-coefficient 0; `psychnet_constant_variable` (warning) when a constant
+#'   column is dropped.
+#' @seealso [net_stability()] for centralities; [net_split_reliability()] for
+#'   split-half agreement; [net_boot()] for bootstrap intervals of each edge.
 #' @references Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 #'   psychological networks and their accuracy. *Behavior Research Methods*,
 #'   50(1), 195-212.
 #' @examples
-#' # `method`, `iter`, and `drop_prop` are chosen so the example runs quickly;
-#' # the defaults (method = "glasso", iter = 100, drop_prop = seq(0.1, 0.9,
-#' # 0.1)) are what a real reliability assessment should use.
+#' # method, iter and drop_prop are chosen so the example runs quickly; a
+#' # real analysis uses the defaults (method = "glasso", iter = 100,
+#' # drop_prop = seq(0.1, 0.9, 0.1)).
 #' rel <- net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
 #'                                 drop_prop = c(0.25, 0.5))
 #' rel
@@ -410,8 +443,8 @@ net_casedrop_reliability <- function(data, method = "glasso",
   tab
 }
 
-#' @describeIn net_casedrop_reliability The metric table and the edge-weight
-#'   CS-coefficient.
+#' @describeIn net_casedrop_reliability The edge-weight CS-coefficient,
+#'   followed by the table of metrics.
 #' @export
 print.psychnet_casedrop <- function(x, ...) {
   cat(sprintf("# edge-weight stability: %s | CS = %.2f (%s cor > %.2f in > %.0f%% of subsets)\n",
@@ -421,7 +454,8 @@ print.psychnet_casedrop <- function(x, ...) {
   invisible(x)
 }
 
-#' @describeIn net_casedrop_reliability Similarity metrics by drop proportion.
+#' @describeIn net_casedrop_reliability The four metrics against the
+#'   proportion of cases dropped.
 #' @export
 plot.psychnet_casedrop <- function(x, ...) {
   panels <- c("correlation", "mean_abs_dev", "median_abs_dev", "max_abs_dev")
@@ -453,47 +487,79 @@ plot.psychnet_casedrop <- function(x, ...) {
 
 # ---- split-half reliability ------------------------------------------------
 
-#' Split-half reliability of the network edge structure
+#' Assess the split-half reliability of a network's edge weights
 #'
-#' Repeatedly splits the sample into two halves, estimates a network on each, and
-#' compares their edge-weight vectors. Reports, across splits, the edge-weight
-#' correlation between halves plus the mean/median/maximum absolute edge
-#' deviation - a psychometric reliability view of the estimated structure.
+#' @description
+#' `net_split_reliability()` assesses the split-half reliability of a network's
+#' edge weights. Split-half reliability is the agreement between networks
+#' estimated on two random halves of the sample, which stand in for two
+#' independent samples from the same population; it shows how reproducible the
+#' estimated structure is at that sample size. Repeating the split many times
+#' gives the distribution of this agreement rather than a value that depends on
+#' one arbitrary split.
 #'
-#' @param data Data frame or matrix (rows = observations), resampled exactly as
-#'   given (see [net_boot()]), or a `psychnet_group` (split-half per level).
-#' @param method Estimator (see [psychnet()]). Default `"glasso"`.
-#' @param iter Number of split-half iterations. Default 100.
-#' @param split Fraction of rows in the first half. Default 0.5.
-#' @param cor_method Correlation method for the between-halves edge comparison:
-#'   `"pearson"` (default), `"spearman"`, or `"kendall"`.
-#' @param labels Optional node labels.
-#' @param estimator_args Named list of estimator arguments. `cor_method`,
-#'   `iter` and `split` are arguments of this diagnostic (the between-halves
-#'   comparison), so an estimator's own `cor_method` or `threshold` must go
-#'   here, e.g. `estimator_args = list(cor_method = "spearman")`; values in
-#'   `...` with those names never reach the estimator.
-#' @param ... Passed to the estimator by `net_split_reliability()`; ignored by
-#'   the methods.
+#' The function draws `iter` random splits, with a share `split` of the rows in
+#' the first half, estimates a network on each half, and compares the two
+#' edge-weight vectors by their correlation and by the mean, median and maximum
+#' absolute difference.
+#'
+#' For each of these metrics it returns the mean, the standard deviation and
+#' the 2.5th and 97.5th percentiles across splits.
+#'
+#' For the stability of the edge weights as cases are removed, use
+#' [net_casedrop_reliability()]; for the stability of centralities, use
+#' [net_stability()]; for bootstrap intervals of each edge, use [net_boot()].
+#'
+#' @details
+#' The edge-weight correlation of a split is 0 when exactly one half has a
+#' constant edge-weight vector (for example an empty network against a
+#' non-empty one), and undefined when both halves are constant (they agree,
+#' but no correlation exists) or fewer than two edges are available. Splits in
+#' which a metric is undefined are left out of its summary and counted in
+#' `n_valid`. Each half is passed to the estimator as the full data would be
+#' (see [net_boot()]); the splits are drawn before any network is fitted, so
+#' the result is reproducible with [set.seed()].
+#'
+#' @param data A data frame or matrix with one row per observation, or a
+#'   [psychnet_group] estimated from a data set (assessed per group).
+#' @param method The estimator, as in [psychnet()]. Default `"glasso"`.
+#' @param iter Number of random splits. Default `100`.
+#' @param split Share of the rows in the first half, a number in (0, 1).
+#'   Default `0.5`. Each half must keep at least two rows.
+#' @param cor_method Correlation between the edge weights of the two halves:
+#'   `"pearson"` (default), `"spearman"` or `"kendall"`.
+#' @param labels Optional node labels, one per node.
+#' @param estimator_args Named list of arguments for the estimator. Use it for
+#'   an estimator argument that shares a name with an argument of this
+#'   function, e.g. `estimator_args = list(cor_method = "spearman")`; such
+#'   names given in `...` do not reach the estimator.
+#' @param ... Further arguments for the estimator (`net_split_reliability()`);
+#'   ignored by the methods.
 #' @param x A `psychnet_reliability` object.
-#' @return A tidy `data.frame` (class `psychnet_reliability`), one row per metric
-#'   with columns `metric`, `mean`, `sd`, `lower`, `upper` (2.5% and 97.5%
-#'   percentiles across splits) and `n_valid` (splits in which the metric was
-#'   defined). The edge correlation is 0 for a split in which exactly one half
-#'   has a constant edge vector (for example an empty network against a
-#'   non-empty one, as in bootnet's `cor0()`), and undefined when both halves
-#'   are constant (they agree, but no correlation exists) or fewer than two
-#'   edges are available; undefined splits are excluded from the summary, counted out of
-#'   `n_valid`, and announced by a `psychnet_undefined_statistic` warning. A
-#'   metric defined in no split has `NA` summaries. A failed split fit raises a
-#'   `psychnet_resample_failed` warning carrying the first error; a failed
-#'   full-sample fit raises a `psychnet_estimation_failed` error with the
-#'   estimator's message. The per-split draws are stored with the result for
-#'   `plot()`, which draws a histogram of each metric across splits with its
-#'   mean marked. `print()` and `plot()` return `x` invisibly.
+#' @return A data frame of class `psychnet_reliability`, one row per metric
+#'   (`"mean_abs_dev"`, `"median_abs_dev"`, `"correlation"`, `"max_abs_dev"`),
+#'   with columns `metric`, `mean`, `sd`, `lower` and `upper` (2.5th and
+#'   97.5th percentiles across splits) and `n_valid` (splits in which the
+#'   metric was defined; the summaries are `NA` when it was defined in none).
+#'   The values of every split are kept with the table for `plot()`, which
+#'   draws a histogram of each metric across splits with its mean marked.
+#'   `print()` and `plot()` return `x` invisibly. For a [psychnet_group], the
+#'   function returns one result per group.
+#' @section Conditions:
+#'   `psychnet_bad_input` for an invalid argument, including a `split` that
+#'   leaves fewer than two rows in a half, and for a group that was not
+#'   estimated from a data set; `psychnet_estimation_failed` when, without
+#'   `labels`, the network cannot be estimated on the full data;
+#'   `psychnet_resample_failed` (warning) when some halves cannot be
+#'   estimated, naming the first error, and as an error when fewer than two
+#'   splits succeed; `psychnet_undefined_statistic` (warning) when a metric is
+#'   undefined in some splits; `psychnet_constant_variable` (warning) when a
+#'   constant column is dropped.
+#' @seealso [net_casedrop_reliability()] and [net_stability()] for
+#'   case-dropping stability; [net_boot()] for bootstrap intervals.
 #' @examples
-#' # `method` and `iter` are chosen so the example runs quickly; the defaults
-#' # (method = "glasso", iter = 100) are what a real assessment should use.
+#' # method and iter are chosen so the example runs quickly; a real analysis
+#' # uses the defaults (method = "glasso", iter = 100).
 #' sh <- net_split_reliability(SRL_Claude, method = "pcor", iter = 10)
 #' sh
 #' plot(sh)
@@ -580,7 +646,8 @@ net_split_reliability <- function(data, method = "glasso", iter = 100L,
   summ
 }
 
-#' @describeIn net_split_reliability The between-halves metric table.
+#' @describeIn net_split_reliability The number of splits and the table of
+#'   metrics.
 #' @export
 print.psychnet_reliability <- function(x, ...) {
   cat(sprintf("# split-half reliability: %s | %d iterations (%.0f/%.0f split)\n",
@@ -590,7 +657,8 @@ print.psychnet_reliability <- function(x, ...) {
   invisible(x)
 }
 
-#' @describeIn net_split_reliability Histograms of the metrics across splits.
+#' @describeIn net_split_reliability A histogram of each metric across
+#'   splits.
 #' @export
 plot.psychnet_reliability <- function(x, ...) {
   it <- attr(x, "iterations")

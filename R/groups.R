@@ -175,29 +175,47 @@
   invisible(NULL)
 }
 
-#' Per-group psychometric networks
+#' Networks estimated separately for each group
 #'
-#' The object returned by [psychnet()] when `group` is supplied: a named list of
-#' [psychnet] networks, one per level of the grouping variable. It plots as a
-#' grid with `cograph::splot()` and is consumed per level by the framework verbs
-#' ([net_centralities()], [net_predict()], [net_boot()], [net_stability()],
-#' [net_compare()]), each returning a `*_group` result.
-#' Data-based resampling and comparison require independent cross-sectional
-#' rows. Groups built from several occasions per actor need resampling at the
-#' actor level and are refused by these row-based diagnostics.
+#' @description
+#' A `psychnet_group` holds networks estimated separately for each group: one
+#' fitted network per level of the grouping variable, estimated with the same
+#' method and settings. When the same variables are measured in several
+#' groups, such as clinical and control samples, cohorts or occasions, these
+#' networks show how the association structure differs between them.
 #'
-#' Networks are listed in the grouping variable's level order when it is a
-#' factor (so its first level is group 1 of [net_compare()]), otherwise in
-#' order of first appearance. Rows with a missing group value are dropped
-#' with a `psychnet_rows_dropped` warning; an empty-string level, or a
-#' cross-sectional level with fewer than 3 rows, is a `psychnet_bad_input`
-#' error; a level with no more rows than variables raises a
-#' `psychnet_small_sample` warning.
+#' It is returned by [psychnet()] with `group`. `print()` lists the groups
+#' with their numbers of nodes and edges and their sample sizes, `summary()`
+#' returns these counts as a table, and `as.data.frame()` stacks the edges of
+#' all groups; `cograph::splot()` draws the networks in a grid. The analysis
+#' functions [net_centralities()], [net_predict()],
+#' [net_boot()], [net_stability()], [net_casedrop_reliability()] and
+#' [net_split_reliability()] accept the object and return one result per
+#' group (a [psychnet_result_group]); [net_compare()] tests the difference
+#' between two of its levels.
+#'
+#' Resampling and comparison assume independent rows. Groups formed from
+#' several occasions per actor of an event log are refused by these
+#' functions, because they would need resampling at the actor level.
+#'
+#' @details
+#' Groups are ordered by the levels of the grouping variable when it is a
+#' factor, so its first level is group 1 in [net_compare()], and otherwise by
+#' first appearance. Each network keeps the rows it was estimated from, so
+#' two members can be passed to [net_compare()] directly.
 #'
 #' @param x A `psychnet_group` object.
 #' @param ... Ignored.
-#' @return `x`, invisibly (for `print`), after printing one row per group with
-#'   its node and edge counts and sample size.
+#' @return `print()` returns `x` invisibly, after printing one row per group
+#'   with its numbers of nodes and edges and its sample size.
+#' @section Conditions:
+#'   `psychnet_rows_dropped` (warning) when rows with a missing group value
+#'   are dropped; `psychnet_bad_input` when a group column is missing, a
+#'   level is the empty string, there are fewer than 2 levels, or a level of
+#'   a numeric table has fewer than 3 rows; `psychnet_small_sample` (warning)
+#'   when a level has no more rows than variables.
+#' @seealso [psychnet()] to estimate the networks; [psychnet-class] for a
+#'   single network; [net_compare()] to compare two groups.
 #' @examples
 #' d <- rbind(data.frame(SRL_GPT, source = "GPT"),
 #'            data.frame(SRL_Claude, source = "Claude"))
@@ -219,10 +237,9 @@ print.psychnet_group <- function(x, ...) {
 }
 
 #' @rdname psychnet_group
-#' @param row.names,optional Ignored (S3 consistency).
-#' @return For `as.data.frame`, the per-group edge lists stacked with a leading
-#'   `group` column: one row per edge per group, columns `group`, `from`,
-#'   `to`, `weight`.
+#' @param row.names,optional Ignored.
+#' @return `as.data.frame()` returns a data frame with one row per edge per
+#'   group and columns `group`, `from`, `to` and `weight`.
 #' @export
 as.data.frame.psychnet_group <- function(x, row.names = NULL,
                                          optional = FALSE, ...) {
@@ -231,9 +248,9 @@ as.data.frame.psychnet_group <- function(x, row.names = NULL,
 
 #' @rdname psychnet_group
 #' @param object A `psychnet_group` object.
-#' @return For `summary`, a data frame with node/edge counts and mean absolute
-#'   edge weight: one row per group, or per group and `level` when a group
-#'   contains within/between networks.
+#' @return `summary()` returns a data frame with one row per group (or per
+#'   group and `level` when a group holds within-actor and between-actor
+#'   networks) and columns `group`, `nodes`, `edges` and `mean_abs_weight`.
 #' @export
 summary.psychnet_group <- function(object, ...) {
   tab <- .group_network_summary(object)
@@ -333,17 +350,27 @@ summary.psychnet_group <- function(object, ...) {
   res
 }
 
-#' Per-group framework results
+#' Results of an analysis applied to networks per group
 #'
-#' The list returned by a framework verb ([net_centralities()], [net_predict()],
-#' [net_boot()], [net_stability()]) applied to a [psychnet_group]: one result per
-#' group level, keyed by level. `as.data.frame()` stacks the per-group tables
-#' with a leading `group` column.
+#' @description
+#' A `psychnet_result_group` holds the results of an analysis applied to
+#' networks estimated per group, such as their centralities or bootstrapped
+#' edges: one result per group, keyed by group level, so that they can be
+#' printed together and combined into one table.
+#'
+#' It is returned when a [psychnet_group] is passed to [net_centralities()],
+#' [net_predict()], [net_boot()], [net_stability()],
+#' [net_casedrop_reliability()] or [net_split_reliability()]. `print()` shows
+#' each group's result under a heading, and `as.data.frame()` stacks the
+#' groups' tables with a leading `group` column.
 #'
 #' @param x A `psychnet_result_group` object.
-#' @param ... Ignored.
-#' @return `x`, invisibly (for `print`), after printing each group's result
-#'   under a group heading.
+#' @param ... Ignored by `print()`; passed by `as.data.frame()` to the
+#'   `as.data.frame()` method of each group's result (for example `what`).
+#' @return `print()` returns `x` invisibly, after printing each group's
+#'   result under a group heading.
+#' @seealso [psychnet_group] for the networks; the analysis functions listed
+#'   above for the columns of each table.
 #' @examples
 #' d <- rbind(data.frame(SRL_GPT, source = "GPT"),
 #'            data.frame(SRL_Claude, source = "Claude"))
@@ -365,11 +392,10 @@ print.psychnet_result_group <- function(x, ...) {
 }
 
 #' @rdname psychnet_result_group
-#' @param row.names,optional Ignored (S3 consistency).
-#' @return For `as.data.frame`, the per-group tables stacked with a `group`
-#'   column: each group's result converted by its own `as.data.frame()`
-#'   method, with `...` (e.g. `what =`) passed on to it. An error converting
-#'   any group's result is raised, not dropped.
+#' @param row.names,optional Ignored.
+#' @return `as.data.frame()` returns the groups' tables, each converted by its
+#'   own `as.data.frame()` method, stacked with a leading `group` column. An
+#'   error in converting any group's result is raised, not skipped.
 #' @export
 as.data.frame.psychnet_result_group <- function(x, row.names = NULL,
                                                 optional = FALSE, ...) {

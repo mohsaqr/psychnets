@@ -169,25 +169,41 @@
   )
 }
 
-#' Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm /
-#' psychonetrics
+#' Map the arguments of established network packages to psychnets
 #'
-#' A tidy, one-row-per-argument map from each reference package's estimator to
-#' its `psychnet` equivalent, so users migrating from `qgraph::EBICglasso`,
-#' `qgraph::cor_auto`, `qgraph::ggmModSelect`, `IsingFit::IsingFit`,
-#' `mgm::mgm`, or `psychonetrics::panelgvar` can find the matching argument and
-#' see what `psychnet` changes by default. Intensive time-series models
-#' (`graphicalVAR`, `mlVAR`) are out of scope; the few-wave panel model is
-#' covered by [panel_gvar()].
+#' @description
+#' `net_crosswalk()` maps the arguments of `qgraph`, `IsingFit`, `mgm` and
+#' `psychonetrics` functions to their psychnets counterparts, as a table with
+#' one row per argument. It shows which function fits the same model, which
+#' argument corresponds to which, and where the defaults or the meaning of an
+#' argument differ, for analyses moved to this package from those packages.
 #'
-#' @param reference Which reference function to show: `"all"` (default),
-#'   `"EBICglasso"`, `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, `"mgm"`, or
+#' The table covers `qgraph::EBICglasso()` ([ebic_glasso()]),
+#' `qgraph::cor_auto()` ([cor_auto()]), `qgraph::ggmModSelect()`
+#' ([ggm_modselect()]), `IsingFit::IsingFit()` ([ising_fit()]), `mgm::mgm()`
+#' ([mgm_fit()]) and `psychonetrics::panelgvar()` ([panel_gvar()]); `reference`
+#' selects one of them. Each row records whether the argument is identical,
+#' renamed, has a different default or a different meaning, or exists in only
+#' one of the two functions, with a short note.
+#'
+#' The result is a data frame with one row per argument; nothing is fitted.
+#'
+#' Intensive time-series models (`graphicalVAR`, `mlVAR`) are not covered by
+#' this package.
+#'
+#' @param reference The reference function to show: `"all"` (default),
+#'   `"EBICglasso"`, `"cor_auto"`, `"ggmModSelect"`, `"IsingFit"`, `"mgm"` or
 #'   `"panelgvar"`.
-#' @return A tidy `data.frame`, one row per argument, with columns `reference`
-#'   (the `pkg::fn` being substituted), `psychnet` (the psychnet verb),
-#'   `ref_arg`, `psychnet_arg` (`"-"` when there is no counterpart), `status`
-#'   (`identical` / `renamed` / `default differs` / `semantics differ` /
-#'   `reference only` / `psychnet only`), and a short `note`.
+#' @return A data frame with one row per argument and columns `reference` (the
+#'   reference function, as `pkg::fn`), `psychnet` (the corresponding function
+#'   in this package), `ref_arg` and `psychnet_arg` (the argument names, `"-"`
+#'   when there is no counterpart), `status` (`"identical"`, `"renamed"`,
+#'   `"default differs"`, `"semantics differ"`, `"reference only"` or
+#'   `"psychnet only"`) and `note`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `reference` is not one of the listed values.
+#' @seealso [psychnet()], which also accepts the `qgraph` and `bootnet` method
+#'   names.
 #' @examples
 #' net_crosswalk("EBICglasso")
 #' net_crosswalk("IsingFit")

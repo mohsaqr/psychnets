@@ -2,27 +2,40 @@
 % Please edit documentation in R/predictability.R
 \name{node_predictability}
 \alias{node_predictability}
-\title{Node predictability as a plotting vector}
+\title{Return node predictability as a vector for plotting}
 \usage{
 node_predictability(x, data = NULL)
 }
 \arguments{
-\item{x}{A \link{psychnet} object.}
+\item{x}{A fitted network (\link[=psychnet-class]{psychnet}).}
 
 \item{data}{The data the network was estimated from; required for the
-nodewise models (ising / ising_sampler / mgm), ignored for the GGMs.}
+nodewise models (\code{ising}, \code{ising_sampler}, \code{mgm}), ignored otherwise.}
 }
 \value{
-A named numeric vector, one value per node (node order), each in
-\verb{[0, 1]}.
+A numeric vector with one value per node, in node order, named by
+node label, each value between 0 and 1.
 }
 \description{
-A thin companion to \code{\link[=net_predict]{net_predict()}} that returns predictability as a plain
-numeric vector in node order, clamped to \verb{[0, 1]} -- the form
-\code{cograph::splot()} expects for \code{pie_values} (the predictability ring drawn
-around each node). Use \code{\link[=net_predict]{net_predict()}} when you want the full tidy table.
+\code{node_predictability()} returns node predictability as a numeric vector in
+node order, limited to the range 0 to 1, as \code{cograph::splot()} expects for
+\code{pie_values}. Node predictability is the proportion of a node's variance
+explained by its neighbours in the network (see \code{\link[=net_predict]{net_predict()}}), and is
+often drawn as a ring around each node of a network plot.
+
+For binary nodes the value is the normalized accuracy (nCC). Use
+\code{\link[=net_predict]{net_predict()}} for the full table, including the type of each node and the
+raw accuracy.
 }
+\section{Conditions}{
+
+The conditions of \code{\link[=net_predict]{net_predict()}}.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 node_predictability(ebic_glasso(cor_matrix = S, n = 250))
+}
+\seealso{
+\code{\link[=net_predict]{net_predict()}} for the table.
 }

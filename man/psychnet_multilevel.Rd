@@ -6,7 +6,7 @@
 \alias{as.data.frame.psychnet_multilevel}
 \alias{summary.psychnet_multilevel}
 \alias{plot.psychnet_multilevel}
-\title{Within / between event-data networks}
+\title{Within-actor and between-actor networks from event data}
 \usage{
 \method{print}{psychnet_multilevel}(x, ...)
 
@@ -19,34 +19,61 @@
 \arguments{
 \item{x, object}{A \code{psychnet_multilevel} object.}
 
-\item{...}{Ignored by \code{print}, \code{summary} and \code{as.data.frame}; passed to
-\code{cograph::splot()} by \code{plot}.}
+\item{...}{Passed to \code{cograph::splot()} by \code{plot()}; ignored by the other
+methods.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 }
 \value{
-\code{x}, invisibly (for \code{print}), after printing the numbers of actors and
-occasions and each network's node and edge counts.
+\code{print()} returns \code{x} invisibly, after printing the numbers of
+actors and occasions and each network's numbers of nodes and edges.
 
-For \code{as.data.frame}, the two edge lists stacked with a leading
-\code{level} column (\code{"within"} or \code{"between"}): columns \code{level}, \code{from}, \code{to},
-\code{weight}, one row per edge.
+\code{as.data.frame()} returns one row per edge of the two networks,
+with columns \code{level} (\code{"within"} or \code{"between"}), \code{from}, \code{to} and
+\code{weight}.
 
-For \code{summary}, a data frame with one row per level (\code{"within"},
-\code{"between"}): columns \code{level}, \code{nodes}, \code{edges}, \code{mean_abs_weight} (0
-for a network without edges) and \code{n} (the level's effective sample
-size: pooled within-actor degrees of freedom, or the number of actors).
+\code{summary()} returns a data frame with one row per level
+(\code{"within"}, \code{"between"}) and columns \code{level}, \code{nodes}, \code{edges},
+\code{mean_abs_weight} (0 for a network without edges) and \code{n} (the sample
+size used at that level).
 
-For \code{plot}, \code{x} invisibly, after drawing the within and between
-networks side by side with \code{cograph::splot()} (a Suggested package; a
-\code{psychnet_bad_input} error says so when it is not installed).
+\code{plot()} draws the two networks side by side with
+\code{cograph::splot()} and returns \code{x} invisibly.
 }
 \description{
-The object returned by \code{\link[=psychnet]{psychnet()}} for nested event data with
-\code{standardize = FALSE}: a pair of Gaussian graphical networks decomposing the
-actor-by-action frequency covariance into a within-actor and a between-actor
-part.
+A \code{psychnet_multilevel} object holds a pair of Gaussian graphical
+networks estimated from event data with several occasions per actor: a
+within-actor network and a between-actor network. \code{\link[=psychnet]{psychnet()}} returns it
+for event data (an event log, or a table of action frequencies with one
+row per occasion and an \code{id} column) with several occasions per actor and
+\code{standardize = FALSE}, estimating both networks with the chosen method.
+
+When the same actors, such as students in a learning environment,
+contribute several occasions (sessions), the association between the
+frequencies of two actions has two sources. Within actors, it shows
+whether an actor who performs one action more often than usual on an
+occasion also performs the other more often. Between actors, it shows
+whether actors who perform one action more often on average also perform
+the other more often. The two can differ in size and even in sign. The
+within network is estimated from each occasion's deviations from its
+actor's mean action frequencies, with the pooled within-actor degrees of
+freedom (occasions minus actors) as sample size; the between network from
+the actors' mean frequencies, with the number of actors as sample size.
+
+\code{print()} reports the numbers of actors, occasions, nodes and edges,
+\code{summary()} and \code{as.data.frame()} return data frames, and \code{plot()} draws
+the two networks side by side.
+
+With \code{standardize = TRUE} (the default), \code{\link[=psychnet]{psychnet()}} returns only the
+within-actor network, as a single \code{psychnet}. For persons measured at
+fixed waves, with effects from one wave to the next, use \code{\link[=panel_gvar]{panel_gvar()}}.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} from \code{plot()} when the \code{cograph} package is not
+installed.
+}
+
 \examples{
 set.seed(1)
 ev <- data.frame(
@@ -59,4 +86,8 @@ ml
 summary(ml)
 as.data.frame(ml)
 if (requireNamespace("cograph", quietly = TRUE)) plot(ml)
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}} for fitting; \code{\link[=event_frequencies]{event_frequencies()}} for the
+conversion of an event log; \link[=psychnet-class]{psychnet} for the two networks.
 }

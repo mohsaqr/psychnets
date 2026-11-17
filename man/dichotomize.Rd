@@ -2,41 +2,60 @@
 % Please edit documentation in R/dichotomize.R
 \name{dichotomize}
 \alias{dichotomize}
-\title{Dichotomize numeric columns to 0/1}
+\title{Split numeric items into binary 0/1 variables}
 \usage{
 dichotomize(data, method = c("median", "mean", "rank"))
 }
 \arguments{
-\item{data}{Numeric matrix or data frame (rows = observations).}
+\item{data}{A numeric matrix or data frame with one row per observation.}
 
-\item{method}{Split rule, applied independently to each column:
+\item{method}{Split rule, applied to each column:
 \describe{
-\item{\code{"median"}}{(default) \code{1} if the value is \code{>=} the column median.}
-\item{\code{"mean"}}{\code{1} if the value is \code{>} the column mean.}
-\item{\code{"rank"}}{\code{1} for observations whose average rank is above the
-midpoint. Tied values always remain together, so the split may be
-unbalanced rather than depending on row order.}
+\item{\code{"median"}}{(default) \code{1} when the value is at or above the
+column median.}
+\item{\code{"mean"}}{\code{1} when the value is above the column mean.}
+\item{\code{"rank"}}{\code{1} when the value's average rank is above the
+midpoint. Tied values stay together, so the split can be
+unbalanced but never depends on row order.}
 }
-On a floor- or ceiling-heavy item the median can equal the column minimum,
-so \code{"median"} (\code{>=}) puts every observation in the upper group and the
-output column is constant. Such columns are reported by a
-\code{psychnet_constant_variable} warning (an Ising fit would drop them);
-\code{method = "mean"} or \code{"rank"} splits them.}
+On an item with many responses at its floor, the median can equal the
+minimum, so \code{"median"} puts every observation in the upper group and the
+output column is constant (an Ising fit would drop it); \code{"mean"} or
+\code{"rank"} splits such items.}
 }
 \value{
-An integer matrix of \code{0}/\code{1} values with the same dimensions and
-dimnames as \code{data}. Missing values stay \code{NA} in the output (they are not
-assigned to either group). A non-numeric \code{data}, an empty one, or a
-constant / all-missing input column is an error of class
-\code{psychnet_bad_input}.
+An integer matrix of 0/1 values with the dimensions and dimnames
+of \code{as.matrix(data)}; missing values stay \code{NA}.
 }
 \description{
-Splits each column of a numeric matrix or data frame into a binary 0/1
-variable. This is the usual preprocessing step before fitting an Ising
-network (\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}}) to Likert or other
-ordinal/continuous data, which require binary input.
+\code{dichotomize()} splits numeric items into binary 0/1 variables, each
+column independently at its median (default), at its mean, or by rank.
+Ising network models (\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}}) describe binary
+variables, so Likert-type or continuous items must be split before such a
+model can be fitted; the resulting network then describes associations
+between scoring high and scoring low on the items rather than between
+their full response scales.
+
+Missing values stay missing. The result is an integer 0/1 matrix with the
+dimensions of the input.
+
+Splitting discards the information in the response scale. To keep it,
+estimate a Gaussian graphical model, for example \code{\link[=ebic_glasso]{ebic_glasso()}} with
+\code{cor_method = "auto"} (polychoric correlations for ordinal items), or a
+mixed graphical model with \code{\link[=mgm_fit]{mgm_fit()}}.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{data} is not numeric or has no columns, a
+column is constant or entirely missing, or \code{method} is not one of the
+rules; \code{psychnet_constant_variable} (warning) when a split puts every
+observation of a column in one group.
+}
+
 \examples{
 b <- dichotomize(SRL_GPT, method = "median")
 table(b)                          # values are 0/1 only
+}
+\seealso{
+\code{\link[=ising_fit]{ising_fit()}} and \code{\link[=ising_sampler]{ising_sampler()}}, which need binary data.
 }

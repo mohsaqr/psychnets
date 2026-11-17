@@ -3,7 +3,7 @@
 \docType{data}
 \name{srl_panel}
 \alias{srl_panel}
-\title{Synthetic weekly self-regulated-learning panel}
+\title{Simulated weekly panel of self-regulated learning}
 \format{
 A data frame with 400 rows (100 students x 4 weeks) and 7 columns:
 \describe{
@@ -24,11 +24,10 @@ data in the idiographic package.
 srl_panel
 }
 \description{
-A synthetic panel of 100 students measured in four consecutive weeks on five
-self-regulated-learning indicators -- a small, fully shareable data set for
-the panel graphical VAR (\code{\link[=panel_gvar]{panel_gvar()}}).
-}
-\details{
+\code{srl_panel} is a simulated panel of 100 students measured in four consecutive
+weeks on five self-regulated-learning indicators -- a small, fully shareable
+dataset for the panel graphical VAR (\code{\link[=panel_gvar]{panel_gvar()}}).
+
 The data were simulated, once, from a stationary random-intercept VAR(1)
 (the panel graphical VAR model) whose structure was taken from the weekly
 means of real experience-sampling data (the anonymized \code{esm_srl} data of the
@@ -47,5 +46,8 @@ fit <- panel_gvar(srl_panel,
                            "anxiety"),
                   id = "student", wave = "week")
 summary(fit)
+}
+\seealso{
+\code{\link[=panel_gvar]{panel_gvar()}} for the model; \link{SRL} for cross-sectional data.
 }
 \keyword{datasets}

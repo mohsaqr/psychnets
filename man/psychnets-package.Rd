@@ -4,26 +4,33 @@
 \name{psychnets-package}
 \alias{psychnets}
 \alias{psychnets-package}
-\title{psychnets: Clean-Room Base-R Psychometric Network Estimation}
+\title{psychnets: Psychometric Network Estimation}
 \description{
-Estimates psychometric network models in pure base R, with no compiled
-dependencies and dependency-free correctness certificates. See \code{\link[=psychnet]{psychnet()}}
-for the unified entry point to the cross-sectional estimators
-(\code{\link[=cor_network]{cor_network()}}, \code{\link[=pcor_network]{pcor_network()}}, \code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=huge_network]{huge_network()}},
-\code{\link[=ggm_modselect]{ggm_modselect()}}, \code{\link[=tmfg_network]{tmfg_network()}}, \code{\link[=logo_network]{logo_network()}}, \code{\link[=relimp_network]{relimp_network()}},
-\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}}, \code{\link[=mgm_fit]{mgm_fit()}}) and \code{\link[=panel_gvar]{panel_gvar()}} for the
-panel graphical VAR. Fitted networks are read with \code{as.data.frame()},
-\code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_predict]{net_predict()}} and \code{\link[=certificate]{certificate()}}, and their accuracy
-and stability are assessed with \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}} and
+\code{psychnets} estimates psychometric networks and assesses their accuracy,
+stability and differences. A psychometric network represents
+psychological variables, such as items, symptoms or behaviours, as nodes
+and their associations as edges; it shows which variables are directly
+related, which are central, and how the structure differs between groups.
+
+The cross-sectional estimators are reached through \code{\link[=psychnet]{psychnet()}} or called
+directly: Gaussian graphical models (\code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=ggm_modselect]{ggm_modselect()}},
+\code{\link[=huge_network]{huge_network()}}), information-filtering networks (\code{\link[=tmfg_network]{tmfg_network()}},
+\code{\link[=logo_network]{logo_network()}}), relative-importance networks (\code{\link[=relimp_network]{relimp_network()}}),
+correlation and partial-correlation networks (\code{\link[=cor_network]{cor_network()}},
+\code{\link[=pcor_network]{pcor_network()}}), Ising models for binary data (\code{\link[=ising_fit]{ising_fit()}},
+\code{\link[=ising_sampler]{ising_sampler()}}) and mixed graphical models (\code{\link[=mgm_fit]{mgm_fit()}}). Panel data from
+a few waves are modelled with the panel graphical VAR (\code{\link[=panel_gvar]{panel_gvar()}}).
+Fitted networks are read with \code{as.data.frame()}, \code{\link[=net_centralities]{net_centralities()}},
+\code{\link[=net_predict]{net_predict()}} and \code{\link[=certificate]{certificate()}}; their accuracy, stability and group
+differences are assessed with \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}} and
 \code{\link[=net_compare]{net_compare()}}.
 }
-\section{Certification}{
+\section{Certificates}{
 
-Regularized estimators are graded against their own objective rather than
-an external solver. For the Gaussian graphical model, \code{\link[=glasso_kkt]{glasso_kkt()}} gives
-the stationarity (KKT) residual: zero certifies the unique global optimum of
-the convex objective. Every fitted network stores its residual, and
-\code{\link[=certificate]{certificate()}} reports it as a one-row table for any estimator.
+Each regularized or constrained estimator stores how far its network is
+from satisfying the optimality conditions of its objective, so that the
+fitted network can be checked without a second solver. \code{\link[=certificate]{certificate()}}
+reports this value for any fitted network.
 }
 
 \seealso{
@@ -36,11 +43,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Mohammed Saqr \email{saqr@saqr.me} [copyright holder]
+\strong{Maintainer}: Mohammed Saqr \email{saqr@saqr.me} (\href{https://orcid.org/0000-0001-5881-3109}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item Sonsoles López-Pernas
+  \item Mohammed Saqr \email{saqr@saqr.me} (\href{https://orcid.org/0000-0001-5881-3109}{ORCID}) [copyright holder]
+  \item Sonsoles López-Pernas (\href{https://orcid.org/0000-0002-9621-1392}{ORCID})
 }
 
 }

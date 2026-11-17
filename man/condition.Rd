@@ -4,7 +4,7 @@
 \alias{condition}
 \alias{as.data.frame.psychnet_moderated}
 \alias{print.psychnet_moderated}
-\title{Condition a moderated network at a moderator value}
+\title{Read a moderated mixed graphical model at a value of the moderator}
 \usage{
 condition(object, value, rule = NULL)
 
@@ -13,67 +13,89 @@ condition(object, value, rule = NULL)
 \method{print}{psychnet_moderated}(x, ...)
 }
 \arguments{
-\item{object}{A \code{psychnet_moderated} object from \code{mgm_fit(..., moderators=)}.}
+\item{object}{A \code{psychnet_moderated} fit from \code{\link[=mgm_fit]{mgm_fit()}} with
+\code{moderators}.}
 
-\item{value}{A single moderator value to condition on: a level of a
-categorical moderator (number, label, factor or logical, as coded in the
-data), or a finite number on the raw scale of a continuous one.}
+\item{value}{A single moderator value: a level of a categorical moderator
+(number, label, factor or logical, as coded in the data), or a finite
+number on the raw scale of a continuous one. For \code{as.data.frame()},
+\code{NULL} (default) gives the table of main and moderation effects.}
 
-\item{rule}{Symmetrization rule; defaults to the rule used at fit time.}
+\item{rule}{\code{"AND"} or \code{"OR"} combination of the two conditioned nodewise
+estimates of each pair. Default \code{NULL} uses the rule of the fit.}
 
-\item{x}{A \code{psychnet_moderated} object.}
+\item{x}{A \code{psychnet_moderated} fit.}
 
-\item{row.names, optional}{Standard \code{\link[=as.data.frame]{as.data.frame()}} arguments; ignored.}
+\item{row.names, optional}{Ignored.}
 
 \item{...}{Unused.}
 }
 \value{
-\code{condition()} returns a \code{psychnet} network object (the moderator node
-carries no edges), with \verb{$mod_value} the value conditioned on.
+\code{condition()} returns an undirected network of class \code{psychnet}
+(\link[=psychnet-class]{psychnet}); the value conditioned on is stored as \code{mod_value}.
 
 \code{as.data.frame()} on the moderated fit returns, with \code{value = NULL}, one
-row per pair of nodes joined by a main effect or a moderation effect, with
-columns \code{from}, \code{to}, \code{main_effect} (aggregated magnitude of the pairwise
-main effect, mgm convention: mean absolute nodewise estimate, zero when the
-pair does not survive \code{rule}), \code{interaction} (aggregated magnitude of the
-moderator x pair three-way interaction, \code{NA} for a pair that includes the
-moderator itself), \code{moderated} (logical: \code{interaction > 0}) and
-\code{involves_moderator}. With a \code{value}, it returns the tidy edge list
-(\code{from}, \code{to}, \code{weight}) of \code{condition(x, value)}.
+row per pair of nodes joined by a main effect or a moderation effect,
+with columns \code{from}, \code{to}, \code{main_effect} (magnitude of the pairwise main
+effect: the mean absolute nodewise estimate, zero when the pair does not
+survive the rule), \code{interaction} (magnitude of the moderator-by-pair
+interaction, \code{NA} for a pair that includes the moderator), \code{moderated}
+(\code{interaction > 0}, \code{NA} for a pair that includes the moderator) and
+\code{involves_moderator}. With a \code{value}, it returns the edge list (\code{from},
+\code{to}, \code{weight}) of \code{condition(x, value)}.
 
-\code{print()} on the moderated fit shows the number of nodes, the moderator
-and the fit settings, and returns \code{x} invisibly.
-
-Errors of class \code{psychnet_bad_input} when \code{value} is missing, not length
-one, not a level of a categorical moderator, or not a finite number for a
-continuous one.
+\code{print()} shows the number of nodes, the moderator and the fit settings,
+and returns \code{x} invisibly.
 }
 \description{
-Extracts the effective pairwise network implied by a moderated MGM
-(\code{\link[=mgm_fit]{mgm_fit()}} with \code{moderators}) at a given value of the moderator, mirroring
-\code{mgm::condition()}: it applies the AND-rule pre-filter, absorbs the moderator
-value into the main-effect coefficients, and re-aggregates the pairwise edges.
-}
-\details{
-\code{value} is always read on the moderator's \strong{own} scale. For a categorical
-moderator it is one of the levels observed in the data, in the coding the
-data used: \code{1}/\code{2} for a moderator coded 1/2, \code{"treat"} for a factor level
-\code{"treat"} (the internal 0-based level code is never exposed). For a
-continuous moderator it is a value on the raw scale; the moderator is
-standardized internally (mgm's \code{scale = TRUE}), and the value is mapped to
-\code{(value - mean) / sd} before conditioning, so \code{value = mean(moderator)} gives
-the network at the average moderator. (\code{mgm::condition()} instead takes the
-value on its internal standardized scale: \code{condition(fit, v)} here equals
-\code{mgm::condition(ref, list(k = (v - mean) / sd))}.)
+\code{condition()} reads a moderated mixed graphical model at one value of the
+moderator and returns that network as an ordinary \code{psychnet};
+\code{as.data.frame()} and \code{print()} read the moderated fit itself. In a
+moderated network model, fitted by \code{\link[=mgm_fit]{mgm_fit()}} with \code{moderators}, the
+strength of an edge between two variables can depend on the value of a
+third variable, the moderator, so each pairwise association has a main
+effect and an interaction with the moderator.
+
+The network at a given moderator value, for example in a treatment group
+compared with a control group, or at low compared with high stress, shows
+how the conditional associations among the other variables differ across
+the moderator. For each pair, \code{condition()} takes the main effect plus the
+interaction evaluated at \code{value}, aggregated over the two nodewise
+regressions and combined by the AND or OR rule. Pairs whose main effect or
+interaction did not survive the rule at fitting time contribute nothing.
+The moderator itself carries no edges, and edge weights are magnitudes
+(non-negative), as in \code{mgm::condition()}. \code{as.data.frame()} on the
+moderated fit lists the size of the main effect and of the moderation
+effect of every pair with a nonzero effect, or, with \code{value}, the edges of
+the conditioned network.
+
+\code{value} is read on the moderator's own scale: a level of a categorical
+moderator as coded in the data (\code{1} or \code{2} for a moderator coded 1/2,
+\code{"treat"} for a factor level \code{"treat"}), or a raw value of a continuous
+moderator, so that \code{value = mean(moderator)} gives the network at the
+average moderator. The conditioned network is computed from the fit rather
+than estimated, so \code{\link[=certificate]{certificate()}} reports its certificate as missing.
+
+\code{condition()} returns an undirected network of class \code{psychnet}
+(\link[=psychnet-class]{psychnet}).
+
+To fit the moderated model, use \code{\link[=mgm_fit]{mgm_fit()}} with \code{moderators}.
 }
 \section{Functions}{
 \itemize{
-\item \code{as.data.frame(psychnet_moderated)}: Tidy table of the moderated fit: per-edge main and
-moderation effects, or (with \code{value}) the conditioned edge list.
+\item \code{as.data.frame(psychnet_moderated)}: Main and moderation effects of every pair, or (with
+\code{value}) the edge list of the conditioned network.
 
-\item \code{print(psychnet_moderated)}: The moderated fit: nodes, moderator and settings.
+\item \code{print(psychnet_moderated)}: Print the nodes, the moderator and the fit settings.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{object} is not a moderated fit, \code{rule} is not
+\code{"AND"} or \code{"OR"}, or \code{value} is missing, not of length one, not a level
+of a categorical moderator, or not a finite number for a continuous one.
+}
+
 \examples{
 set.seed(1)
 x1 <- stats::rnorm(400); x2 <- stats::rnorm(400)
@@ -85,5 +107,9 @@ fit
 as.data.frame(fit)            # main and moderation effects per edge
 condition(fit, value = 1)     # no x1-y edge
 condition(fit, value = 2)     # the x1-y edge appears
-as.data.frame(fit, value = 2) # the same network as a tidy edge list
+as.data.frame(fit, value = 2) # the same network as an edge list
+}
+\seealso{
+\code{\link[=mgm_fit]{mgm_fit()}} for fitting the moderated model; \link[=psychnet-class]{psychnet} for
+the conditioned network.
 }

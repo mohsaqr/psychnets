@@ -2,37 +2,74 @@
 % Please edit documentation in R/predictability.R
 \name{net_predict}
 \alias{net_predict}
-\title{Node predictability}
+\title{Compute how well each node is predicted by the network}
 \usage{
 net_predict(x, data = NULL, ...)
 }
 \arguments{
-\item{x}{A \link{psychnet} object.}
+\item{x}{A fitted network (\link[=psychnet-class]{psychnet}), or a \link{psychnet_group} (one
+table per group).}
 
 \item{data}{The data the network was estimated from; required for the
-nodewise models (ising / IsingSampler / mgm), ignored for the GGMs.}
+nodewise models (\code{ising}, \code{ising_sampler}, \code{mgm}), ignored otherwise.}
 
 \item{...}{Unused.}
 }
 \value{
-A tidy \code{data.frame}, one row per node, with columns \code{node}, \code{type}
+A data frame with one row per node and columns \code{node}, \code{type}
 (\code{"gaussian"} or \code{"binary"}), \code{metric} (\code{"R2"} or \code{"nCC"}),
-\code{predictability}, and \code{accuracy} (classification accuracy for binary nodes,
-\code{NA} for Gaussian).
+\code{predictability} (the value of \code{metric}) and \code{accuracy} (CC for binary
+nodes, \code{NA} for Gaussian ones). For a \link{psychnet_group}, one table per
+group (see \link{psychnet_result_group}).
 }
 \description{
-Reports how well each node is predicted by the others in a fitted network.
-For Gaussian graphical models this is the closed-form variance explained
-(R-squared) from the precision matrix and needs no data. For the nodewise
-models (\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}}, \code{\link[=mgm_fit]{mgm_fit()}}) it requires the data
-and reports R-squared for Gaussian nodes and classification accuracy (\code{CC})
-plus normalized accuracy (\code{nCC}) for binary nodes.
+\code{net_predict()} computes the predictability of each node in a network. The
+predictability of a node is the proportion of its variance explained by the
+nodes it is connected to (Haslbeck & Waldorp, 2018): where centrality
+describes how a node is connected, predictability describes how much of the
+node's variation its connections account for. It places the edges on an
+absolute scale: a node with low predictability depends largely on variables
+outside the network, which limits how far it can be changed through its
+neighbours.
+
+For Gaussian graphical models, predictability is the explained variance
+(R^2), which follows from the estimated precision matrix without the data.
+For a relative-importance network (\code{\link[=relimp_network]{relimp_network()}}) it is the R^2 stored
+with the fit. For the nodewise models (\code{\link[=ising_fit]{ising_fit()}}, \code{\link[=ising_sampler]{ising_sampler()}} and
+\code{\link[=mgm_fit]{mgm_fit()}}) it is computed from the data by predicting each node from the
+others: R^2 for continuous nodes and, for binary nodes, the proportion of
+correct classifications (CC) and the normalized accuracy (nCC), the gain
+over always predicting the more frequent category as a share of the gain
+that was possible.
+
+It returns one row per node, with the type of the node, the metric used and
+its value, and the raw accuracy of binary nodes.
+
+\code{\link[=node_predictability]{node_predictability()}} returns the same values as a vector for plotting;
+\code{\link[=net_boot]{net_boot()}} with \code{predictability = TRUE} gives bootstrap intervals for
+Gaussian graphical models.
 }
 \details{
-Prediction selects the original modeled columns, independently of display
-\code{labels}. Binary MGM categories use the levels recorded when fitting,
-including numeric codes such as 1/2; unseen categories are refused.
+For a Gaussian graphical model with precision matrix \eqn{\Theta} and
+correlation matrix \eqn{S}, the predictability of node \eqn{j} is
+\eqn{R^2_j = 1 - 1 / (\Theta_{jj} S_{jj})}.
+
+For the nodewise models, the columns of \code{data} are matched to the nodes by
+name (the original column names, then the node labels) when the names
+allow it, and otherwise by position; binary categories are coded as when
+the network was fitted, and a category not seen in fitting is refused.
+Incomplete rows are left out.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} for a network without predictability (for example
+from \code{\link[=cor_network]{cor_network()}} or \code{\link[=tmfg_network]{tmfg_network()}}); for a nodewise model when
+\code{data} is missing, lacks columns for some nodes, contains a category not
+seen in fitting, or has no complete row; for a mixed graphical model with
+a categorical node of more than two levels; and for a group of within-
+and between-person networks.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 net_predict(ebic_glasso(cor_matrix = S, n = 250))
@@ -45,4 +82,8 @@ Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network
 models predict observations? On the importance of predictability in
 network models. \emph{Behavior Research Methods}, 50(2), 853-861.
 \doi{10.3758/s13428-017-0910-x}
+}
+\seealso{
+\code{\link[=node_predictability]{node_predictability()}}; \code{\link[=net_centralities]{net_centralities()}} for centrality;
+\code{\link[=net_boot]{net_boot()}} for intervals.
 }

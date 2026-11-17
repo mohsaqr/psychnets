@@ -2,7 +2,7 @@
 % Please edit documentation in R/logo.R
 \name{logo_network}
 \alias{logo_network}
-\title{Local-Global sparse inverse covariance (LoGo)}
+\title{Estimate a sparse Gaussian graphical model on a filtered graph (LoGo)}
 \usage{
 logo_network(
   data = NULL,
@@ -15,42 +15,88 @@ logo_network(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied.}
+\item{data}{A numeric data frame or matrix with one row per observation.
+Not needed when \code{cor_matrix} is given.}
 
-\item{cor_matrix}{Optional correlation matrix; if given, \code{n} is required.}
+\item{cor_matrix}{A correlation matrix to use instead of \code{data}; a
+covariance matrix is rescaled to a correlation matrix. \code{n} is then
+required.}
 
-\item{n}{Sample size (recorded on the result; required with \code{cor_matrix}): a
-single finite number >= 1.}
+\item{n}{Sample size, required with \code{cor_matrix} and recorded on the
+result: a single finite number >= 1. Ignored when \code{data} is given.}
 
-\item{cor_method}{Correlation when \code{data} is supplied: \code{"pearson"} (default),
-\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial; see \code{\link[=cor_auto]{cor_auto()}}).}
+\item{cor_method}{Correlation computed from \code{data}: \code{"pearson"} (default),
+\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric and polyserial
+correlations for ordinal items; see \code{\link[=cor_auto]{cor_auto()}}).}
 
-\item{threshold}{Partial correlations with absolute value below this are
-zeroed: a single number >= 0, default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
-graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
+\item{threshold}{Absolute partial correlation below which an edge is set to
+zero after estimation: a single number >= 0. Default \code{0}. A logical value
+is refused. A positive value leaves the certificate missing.}
 
-\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+\item{na_method}{Handling of missing values in \code{data}: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels, one unique label per network node.}
+\item{labels}{Optional node labels, one unique label per node of the
+network.}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
-with \verb{$precision}, \verb{$support} (the TMFG graph), \verb{$cor_matrix}, and \verb{$kkt}.
-A clique or separator block that is singular or nearly so (reciprocal
-condition number below 1e-10, e.g. a duplicate column), or a precision
-whose certificate exceeds 1e-6, is refused with an error of class
-\code{psychnet_singular} rather than returned as an uncertified network.
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}) whose edge
+weights are partial correlations. \code{as.data.frame()} returns one row per
+edge with columns \code{from}, \code{to} and \code{weight}; \code{\link[=certificate]{certificate()}} reports the
+check. The object also stores the precision matrix (\code{precision}), the
+TMFG graph as a logical matrix (\code{support}) and the correlation matrix
+(\code{cor_matrix}).
 }
 \description{
-Estimates a sparse Gaussian graphical model whose conditional-independence
-structure is the chordal TMFG: the precision is the closed-form Gaussian
-Markov random field on that graph (Barfuss et al. 2016). Equivalent in
-purpose to \code{NetworkToolbox::LoGo()} / \code{bootnet}'s \code{"LoGo"} default, pure base
-R and self-certified via \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} (the precision reproduces \code{S}
-exactly on the TMFG support).
+\code{logo_network()} estimates a sparse Gaussian graphical model on a filtered
+graph with the Local-Global (LoGo) method. LoGo works in two steps: it
+first chooses the network structure by information filtering with the
+triangulated maximally filtered graph (TMFG), and then estimates the
+partial correlations as the maximum-likelihood Gaussian graphical model on
+that graph (Barfuss et al., 2016).
+
+The TMFG retains the strongest correlations under the constraint that the
+graph stays planar and is built from tetrahedra (four-variable cliques),
+which fixes the number of edges at \eqn{3(p - 2)} for \eqn{p} variables.
+Because the graph is decomposable, the maximum-likelihood estimate has a
+closed form, assembled from the inverses of small local correlation
+matrices, so no penalty or iterative fitting is needed. The model is
+estimated from raw data or from a correlation matrix with its sample size.
+
+\code{logo_network()} returns the partial-correlation network of this model, the
+maximum-likelihood network on the TMFG graph, which \code{\link[=certificate]{certificate()}} checks.
+
+The graph alone, with correlations as edge weights, is returned by
+\code{\link[=tmfg_network]{tmfg_network()}}. For a network whose sparsity is chosen by the data use
+\code{\link[=ebic_glasso]{ebic_glasso()}} or \code{\link[=ggm_modselect]{ggm_modselect()}}. The model is the one fitted by
+\code{NetworkToolbox::LoGo()}.
 }
+\details{
+With \eqn{C} the four-variable cliques and \eqn{T} the three-variable
+separators of the TMFG, the precision matrix is
+\deqn{\Theta = \sum_{c \in C} [S_{cc}^{-1}]^0 - \sum_{t \in T} [S_{tt}^{-1}]^0,}
+where \eqn{[\cdot]^0} pads a block with zeros to the full size. The
+certificate is computed by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} with the TMFG as the graph.
+After a positive \code{threshold} it is missing; \code{print()} still shows the value
+for the network before thresholding.
+
+The closed form needs every clique and separator block to be invertible.
+A block that is singular or nearly so (reciprocal condition number below
+\code{1e-10}, as with duplicate or collinear variables) is refused rather than
+approximated, as is a precision matrix whose certificate exceeds \code{1e-6}.
+}
+\section{Conditions}{
+
+\code{psychnet_singular} (error, also of class \code{psychnet_bad_input}) when a
+clique or separator block is singular or nearly so, or the precision
+matrix fails its certificate; \code{psychnet_bad_input} when there are fewer
+than four variables, an argument is out of range, \code{threshold} is
+logical, \code{cor_matrix} is not a finite, symmetric, positive semi-definite
+matrix with a positive diagonal, \code{n} is missing with \code{cor_matrix}, or
+\code{labels} do not match the nodes; \code{psychnet_constant_variable} (warning)
+when a constant or all-missing column is dropped.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(300 * 6), 300, 6)
@@ -60,4 +106,13 @@ logo_network(x)
 Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016).
 Parsimonious modeling with information filtering networks. \emph{Physical
 Review E}, 94(6), 062306. \doi{10.1103/PhysRevE.94.062306}
+
+Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for big
+data: Triangulated maximally filtered graph. \emph{Journal of Complex Networks},
+5(2), 161-178. \doi{10.1093/comnet/cnw015}
+}
+\seealso{
+\code{\link[=tmfg_network]{tmfg_network()}} for the filtered graph; \code{\link[=certificate]{certificate()}} and
+\code{\link[=ggm_support_kkt]{ggm_support_kkt()}} for the check; \code{\link[=psychnet]{psychnet()}}, which routes
+\code{method = "logo"} here; \link[=psychnet-class]{psychnet} for the result.
 }

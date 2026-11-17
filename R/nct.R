@@ -299,108 +299,137 @@
   if (is.name(expr)) as.character(expr) else default
 }
 
-#' Network Comparison Test
+#' Compare the networks of two groups with a permutation test
 #'
-#' Permutation test for whether two groups' Gaussian graphical models differ,
-#' on three invariants (van Borkulo et al. 2022): network structure (`M`, the
-#' largest absolute edge difference), global strength (`S`, the difference in
-#' summed absolute edge weights; with `abs = FALSE`, summed signed weights,
-#' i.e. global expected influence) and individual edges (`E`). Networks are
-#' EBIC graphical lassos (clean-room pure R). Equivalent in purpose to `NetworkComparisonTest::NCT()`, and equal to
-#' it in its permutation draws: under the same seed both permute the same rows,
-#' so the two differ only by the glasso solver's convergence tolerance.
+#' @description
+#' `net_compare()` tests whether the networks of two groups differ, using the
+#' Network Comparison Test (van Borkulo et al., 2022). It estimates an EBIC
+#' graphical lasso network in each group and compares them on three statistics:
+#' M, the largest difference in any edge weight; S, the difference in global
+#' strength; and E, the difference in each edge.
 #'
-#' The two groups must hold the same variables in the same order (non-numeric
-#' columns such as an id or a group label are dropped first).
+#' The groups can be, for example, patients and controls, or the same people at
+#' two time points. Networks estimated in two groups differ in their sample
+#' estimates even when the population networks are identical, so the test
+#' compares the observed differences with those produced by assigning the
+#' observations to the two groups at random. M tests network structure
+#' invariance and is the largest absolute difference in any edge weight; S
+#' tests global strength invariance and is the absolute difference in the sum
+#' of the absolute edge weights; E tests the invariance of each edge and is the
+#' absolute difference in that edge's weight.
 #'
-#' Missing data follow `na_method`. `"pairwise"` (default) keeps every row,
-#' permutes rows as usual, and estimates each (sub)sample from its
-#' pairwise-complete correlation matrix (projected to the nearest positive
-#' definite correlation matrix), with the median pairwise co-observation count
-#' as the sample size -- the same treatment as [ebic_glasso()]. `"listwise"`
-#' drops incomplete rows first (in a paired design, a pair is dropped when
-#' either member is incomplete). Complete data are unaffected by the choice.
+#' The null distributions of M, S and E are obtained by re-estimating both
+#' networks after each of `iter` random reassignments of the rows to the two
+#' groups. With `paired = TRUE` the rows are pairs of measurements of the same
+#' unit, and a permutation swaps the two members of each pair with probability
+#' one half. A p-value is the share of permutations, with the observed data
+#' counted as one of them, whose statistic is at least as large as the observed
+#' one. Options compare signed rather than absolute weights in S
+#' (`abs = FALSE`, a test of global expected influence), compare the presence
+#' of edges only (`weighted = FALSE`), and adjust the per-edge p-values for
+#' multiple testing (`p_adjust`).
+#'
+#' It returns the two global tests, read with `summary()`, and the per-edge
+#' tests, read with `as.data.frame()`.
+#'
+#' The test compares partial-correlation networks, so both networks are always
+#' EBIC graphical lassos ([ebic_glasso()]). For differences between edges or
+#' between centralities within one network, use [difference_test()]; for the
+#' accuracy of each network on its own, use [net_boot()].
+#'
+#' @details
+#' The two groups must hold the same variables in the same order; non-numeric
+#' columns, such as an identifier or a group label, are dropped first.
+#'
+#' Missing values follow `na_method`. `"pairwise"` (default) keeps every row,
+#' permutes rows as usual, and estimates each network from the
+#' pairwise-complete correlation matrix, projected to the nearest positive
+#' definite correlation matrix, with the median number of jointly observed
+#' rows as the sample size, as [ebic_glasso()] does. `"listwise"` first drops
+#' incomplete rows; in a paired design a pair is dropped when either member is
+#' incomplete. Complete data give the same result under both.
 #'
 #' A variable without variation in a group, or in a permuted split (a rare
-#' binary item can be constant in a split), enters that network as an isolated
-#' node -- the convention of every psychnets estimator for a constant column.
-#' The statistic is then defined on every split, so the permutation test stays
-#' exact. A constant variable in an observed group raises a
-#' `psychnet_constant_variable` warning.
+#' binary item can be constant in one), enters that network as an isolated
+#' node, as with every estimator in the package. The statistics are then
+#' defined in every permutation, so the test remains exact.
 #'
-#' @param data1,data2 Numeric data frames/matrices with the same variables,
-#'   holding finite values or `NA` (an infinite value is a
-#'   `psychnet_bad_input` error). When `data1` is a [psychnet_group], `data2`
-#'   gives the two levels to compare as they appear in the grouping column,
-#'   e.g. `c(1, 4)` for weeks 1 and 4 (default: its two levels when there are
-#'   exactly two); the group's node `labels` name the edges, and the group's
-#'   `gamma` and `na_method` are used unless you supply `gamma` / `na_method`,
-#'   which then win (with a `psychnet_estimator_mismatch` warning when they
-#'   differ from the group's). Two networks of one such group can also be
-#'   passed directly, `net_compare(nets$A, nets$B)`: each keeps its rows (and
-#'   persons), so this is the same test as `net_compare(nets, c("A", "B"))`. A
-#'   network fitted on its own keeps no data and is refused.
-#' @param iter Number of permutations. Default 1000.
-#' @param gamma EBIC hyperparameter. Default 0.5.
-#' @param paired Logical; within-row swapping for paired designs (row `i` of
-#'   `data1` and of `data2` are the same unit). Default `FALSE`, except for a
-#'   group built by `psychnet(..., within = )`: its levels hold the same
-#'   persons, so they are compared paired by person unless `paired = FALSE`
-#'   (persons seen in only one level are left out, with a
-#'   `psychnet_rows_dropped` warning).
-#' @param abs Logical; compare absolute edge weights. Default TRUE.
-#' @param weighted Logical; if FALSE, binarize networks first. Default TRUE.
-#' @param p_adjust Multiple-comparison adjustment for per-edge p-values
-#'   (any [stats::p.adjust] method). Default `"none"`.
+#' The statistics and the permutation scheme are those of
+#' `NetworkComparisonTest::NCT()`, and the letters M and S follow van Borkulo
+#' et al. (2022).
+#'
+#' @param data1,data2 Data frames or matrices with the same numeric variables
+#'   in the same order, one row per observation, holding finite values or
+#'   `NA`. Alternatively, `data1` can be a [psychnet_group] estimated from a
+#'   data set, with `data2` naming the two levels to compare as they appear in
+#'   the grouping column (e.g. `c(1, 4)`; default: the two levels of a
+#'   two-level group); or `data1` and `data2` can be two member networks of
+#'   one [psychnet_group], which keep their rows and are compared as that
+#'   group's levels. A network estimated on its own keeps no data and is
+#'   refused.
+#' @param iter Number of permutations. Default `1000`.
+#' @param gamma EBIC hyperparameter of the graphical lasso. Default `0.5`.
+#'   For a group, the group's own value is used unless `gamma` is given.
+#' @param paired If `TRUE`, row i of `data1` and row i of `data2` are
+#'   measurements of the same unit. Default `FALSE`, except for a group built
+#'   with `psychnet(within = )`, whose levels are compared paired by person
+#'   unless `paired = FALSE`; persons observed in only one level are left out.
+#' @param abs If `TRUE` (default), S compares the sums of absolute edge weights
+#'   (global strength); if `FALSE`, the sums of signed edge weights (global
+#'   expected influence). M and E always use absolute differences.
+#' @param weighted If `FALSE`, both networks are reduced to the presence or
+#'   absence of each edge (1 or 0) before comparison. Default `TRUE`.
+#' @param p_adjust Multiplicity adjustment for the per-edge p-values, any
+#'   method of [stats::p.adjust()]. Default `"none"`. M and S are not adjusted.
 #' @param na_method `"pairwise"` (default) or `"listwise"` handling of missing
-#'   values; see Details.
+#'   values; see Details. For a group, the group's own setting is used unless
+#'   `na_method` is given.
 #' @param x,object A `psychnet_nct` object.
 #' @param alpha For the methods: significance level for the `significant`
-#'   column, the `*` marks and the edge colouring. Default 0.05.
+#'   column, the `*` marks and the colouring of edges. Default `0.05`.
 #' @param n For `print()`: number of edges to list, largest difference first.
 #'   Default `Inf` (all).
-#' @param type For `plot()`: `"strength"` (default) or `"structure"` draw the
-#'   permutation null of S or M with the observed value and p-value marked;
-#'   `"edges"` draws the observed per-edge absolute differences, significant
-#'   ones coloured and marked `*`.
-#' @param row.names,optional Ignored (S3 consistency).
+#' @param type For `plot()`: `"strength"` (default) or `"structure"` draws the
+#'   permutation distribution of S or M with the observed value and p-value;
+#'   `"edges"` draws the observed difference of every edge.
+#' @param row.names,optional Ignored.
 #' @param ... Unused.
-#' @return An object of class `psychnet_nct`, a list with `$nw1`, `$nw2` (the
-#'   two estimated weighted adjacency matrices); the three tests, each with
-#'   `observed`, `perm` and `p_value`: `$structure` (statistic M, the largest
-#'   absolute edge difference), `$strength` (statistic S, the absolute
-#'   difference in global strength; also `by_group`, each network's global
-#'   strength) and `$E` (per-edge absolute differences; also `edge_names`, a
-#'   `from`/`to` data frame aligned to the per-edge vector); plus `n_iter`, `n`
-#'   (rows used per group), `groups` (display names: the argument names, or
-#'   the group levels), `paired` and `params`. The letters follow van
-#'   Borkulo et al. (2022) and `NetworkComparisonTest`; `$M` and `$S` (which
-#'   before psychnets 0.6.0 held the two global tests the other way round) raise
-#'   a `psychnet_renamed` error.
-#'
-#'   `print()` shows every result: the two global tests, each group's global
-#'   strength, the number of differing edges and every edge, largest
-#'   difference first. `summary()` returns a data frame with one row per
-#'   global test, columns `test` (`"network structure"`; `"global strength"`,
-#'   or `"global expected influence"` when `abs = FALSE`), `statistic` (`"M"`,
+#' @return An object of class `psychnet_nct`. `summary()` returns the two
+#'   global tests as a data frame, one row per test, with columns `test`
+#'   (`"network structure"`, and `"global strength"`, or
+#'   `"global expected influence"` when `abs = FALSE`), `statistic` (`"M"`,
 #'   `"S"`), `observed`, `p_value` and `significant` (`p_value < alpha`).
-#'   `as.data.frame()` returns one row per node pair, columns `from`, `to`,
-#'   `weight_1`, `weight_2` (the edge in each group's network; 0/1 when
-#'   `weighted = FALSE`), `difference` (absolute difference, statistic E),
-#'   `p_value` (permutation p, adjusted by `p_adjust`), `p_raw` (the same
-#'   permutation p before adjustment; equal to `p_value` when `p_adjust =
-#'   "none"`) and `significant` (`p_value < alpha`, i.e. on the adjusted p).
-#'   The global M and S tests are never adjusted.
-#'   `print()` and `plot()` return `x` invisibly.
+#'   `as.data.frame()` returns the edge tests, one row per node pair, with
+#'   columns `from`, `to`, `weight_1`, `weight_2` (the edge in each group's
+#'   network; 0 or 1 when `weighted = FALSE`), `difference` (statistic E),
+#'   `p_value` (adjusted by `p_adjust`), `p_raw` (before adjustment) and
+#'   `significant` (adjusted `p_value < alpha`).
 #'
-#'   Errors of class `psychnet_bad_input` for malformed arguments or groups
-#'   whose columns differ (in name or order); of class
-#'   `psychnet_degenerate_sample` when (pairwise) a variable pair shares fewer
-#'   than two observed rows in a group or a permuted split. Warnings of class
-#'   `psychnet_constant_variable` (a constant variable in an observed group) and
-#'   `psychnet_estimator_mismatch` (a group object built with an estimator or
-#'   settings other than EBIC glasso, or compared with a `gamma` / `na_method`
-#'   other than the group's own).
+#'   The object also stores the two estimated networks, the permutation
+#'   distributions of M, S and E, the global strength of each group, the
+#'   number of rows used in each group, the group names (the argument names,
+#'   or the group levels) and the settings. `print()` shows the two global
+#'   tests, the global strength of each group and every edge, largest
+#'   difference first, and returns `x` invisibly; `plot()` returns `x`
+#'   invisibly.
+#' @section Conditions:
+#'   `psychnet_bad_input` for an invalid argument; when the groups' columns
+#'   differ in name, order or number, or hold infinite values; when a group
+#'   has fewer than three rows or paired groups differ in size; and, for
+#'   groups, when the levels are not found or the two networks are not members
+#'   of one [psychnet_group]. `psychnet_degenerate_sample` when, with
+#'   `na_method = "pairwise"`, two variables share fewer than two observed
+#'   rows in a group or in a permuted split. `psychnet_constant_variable`
+#'   (warning) when a variable is constant in an observed group;
+#'   `psychnet_estimator_mismatch` (warning) when a group was estimated with
+#'   another estimator or settings, or is compared with a `gamma` or
+#'   `na_method` other than its own; `psychnet_rows_dropped` (warning) when a
+#'   paired comparison of a group leaves out persons observed in only one
+#'   level. `psychnet_renamed` on access to the fields `M` and `S`, which the
+#'   object does not have; `summary()` reports both tests.
+#' @seealso [difference_test()] for differences within one network;
+#'   [net_boot()] for the accuracy of a network; [ebic_glasso()] for the
+#'   estimator; [psychnet_group] for networks estimated per group.
 #' @references van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski,
 #'   J. J., Tio, P., Schoevers, R. A., Borsboom, D., & Waldorp, L. J. (2022).
 #'   Comparing network structures on three aspects: A permutation test.
@@ -417,7 +446,7 @@
 #' print(fit, n = 3)          # the three largest edge differences
 #' summary(fit)
 #' as.data.frame(fit)
-#' plot(fit)                  # global strength permutation null
+#' plot(fit)                  # permutation distribution of global strength
 #' plot(fit, type = "edges")  # per-edge differences
 #' @export
 net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
@@ -556,7 +585,7 @@ net_compare <- function(data1, data2 = NULL, iter = 1000L, gamma = 0.5,
   )
 }
 
-#' @describeIn net_compare The M and S tests as a table.
+#' @describeIn net_compare The two global tests, M and S, one row each.
 #' @export
 summary.psychnet_nct <- function(object, alpha = 0.05, ...) {
   stopifnot("`alpha` must be a single number in (0, 1)" =
@@ -587,7 +616,8 @@ as.data.frame.psychnet_nct <- function(x, row.names = NULL, optional = FALSE,
              stringsAsFactors = FALSE, row.names = NULL)
 }
 
-#' @describeIn net_compare Every result, edges largest difference first.
+#' @describeIn net_compare The global tests, the global strength of each
+#'   group, and every edge, largest difference first.
 #' @export
 print.psychnet_nct <- function(x, n = Inf, alpha = 0.05, ...) {
   cat(.nct_display(x, n = n, alpha = alpha), sep = "\n")

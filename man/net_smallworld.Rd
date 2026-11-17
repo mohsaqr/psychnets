@@ -2,30 +2,59 @@
 % Please edit documentation in R/graph_metrics.R
 \name{net_smallworld}
 \alias{net_smallworld}
-\title{Small-world index}
+\title{Compute the small-world index of a network}
 \usage{
 net_smallworld(x, n_rand = 100L, seed = NULL)
 }
 \arguments{
-\item{x}{A \code{psychnet} object or a square weighted adjacency matrix.}
+\item{x}{An undirected fitted network (\link[=psychnet-class]{psychnet}) or a symmetric
+weighted adjacency matrix.}
 
-\item{n_rand}{Number of degree-preserving random graphs. Default 100.}
+\item{n_rand}{Number of random reference graphs. Default \code{100}.}
 
-\item{seed}{Optional integer for reproducibility of the random graphs.}
+\item{seed}{Optional seed for the random graphs. The caller's random number
+stream is restored afterwards. Default \code{NULL} (the current stream).}
 }
 \value{
-A tidy one-row \code{data.frame} (class \code{psychnet_smallworld}):
-\code{smallworldness}, \code{transitivity}, \code{aspl}, \code{transitivity_rand}, \code{aspl_rand}.
-When the random reference graphs have no triangles or no finite paths the
-index is undefined: \code{smallworldness} is \code{NA} and a warning of class
-\code{psychnet_undefined_statistic} is raised.
+A one-row data frame of class \code{psychnet_smallworld}, with columns
+\code{smallworldness} (sigma; \code{NA} when undefined), \code{transitivity}, \code{aspl}
+(average shortest-path length), and \code{transitivity_rand} and \code{aspl_rand}
+(their means over the random graphs).
 }
 \description{
-The Humphries & Gurney (2008) small-world index \code{sigma}: observed transitivity
-and average shortest-path length compared with degree-preserving random graphs
-(\code{sigma = (C/C_rand) / (L/L_rand)}; \code{sigma > 1} indicates small-worldness).
-Computed on the binarised network. Ported from \code{qgraph::smallworldness}.
+\code{net_smallworld()} computes the small-world index sigma of a network. A
+small-world network combines the high clustering of a regular lattice with
+the short paths between nodes of a random graph, and Humphries and Gurney
+(2008) quantify this with sigma: the transitivity of the network relative to
+that of comparable random graphs, divided by its average shortest-path
+length relative to theirs, \code{sigma = (C / C_rand) / (L / L_rand)}. A value of
+sigma above 1 indicates small-world structure.
+
+The function computes the index on the unweighted network, in which an edge
+is present when its weight is nonzero, and compares it with \code{n_rand} random
+graphs that keep the degree of every node, obtained by rewiring pairs of
+edges. Because the reference graphs are random, the result varies between
+calls unless \code{seed} is given.
+
+It returns one row with sigma, the transitivity and average shortest-path
+length of the network, and their means over the random graphs.
+
+For the clustering of each node, use \code{\link[=net_clustering]{net_clustering()}}.
 }
+\details{
+Transitivity is the global clustering coefficient: three times the number of
+triangles divided by the number of connected triples. The average
+shortest-path length is taken over the pairs of nodes joined by a path. The
+index is undefined when the random graphs have no triangles or no paths.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is directed, is not a finite symmetric
+square matrix of at least two nodes, or \code{n_rand} is not a positive whole
+number; \code{psychnet_undefined_statistic} (warning) when the random graphs
+have no triangles or no paths, so that sigma is \code{NA}.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:8, 1:8, "-"))
 net_smallworld(ebic_glasso(cor_matrix = S, n = 400), n_rand = 50, seed = 1)
@@ -35,4 +64,7 @@ Humphries, M. D., & Gurney, K. (2008). Network
 'small-world-ness': A quantitative method for determining canonical network
 equivalence. \emph{PLoS ONE}, 3(4), e0002051.
 \doi{10.1371/journal.pone.0002051}
+}
+\seealso{
+\code{\link[=net_clustering]{net_clustering()}} for clustering per node.
 }

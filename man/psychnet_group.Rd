@@ -5,7 +5,7 @@
 \alias{print.psychnet_group}
 \alias{as.data.frame.psychnet_group}
 \alias{summary.psychnet_group}
-\title{Per-group psychometric networks}
+\title{Networks estimated separately for each group}
 \usage{
 \method{print}{psychnet_group}(x, ...)
 
@@ -18,41 +18,57 @@
 
 \item{...}{Ignored.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 
 \item{object}{A \code{psychnet_group} object.}
 }
 \value{
-\code{x}, invisibly (for \code{print}), after printing one row per group with
-its node and edge counts and sample size.
+\code{print()} returns \code{x} invisibly, after printing one row per group
+with its numbers of nodes and edges and its sample size.
 
-For \code{as.data.frame}, the per-group edge lists stacked with a leading
-\code{group} column: one row per edge per group, columns \code{group}, \code{from},
-\code{to}, \code{weight}.
+\code{as.data.frame()} returns a data frame with one row per edge per
+group and columns \code{group}, \code{from}, \code{to} and \code{weight}.
 
-For \code{summary}, a data frame with node/edge counts and mean absolute
-edge weight: one row per group, or per group and \code{level} when a group
-contains within/between networks.
+\code{summary()} returns a data frame with one row per group (or per
+group and \code{level} when a group holds within-actor and between-actor
+networks) and columns \code{group}, \code{nodes}, \code{edges} and \code{mean_abs_weight}.
 }
 \description{
-The object returned by \code{\link[=psychnet]{psychnet()}} when \code{group} is supplied: a named list of
-\link{psychnet} networks, one per level of the grouping variable. It plots as a
-grid with \code{cograph::splot()} and is consumed per level by the framework verbs
-(\code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_predict]{net_predict()}}, \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}},
-\code{\link[=net_compare]{net_compare()}}), each returning a \verb{*_group} result.
-Data-based resampling and comparison require independent cross-sectional
-rows. Groups built from several occasions per actor need resampling at the
-actor level and are refused by these row-based diagnostics.
+A \code{psychnet_group} holds networks estimated separately for each group: one
+fitted network per level of the grouping variable, estimated with the same
+method and settings. When the same variables are measured in several
+groups, such as clinical and control samples, cohorts or occasions, these
+networks show how the association structure differs between them.
+
+It is returned by \code{\link[=psychnet]{psychnet()}} with \code{group}. \code{print()} lists the groups
+with their numbers of nodes and edges and their sample sizes, \code{summary()}
+returns these counts as a table, and \code{as.data.frame()} stacks the edges of
+all groups; \code{cograph::splot()} draws the networks in a grid. The analysis
+functions \code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_predict]{net_predict()}},
+\code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}}, \code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}} and
+\code{\link[=net_split_reliability]{net_split_reliability()}} accept the object and return one result per
+group (a \link{psychnet_result_group}); \code{\link[=net_compare]{net_compare()}} tests the difference
+between two of its levels.
+
+Resampling and comparison assume independent rows. Groups formed from
+several occasions per actor of an event log are refused by these
+functions, because they would need resampling at the actor level.
 }
 \details{
-Networks are listed in the grouping variable's level order when it is a
-factor (so its first level is group 1 of \code{\link[=net_compare]{net_compare()}}), otherwise in
-order of first appearance. Rows with a missing group value are dropped
-with a \code{psychnet_rows_dropped} warning; an empty-string level, or a
-cross-sectional level with fewer than 3 rows, is a \code{psychnet_bad_input}
-error; a level with no more rows than variables raises a
-\code{psychnet_small_sample} warning.
+Groups are ordered by the levels of the grouping variable when it is a
+factor, so its first level is group 1 in \code{\link[=net_compare]{net_compare()}}, and otherwise by
+first appearance. Each network keeps the rows it was estimated from, so
+two members can be passed to \code{\link[=net_compare]{net_compare()}} directly.
 }
+\section{Conditions}{
+
+\code{psychnet_rows_dropped} (warning) when rows with a missing group value
+are dropped; \code{psychnet_bad_input} when a group column is missing, a
+level is the empty string, there are fewer than 2 levels, or a level of
+a numeric table has fewer than 3 rows; \code{psychnet_small_sample} (warning)
+when a level has no more rows than variables.
+}
+
 \examples{
 d <- rbind(data.frame(SRL_GPT, source = "GPT"),
            data.frame(SRL_Claude, source = "Claude"))
@@ -60,4 +76,8 @@ nets <- psychnet(d, method = "glasso", group = "source")
 nets
 summary(nets)
 as.data.frame(nets)
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}} to estimate the networks; \link[=psychnet-class]{psychnet} for a
+single network; \code{\link[=net_compare]{net_compare()}} to compare two groups.
 }

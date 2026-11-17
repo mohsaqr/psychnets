@@ -26,3 +26,6 @@
 ^README\.html$
 ^vignettes/articles$
 ^psychnets_.*\.tar\.gz.*$
+^\.mini-ci$
+^\.ci$
+^Project_docs$

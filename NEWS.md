@@ -1,3 +1,18 @@
+# psychnets 0.7.4
+
+* Tests: the panel graphical VAR golden test checks the saturated fit of the
+  n = 45 design, a boundary solution (all between-person variances approach
+  zero), by its boundary flag and log-likelihood (relative tolerance 1e-10)
+  instead of its estimates at 1e-10. On the flat likelihood at that boundary
+  the estimates depend on where the optimizer stops and differ by about 1e-4
+  across platforms and R versions, while the log-likelihood agrees to 1e-8.
+  Every interior fit keeps the 1e-10 comparison. No code or returned number
+  changed.
+* `mlVAR` added to Suggests (used in a test of `scale_within()`).
+* Documentation: author lines and tables of contents on all articles; the
+  pkgdown reference is grouped by task and the articles by Vignettes and
+  Guides; ORCID identifiers for both authors; the README lists the articles.
+
 # psychnets 0.7.2
 
 * `net_compare()` accepts two networks of one `psychnet(..., group = )`

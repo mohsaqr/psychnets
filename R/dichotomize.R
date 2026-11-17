@@ -1,32 +1,47 @@
 # Dichotomize numeric/ordinal columns to 0/1 -- the standard preprocessing step
 # before fitting an Ising network to Likert data.
 
-#' Dichotomize numeric columns to 0/1
+#' Split numeric items into binary 0/1 variables
 #'
-#' Splits each column of a numeric matrix or data frame into a binary 0/1
-#' variable. This is the usual preprocessing step before fitting an Ising
-#' network ([ising_fit()], [ising_sampler()]) to Likert or other
-#' ordinal/continuous data, which require binary input.
+#' @description
+#' `dichotomize()` splits numeric items into binary 0/1 variables, each
+#' column independently at its median (default), at its mean, or by rank.
+#' Ising network models ([ising_fit()], [ising_sampler()]) describe binary
+#' variables, so Likert-type or continuous items must be split before such a
+#' model can be fitted; the resulting network then describes associations
+#' between scoring high and scoring low on the items rather than between
+#' their full response scales.
 #'
-#' @param data Numeric matrix or data frame (rows = observations).
-#' @param method Split rule, applied independently to each column:
+#' Missing values stay missing. The result is an integer 0/1 matrix with the
+#' dimensions of the input.
+#'
+#' Splitting discards the information in the response scale. To keep it,
+#' estimate a Gaussian graphical model, for example [ebic_glasso()] with
+#' `cor_method = "auto"` (polychoric correlations for ordinal items), or a
+#' mixed graphical model with [mgm_fit()].
+#'
+#' @param data A numeric matrix or data frame with one row per observation.
+#' @param method Split rule, applied to each column:
 #'   \describe{
-#'     \item{`"median"`}{(default) `1` if the value is `>=` the column median.}
-#'     \item{`"mean"`}{`1` if the value is `>` the column mean.}
-#'     \item{`"rank"`}{`1` for observations whose average rank is above the
-#'       midpoint. Tied values always remain together, so the split may be
-#'       unbalanced rather than depending on row order.}
+#'     \item{`"median"`}{(default) `1` when the value is at or above the
+#'       column median.}
+#'     \item{`"mean"`}{`1` when the value is above the column mean.}
+#'     \item{`"rank"`}{`1` when the value's average rank is above the
+#'       midpoint. Tied values stay together, so the split can be
+#'       unbalanced but never depends on row order.}
 #'   }
-#'   On a floor- or ceiling-heavy item the median can equal the column minimum,
-#'   so `"median"` (`>=`) puts every observation in the upper group and the
-#'   output column is constant. Such columns are reported by a
-#'   `psychnet_constant_variable` warning (an Ising fit would drop them);
-#'   `method = "mean"` or `"rank"` splits them.
-#' @return An integer matrix of `0`/`1` values with the same dimensions and
-#'   dimnames as `data`. Missing values stay `NA` in the output (they are not
-#'   assigned to either group). A non-numeric `data`, an empty one, or a
-#'   constant / all-missing input column is an error of class
-#'   `psychnet_bad_input`.
+#'   On an item with many responses at its floor, the median can equal the
+#'   minimum, so `"median"` puts every observation in the upper group and the
+#'   output column is constant (an Ising fit would drop it); `"mean"` or
+#'   `"rank"` splits such items.
+#' @return An integer matrix of 0/1 values with the dimensions and dimnames
+#'   of `as.matrix(data)`; missing values stay `NA`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `data` is not numeric or has no columns, a
+#'   column is constant or entirely missing, or `method` is not one of the
+#'   rules; `psychnet_constant_variable` (warning) when a split puts every
+#'   observation of a column in one group.
+#' @seealso [ising_fit()] and [ising_sampler()], which need binary data.
 #' @examples
 #' b <- dichotomize(SRL_GPT, method = "median")
 #' table(b)                          # values are 0/1 only

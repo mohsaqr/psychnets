@@ -2,8 +2,7 @@
 % Please edit documentation in R/crosswalk.R
 \name{net_crosswalk}
 \alias{net_crosswalk}
-\title{Argument crosswalk: psychnet as a substitute for qgraph / IsingFit / mgm /
-psychonetrics}
+\title{Map the arguments of established network packages to psychnets}
 \usage{
 net_crosswalk(
   reference = c("all", "EBICglasso", "cor_auto", "ggmModSelect", "IsingFit", "mgm",
@@ -11,28 +10,49 @@ net_crosswalk(
 )
 }
 \arguments{
-\item{reference}{Which reference function to show: \code{"all"} (default),
-\code{"EBICglasso"}, \code{"cor_auto"}, \code{"ggmModSelect"}, \code{"IsingFit"}, \code{"mgm"}, or
+\item{reference}{The reference function to show: \code{"all"} (default),
+\code{"EBICglasso"}, \code{"cor_auto"}, \code{"ggmModSelect"}, \code{"IsingFit"}, \code{"mgm"} or
 \code{"panelgvar"}.}
 }
 \value{
-A tidy \code{data.frame}, one row per argument, with columns \code{reference}
-(the \code{pkg::fn} being substituted), \code{psychnet} (the psychnet verb),
-\code{ref_arg}, \code{psychnet_arg} (\code{"-"} when there is no counterpart), \code{status}
-(\code{identical} / \code{renamed} / \verb{default differs} / \verb{semantics differ} /
-\verb{reference only} / \verb{psychnet only}), and a short \code{note}.
+A data frame with one row per argument and columns \code{reference} (the
+reference function, as \code{pkg::fn}), \code{psychnet} (the corresponding function
+in this package), \code{ref_arg} and \code{psychnet_arg} (the argument names, \code{"-"}
+when there is no counterpart), \code{status} (\code{"identical"}, \code{"renamed"},
+\code{"default differs"}, \code{"semantics differ"}, \code{"reference only"} or
+\code{"psychnet only"}) and \code{note}.
 }
 \description{
-A tidy, one-row-per-argument map from each reference package's estimator to
-its \code{psychnet} equivalent, so users migrating from \code{qgraph::EBICglasso},
-\code{qgraph::cor_auto}, \code{qgraph::ggmModSelect}, \code{IsingFit::IsingFit},
-\code{mgm::mgm}, or \code{psychonetrics::panelgvar} can find the matching argument and
-see what \code{psychnet} changes by default. Intensive time-series models
-(\code{graphicalVAR}, \code{mlVAR}) are out of scope; the few-wave panel model is
-covered by \code{\link[=panel_gvar]{panel_gvar()}}.
+\code{net_crosswalk()} maps the arguments of \code{qgraph}, \code{IsingFit}, \code{mgm} and
+\code{psychonetrics} functions to their psychnets counterparts, as a table with
+one row per argument. It shows which function fits the same model, which
+argument corresponds to which, and where the defaults or the meaning of an
+argument differ, for analyses moved to this package from those packages.
+
+The table covers \code{qgraph::EBICglasso()} (\code{\link[=ebic_glasso]{ebic_glasso()}}),
+\code{qgraph::cor_auto()} (\code{\link[=cor_auto]{cor_auto()}}), \code{qgraph::ggmModSelect()}
+(\code{\link[=ggm_modselect]{ggm_modselect()}}), \code{IsingFit::IsingFit()} (\code{\link[=ising_fit]{ising_fit()}}), \code{mgm::mgm()}
+(\code{\link[=mgm_fit]{mgm_fit()}}) and \code{psychonetrics::panelgvar()} (\code{\link[=panel_gvar]{panel_gvar()}}); \code{reference}
+selects one of them. Each row records whether the argument is identical,
+renamed, has a different default or a different meaning, or exists in only
+one of the two functions, with a short note.
+
+The result is a data frame with one row per argument; nothing is fitted.
+
+Intensive time-series models (\code{graphicalVAR}, \code{mlVAR}) are not covered by
+this package.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{reference} is not one of the listed values.
+}
+
 \examples{
 net_crosswalk("EBICglasso")
 net_crosswalk("IsingFit")
 net_crosswalk("panelgvar")
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}}, which also accepts the \code{qgraph} and \code{bootnet} method
+names.
 }

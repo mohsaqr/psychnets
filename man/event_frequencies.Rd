@@ -2,7 +2,7 @@
 % Please edit documentation in R/multilevel.R
 \name{event_frequencies}
 \alias{event_frequencies}
-\title{Action frequencies from an event log}
+\title{Count the actions of each actor and session in an event log}
 \usage{
 event_frequencies(
   data,
@@ -15,44 +15,60 @@ event_frequencies(
 )
 }
 \arguments{
-\item{data}{A long event log (data frame), one row per event.}
+\item{data}{A data frame with one row per event.}
 
-\item{actor}{Column(s) naming the actor / subject. Default \code{"Actor"}.}
+\item{actor}{Column(s) identifying the actor. Default \code{"Actor"}.}
 
-\item{action}{Column naming the action / state. Default \code{"Action"}.}
+\item{action}{Column holding the action. Default \code{"Action"}.}
 
-\item{session}{Optional column(s) naming an explicit session within an actor.}
+\item{session}{Optional column(s) identifying sessions within an actor.}
 
-\item{time}{Optional column used to compute sessions from gaps (see
-\code{compute_sessions}); it is not used for any temporal model.}
+\item{time}{Optional column of event times (numbers, dates, date-times or
+timestamps as text), used only to split sessions.}
 
-\item{compute_sessions}{If \code{TRUE}, split each actor into sessions from the
-\code{time} gaps (a new session starts when the gap exceeds \code{time_threshold}).
-Default \code{TRUE}.}
+\item{compute_sessions}{Whether to split each actor's events into sessions
+at gaps in \code{time} longer than \code{time_threshold}. Default \code{TRUE}; has no
+effect without \code{time}.}
 
-\item{time_threshold}{Maximum gap (in the units of \code{time}, seconds for a
-timestamp) between consecutive events before a new session begins. Default
-\code{900} (15 minutes), as in Nestimate.}
+\item{time_threshold}{Longest gap between consecutive events within one
+session, in the units of \code{time} (seconds for date-times). Default \code{900}
+(15 minutes).}
 }
 \value{
-A \code{data.frame} with one row per occasion: an \code{actor} column
-(character), a \code{session} column (character occasion label: the actor and
-session values joined by \code{"."}, followed by the computed session number
-when \code{compute_sessions} splits by \code{time}), and one numeric (double) count
-column per action. Errors of class \code{psychnet_bad_input} when a column is
-missing, \code{actor} or \code{session} has missing values, or \code{time} cannot be
-parsed.
+A data frame with one row per occasion and columns \code{actor},
+\code{session} (an occasion label joining the actor, the session and, when
+sessions are computed from \code{time}, the session number, separated by
+\code{"."}) and one numeric column of counts per action.
 }
 \description{
-Converts a long event log -- one row per event, with an actor, an action, and
-optionally a session and time -- into a frequency table: one row per occasion,
-one column per distinct action, holding that action's count. The conversion
-mirrors the "frequency" format of the Nestimate event pipeline. An occasion is
-one (actor, session) cell; with \code{compute_sessions = TRUE} the \code{time} column is
-used to split each actor into sessions wherever the gap between consecutive
-events exceeds \code{time_threshold}. This is the frequency input that
-\code{\link[=psychnet]{psychnet()}} builds internally for event data (\code{source = "eventdata"}).
+\code{event_frequencies()} counts how often each action occurred in each
+occasion of an event log, where an occasion is an actor, or an actor's
+session. This table of action frequencies is what a network of actions,
+which shows which actions tend to occur together in the same occasion, is
+estimated from.
+
+In an event log each row records one action by one actor, such as a
+student reading, taking a quiz or writing a note; behavioural and learning
+data often arrive in this form. Occasions are formed by \code{actor}, by
+\code{actor} and \code{session} when sessions are given, and, with \code{time} and
+\code{compute_sessions = TRUE}, by splitting an actor's events into sessions
+wherever the gap between consecutive events exceeds \code{time_threshold}.
+
+The result is a data frame with one row per occasion and one column per
+distinct action, holding the count.
+
+\code{\link[=psychnet]{psychnet()}} performs this conversion itself when given an event log, so the
+function is needed only to inspect or reuse the table. Events with a missing
+or empty action are not counted.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{data} is not a data frame, a named column is
+missing, \code{action} has fewer than two distinct values, \code{actor} or
+\code{session} has missing values, or \code{time} cannot be read as numbers or
+timestamps.
+}
+
 \examples{
 ev <- data.frame(
   Actor   = rep(c("a", "b"), each = 6),
@@ -60,4 +76,8 @@ ev <- data.frame(
   Action  = c("read","quiz","read", "quiz","read","note",
               "note","note","read", "read","quiz","quiz"))
 event_frequencies(ev, session = "Session")
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}} with \code{actor} to estimate a network from an event log;
+\link{psychnet_multilevel} for within-actor and between-actor networks.
 }

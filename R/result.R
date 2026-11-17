@@ -78,41 +78,62 @@
   .attach_predictability(net, data = data)
 }
 
-#' Psychometric network objects
+#' Fitted psychometric network
 #'
-#' Every estimator ([cor_network()], [ebic_glasso()], [ising_fit()],
-#' [mgm_fit()], ..., and the front door [psychnet()]) returns an object of class
-#' `c("psychnet", "cograph_network")`. Read it with `print()`, `summary()` and
-#' `as.data.frame()`, and draw it with `plot()`, which hands it to
-#' `cograph::splot()`. Diagnostics computed from it ([net_centralities()],
-#' [net_boot()], [net_stability()], ...) have their own result classes, with
-#' methods documented on those verbs' pages.
+#' @description
+#' A `psychnet` object holds a fitted psychometric network; every estimator in
+#' the package returns its network in this form. The network consists of
+#' nodes, which are the variables,
+#' and weighted edges, which are the estimated associations: partial
+#' correlations for the Gaussian graphical models, correlations for
+#' [cor_network()], symmetrized regression weights for the Ising and mixed
+#' graphical models, and directed importance shares for [relimp_network()].
 #'
-#' The stored fields follow the cograph/Nestimate network object: `weights`
-#' (the p x p weighted adjacency matrix with zero diagonal; partial
-#' correlations for the Gaussian models, symmetrized regression weights for
-#' Ising and mixed models), `nodes` (data frame `id`, `label`, `name`), `edges`
-#' (integer node indices `from`, `to` and `weight`, the cograph format; use
-#' `as.data.frame()` for labelled edges), `directed`, `method` and `n` (sample
-#' size), plus method-specific fields such as `precision`, `lambda`, `gamma`,
-#' `cor_matrix`, `kkt`, `thresholds`, `types` and `nodewise`. Read the
-#' optimality certificate with [certificate()].
+#' `print()` reports the estimator, the numbers of nodes and edges, the
+#' selected penalty and the certificate; `summary()` adds the range of the edge
+#' weights; `as.data.frame()` returns the edges as a table; and `plot()` draws
+#' the network with the `cograph` package. The certificate is read with
+#' [certificate()].
+#'
+#' Analyses of a fitted network, such as [net_centralities()], [net_boot()]
+#' and [net_stability()], return their own result classes, documented on their
+#' pages. Networks estimated per group are collected in a [psychnet_group].
+#'
+#' @details
+#' The object is a list that follows the network object of the `cograph` and
+#' `Nestimate` packages, so it can be passed to `cograph::splot()` directly.
+#' It stores the weighted adjacency matrix with a zero diagonal (`weights`),
+#' the node table (`nodes`, with `id`, `label` and `name`), the edge table in
+#' the cograph format with integer node indices (`edges`), whether the network
+#' is directed (`directed`), the estimator (`method`) and the sample size
+#' (`n`), together with fields specific to each estimator, such as the
+#' precision matrix (`precision`), the selected penalty (`lambda`), the EBIC
+#' hyperparameter (`gamma`), the correlation matrix (`cor_matrix`), the
+#' certificate (`kkt`), the Ising thresholds (`thresholds`) and the node types
+#' of a mixed model (`types`). Field access with `$` also recognises the names
+#' used by earlier versions: `graph` (the weights), `labels`, `n_nodes`,
+#' `n_edges` and `n_obs`.
 #'
 #' @param x,object A `psychnet` object.
-#' @param name For `$`: a field name. Besides the stored fields, the legacy
-#'   aliases `graph` (= `weights`), `labels` (the node labels), `n_nodes`,
-#'   `n_edges` and `n_obs` (= `n`) are recognised.
-#' @param include_zero For `as.data.frame()`: if `TRUE`, keep zero-weight
-#'   (absent) edges. Default `FALSE`.
-#' @param row.names,optional Ignored (S3 consistency).
-#' @param ... For `plot()`, passed to [cograph::splot()]; ignored by the other
+#' @param name For `$`: a field name, or one of the earlier names listed in
+#'   Details.
+#' @param include_zero For `as.data.frame()`: keep absent (zero-weight) edges.
+#'   Default `FALSE`.
+#' @param row.names,optional Ignored.
+#' @param ... For `plot()`, passed to `cograph::splot()`; ignored by the other
 #'   methods.
-#' @return `print()` returns `x` invisibly. `as.data.frame()` returns a
-#'   data frame with one row per edge and columns `from`, `to` (node labels)
-#'   and `weight`. `summary()` prints the network and its edge-weight range and
-#'   returns the same edge table invisibly. `plot()` returns the value of
-#'   [cograph::splot()] invisibly. `$` returns the requested field, or `NULL`
-#'   when the name is neither a stored field nor a known alias.
+#' @return `as.data.frame()` returns a data frame with one row per edge
+#'   (each node pair once for an undirected network, each ordered pair for a
+#'   directed one) and columns `from`, `to` (node labels) and `weight`.
+#'   `print()` returns `x` invisibly. `summary()` prints the network with its
+#'   edge-weight range and returns the edge table invisibly. `plot()` returns
+#'   the value of `cograph::splot()` invisibly. `$` returns the requested
+#'   field, or `NULL` when the name is neither a field nor an earlier name.
+#' @section Conditions:
+#'   `psychnet_bad_input` from `plot()` when the `cograph` package is not
+#'   installed.
+#' @seealso [psychnet()] and the estimators it routes to; [certificate()];
+#'   [psychnet_group] for networks per group.
 #' @examples
 #' fit <- pcor_network(SRL_GPT)
 #' fit
@@ -139,10 +160,8 @@ NULL
     NULL)
 }
 
-#' @describeIn psychnet-class The estimator, node and edge counts, the
-#'   selected penalty and the certificate: the optimality (KKT) residual for
-#'   the regularized / constrained estimators, the structural certificate for
-#'   TMFG (number of violated invariants) and relimp (decomposition residual).
+#' @describeIn psychnet-class The estimator, the node and edge counts, the
+#'   selected penalty and the certificate (see [certificate()]).
 #' @export
 print.psychnet <- function(x, ...) {
   cat(sprintf("<psychnet> %s network\n", x$method))

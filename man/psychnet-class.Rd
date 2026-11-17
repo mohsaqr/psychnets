@@ -7,7 +7,7 @@
 \alias{print.psychnet}
 \alias{as.data.frame.psychnet}
 \alias{summary.psychnet}
-\title{Psychometric network objects}
+\title{Fitted psychometric network}
 \usage{
 \method{plot}{psychnet}(x, ...)
 
@@ -22,63 +22,81 @@
 \arguments{
 \item{x, object}{A \code{psychnet} object.}
 
-\item{...}{For \code{plot()}, passed to \code{\link[cograph:splot]{cograph::splot()}}; ignored by the other
+\item{...}{For \code{plot()}, passed to \code{cograph::splot()}; ignored by the other
 methods.}
 
-\item{name}{For \code{$}: a field name. Besides the stored fields, the legacy
-aliases \code{graph} (= \code{weights}), \code{labels} (the node labels), \code{n_nodes},
-\code{n_edges} and \code{n_obs} (= \code{n}) are recognised.}
+\item{name}{For \code{$}: a field name, or one of the earlier names listed in
+Details.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 
-\item{include_zero}{For \code{as.data.frame()}: if \code{TRUE}, keep zero-weight
-(absent) edges. Default \code{FALSE}.}
+\item{include_zero}{For \code{as.data.frame()}: keep absent (zero-weight) edges.
+Default \code{FALSE}.}
 }
 \value{
-\code{print()} returns \code{x} invisibly. \code{as.data.frame()} returns a
-data frame with one row per edge and columns \code{from}, \code{to} (node labels)
-and \code{weight}. \code{summary()} prints the network and its edge-weight range and
-returns the same edge table invisibly. \code{plot()} returns the value of
-\code{\link[cograph:splot]{cograph::splot()}} invisibly. \code{$} returns the requested field, or \code{NULL}
-when the name is neither a stored field nor a known alias.
+\code{as.data.frame()} returns a data frame with one row per edge
+(each node pair once for an undirected network, each ordered pair for a
+directed one) and columns \code{from}, \code{to} (node labels) and \code{weight}.
+\code{print()} returns \code{x} invisibly. \code{summary()} prints the network with its
+edge-weight range and returns the edge table invisibly. \code{plot()} returns
+the value of \code{cograph::splot()} invisibly. \code{$} returns the requested
+field, or \code{NULL} when the name is neither a field nor an earlier name.
 }
 \description{
-Every estimator (\code{\link[=cor_network]{cor_network()}}, \code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=ising_fit]{ising_fit()}},
-\code{\link[=mgm_fit]{mgm_fit()}}, ..., and the front door \code{\link[=psychnet]{psychnet()}}) returns an object of class
-\code{c("psychnet", "cograph_network")}. Read it with \code{print()}, \code{summary()} and
-\code{as.data.frame()}, and draw it with \code{plot()}, which hands it to
-\code{cograph::splot()}. Diagnostics computed from it (\code{\link[=net_centralities]{net_centralities()}},
-\code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}}, ...) have their own result classes, with
-methods documented on those verbs' pages.
+A \code{psychnet} object holds a fitted psychometric network; every estimator in
+the package returns its network in this form. The network consists of
+nodes, which are the variables,
+and weighted edges, which are the estimated associations: partial
+correlations for the Gaussian graphical models, correlations for
+\code{\link[=cor_network]{cor_network()}}, symmetrized regression weights for the Ising and mixed
+graphical models, and directed importance shares for \code{\link[=relimp_network]{relimp_network()}}.
+
+\code{print()} reports the estimator, the numbers of nodes and edges, the
+selected penalty and the certificate; \code{summary()} adds the range of the edge
+weights; \code{as.data.frame()} returns the edges as a table; and \code{plot()} draws
+the network with the \code{cograph} package. The certificate is read with
+\code{\link[=certificate]{certificate()}}.
+
+Analyses of a fitted network, such as \code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_boot]{net_boot()}}
+and \code{\link[=net_stability]{net_stability()}}, return their own result classes, documented on their
+pages. Networks estimated per group are collected in a \link{psychnet_group}.
 }
 \details{
-The stored fields follow the cograph/Nestimate network object: \code{weights}
-(the p x p weighted adjacency matrix with zero diagonal; partial
-correlations for the Gaussian models, symmetrized regression weights for
-Ising and mixed models), \code{nodes} (data frame \code{id}, \code{label}, \code{name}), \code{edges}
-(integer node indices \code{from}, \code{to} and \code{weight}, the cograph format; use
-\code{as.data.frame()} for labelled edges), \code{directed}, \code{method} and \code{n} (sample
-size), plus method-specific fields such as \code{precision}, \code{lambda}, \code{gamma},
-\code{cor_matrix}, \code{kkt}, \code{thresholds}, \code{types} and \code{nodewise}. Read the
-optimality certificate with \code{\link[=certificate]{certificate()}}.
+The object is a list that follows the network object of the \code{cograph} and
+\code{Nestimate} packages, so it can be passed to \code{cograph::splot()} directly.
+It stores the weighted adjacency matrix with a zero diagonal (\code{weights}),
+the node table (\code{nodes}, with \code{id}, \code{label} and \code{name}), the edge table in
+the cograph format with integer node indices (\code{edges}), whether the network
+is directed (\code{directed}), the estimator (\code{method}) and the sample size
+(\code{n}), together with fields specific to each estimator, such as the
+precision matrix (\code{precision}), the selected penalty (\code{lambda}), the EBIC
+hyperparameter (\code{gamma}), the correlation matrix (\code{cor_matrix}), the
+certificate (\code{kkt}), the Ising thresholds (\code{thresholds}) and the node types
+of a mixed model (\code{types}). Field access with \code{$} also recognises the names
+used by earlier versions: \code{graph} (the weights), \code{labels}, \code{n_nodes},
+\code{n_edges} and \code{n_obs}.
 }
 \section{Functions}{
 \itemize{
-\item \code{plot(psychnet)}: Draws the network with \code{cograph::splot()} (a
-Suggested package; an error says so when it is not installed).
+\item \code{plot(psychnet)}: Draws the network with \code{cograph::splot()},
+passing \code{...} on; needs the suggested package \code{cograph}.
 
 \item \code{$}: Field access, including the legacy aliases.
 
-\item \code{print(psychnet)}: The estimator, node and edge counts, the
-selected penalty and the certificate: the optimality (KKT) residual for
-the regularized / constrained estimators, the structural certificate for
-TMFG (number of violated invariants) and relimp (decomposition residual).
+\item \code{print(psychnet)}: The estimator, the node and edge counts, the
+selected penalty and the certificate (see \code{\link[=certificate]{certificate()}}).
 
 \item \code{as.data.frame(psychnet)}: The tidy edge list, one row per edge.
 
 \item \code{summary(psychnet)}: The printout plus the edge-weight range.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} from \code{plot()} when the \code{cograph} package is not
+installed.
+}
+
 \examples{
 fit <- pcor_network(SRL_GPT)
 fit
@@ -86,4 +104,8 @@ summary(fit)
 as.data.frame(fit)
 as.data.frame(fit, include_zero = TRUE)
 if (requireNamespace("cograph", quietly = TRUE)) plot(fit)
+}
+\seealso{
+\code{\link[=psychnet]{psychnet()}} and the estimators it routes to; \code{\link[=certificate]{certificate()}};
+\link{psychnet_group} for networks per group.
 }

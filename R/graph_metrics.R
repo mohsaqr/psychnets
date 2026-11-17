@@ -6,19 +6,49 @@
 # Diagonal of a triple matrix product, A %*% A %*% A, without forming it twice.
 .psn_diag_cube <- function(A) rowSums((A %*% A) * t(A))
 
-#' Weighted clustering coefficients
+#' Compute weighted clustering coefficients of the nodes
 #'
-#' Per-node clustering coefficients for a weighted (optionally signed) network:
-#' Watts-Strogatz, Zhang-Horvath, Onnela, and Barrat. For signed networks the
-#' signed variants are also returned (a closed triangle of three negative or one
-#' negative edge lowers the signed coefficient). Ported from
-#' `qgraph::clustcoef_auto`.
+#' @description
+#' `net_clustering()` computes weighted clustering coefficients for each node of
+#' a network. The clustering coefficient of a node measures how strongly its
+#' neighbours are connected to each other: in a psychometric network, a node
+#' with high clustering lies within a closely related group of variables,
+#' whereas a node with low clustering links variables that are otherwise
+#' unrelated.
 #'
-#' @param x A `psychnet` object or a square weighted adjacency matrix.
-#' @param labels Optional node labels (used when `x` is a bare matrix).
-#' @return A tidy `data.frame` (class `psychnet_clustering`), one row per node:
-#'   `node`, `clustWS`, `signed_clustWS`, `clustZhang`, `signed_clustZhang`,
-#'   `clustOnnela`, `signed_clustOnnela`, `clustBarrat`.
+#' Several generalizations of the clustering coefficient to weighted networks
+#' exist, and the function returns four of them: that of Watts and Strogatz
+#' (1998), which uses only the presence of edges; of Zhang and Horvath (2005),
+#' which uses the edge weights; of Onnela et al. (2005), which uses the
+#' geometric mean of the weights in each triangle; and of Barrat et al. (2004),
+#' which weights triangles by node strength. For the first three it also
+#' returns the signed versions of Costantini and Perugini (2014), in which a
+#' triangle with one or three negative edges lowers the coefficient.
+#'
+#' It returns one row per node, with one column per coefficient.
+#'
+#' For a summary of clustering at the level of the whole network, compared
+#' with random graphs, use [net_smallworld()]; for other node measures, use
+#' [net_centralities()].
+#'
+#' @details
+#' Edge weights outside \[-1, 1\] are first divided by the largest absolute
+#' weight. A node with fewer than two neighbours closes no triangle and has
+#' coefficient 0. The Barrat coefficient uses absolute weights.
+#'
+#' @param x An undirected fitted network ([psychnet-class]) or a symmetric
+#'   weighted adjacency matrix.
+#' @param labels Optional node labels for a bare matrix, one unique label per
+#'   node.
+#' @return A data frame of class `psychnet_clustering`, one row per node, with
+#'   columns `node`, `clustWS`, `signed_clustWS`, `clustZhang`,
+#'   `signed_clustZhang`, `clustOnnela`, `signed_clustOnnela` and
+#'   `clustBarrat`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `x` is directed, is not a finite symmetric
+#'   square matrix, or `labels` is invalid.
+#' @seealso [net_smallworld()] for the small-world index;
+#'   [net_centralities()] for other node measures.
 #' @references Costantini, G., & Perugini, M. (2014). Generalization of
 #'   clustering coefficients to signed correlation networks. *PLoS ONE*, 9(2),
 #'   e88669. \doi{10.1371/journal.pone.0088669}
@@ -152,21 +182,49 @@ net_clustering <- function(x, labels = NULL) {
   A
 }
 
-#' Small-world index
+#' Compute the small-world index of a network
 #'
-#' The Humphries & Gurney (2008) small-world index `sigma`: observed transitivity
-#' and average shortest-path length compared with degree-preserving random graphs
-#' (`sigma = (C/C_rand) / (L/L_rand)`; `sigma > 1` indicates small-worldness).
-#' Computed on the binarised network. Ported from `qgraph::smallworldness`.
+#' @description
+#' `net_smallworld()` computes the small-world index sigma of a network. A
+#' small-world network combines the high clustering of a regular lattice with
+#' the short paths between nodes of a random graph, and Humphries and Gurney
+#' (2008) quantify this with sigma: the transitivity of the network relative to
+#' that of comparable random graphs, divided by its average shortest-path
+#' length relative to theirs, `sigma = (C / C_rand) / (L / L_rand)`. A value of
+#' sigma above 1 indicates small-world structure.
 #'
-#' @param x A `psychnet` object or a square weighted adjacency matrix.
-#' @param n_rand Number of degree-preserving random graphs. Default 100.
-#' @param seed Optional integer for reproducibility of the random graphs.
-#' @return A tidy one-row `data.frame` (class `psychnet_smallworld`):
-#'   `smallworldness`, `transitivity`, `aspl`, `transitivity_rand`, `aspl_rand`.
-#'   When the random reference graphs have no triangles or no finite paths the
-#'   index is undefined: `smallworldness` is `NA` and a warning of class
-#'   `psychnet_undefined_statistic` is raised.
+#' The function computes the index on the unweighted network, in which an edge
+#' is present when its weight is nonzero, and compares it with `n_rand` random
+#' graphs that keep the degree of every node, obtained by rewiring pairs of
+#' edges. Because the reference graphs are random, the result varies between
+#' calls unless `seed` is given.
+#'
+#' It returns one row with sigma, the transitivity and average shortest-path
+#' length of the network, and their means over the random graphs.
+#'
+#' For the clustering of each node, use [net_clustering()].
+#'
+#' @details
+#' Transitivity is the global clustering coefficient: three times the number of
+#' triangles divided by the number of connected triples. The average
+#' shortest-path length is taken over the pairs of nodes joined by a path. The
+#' index is undefined when the random graphs have no triangles or no paths.
+#'
+#' @param x An undirected fitted network ([psychnet-class]) or a symmetric
+#'   weighted adjacency matrix.
+#' @param n_rand Number of random reference graphs. Default `100`.
+#' @param seed Optional seed for the random graphs. The caller's random number
+#'   stream is restored afterwards. Default `NULL` (the current stream).
+#' @return A one-row data frame of class `psychnet_smallworld`, with columns
+#'   `smallworldness` (sigma; `NA` when undefined), `transitivity`, `aspl`
+#'   (average shortest-path length), and `transitivity_rand` and `aspl_rand`
+#'   (their means over the random graphs).
+#' @section Conditions:
+#'   `psychnet_bad_input` when `x` is directed, is not a finite symmetric
+#'   square matrix of at least two nodes, or `n_rand` is not a positive whole
+#'   number; `psychnet_undefined_statistic` (warning) when the random graphs
+#'   have no triangles or no paths, so that sigma is `NA`.
+#' @seealso [net_clustering()] for clustering per node.
 #' @references Humphries, M. D., & Gurney, K. (2008). Network
 #'   'small-world-ness': A quantitative method for determining canonical network
 #'   equivalence. *PLoS ONE*, 3(4), e0002051.

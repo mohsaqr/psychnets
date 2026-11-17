@@ -119,60 +119,104 @@
        weights = if (is.null(w)) NULL else w / max(w))
 }
 
-#' Ising network for binary data
+#' Estimate a regularized Ising network for binary items
 #'
-#' Estimates an Ising model by nodewise L1-penalized logistic regression with
-#' EBIC selection, combined by the AND (default) or OR rule. Equivalent in
-#' purpose to `IsingFit::IsingFit()`, but pure base R and self-certified: each
-#' node's regression reports its stationarity (KKT) residual (see
-#' [glm_lasso_kkt()]).
+#' @description
+#' `ising_fit()` estimates a regularized Ising network from binary items, such
+#' as symptoms that are present or absent or items that are endorsed or not.
+#' The Ising model describes the items through a threshold for each item and
+#' an interaction for each pair, the association between two items after
+#' conditioning on all other items, and is estimated here by the nodewise
+#' lasso method of van Borkulo et al. (2014).
 #'
-#' @param data Binary data frame or matrix (rows = observations). Columns may
-#'   be numeric 0/1, logical, or two-level factors (the first level is coded 0).
-#'   Any other column -- a numeric column not coded 0/1 (e.g. 1/2), a factor
-#'   with more than two levels, a character column -- is an error naming it,
-#'   never a silently dropped node. A constant column carries no information
-#'   and is dropped.
-#' @param gamma EBIC hyperparameter. Default 0.25.
-#' @param rule Edge-combination rule: `"AND"` (default) or `"OR"`.
-#' @param nlambda Number of penalties per nodewise path. Default 100.
-#' @param lambda_min_ratio Smallest penalty as a fraction of the largest.
-#'   With `native = FALSE`, omitting the argument retains glmnet's reference
-#'   default for compatibility; an explicitly supplied value is honored.
-#' @param min_sum Minimum row sum-score (number of endorsed items); rows below
-#'   it are dropped before fitting. `NULL` (default) keeps every row.
-#' @param weights Optional non-negative observation weights, one per input row
-#'   after missing-data preparation. When `min_sum` is used, weights are filtered
-#'   alongside their corresponding rows. Weights are rescaled to a maximum of 1
-#'   (the `mgm::mgm()` convention), so only their relative sizes matter:
-#'   `weights = w` and `weights = 7 * w` give the same network. `NULL`
-#'   (default) is unweighted.
-#' @param na_method Missing-data handling: `"pairwise"` (default) single-imputes
-#'   each column over its observed values (mode for binary), keeping the full
-#'   sample; `"listwise"` drops incomplete rows. Identical for complete data.
-#' @param native Solver switch. `TRUE` (default) uses psychnet's own pure-R,
-#'   dependency-free, self-certified L1 logistic path (KKT ~1e-9). `FALSE`
-#'   delegates each per-node fit to the `glmnet` package with the IsingFit EBIC
-#'   path, so the returned `$weights`/`$thresholds` byte-match
-#'   `IsingFit::IsingFit()` (to ~1e-16) at the cost of glmnet's looser
-#'   self-certificate. `native = FALSE` needs the optional `glmnet` package
-#'   (Suggests). `min_sum` is supported by both engines; observation `weights`
-#'   require `native = TRUE`.
+#' A positive edge means that the two items tend to be endorsed together, a
+#' negative edge that endorsing one makes the other less likely, and an
+#' absent edge that the two are conditionally independent; the network shows
+#' which items are directly associated once the rest are taken into account.
+#' The function regresses each item on all other items by L1-penalized
+#' (lasso) logistic regression and selects each item's penalty by the
+#' extended Bayesian information criterion (EBIC). Every pair is estimated
+#' twice, once in each item's regression. Under the AND rule (default) an
+#' edge is kept when both estimates are nonzero, under the OR rule when
+#' either is; its weight is the mean of the two. Rows can be filtered by
+#' their sum score (`min_sum`) and weighted (`weights`). Each regression is
+#' checked against its optimality (Karush–Kuhn–Tucker) conditions, and
+#' [certificate()] reports the largest violation across the items.
+#'
+#' The result is an undirected network of class `psychnet`
+#' ([psychnet-class]).
+#'
+#' For unpenalized estimates with significance-based pruning, use
+#' [ising_sampler()]; for data that combine continuous and binary variables,
+#' [mgm_fit()]. Ordinal or continuous items can be split with
+#' [dichotomize()] first. The model is the one fitted by
+#' `IsingFit::IsingFit()`, which `native = FALSE` reproduces.
+#'
+#' @details
+#' Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
+#' The weight of an edge is the change in the log-odds of one item when the
+#' other is endorsed, averaged over the two regressions; an item's threshold
+#' is its log-odds when every other item is 0.
+#'
+#' @param data Binary data: a data frame or matrix with one row per
+#'   observation. Columns may be numeric 0/1, logical, or two-level factors
+#'   (the first level is coded 0). Any other column, such as a numeric column
+#'   coded 1/2 or a factor with more than two levels, is an error naming it.
+#'   A constant column is dropped.
+#' @param gamma EBIC hyperparameter, a single number >= 0; larger values give
+#'   sparser networks. Default `0.25`.
+#' @param rule `"AND"` (default) keeps an edge when both nodewise estimates
+#'   are nonzero; `"OR"` when either is.
+#' @param nlambda Number of penalty values on each nodewise path, a whole
+#'   number >= 2. Default `100`.
+#' @param lambda_min_ratio Smallest penalty as a fraction of the largest, in
+#'   (0, 1). Default `0.01`. With `native = FALSE`, leaving it unset uses
+#'   glmnet's own default, as `IsingFit::IsingFit()` does.
+#' @param min_sum Minimum number of endorsed items per row; rows below it are
+#'   dropped before fitting. Default `NULL` keeps every row.
+#' @param weights Optional non-negative observation weights, one per row after
+#'   missing-data handling (and filtered with `min_sum`). Only their relative
+#'   sizes matter: `weights = w` and `weights = 7 * w` give the same network.
+#'   Requires `native = TRUE`. Default `NULL` (unweighted).
+#' @param na_method `"pairwise"` (default) fills each missing value with the
+#'   item's more frequent value and keeps every row; `"listwise"` drops rows
+#'   with a missing value. The two agree for complete data.
+#' @param native `TRUE` (default) uses the package's own solver. `FALSE` fits
+#'   each regression with the `glmnet` package (which must be installed) and
+#'   reproduces `IsingFit::IsingFit()`; its certificate reflects glmnet's
+#'   convergence tolerance and is usually larger. `weights` are not accepted
+#'   with `native = FALSE`.
 #' @param labels Optional node labels: one per node, or one per input column
 #'   (labels of dropped constant columns are then discarded).
-#' @return A `psychnet` object whose `$weights` is the symmetric weight matrix,
-#'   with `$thresholds` (node intercepts), `$rule`, `$nodewise` (the per-node
-#'   fits used by [net_predict()]) and `$kkt` (the worst nodewise stationarity
-#'   residual, read with [certificate()]).
-#'
-#'   Errors of class `psychnet_bad_input` for non-binary columns, invalid
-#'   `gamma`/`nlambda`/`lambda_min_ratio`/`weights`, or mislengthed `labels`.
-#'   A nodewise fit that does not reach its optimum raises a
-#'   `psychnet_no_converge` warning naming the node.
+#' @return An undirected network of class `psychnet` ([psychnet-class]).
+#'   `as.data.frame()` gives one row per edge (`from`, `to`, `weight`),
+#'   [certificate()] the largest optimality violation of the nodewise
+#'   regressions, and [net_predict()] the predictability of each node. The
+#'   object also stores the node thresholds (`thresholds`), the combination
+#'   rule (`rule`) and the nodewise regressions (`nodewise`).
+#' @section Conditions:
+#'   `psychnet_bad_input` when a column is not binary, fewer than two usable
+#'   columns remain, `gamma`, `nlambda`, `lambda_min_ratio`, `min_sum`,
+#'   `weights`, `native` or `labels` is invalid, `min_sum` removes every row
+#'   (or every row with positive weight), `weights` is combined with
+#'   `native = FALSE`, or `native = FALSE` is requested without the `glmnet`
+#'   package; `psychnet_constant_variable` (warning) when a constant column
+#'   is dropped; `psychnet_no_converge` (warning) when a nodewise regression
+#'   does not reach its optimum; `psychnet_degenerate_sample` (warning) when
+#'   an item takes a single value on every retained row, so its regression
+#'   has no finite intercept. The last two are raised with `native = TRUE`.
+#' @seealso [ising_sampler()] for the unregularized model; [mgm_fit()] for
+#'   mixed continuous and binary data; [dichotomize()] to prepare items;
+#'   [certificate()] and [glm_lasso_kkt()] for the optimality check;
+#'   [net_predict()]; [psychnet()] with `method = "ising"`.
 #' @references van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
 #'   Boschloo, L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
 #'   constructing networks from binary data. *Scientific Reports*, 4, 5918.
 #'   \doi{10.1038/srep05918}
+#'
+#'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+#'   for Gaussian graphical models. *Advances in Neural Information Processing
+#'   Systems*, 23, 604-612.
 #' @examples
 #' # Ising models need 0/1 data: split the five SRL construct scores at the median.
 #' b <- dichotomize(SRL_GPT)

@@ -2,27 +2,57 @@
 % Please edit documentation in R/graph_metrics.R
 \name{net_clustering}
 \alias{net_clustering}
-\title{Weighted clustering coefficients}
+\title{Compute weighted clustering coefficients of the nodes}
 \usage{
 net_clustering(x, labels = NULL)
 }
 \arguments{
-\item{x}{A \code{psychnet} object or a square weighted adjacency matrix.}
+\item{x}{An undirected fitted network (\link[=psychnet-class]{psychnet}) or a symmetric
+weighted adjacency matrix.}
 
-\item{labels}{Optional node labels (used when \code{x} is a bare matrix).}
+\item{labels}{Optional node labels for a bare matrix, one unique label per
+node.}
 }
 \value{
-A tidy \code{data.frame} (class \code{psychnet_clustering}), one row per node:
-\code{node}, \code{clustWS}, \code{signed_clustWS}, \code{clustZhang}, \code{signed_clustZhang},
-\code{clustOnnela}, \code{signed_clustOnnela}, \code{clustBarrat}.
+A data frame of class \code{psychnet_clustering}, one row per node, with
+columns \code{node}, \code{clustWS}, \code{signed_clustWS}, \code{clustZhang},
+\code{signed_clustZhang}, \code{clustOnnela}, \code{signed_clustOnnela} and
+\code{clustBarrat}.
 }
 \description{
-Per-node clustering coefficients for a weighted (optionally signed) network:
-Watts-Strogatz, Zhang-Horvath, Onnela, and Barrat. For signed networks the
-signed variants are also returned (a closed triangle of three negative or one
-negative edge lowers the signed coefficient). Ported from
-\code{qgraph::clustcoef_auto}.
+\code{net_clustering()} computes weighted clustering coefficients for each node of
+a network. The clustering coefficient of a node measures how strongly its
+neighbours are connected to each other: in a psychometric network, a node
+with high clustering lies within a closely related group of variables,
+whereas a node with low clustering links variables that are otherwise
+unrelated.
+
+Several generalizations of the clustering coefficient to weighted networks
+exist, and the function returns four of them: that of Watts and Strogatz
+(1998), which uses only the presence of edges; of Zhang and Horvath (2005),
+which uses the edge weights; of Onnela et al. (2005), which uses the
+geometric mean of the weights in each triangle; and of Barrat et al. (2004),
+which weights triangles by node strength. For the first three it also
+returns the signed versions of Costantini and Perugini (2014), in which a
+triangle with one or three negative edges lowers the coefficient.
+
+It returns one row per node, with one column per coefficient.
+
+For a summary of clustering at the level of the whole network, compared
+with random graphs, use \code{\link[=net_smallworld]{net_smallworld()}}; for other node measures, use
+\code{\link[=net_centralities]{net_centralities()}}.
 }
+\details{
+Edge weights outside [-1, 1] are first divided by the largest absolute
+weight. A node with fewer than two neighbours closes no triangle and has
+coefficient 0. The Barrat coefficient uses absolute weights.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is directed, is not a finite symmetric
+square matrix, or \code{labels} is invalid.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 net_clustering(ebic_glasso(cor_matrix = S, n = 400))
@@ -46,4 +76,8 @@ coherence of motifs in weighted complex networks. \emph{Physical Review E},
 Barrat, A., Barthelemy, M., Pastor-Satorras, R., & Vespignani, A. (2004).
 The architecture of complex weighted networks. \emph{Proceedings of the National
 Academy of Sciences}, 101(11), 3747-3752. \doi{10.1073/pnas.0400087101}
+}
+\seealso{
+\code{\link[=net_smallworld]{net_smallworld()}} for the small-world index;
+\code{\link[=net_centralities]{net_centralities()}} for other node measures.
 }

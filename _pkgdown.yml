@@ -5,7 +5,138 @@ template:
   bslib:
     primary: "#1a5276"
 
+authors:
+  Mohammed Saqr:
+    href: https://saqr.me
+  Sonsoles López-Pernas:
+    href: https://sonsoles.me
+
 navbar:
   structure:
-    left:  [intro, reference, articles]
+    left:  [intro, reference, articles, news]
     right: [search, github]
+
+reference:
+- title: Overview
+  contents:
+  - psychnets-package
+  - psychnet
+
+- title: Gaussian graphical models
+  desc: Partial-correlation networks for continuous or ordinal indicators,
+    regularized, selected stepwise, or nonparanormal.
+  contents:
+  - ebic_glasso
+  - ggm_modselect
+  - pcor_network
+  - cor_network
+  - huge_network
+
+- title: Information-filtering and relative-importance networks
+  desc: Sparse networks built from the correlation structure (TMFG, LoGo) and
+    networks of shared explained variance.
+  contents:
+  - tmfg_network
+  - logo_network
+  - relimp_network
+
+- title: Binary and mixed data
+  desc: Ising networks for binary indicators and mixed graphical models for
+    variables of different types, including moderation.
+  contents:
+  - ising_fit
+  - ising_sampler
+  - mgm_fit
+  - condition
+  - dichotomize
+
+- title: Panel and within-person networks
+  desc: Temporal, contemporaneous and between-person networks from repeated
+    measurements.
+  contents:
+  - panel_gvar
+  - psychnet_panelgvar
+  - psychnet_multilevel
+  - scale_within
+
+- title: Groups and event data
+  desc: One network per group, and networks from logs of coded events.
+  contents:
+  - psychnet_group
+  - psychnet_result_group
+  - event_frequencies
+
+- title: Preparing data
+  contents:
+  - cor_auto
+  - redundancy
+  - net_aggregate
+
+- title: Node and network measures
+  contents:
+  - net_centralities
+  - net_bridge
+  - net_edge_betweenness
+  - net_clustering
+  - net_smallworld
+  - net_predict
+  - node_predictability
+
+- title: Accuracy and stability
+  desc: Bootstrap intervals, difference tests, and the stability and
+    reliability of edges and centralities under case dropping and splitting.
+  contents:
+  - net_boot
+  - difference_test
+  - net_stability
+  - net_casedrop_reliability
+  - net_split_reliability
+
+- title: Comparing networks
+  contents:
+  - net_compare
+
+- title: Certificates
+  desc: Optimality and structural checks that a fitted network is the
+    solution of its estimator.
+  contents:
+  - certificate
+  - glasso_kkt
+  - glm_lasso_kkt
+  - ggm_support_kkt
+  - lmg_certificate
+  - tmfg_certificate
+
+- title: Result objects
+  contents:
+  - psychnet-class
+
+- title: Crosswalk
+  desc: Arguments of qgraph, bootnet, IsingFit and mgm mapped to psychnets.
+  contents:
+  - net_crosswalk
+
+- title: Data
+  contents:
+  - SRL
+  - srl_panel
+
+articles:
+- title: Vignettes
+  navbar: Vignettes
+  contents:
+  - gaussian-graphical-models
+  - ggm-model-selection
+  - information-filtering-networks
+  - relative-importance-networks
+  - ising-networks
+  - mixed-graphical-models
+  - panel-graphical-var
+
+- title: Guides
+  navbar: Guides
+  contents:
+  - group-networks-from-event-data
+  - articles/network-reliability
+  - visualizing-with-cograph
+  - articles/visualizing-networks

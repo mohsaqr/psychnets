@@ -6,7 +6,7 @@
 \alias{as.data.frame.psychnet_nct}
 \alias{print.psychnet_nct}
 \alias{plot.psychnet_nct}
-\title{Network Comparison Test}
+\title{Compare the networks of two groups with a permutation test}
 \usage{
 net_compare(
   data1,
@@ -29,136 +29,165 @@ net_compare(
 \method{plot}{psychnet_nct}(x, type = c("strength", "structure", "edges"), alpha = 0.05, ...)
 }
 \arguments{
-\item{data1, data2}{Numeric data frames/matrices with the same variables,
-holding finite values or \code{NA} (an infinite value is a
-\code{psychnet_bad_input} error). When \code{data1} is a \link{psychnet_group}, \code{data2}
-gives the two levels to compare as they appear in the grouping column,
-e.g. \code{c(1, 4)} for weeks 1 and 4 (default: its two levels when there are
-exactly two); the group's node \code{labels} name the edges, and the group's
-\code{gamma} and \code{na_method} are used unless you supply \code{gamma} / \code{na_method},
-which then win (with a \code{psychnet_estimator_mismatch} warning when they
-differ from the group's). Two networks of one such group can also be
-passed directly, \code{net_compare(nets$A, nets$B)}: each keeps its rows (and
-persons), so this is the same test as \code{net_compare(nets, c("A", "B"))}. A
-network fitted on its own keeps no data and is refused.}
+\item{data1, data2}{Data frames or matrices with the same numeric variables
+in the same order, one row per observation, holding finite values or
+\code{NA}. Alternatively, \code{data1} can be a \link{psychnet_group} estimated from a
+data set, with \code{data2} naming the two levels to compare as they appear in
+the grouping column (e.g. \code{c(1, 4)}; default: the two levels of a
+two-level group); or \code{data1} and \code{data2} can be two member networks of
+one \link{psychnet_group}, which keep their rows and are compared as that
+group's levels. A network estimated on its own keeps no data and is
+refused.}
 
-\item{iter}{Number of permutations. Default 1000.}
+\item{iter}{Number of permutations. Default \code{1000}.}
 
-\item{gamma}{EBIC hyperparameter. Default 0.5.}
+\item{gamma}{EBIC hyperparameter of the graphical lasso. Default \code{0.5}.
+For a group, the group's own value is used unless \code{gamma} is given.}
 
-\item{paired}{Logical; within-row swapping for paired designs (row \code{i} of
-\code{data1} and of \code{data2} are the same unit). Default \code{FALSE}, except for a
-group built by \code{psychnet(..., within = )}: its levels hold the same
-persons, so they are compared paired by person unless \code{paired = FALSE}
-(persons seen in only one level are left out, with a
-\code{psychnet_rows_dropped} warning).}
+\item{paired}{If \code{TRUE}, row i of \code{data1} and row i of \code{data2} are
+measurements of the same unit. Default \code{FALSE}, except for a group built
+with \code{psychnet(within = )}, whose levels are compared paired by person
+unless \code{paired = FALSE}; persons observed in only one level are left out.}
 
-\item{abs}{Logical; compare absolute edge weights. Default TRUE.}
+\item{abs}{If \code{TRUE} (default), S compares the sums of absolute edge weights
+(global strength); if \code{FALSE}, the sums of signed edge weights (global
+expected influence). M and E always use absolute differences.}
 
-\item{weighted}{Logical; if FALSE, binarize networks first. Default TRUE.}
+\item{weighted}{If \code{FALSE}, both networks are reduced to the presence or
+absence of each edge (1 or 0) before comparison. Default \code{TRUE}.}
 
-\item{p_adjust}{Multiple-comparison adjustment for per-edge p-values
-(any \link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+\item{p_adjust}{Multiplicity adjustment for the per-edge p-values, any
+method of \code{\link[stats:p.adjust]{stats::p.adjust()}}. Default \code{"none"}. M and S are not adjusted.}
 
 \item{na_method}{\code{"pairwise"} (default) or \code{"listwise"} handling of missing
-values; see Details.}
+values; see Details. For a group, the group's own setting is used unless
+\code{na_method} is given.}
 
 \item{alpha}{For the methods: significance level for the \code{significant}
-column, the \code{*} marks and the edge colouring. Default 0.05.}
+column, the \code{*} marks and the colouring of edges. Default \code{0.05}.}
 
 \item{...}{Unused.}
 
 \item{x, object}{A \code{psychnet_nct} object.}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 
 \item{n}{For \code{print()}: number of edges to list, largest difference first.
 Default \code{Inf} (all).}
 
-\item{type}{For \code{plot()}: \code{"strength"} (default) or \code{"structure"} draw the
-permutation null of S or M with the observed value and p-value marked;
-\code{"edges"} draws the observed per-edge absolute differences, significant
-ones coloured and marked \code{*}.}
+\item{type}{For \code{plot()}: \code{"strength"} (default) or \code{"structure"} draws the
+permutation distribution of S or M with the observed value and p-value;
+\code{"edges"} draws the observed difference of every edge.}
 }
 \value{
-An object of class \code{psychnet_nct}, a list with \verb{$nw1}, \verb{$nw2} (the
-two estimated weighted adjacency matrices); the three tests, each with
-\code{observed}, \code{perm} and \code{p_value}: \verb{$structure} (statistic M, the largest
-absolute edge difference), \verb{$strength} (statistic S, the absolute
-difference in global strength; also \code{by_group}, each network's global
-strength) and \verb{$E} (per-edge absolute differences; also \code{edge_names}, a
-\code{from}/\code{to} data frame aligned to the per-edge vector); plus \code{n_iter}, \code{n}
-(rows used per group), \code{groups} (display names: the argument names, or
-the group levels), \code{paired} and \code{params}. The letters follow van
-Borkulo et al. (2022) and \code{NetworkComparisonTest}; \verb{$M} and \verb{$S} (which
-before psychnets 0.6.0 held the two global tests the other way round) raise
-a \code{psychnet_renamed} error.
-
-\code{print()} shows every result: the two global tests, each group's global
-strength, the number of differing edges and every edge, largest
-difference first. \code{summary()} returns a data frame with one row per
-global test, columns \code{test} (\code{"network structure"}; \code{"global strength"},
-or \code{"global expected influence"} when \code{abs = FALSE}), \code{statistic} (\code{"M"},
+An object of class \code{psychnet_nct}. \code{summary()} returns the two
+global tests as a data frame, one row per test, with columns \code{test}
+(\code{"network structure"}, and \code{"global strength"}, or
+\code{"global expected influence"} when \code{abs = FALSE}), \code{statistic} (\code{"M"},
 \code{"S"}), \code{observed}, \code{p_value} and \code{significant} (\code{p_value < alpha}).
-\code{as.data.frame()} returns one row per node pair, columns \code{from}, \code{to},
-\code{weight_1}, \code{weight_2} (the edge in each group's network; 0/1 when
-\code{weighted = FALSE}), \code{difference} (absolute difference, statistic E),
-\code{p_value} (permutation p, adjusted by \code{p_adjust}), \code{p_raw} (the same
-permutation p before adjustment; equal to \code{p_value} when \code{p_adjust = "none"}) and \code{significant} (\code{p_value < alpha}, i.e. on the adjusted p).
-The global M and S tests are never adjusted.
-\code{print()} and \code{plot()} return \code{x} invisibly.
+\code{as.data.frame()} returns the edge tests, one row per node pair, with
+columns \code{from}, \code{to}, \code{weight_1}, \code{weight_2} (the edge in each group's
+network; 0 or 1 when \code{weighted = FALSE}), \code{difference} (statistic E),
+\code{p_value} (adjusted by \code{p_adjust}), \code{p_raw} (before adjustment) and
+\code{significant} (adjusted \code{p_value < alpha}).
 
-Errors of class \code{psychnet_bad_input} for malformed arguments or groups
-whose columns differ (in name or order); of class
-\code{psychnet_degenerate_sample} when (pairwise) a variable pair shares fewer
-than two observed rows in a group or a permuted split. Warnings of class
-\code{psychnet_constant_variable} (a constant variable in an observed group) and
-\code{psychnet_estimator_mismatch} (a group object built with an estimator or
-settings other than EBIC glasso, or compared with a \code{gamma} / \code{na_method}
-other than the group's own).
+The object also stores the two estimated networks, the permutation
+distributions of M, S and E, the global strength of each group, the
+number of rows used in each group, the group names (the argument names,
+or the group levels) and the settings. \code{print()} shows the two global
+tests, the global strength of each group and every edge, largest
+difference first, and returns \code{x} invisibly; \code{plot()} returns \code{x}
+invisibly.
 }
 \description{
-Permutation test for whether two groups' Gaussian graphical models differ,
-on three invariants (van Borkulo et al. 2022): network structure (\code{M}, the
-largest absolute edge difference), global strength (\code{S}, the difference in
-summed absolute edge weights; with \code{abs = FALSE}, summed signed weights,
-i.e. global expected influence) and individual edges (\code{E}). Networks are
-EBIC graphical lassos (clean-room pure R). Equivalent in purpose to \code{NetworkComparisonTest::NCT()}, and equal to
-it in its permutation draws: under the same seed both permute the same rows,
-so the two differ only by the glasso solver's convergence tolerance.
+\code{net_compare()} tests whether the networks of two groups differ, using the
+Network Comparison Test (van Borkulo et al., 2022). It estimates an EBIC
+graphical lasso network in each group and compares them on three statistics:
+M, the largest difference in any edge weight; S, the difference in global
+strength; and E, the difference in each edge.
+
+The groups can be, for example, patients and controls, or the same people at
+two time points. Networks estimated in two groups differ in their sample
+estimates even when the population networks are identical, so the test
+compares the observed differences with those produced by assigning the
+observations to the two groups at random. M tests network structure
+invariance and is the largest absolute difference in any edge weight; S
+tests global strength invariance and is the absolute difference in the sum
+of the absolute edge weights; E tests the invariance of each edge and is the
+absolute difference in that edge's weight.
+
+The null distributions of M, S and E are obtained by re-estimating both
+networks after each of \code{iter} random reassignments of the rows to the two
+groups. With \code{paired = TRUE} the rows are pairs of measurements of the same
+unit, and a permutation swaps the two members of each pair with probability
+one half. A p-value is the share of permutations, with the observed data
+counted as one of them, whose statistic is at least as large as the observed
+one. Options compare signed rather than absolute weights in S
+(\code{abs = FALSE}, a test of global expected influence), compare the presence
+of edges only (\code{weighted = FALSE}), and adjust the per-edge p-values for
+multiple testing (\code{p_adjust}).
+
+It returns the two global tests, read with \code{summary()}, and the per-edge
+tests, read with \code{as.data.frame()}.
+
+The test compares partial-correlation networks, so both networks are always
+EBIC graphical lassos (\code{\link[=ebic_glasso]{ebic_glasso()}}). For differences between edges or
+between centralities within one network, use \code{\link[=difference_test]{difference_test()}}; for the
+accuracy of each network on its own, use \code{\link[=net_boot]{net_boot()}}.
 }
 \details{
-The two groups must hold the same variables in the same order (non-numeric
-columns such as an id or a group label are dropped first).
+The two groups must hold the same variables in the same order; non-numeric
+columns, such as an identifier or a group label, are dropped first.
 
-Missing data follow \code{na_method}. \code{"pairwise"} (default) keeps every row,
-permutes rows as usual, and estimates each (sub)sample from its
-pairwise-complete correlation matrix (projected to the nearest positive
-definite correlation matrix), with the median pairwise co-observation count
-as the sample size -- the same treatment as \code{\link[=ebic_glasso]{ebic_glasso()}}. \code{"listwise"}
-drops incomplete rows first (in a paired design, a pair is dropped when
-either member is incomplete). Complete data are unaffected by the choice.
+Missing values follow \code{na_method}. \code{"pairwise"} (default) keeps every row,
+permutes rows as usual, and estimates each network from the
+pairwise-complete correlation matrix, projected to the nearest positive
+definite correlation matrix, with the median number of jointly observed
+rows as the sample size, as \code{\link[=ebic_glasso]{ebic_glasso()}} does. \code{"listwise"} first drops
+incomplete rows; in a paired design a pair is dropped when either member is
+incomplete. Complete data give the same result under both.
 
 A variable without variation in a group, or in a permuted split (a rare
-binary item can be constant in a split), enters that network as an isolated
-node -- the convention of every psychnets estimator for a constant column.
-The statistic is then defined on every split, so the permutation test stays
-exact. A constant variable in an observed group raises a
-\code{psychnet_constant_variable} warning.
+binary item can be constant in one), enters that network as an isolated
+node, as with every estimator in the package. The statistics are then
+defined in every permutation, so the test remains exact.
+
+The statistics and the permutation scheme are those of
+\code{NetworkComparisonTest::NCT()}, and the letters M and S follow van Borkulo
+et al. (2022).
 }
 \section{Functions}{
 \itemize{
-\item \code{summary(psychnet_nct)}: The M and S tests as a table.
+\item \code{summary(psychnet_nct)}: The two global tests, M and S, one row each.
 
 \item \code{as.data.frame(psychnet_nct)}: The per-edge tests, one row per node pair.
 
-\item \code{print(psychnet_nct)}: Every result, edges largest difference first.
+\item \code{print(psychnet_nct)}: The global tests, the global strength of each
+group, and every edge, largest difference first.
 
-\item \code{plot(psychnet_nct)}: Permutation null of S or M, or the per-edge
-differences (see \code{type}); significant edges are labelled \code{*} as well as
-coloured.
+\item \code{plot(psychnet_nct)}: The permutation distribution of S or M with the
+observed value marked, or the observed difference of every edge (see
+\code{type}); significant edges are coloured and marked \code{*}.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument; when the groups' columns
+differ in name, order or number, or hold infinite values; when a group
+has fewer than three rows or paired groups differ in size; and, for
+groups, when the levels are not found or the two networks are not members
+of one \link{psychnet_group}. \code{psychnet_degenerate_sample} when, with
+\code{na_method = "pairwise"}, two variables share fewer than two observed
+rows in a group or in a permuted split. \code{psychnet_constant_variable}
+(warning) when a variable is constant in an observed group;
+\code{psychnet_estimator_mismatch} (warning) when a group was estimated with
+another estimator or settings, or is compared with a \code{gamma} or
+\code{na_method} other than its own; \code{psychnet_rows_dropped} (warning) when a
+paired comparison of a group leaves out persons observed in only one
+level. \code{psychnet_renamed} on access to the fields \code{M} and \code{S}, which the
+object does not have; \code{summary()} reports both tests.
+}
+
 \examples{
 set.seed(1)
 # group a has a stronger chain than group b
@@ -171,7 +200,7 @@ fit
 print(fit, n = 3)          # the three largest edge differences
 summary(fit)
 as.data.frame(fit)
-plot(fit)                  # global strength permutation null
+plot(fit)                  # permutation distribution of global strength
 plot(fit, type = "edges")  # per-edge differences
 }
 \references{
@@ -179,4 +208,9 @@ van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski,
 J. J., Tio, P., Schoevers, R. A., Borsboom, D., & Waldorp, L. J. (2022).
 Comparing network structures on three aspects: A permutation test.
 \emph{Psychological Methods}. \doi{10.1037/met0000476}
+}
+\seealso{
+\code{\link[=difference_test]{difference_test()}} for differences within one network;
+\code{\link[=net_boot]{net_boot()}} for the accuracy of a network; \code{\link[=ebic_glasso]{ebic_glasso()}} for the
+estimator; \link{psychnet_group} for networks estimated per group.
 }

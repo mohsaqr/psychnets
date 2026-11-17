@@ -3,7 +3,7 @@
 \name{redundancy}
 \alias{redundancy}
 \alias{print.psychnet_redundancy}
-\title{Detect redundant node pairs ("goldbricker")}
+\title{Detect redundant pairs of items}
 \usage{
 redundancy(
   data,
@@ -16,52 +16,77 @@ redundancy(
 \method{print}{psychnet_redundancy}(x, ...)
 }
 \arguments{
-\item{data}{A numeric data frame or matrix (rows = observations).}
+\item{data}{A numeric data frame or matrix with one row per observation and
+one column per item.}
 
-\item{p}{Significance level for each pairwise correlation-difference test.
-Default 0.05.}
+\item{p}{Significance level of each test of two correlations. Default
+\code{0.05}.}
 
-\item{threshold}{Maximum proportion of significantly different correlations
-for a pair to be flagged redundant. Default 0.25.}
+\item{threshold}{A pair is flagged when its proportion of significantly
+different correlations is below this value. Default \code{0.25}.}
 
-\item{cor_min}{Minimum correlation between the two items themselves. Default
-0.5.}
+\item{cor_min}{Minimum correlation between the two items: a pair is
+flagged only when its correlation exceeds this value. Default \code{0.5}.}
 
-\item{cor_method}{Correlation type: \code{"auto"} (default, \code{\link[=cor_auto]{cor_auto()}} -
-polychoric/polyserial as appropriate, matching goldbricker), \code{"pearson"},
-\code{"spearman"}, or \code{"kendall"}.}
+\item{cor_method}{Correlation type: \code{"auto"} (default; polychoric or
+polyserial correlations where items are ordinal, see \code{\link[=cor_auto]{cor_auto()}}),
+\code{"pearson"}, \code{"spearman"} or \code{"kendall"}.}
 
 \item{x}{A \code{psychnet_redundancy} object.}
 
 \item{...}{Unused.}
 }
 \value{
-A tidy \code{data.frame} (class \code{psychnet_redundancy}), one row per flagged
-pair (sorted most-redundant first), with columns \code{item1}, \code{item2},
-\code{proportion} (share of significantly different correlations) and
-\code{correlation}. Zero rows when nothing is flagged. The full proportion matrix
-is stored with the result (attribute \code{proportion_matrix}). \code{print()}
-shows the flagged pairs, or a note that none were flagged, and returns \code{x}
-invisibly.
+A data frame of class \code{psychnet_redundancy}, one row per flagged
+pair, most redundant first, with columns \code{item1}, \code{item2}, \code{proportion}
+(share of significantly different correlations) and \code{correlation} (the
+correlation of the two items); it has no rows when no pair is flagged. The
+proportions for all pairs are kept with the result as the attribute
+\code{proportion_matrix}. \code{print()} shows the flagged pairs, or a note that
+none were flagged, and returns \code{x} invisibly.
 }
 \description{
-Flags pairs of items that behave redundantly in a network: their correlations
-with all other items are mostly statistically indistinguishable (a small
-proportion of significantly different correlations) and the two items are
-themselves strongly correlated. Ported from \code{networktools::goldbricker}.
+\code{redundancy()} detects pairs of items that measure nearly the same thing,
+which appear in a network as two nodes with nearly the same connections.
+Such topological overlap complicates the interpretation of the network, and
+of centrality in particular (Hallquist, Wright & Molenaar, 2021), so
+redundant pairs are commonly identified before a network is estimated, and
+then combined or reduced to one item.
+
+The function compares, for every pair of items, their correlations with each
+of the other items, using a significance test for two dependent correlations
+that share a variable. A pair is flagged as redundant when the proportion of
+significantly different correlations is below \code{threshold} and the two items
+correlate above \code{cor_min} with each other. This is the procedure of
+\code{goldbricker()} in the \code{networktools} package.
+
+It returns the flagged pairs, most redundant first.
+
+To combine flagged items into one variable before estimating the network,
+\code{\link[=net_aggregate]{net_aggregate()}} forms a composite score per group of items.
 }
 \details{
-\strong{Data handling.} Non-numeric columns are dropped, and so is any column
-that is constant once incomplete rows are removed. Rows with a missing value
-in any numeric column are dropped (listwise deletion, as \code{goldbricker}
-does), with a warning of class \code{psychnet_rows_dropped} giving the count; the
-remaining number of rows is the \code{n} of every correlation-difference test.
+Non-numeric columns are dropped, and so is any column that is constant once
+incomplete rows are removed. Rows with a missing value in any numeric
+column are dropped (listwise deletion, as in \code{goldbricker()}), and the
+number of remaining rows is the sample size of every test.
 }
 \section{Functions}{
 \itemize{
-\item \code{print(psychnet_redundancy)}: The flagged pairs with the thresholds used.
+\item \code{print(psychnet_redundancy)}: The thresholds used and the flagged pairs.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument, for data that are not a
+data frame or matrix, or for fewer than three usable items;
+\code{psychnet_degenerate_sample} when fewer than four complete rows remain;
+\code{psychnet_rows_dropped} (warning) when incomplete rows are dropped;
+\code{psychnet_constant_variable} (warning) when a constant column is dropped;
+\code{psychnet_dropped_columns} (a message) when non-numeric columns are
+dropped.
+}
+
 \examples{
 redundancy(SRL_Claude)
 }
@@ -69,4 +94,8 @@ redundancy(SRL_Claude)
 Hallquist, M. N., Wright, A. G. C., & Molenaar, P. C. M. (2021).
 Problems with centrality measures in psychopathology networks.
 \emph{Multivariate Behavioral Research}, 56(2), 199-223.
+}
+\seealso{
+\code{\link[=net_aggregate]{net_aggregate()}} to combine items; \code{\link[=cor_auto]{cor_auto()}} for the
+correlations.
 }

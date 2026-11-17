@@ -1,89 +1,106 @@
 # Unified front door, mirroring bootnet::estimateNetwork(data, default = ...),
 # extended to read raw event logs (actor / action / time) directly.
 
-#' Estimate a psychometric network
+#' Estimate a psychometric network with any of the package's estimators
 #'
-#' The package's main entry point. Supply `data` and a `method`; everything else
-#' is optional fine-grained control. `psychnet()` reads two kinds of input and
-#' picks the right one automatically (`source = "auto"`):
+#' @description
+#' `psychnet()` estimates a psychometric network with any of the
+#' cross-sectional estimators, selected by `method`. A psychometric network
+#' represents variables, such as
+#' questionnaire items, symptoms or behaviours, as nodes and their conditional
+#' or marginal associations as edges.
 #'
-#' * **a numeric table** (`source = "data"`) -- the ordinary cross-sectional
-#'   case: one row per observation, one column per variable;
-#' * **a long event log** (`source = "eventdata"`) -- one row per event, with an
-#'   `actor` and an `action` column (and optionally `session` / `time`). The log
-#'   is converted to action frequencies with [event_frequencies()] and, when
-#'   actors contribute several occasions, decomposed into within- and
-#'   between-actor networks. Passing `actor` switches this on automatically.
+#' The estimators differ in what an edge means: partial-correlation networks
+#' describe the association between two variables after controlling for all
+#' others, regularized networks retain only the associations the data support,
+#' and Ising and mixed graphical models apply the same idea to binary and
+#' mixed data. Besides `method`, the arguments select the variables (`vars`),
+#' estimate one network per group (`group`), scale each variable within
+#' persons first (`within`), or treat `data` as an event log (`actor`,
+#' `action`, `session`, `time`), which is converted to action frequencies per
+#' occasion before a network is estimated.
 #'
-#' `method` speaks the package's own short vocabulary -- `"glasso"`, `"ggm"`,
-#' `"tmfg"`, `"logo"`, `"relimp"`, `"ising"`, `"ising_sampler"`, `"huge"`,
-#' `"mgm"`, `"cor"`, `"pcor"`. For interoperability it **also** accepts the
-#' `qgraph`/`bootnet` spellings (`"EBICglasso"`, `"ggmModSelect"`, `"TMFG"`,
-#' `"LoGo"`, `"IsingFit"`, `"IsingSampler"`), which resolve to the same
-#' estimators. Whichever you pass in, the stored `$method` is the short name.
+#' `psychnet()` returns a fitted network; with `group`, one network per
+#' group, and for some event data a pair of within-actor and between-actor
+#' networks.
 #'
-#' @param data A numeric data frame / matrix (rows = observations), or a long
-#'   event log when `actor` is supplied.
-#' @param method Estimator, a single name. One of `"glasso"` (default),
-#'   `"ggm"`, `"tmfg"`, `"logo"`, `"relimp"`, `"ising"`, `"ising_sampler"`,
-#'   `"huge"`, `"mgm"`, `"cor"`, `"pcor"`; several names at once are an error
-#'   (`psychnet_bad_input`). The `qgraph`/`bootnet` names are accepted as aliases
-#'   (e.g. `"EBICglasso"` -> `"glasso"`, `"ggmModSelect"` -> `"ggm"`).
-#'   Event data is restricted to the Gaussian graphical methods.
-#' @param vars Which variables to build the network on. Defaults to every
-#'   variable. Selected the tidy way: a name range (`motivation:regulation`),
-#'   a column-index range (`3:9`), a vector of names (`c(joy, fear)` or
-#'   `c("joy", "fear")`), or a single name -- the same grammar as `subset()`'s
-#'   `select=`. (For an event log, actions become the variables, so `vars`
-#'   selects feature columns only when `data` is already a numeric table.)
-#' @param group Optional grouping column(s). When supplied, one network is
-#'   estimated per level of `group` and a `psychnet_group` (a named list of
-#'   networks) is returned, which plots as a grid and is iterated per level by
-#'   the framework verbs.
-#' @param within Optional name of a person-identifier column. When supplied,
-#'   every network variable is centered and scaled *within persons* first (see
-#'   [scale_within()]; mlVAR's `scaleWithin`), over all rows -- so with `group`
-#'   (e.g. occasions) the person means and SDs use every occasion -- and the
-#'   person column is not a node. With `group`, the result remembers which
-#'   person each row is, so `net_compare(x, levels, paired = TRUE)` pairs the
-#'   two levels by person. Without `group`, rows of the same person are pooled
-#'   and are not independent. Cross-sectional data only.
-#' @param source Input kind: `"auto"` (default; an event log when `actor` is
-#'   given, otherwise a numeric table), `"data"`, or `"eventdata"`.
-#' @param actor,action,session,time Event-log columns. `actor` (and, by default,
-#'   `action = "Action"`) name the subject and the event; `session` is an
-#'   explicit within-actor grouping, and `time` is used only to compute sessions
-#'   from gaps. Supplying `actor` selects `source = "eventdata"`.
-#' @param compute_sessions,time_threshold Split each actor into sessions from
-#'   `time` gaps (a new session starts when the gap exceeds `time_threshold`,
-#'   default 900 s). `compute_sessions` defaults to `TRUE`; it is a no-op when no
-#'   `time` is supplied.
-#' @param id Actor column when an event log has already been reduced to a numeric
-#'   feature table (one row per occasion) rather than raw events.
-#' @param standardize For nested event data (several occasions per actor),
-#'   `TRUE` (default) removes the actor clustering by person-centering and fits a
-#'   single network; `FALSE` returns the within/between pair instead.
-#' @param threshold Absolute-weight threshold below which edges are zeroed for
-#'   `cor`, `pcor`, `glasso`, `huge`, `ggm`, and `logo`: a single number >= 0
-#'   (validated by the estimator). For `mgm`, supply its character rule
-#'   (`"LW"`, `"HW"`, or `"none"`); the numeric default leaves `mgm_fit()`'s
-#'   own default unchanged. A non-zero value for any other method is ignored
-#'   with a `psychnet_ignored_argument` warning.
-#' @param gamma EBIC hyperparameter. `NULL` (default) keeps each method's own
-#'   default (0.5 for the regularized Gaussian graphical models, 0 for `ggm`,
-#'   0.25 for `ising`/`mgm`); set it to override. Forwarded only to the
-#'   regularized methods; a value given for another method is ignored with a
-#'   `psychnet_ignored_argument` warning.
-#' @param labels Optional node labels.
-#' @param ... Passed to the underlying estimator (e.g. `cor_method=` for the
-#'   correlation-based methods, `npn=` for `"huge"`, `rule=` for the Ising
-#'   methods, `alpha=` for the correlation / `"ising_sampler"` methods).
-#'   For event feature tables, `na_method = "listwise"` removes incomplete
-#'   rows before person-centering; `"pairwise"` (default) uses available
-#'   observations for each person's variable means and each correlation.
-#' @return A `psychnet` object; a `psychnet_group` (named list of networks) when
-#'   `group` is supplied; or, for nested event data with `standardize = FALSE`, a
-#'   `psychnet_multilevel` object carrying `$within` and `$between` networks.
+#' Each method can also be called directly, which exposes its full set of
+#' options. Panel data measured in a few waves are modelled by
+#' [panel_gvar()], which `psychnet()` does not route. The method-specific
+#' pages describe each model: [ebic_glasso()], [ggm_modselect()], [huge_network()], [tmfg_network()],
+#' [logo_network()], [relimp_network()], [cor_network()], [pcor_network()],
+#' [ising_fit()], [ising_sampler()] and [mgm_fit()].
+#'
+#' @details
+#' `method` accepts the package's short names and the names used by `qgraph`
+#' and `bootnet` (`"EBICglasso"`, `"ggmModSelect"`, `"TMFG"`, `"LoGo"`,
+#' `"IsingFit"`, `"IsingSampler"`), ignoring case and separators; all resolve
+#' to the same estimators, and the fitted network records the short name.
+#' [net_crosswalk()] maps the arguments of the reference packages to those of
+#' this package.
+#'
+#' @param data A data frame or matrix with one row per observation and one
+#'   column per variable, or a long event log (one row per event).
+#' @param method The estimator, a single name: `"glasso"` (default), `"ggm"`,
+#'   `"huge"`, `"tmfg"`, `"logo"`, `"relimp"`, `"cor"`, `"pcor"`, `"ising"`,
+#'   `"ising_sampler"` or `"mgm"`, or a `qgraph`/`bootnet` alias. Event data
+#'   accept `"glasso"`, `"pcor"`, `"ggm"`, `"huge"`, `"tmfg"` and `"logo"`.
+#' @param vars The variables to use as nodes (default: all). A name range
+#'   (`motivation:regulation`), an index range (`3:9`), names (`c(joy, fear)`
+#'   or `c("joy", "fear")`) or a single name, as in the `select` argument of
+#'   [subset()]. For an event log the actions are the nodes.
+#' @param group Optional grouping column(s). One network is estimated per
+#'   level and a [psychnet_group] is returned.
+#' @param within Optional person-identifier column. Each variable is centred
+#'   and scaled within persons over all rows before estimation (see
+#'   [scale_within()]), and the person column is not a node. With `group`,
+#'   rows are matched by person so that [net_compare()] can pair two levels
+#'   (`paired = TRUE`). Without `group`, a person's rows are pooled and are
+#'   not independent. Numeric tables only.
+#' @param source Kind of input: `"auto"` (default; an event log when `actor`
+#'   or `id` is given, otherwise a numeric table), `"data"` or `"eventdata"`.
+#' @param actor,action,session,time Event-log columns: the actor, the action
+#'   (default `"Action"`), an optional session within actor, and an optional
+#'   time used only to split actors into sessions. Giving `actor` selects
+#'   event data.
+#' @param compute_sessions,time_threshold Whether to split each actor into
+#'   sessions where the gap in `time` exceeds `time_threshold` (defaults
+#'   `TRUE` and 900, i.e. 15 minutes for times in seconds). Has no effect
+#'   without `time`.
+#' @param id Actor column of an event log already reduced to a numeric table
+#'   with one row per occasion.
+#' @param standardize For event data with several occasions per actor: `TRUE`
+#'   (default) centres each actor's occasions and fits one network; `FALSE`
+#'   returns separate within-actor and between-actor networks.
+#' @param threshold Absolute edge weight below which edges are set to zero, for
+#'   `"cor"`, `"pcor"`, `"glasso"`, `"huge"`, `"ggm"` and `"logo"`: a single
+#'   number >= 0 (default `0`). For `"mgm"`, give its rule (`"LW"`, `"HW"` or
+#'   `"none"`); the default `0` leaves the [mgm_fit()] default in place.
+#' @param gamma EBIC hyperparameter for `"glasso"`, `"huge"`, `"ggm"`,
+#'   `"ising"` and `"mgm"`. `NULL` (default) keeps each method's own default.
+#' @param labels Optional node labels, one per node.
+#' @param ... Further arguments for the estimator, such as `cor_method` for
+#'   the correlation-based methods, `npn` for `"huge"`, `rule` for the Ising
+#'   methods and `alpha` for `"cor"`, `"pcor"` and `"ising_sampler"`. For an
+#'   event table, `na_method = "listwise"` removes incomplete rows before
+#'   centring; `"pairwise"` (default) uses the available values.
+#' @return A fitted network of class `psychnet` ([psychnet-class]); with
+#'   `group`, a [psychnet_group] with one network per level; for event data
+#'   with several occasions per actor and `standardize = FALSE`, a
+#'   [psychnet_multilevel] pair of within-actor and between-actor networks.
+#'   Edges are read with `as.data.frame()`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `method` has several values or is unknown,
+#'   `vars` names a missing column, `within` does not name one column of a
+#'   numeric table, or event data are combined with a method other than the
+#'   Gaussian ones; `psychnet_ignored_argument` (warning) when `threshold` or
+#'   `gamma` is set for a method that does not use it. With `group`, the
+#'   conditions listed in [psychnet_group]. The chosen estimator raises its
+#'   own conditions.
+#' @seealso [psychnet-class] for the fitted object; [certificate()] to check
+#'   a regularized fit; [net_centralities()], [net_boot()] and
+#'   [net_compare()] for analyses of fitted networks; [event_frequencies()]
+#'   for the event-log conversion.
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 5), 200, 5)

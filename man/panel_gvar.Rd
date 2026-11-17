@@ -2,7 +2,7 @@
 % Please edit documentation in R/panelgvar.R
 \name{panel_gvar}
 \alias{panel_gvar}
-\title{Panel graphical VAR network (panel-GVAR)}
+\title{Estimate temporal, contemporaneous and between-person networks from panel data}
 \usage{
 panel_gvar(
   data,
@@ -25,169 +25,188 @@ panel_gvar(
 )
 }
 \arguments{
-\item{data}{A data.frame (or matrix). Either \strong{long} (one row per person per
-wave; give \code{vars}, \code{id}, \code{wave}) or \strong{wide} (one row per person; give
+\item{data}{A data frame or matrix: \strong{long} (one row per person per wave;
+give \code{vars}, \code{id} and \code{wave}) or \strong{wide} (one row per person; give
 \code{vars} as a design matrix).}
 
-\item{vars}{Long data: character vector of the variable columns. Wide data: a
-character matrix of column names, one row per variable and one column per
-wave (the \code{psychonetrics} \code{vars} design); its row names become the labels.}
+\item{vars}{Long data: the names of the variable columns. Wide data: a
+character matrix of column names with one row per variable and one
+column per wave (the \code{psychonetrics} design); its row names become the
+labels.}
 
-\item{id, wave}{Long data only: names of the person-identifier and wave
-columns. Person identifiers and waves must be non-missing, and neither
-column may be one of \code{vars}. Waves are put in time order: a factor by its
-level order; numeric, date or time waves by value; character waves that
-are all numbers (\code{"1"}, \code{"2"}, \code{"10"}) numerically; any other character
-waves alphabetically, with a \code{psychnet_wave_order} warning naming the
-order used (pass a factor to set it).}
+\item{id, wave}{Long data only: the names of the person and wave columns.
+Neither may contain missing values or be one of \code{vars}, and each person
+has at most one row per wave. Waves are ordered by factor level order,
+by value for numbers, dates and times, numerically for character values
+that are all numbers, and alphabetically (with a warning) for any other
+character values; pass a factor to set the order.}
 
-\item{select}{Edge selection. \code{"none"} (default): every edge is estimated
-and reported with its standard error and p-value -- significance is shown,
-not imposed (the \code{psychonetrics} default). \code{"prune"}: remove edges with
-p > \code{alpha} and refit, then step up (see \code{stepup}) -- psychonetrics'
-\code{prune() |> stepup()}. \code{"ebic"}: penalized maximum likelihood (lasso on
-every temporal, contemporaneous and between parameter) with the penalty
-chosen by EBIC along a path -- psychonetrics'
-\code{panelgvar(estimator = "PML")}, the panel counterpart of \code{\link[=ebic_glasso]{ebic_glasso()}}.}
+\item{select}{Edge selection: \code{"none"} (default) estimates every edge and
+reports its significance; \code{"prune"} removes non-significant edges and
+refits (see Details); \code{"ebic"} estimates penalized networks with the
+penalty chosen by EBIC.}
 
-\item{alpha}{Significance level for the \code{significant} flag, the solid/dashed
-edges of \code{plot()}, and \code{select = "prune"}. Default \code{0.01}
-(\code{psychonetrics::prune()}'s default).}
+\item{alpha}{Significance level, in (0, 1), for the \code{significant} flag,
+the solid and dashed edges of \code{plot()}, and pruning. Default \code{0.01}, as
+in \code{psychonetrics::prune()}.}
 
-\item{adjust}{Multiplicity correction applied to the edge p-values before
-pruning, one of \link[stats:p.adjust]{stats::p.adjust.methods}. Default \code{"none"}
-(\code{psychonetrics::prune()}'s default). Used only with \code{select = "prune"}
-(a \code{psychnet_ignored_argument} warning says so otherwise); the p-values
-and \code{significant} flags reported in the edge and parameter tables are
+\item{adjust}{Multiplicity correction for the p-values tested in pruning,
+one of \link[stats:p.adjust.methods]{stats::p.adjust.methods}. Default \code{"none"}. Used only with
+\code{select = "prune"}; the reported p-values and \code{significant} flags are
 always unadjusted.}
 
-\item{recursive}{Logical; repeat pruning until no edge has \code{p > alpha}.
-Default \code{FALSE}.}
+\item{recursive}{With \code{select = "prune"}: repeat pruning until no edge has
+p > \code{alpha}. Default \code{FALSE}.}
 
-\item{stepup}{Logical; after pruning, run the \code{psychonetrics::stepup()}
-search: re-add the pruned edge with the largest modification index while
-it is significant at \code{alpha} and the refit passes a chi-square difference
-test at \code{alpha} (and lowers BIC, with \code{criterion = "bic"}). Default \code{TRUE},
-because one-pass pruning can remove parameters that substitute for each
-other (e.g. an autoregression and correlated cross-lagged effects), each
-non-significant alone but not jointly. \code{FALSE} reproduces
-\code{psychonetrics::prune()} alone. Used only with \code{select = "prune"}.}
+\item{stepup}{With \code{select = "prune"}: after pruning, add back removed
+edges that improve the fit (see Details). Default \code{TRUE}, because
+one-pass pruning can remove parameters that are each non-significant but
+jointly significant, such as an autoregression and correlated
+cross-lagged effects. \code{FALSE} gives pruning alone.}
 
-\item{criterion}{Step-up acceptance criterion besides the chi-square test:
-\code{"bic"} (default, as \code{psychonetrics::stepup()}) or \code{"none"}.}
+\item{criterion}{With \code{stepup}: \code{"bic"} (default) also requires BIC to
+decrease when an edge is added; \code{"none"} uses the significance tests
+only.}
 
-\item{gamma, nlambda, lambda_min_ratio}{For \code{select = "ebic"}: the EBIC
-hyperparameter (default 0.5), the number of penalty values on the path
-(50; a finite integer >= 2) and the smallest as a fraction of the largest (1e-4) --
-psychonetrics' \code{find_penalized_lambda()} defaults.}
+\item{gamma, nlambda, lambda_min_ratio}{With \code{select = "ebic"}: the EBIC
+hyperparameter (default \code{0.5}), the number of penalty values (default
+\code{50}, a whole number >= 2), and the smallest penalty as a fraction of the
+largest (default \code{1e-4}).}
 
-\item{refit}{For \code{select = "ebic"}: refit the selected network by
-unpenalized maximum likelihood (standard errors and p-values then come
-from that refit). Default \code{FALSE}: the penalized estimates are returned,
-and standard errors, p-values and \code{significant} are \code{NA} (they do not
-apply to lasso estimates).}
+\item{refit}{With \code{select = "ebic"}: refit the selected networks by
+unpenalized maximum likelihood, so that standard errors and p-values are
+available. Default \code{FALSE} returns the penalized estimates, for which
+standard errors, p-values and \code{significant} are \code{NA}.}
 
-\item{standardize}{Rescale the data before fitting, as psychonetrics'
-\code{panelvar(standardize =)}: \code{"none"} (default), \code{"z"} (one mean and SD per
-variable, pooled over waves), or \code{"z_per_wave"} (z-score every variable
-separately within every wave). \code{"z_per_wave"} removes wave-to-wave drift
-in means and variances -- useful when the stationary-means assumption
-fails, at the price of no longer modelling that drift -- and makes the
-edges standardized. Standardization uses the available values (SD with
-denominator n - 1) before listwise deletion.}
+\item{standardize}{Rescaling before fitting: \code{"none"} (default), \code{"z"}
+(one mean and standard deviation per variable, pooled over waves), or
+\code{"z_per_wave"} (each variable z-scored within each wave). \code{"z_per_wave"}
+removes changes in means and variances across waves, which the model
+would otherwise assume absent, and makes the edges standardized.
+Standardization uses the available values before listwise deletion.}
 
-\item{labels}{Optional node labels (default: \code{vars} for long data, the design
-row names for wide data).}
+\item{labels}{Optional node labels, unique and non-empty (default: \code{vars}
+for long data, the design row names for wide data).}
 
-\item{na_method}{Missing-data handling. Only \code{"listwise"} is supported: a
-person missing any wave/variable is dropped (with a warning giving the
-count). A pairwise covariance is not a likelihood for this model and full-
-information ML is not yet implemented, so \code{"pairwise"} is refused.}
+\item{na_method}{Only \code{"listwise"} (default): a person with any missing
+value is dropped. \code{"pairwise"} is refused, because a pairwise covariance
+is not a likelihood for this model.}
 }
 \value{
-An object of class \code{c("psychnet_panelgvar", "netobject_group")}: a
-named list of three \link{psychnet} networks, \code{temporal} (directed; edge
-\code{from -> to} is the lag-1 effect of \code{from} on \code{to}), \code{contemporaneous},
-and \code{between} (undirected partial correlations). Being a
-\code{netobject_group}, it plots as a grid with \code{cograph::splot()}. Read it with
-\code{as.data.frame()}: \code{what = "edges"} (one row per edge with standard error,
-p-value and 95\% Wald interval; the temporal autoregressive effects are the
-\code{from == to} rows), \code{what = "parameters"} (every model
-parameter), \code{what = "fit"} (one row of fit indices: chi-square, CFI,
-TLI, RMSEA, AIC, BIC), \code{what = "variance"} (one row per variable: the
-between-person share of its variance), \code{what = "covariance"} (the
-innovation and between-person covariance matrices, one row per entry),
-\code{what = "path"} (for \code{select = "ebic"}: one row per penalty value on the
-lambda path), or \code{what = "diagnostics"} (one
-row: the score
-certificate -- largest absolute gradient of the ML fit function on the
-free parameters, or the lasso KKT residual for \code{select = "ebic"} --
-boundary flag, SE availability, and how many of the optimizer
-starts reached the best optimum). Fitting, inference and the certificate
-run on standardized variables (pooled SD per variable), so they are
-unit-free and the certificate does not depend on the variables' units;
-the model is scale-equivariant, so estimates and standard errors map back
-exactly and are returned on the data scale.
-
-Errors are classed: \code{psychnet_bad_input} for unusable input (fewer than
-three waves, too few persons, non-numeric, missing or duplicated columns,
-duplicated or missing labels, an argument outside its allowed values, a
-requested \code{"pairwise"}), \code{psychnet_no_converge} if the optimizer ends at an
-infeasible point. Warnings are classed too: \code{psychnet_no_converge} (score
-above \code{1e-6} at an interior solution), \code{psychnet_boundary} (the final
-contemporaneous or between covariance is near-singular, i.e. partial
-correlations near +/-1 -- common with three waves; those estimates are
-unreliable, and the score, which need not vanish there, is quoted in the
-message),
-\code{psychnet_singular_information} (some parameters are not identified at
-the returned estimate: their standard errors are NA, the others exact),
-\code{psychnet_approximate_se} (the fit being pruned had a singular information;
-the parameters it does not identify were treated as having infinite
-standard errors, so pruning removes them), and
-\code{psychnet_listwise_drop} (persons removed for missing values),
-\code{psychnet_wave_order} (non-numeric character waves ordered
-alphabetically) and \code{psychnet_ignored_argument} (\code{adjust} without
-pruning).
+An object of class \code{c("psychnet_panelgvar", "netobject_group")}
+(\link{psychnet_panelgvar}): a named list of three networks of class
+\code{psychnet}, \code{temporal} (directed), \code{contemporaneous} and \code{between}
+(undirected). \code{as.data.frame()} gives one row per edge with its standard
+error, p-value and Wald interval; \code{as.data.frame(x, what = ...)} gives
+the \code{"parameters"}, \code{"fit"} indices, \code{"variance"} decomposition,
+\code{"covariance"} matrices, EBIC \code{"path"} or \code{"diagnostics"}, whose \code{score}
+column is the certificate. \code{summary()} gives one row per network and
+\code{plot()} draws the three networks.
 }
 \description{
-Estimates the three networks of the panel graphical vector-autoregressive
-model (Epskamp 2020) from few-wave, many-person panel data: a directed
-\strong{temporal} network (within-person lag-1 effects), an undirected
-\strong{contemporaneous} network (partial correlations of the within-person
-innovations), and an undirected \strong{between}-person network (partial
-correlations of the stable person means). The within-person process is a
-stationary VAR(1) around a random intercept; means are stationary across
-waves. This is the model fitted by \code{psychonetrics::panelgvar()}, estimated by
-maximum likelihood in base R.
+\code{panel_gvar()} estimates temporal, contemporaneous and between-person
+networks from panel data, which follow many persons over a few measurement
+waves. It fits the panel graphical vector-autoregressive (panel-GVAR)
+model, which separates three kinds of association among the measured
+variables (Epskamp, 2020).
+
+The \strong{temporal} network is directed: an edge from A to B is the
+within-person effect of A at one wave on B at the next, given all other
+variables, and a self-loop is an autoregressive effect. The
+\strong{contemporaneous} network holds the partial correlations among a
+person's deviations at the same wave that the temporal effects leave
+unexplained. The \strong{between} network holds the partial correlations among
+the persons' stable means. Together they distinguish variables that
+predict one another over time within persons, that vary together within
+persons at the same wave, and that differ together between persons.
+
+The model is fitted by maximum likelihood to long data (one row per
+person and wave) or wide data (one row per person). By default every
+edge is estimated and reported with its standard error, p-value, 95\% Wald
+interval and a \code{significant} flag at \code{alpha}. \code{select = "prune"} removes
+the edges that are not significant and refits the model, then adds back
+removed edges that improve the fit (\code{stepup}). \code{select = "ebic"}
+estimates the three networks with a lasso penalty chosen by the extended
+Bayesian information criterion (EBIC), the panel counterpart of
+\code{\link[=ebic_glasso]{ebic_glasso()}}. The fitted model is checked against its optimality
+conditions (see Details), and \code{as.data.frame(x, what = "diagnostics")}
+reports the result.
+
+The result is a \code{psychnet_panelgvar} object holding the three networks
+(\link{psychnet_panelgvar}).
+
+The model needs at least three waves. For a network from cross-sectional
+data, use \code{\link[=psychnet]{psychnet()}}; for networks of within-person deviations without a
+temporal model, \code{\link[=scale_within]{scale_within()}}. The model is the one fitted by
+\code{psychonetrics::panelgvar()}.
 }
 \details{
-By default the full (saturated) model is returned: every edge with its
-standard error, p-value, 95\% Wald interval and a \code{significant} flag at
-\code{alpha}, drawn solid (significant) or dashed (not) by \code{plot()}.
+Write \eqn{y_{it}} for the scores of person \eqn{i} at wave \eqn{t}. The
+model is \eqn{y_{it} = \mu + b_i + w_{it}}, with means \eqn{\mu} shared by
+all waves, stable person deviations \eqn{b_i} with covariance
+\eqn{\Sigma_b}, and a stationary within-person process
+\eqn{w_{it} = B w_{i,t-1} + \zeta_{it}} with innovation covariance
+\eqn{\Sigma_\zeta}. The temporal network is \eqn{B} (the edge from \eqn{j}
+to \eqn{i} is \eqn{B_{ij}}); the contemporaneous and between networks are
+the partial correlations implied by \eqn{\Sigma_\zeta} and \eqn{\Sigma_b}.
+When the means drift across waves, \code{standardize = "z_per_wave"} removes
+the drift.
 
-\code{select = "ebic"} instead minimizes F + lambda * sum|theta| over the
-temporal (autoregressive diagonal included), contemporaneous and between
-parameters, for 50 log-spaced lambdas from the smallest penalty that empties
-every network, keeping the lambda with the lowest EBIC = -2 logL + k log n
-\itemize{
-\item 4 k gamma log V (k free parameters, V wave x variable columns). The solver
-(accelerated proximal gradient, then an active-set Newton polish) stays
-inside the model's domain and is certified by the lasso KKT conditions; the
-selected lambda is re-solved from three starts. The likelihood is not
-convex, so the certificate proves a stationary point, and \code{print()} reports
-how many starts agree.
+Pruning fixes to zero, in one pass, every temporal, contemporaneous and
+between edge whose Wald p-value (after \code{adjust}) exceeds \code{alpha}, and
+refits; \code{recursive = TRUE} repeats until every remaining edge is
+significant. The step-up search then frees the removed edge with the
+largest modification index while that index is significant at \code{alpha},
+and keeps it when the likelihood-ratio test of the refit is significant at
+\code{alpha} and, with \code{criterion = "bic"}, BIC decreases; the first rejected
+edge ends the search. This is psychonetrics' \code{prune()} followed by
+\code{stepup()}.
+
+With \code{select = "ebic"}, the lasso penalty applies to the temporal
+(autoregressive effects included), contemporaneous and between parameters
+on the data scale, over \code{nlambda} log-spaced values from the smallest
+penalty that empties every network down to \code{lambda_min_ratio} times that
+value. The selected penalty minimizes
+\eqn{\mathrm{EBIC} = -2 \log L + k \log n + 4 \gamma k \log V}, with
+\eqn{k} the number of nonzero free parameters, \eqn{n} the number of
+persons and \eqn{V} the number of wave-by-variable columns. Penalized
+estimates below \code{1e-5} in absolute value on the data scale are set to
+zero before the certificate is computed.
+
+The certificate is the largest absolute gradient of the likelihood over
+the free parameters or, for \code{select = "ebic"} without \code{refit}, the largest
+violation of the lasso optimality (Karush–Kuhn–Tucker) conditions. Pruned
+and penalized models are refitted or re-solved after selection, so the
+certificate refers to the networks returned. It is computed on
+standardized variables and does not depend on the variables' units. The
+likelihood is not convex: a value near zero shows a stationary point, and
+the fit is started from several points whose agreement is reported.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{data}, \code{vars}, \code{id} or \code{wave} cannot be
+resolved (columns missing or duplicated, \code{id} and \code{wave} the same or
+among \code{vars}, missing persons or waves, a person with two rows in one
+wave), a variable is not numeric, there are fewer than two variables or
+fewer than three waves, there are no more complete persons than
+wave-by-variable columns, the stacked covariance is singular, a variable
+does not vary as \code{standardize} requires, \code{labels} is invalid, an
+argument is outside its allowed values, or \code{na_method} is not
+\code{"listwise"}; \code{psychnet_no_converge} (error) when no start reaches a
+feasible optimum, the fitted model is worse than its nested baseline, or
+no penalized model is feasible. Warnings: \code{psychnet_no_converge} when the
+score exceeds \code{1e-6} at an interior solution; \code{psychnet_boundary} when
+the contemporaneous or between covariance is near singular (partial
+correlations near +/-1, common with three waves), so estimates involving
+it are unreliable; \code{psychnet_singular_information} when some parameters
+are not identified at the estimate (their standard errors are \code{NA});
+\code{psychnet_approximate_se} when a fit being pruned had a singular
+information and its unidentified parameters were pruned;
+\code{psychnet_listwise_drop} when persons are removed for missing values;
+\code{psychnet_wave_order} when character waves are ordered alphabetically;
+\code{psychnet_ignored_argument} when \code{adjust} is set without pruning.
 }
 
-With \code{select = "prune"} the saturated model is fitted, every temporal,
-contemporaneous, and between edge whose Wald p-value exceeds \code{alpha} is fixed
-to zero in a single pass, and the model is refitted -- the
-\code{psychonetrics::prune()} default workflow (\code{recursive = TRUE} repeats until
-every remaining edge is significant). Then, with \code{stepup = TRUE} (default),
-the \code{psychonetrics::stepup()} search adds pruned edges back one at a time
-while modification indices, chi-square difference tests and BIC support
-them, so \code{select = "prune"} equals psychonetrics'
-\code{panelgvar() |> runmodel() |> prune() |> stepup()}.
-}
 \examples{
 # srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
 # effort in one week drives efficacy in the next.
@@ -204,4 +223,13 @@ as.data.frame(fit, what = "variance")
 Epskamp, S. (2020). Psychometric network models from time-series
 and panel data. \emph{Psychometrika}, 85(1), 206-231.
 \doi{10.1007/s11336-020-09697-3}
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. \emph{Advances in Neural Information Processing
+Systems}, 23, 604-612.
+}
+\seealso{
+\link{psychnet_panelgvar} for reading the fit; \code{\link[=ebic_glasso]{ebic_glasso()}} for
+cross-sectional data; \code{\link[=scale_within]{scale_within()}}; \code{\link[=certificate]{certificate()}} for the
+certificates of the other estimators.
 }

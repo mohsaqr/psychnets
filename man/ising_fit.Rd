@@ -2,7 +2,7 @@
 % Please edit documentation in R/ising.R
 \name{ising_fit}
 \alias{ising_fit}
-\title{Ising network for binary data}
+\title{Estimate a regularized Ising network for binary items}
 \usage{
 ising_fit(
   data,
@@ -18,67 +18,105 @@ ising_fit(
 )
 }
 \arguments{
-\item{data}{Binary data frame or matrix (rows = observations). Columns may
-be numeric 0/1, logical, or two-level factors (the first level is coded 0).
-Any other column -- a numeric column not coded 0/1 (e.g. 1/2), a factor
-with more than two levels, a character column -- is an error naming it,
-never a silently dropped node. A constant column carries no information
-and is dropped.}
+\item{data}{Binary data: a data frame or matrix with one row per
+observation. Columns may be numeric 0/1, logical, or two-level factors
+(the first level is coded 0). Any other column, such as a numeric column
+coded 1/2 or a factor with more than two levels, is an error naming it.
+A constant column is dropped.}
 
-\item{gamma}{EBIC hyperparameter. Default 0.25.}
+\item{gamma}{EBIC hyperparameter, a single number >= 0; larger values give
+sparser networks. Default \code{0.25}.}
 
-\item{rule}{Edge-combination rule: \code{"AND"} (default) or \code{"OR"}.}
+\item{rule}{\code{"AND"} (default) keeps an edge when both nodewise estimates
+are nonzero; \code{"OR"} when either is.}
 
-\item{nlambda}{Number of penalties per nodewise path. Default 100.}
+\item{nlambda}{Number of penalty values on each nodewise path, a whole
+number >= 2. Default \code{100}.}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.
-With \code{native = FALSE}, omitting the argument retains glmnet's reference
-default for compatibility; an explicitly supplied value is honored.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
+(0, 1). Default \code{0.01}. With \code{native = FALSE}, leaving it unset uses
+glmnet's own default, as \code{IsingFit::IsingFit()} does.}
 
-\item{min_sum}{Minimum row sum-score (number of endorsed items); rows below
-it are dropped before fitting. \code{NULL} (default) keeps every row.}
+\item{min_sum}{Minimum number of endorsed items per row; rows below it are
+dropped before fitting. Default \code{NULL} keeps every row.}
 
-\item{weights}{Optional non-negative observation weights, one per input row
-after missing-data preparation. When \code{min_sum} is used, weights are filtered
-alongside their corresponding rows. Weights are rescaled to a maximum of 1
-(the \code{mgm::mgm()} convention), so only their relative sizes matter:
-\code{weights = w} and \code{weights = 7 * w} give the same network. \code{NULL}
-(default) is unweighted.}
+\item{weights}{Optional non-negative observation weights, one per row after
+missing-data handling (and filtered with \code{min_sum}). Only their relative
+sizes matter: \code{weights = w} and \code{weights = 7 * w} give the same network.
+Requires \code{native = TRUE}. Default \code{NULL} (unweighted).}
 
-\item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
-each column over its observed values (mode for binary), keeping the full
-sample; \code{"listwise"} drops incomplete rows. Identical for complete data.}
+\item{na_method}{\code{"pairwise"} (default) fills each missing value with the
+item's more frequent value and keeps every row; \code{"listwise"} drops rows
+with a missing value. The two agree for complete data.}
 
-\item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
-dependency-free, self-certified L1 logistic path (KKT ~1e-9). \code{FALSE}
-delegates each per-node fit to the \code{glmnet} package with the IsingFit EBIC
-path, so the returned \verb{$weights}/\verb{$thresholds} byte-match
-\code{IsingFit::IsingFit()} (to ~1e-16) at the cost of glmnet's looser
-self-certificate. \code{native = FALSE} needs the optional \code{glmnet} package
-(Suggests). \code{min_sum} is supported by both engines; observation \code{weights}
-require \code{native = TRUE}.}
+\item{native}{\code{TRUE} (default) uses the package's own solver. \code{FALSE} fits
+each regression with the \code{glmnet} package (which must be installed) and
+reproduces \code{IsingFit::IsingFit()}; its certificate reflects glmnet's
+convergence tolerance and is usually larger. \code{weights} are not accepted
+with \code{native = FALSE}.}
 
 \item{labels}{Optional node labels: one per node, or one per input column
 (labels of dropped constant columns are then discarded).}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the symmetric weight matrix,
-with \verb{$thresholds} (node intercepts), \verb{$rule}, \verb{$nodewise} (the per-node
-fits used by \code{\link[=net_predict]{net_predict()}}) and \verb{$kkt} (the worst nodewise stationarity
-residual, read with \code{\link[=certificate]{certificate()}}).
-
-Errors of class \code{psychnet_bad_input} for non-binary columns, invalid
-\code{gamma}/\code{nlambda}/\code{lambda_min_ratio}/\code{weights}, or mislengthed \code{labels}.
-A nodewise fit that does not reach its optimum raises a
-\code{psychnet_no_converge} warning naming the node.
+An undirected network of class \code{psychnet} (\link[=psychnet-class]{psychnet}).
+\code{as.data.frame()} gives one row per edge (\code{from}, \code{to}, \code{weight}),
+\code{\link[=certificate]{certificate()}} the largest optimality violation of the nodewise
+regressions, and \code{\link[=net_predict]{net_predict()}} the predictability of each node. The
+object also stores the node thresholds (\code{thresholds}), the combination
+rule (\code{rule}) and the nodewise regressions (\code{nodewise}).
 }
 \description{
-Estimates an Ising model by nodewise L1-penalized logistic regression with
-EBIC selection, combined by the AND (default) or OR rule. Equivalent in
-purpose to \code{IsingFit::IsingFit()}, but pure base R and self-certified: each
-node's regression reports its stationarity (KKT) residual (see
-\code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}}).
+\code{ising_fit()} estimates a regularized Ising network from binary items, such
+as symptoms that are present or absent or items that are endorsed or not.
+The Ising model describes the items through a threshold for each item and
+an interaction for each pair, the association between two items after
+conditioning on all other items, and is estimated here by the nodewise
+lasso method of van Borkulo et al. (2014).
+
+A positive edge means that the two items tend to be endorsed together, a
+negative edge that endorsing one makes the other less likely, and an
+absent edge that the two are conditionally independent; the network shows
+which items are directly associated once the rest are taken into account.
+The function regresses each item on all other items by L1-penalized
+(lasso) logistic regression and selects each item's penalty by the
+extended Bayesian information criterion (EBIC). Every pair is estimated
+twice, once in each item's regression. Under the AND rule (default) an
+edge is kept when both estimates are nonzero, under the OR rule when
+either is; its weight is the mean of the two. Rows can be filtered by
+their sum score (\code{min_sum}) and weighted (\code{weights}). Each regression is
+checked against its optimality (Karush–Kuhn–Tucker) conditions, and
+\code{\link[=certificate]{certificate()}} reports the largest violation across the items.
+
+The result is an undirected network of class \code{psychnet}
+(\link[=psychnet-class]{psychnet}).
+
+For unpenalized estimates with significance-based pruning, use
+\code{\link[=ising_sampler]{ising_sampler()}}; for data that combine continuous and binary variables,
+\code{\link[=mgm_fit]{mgm_fit()}}. Ordinal or continuous items can be split with
+\code{\link[=dichotomize]{dichotomize()}} first. The model is the one fitted by
+\code{IsingFit::IsingFit()}, which \code{native = FALSE} reproduces.
 }
+\details{
+Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
+The weight of an edge is the change in the log-odds of one item when the
+other is endorsed, averaged over the two regressions; an item's threshold
+is its log-odds when every other item is 0.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when a column is not binary, fewer than two usable
+columns remain, \code{gamma}, \code{nlambda}, \code{lambda_min_ratio}, \code{min_sum},
+\code{weights}, \code{native} or \code{labels} is invalid, \code{min_sum} removes every row
+(or every row with positive weight), \code{weights} is combined with
+\code{native = FALSE}, or \code{native = FALSE} is requested without the \code{glmnet}
+package; \code{psychnet_constant_variable} (warning) when a constant column
+is dropped; \code{psychnet_no_converge} (warning) when a nodewise regression
+does not reach its optimum; \code{psychnet_degenerate_sample} (warning) when
+an item takes a single value on every retained row, so its regression
+has no finite intercept. The last two are raised with \code{native = TRUE}.
+}
+
 \examples{
 # Ising models need 0/1 data: split the five SRL construct scores at the median.
 b <- dichotomize(SRL_GPT)
@@ -92,4 +130,14 @@ van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
 Boschloo, L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
 constructing networks from binary data. \emph{Scientific Reports}, 4, 5918.
 \doi{10.1038/srep05918}
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. \emph{Advances in Neural Information Processing
+Systems}, 23, 604-612.
+}
+\seealso{
+\code{\link[=ising_sampler]{ising_sampler()}} for the unregularized model; \code{\link[=mgm_fit]{mgm_fit()}} for
+mixed continuous and binary data; \code{\link[=dichotomize]{dichotomize()}} to prepare items;
+\code{\link[=certificate]{certificate()}} and \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} for the optimality check;
+\code{\link[=net_predict]{net_predict()}}; \code{\link[=psychnet]{psychnet()}} with \code{method = "ising"}.
 }

@@ -3,7 +3,7 @@
 \name{net_centralities}
 \alias{net_centralities}
 \alias{plot.psychnet_centrality}
-\title{Node centrality}
+\title{Compute the centrality of each node in a network}
 \usage{
 net_centralities(
   x,
@@ -21,72 +21,96 @@ net_centralities(
 )
 }
 \arguments{
-\item{x}{A \link{psychnet} object or a weighted adjacency matrix. For \code{plot()},
-the \code{psychnet_centrality} table returned by \code{net_centralities()}.}
+\item{x}{A fitted network (\link[=psychnet-class]{psychnet}), a weighted adjacency matrix,
+or a \link{psychnet_group} (one table per group). For \code{plot()}, the table
+returned by \code{net_centralities()}.}
 
-\item{measures}{Character vector of measures to return (for \code{plot()}: which
-of the returned measure columns to draw; default all). Any of \code{"strength"},
-\code{"expected_influence"} (the defaults, recommended for psychometric
-networks), \code{"expected_influence_2step"} (a node's one-step expected
-influence plus the one-step expected influence it transmits through its
-neighbours), \code{"betweenness"}, \code{"closeness"}, plus any names supplied via
-\code{centrality_fn}. Betweenness and closeness are computed on the absolute,
-inverted-weight graph and are not generally meaningful on signed networks --
-request them only when a downstream comparison needs them.}
+\item{measures}{Measures to compute: any of \code{"strength"},
+\code{"expected_influence"} (the defaults), \code{"expected_influence_2step"},
+\code{"betweenness"}, \code{"closeness"}, and names supplied by \code{centrality_fn}. For
+\code{plot()}: the measure columns to draw (default: all).}
 
-\item{centrality_fn}{Optional function taking the weighted adjacency matrix
-(with node-label dimnames) and returning a named list of node-centrality
-vectors, used to supply any \code{measures} not built in. Each vector must have
-one numeric value per node. A \emph{named} vector is aligned to the nodes by
-label (its names must be exactly the node labels, in any order); an
-unnamed vector is taken in node order. A wrong length, missing or extra
-names, or a non-numeric value is an error of class \code{psychnet_bad_input}.}
+\item{centrality_fn}{Optional function that takes the weighted adjacency
+matrix (with node labels as dimnames) and returns a named list of
+centrality vectors, one numeric value per node, for measures that are not
+built in. A named vector is matched to the nodes by label; an unnamed one
+is taken in node order.}
 
 \item{...}{Unused.}
 
-\item{type}{For \code{plot()}: \code{"bar"} (default; one sorted lollipop panel per
-measure) or \code{"line"} (the qgraph/bootnet centrality plot: one panel per
-measure, nodes on a shared vertical axis).}
+\item{type}{For \code{plot()}: \code{"bar"} (default; one sorted panel per measure)
+or \code{"line"} (one panel per measure, with the nodes in a shared order).}
 
-\item{scale}{For \code{plot(type = "line")}: the per-measure transform, \code{"raw"}
-(default; each panel keeps its own axis), \code{"z"} (z-score per measure) or
-\code{"relative"} (min-max scaled to [0, 1]). \code{type = "bar"} always shows
-raw values.}
+\item{scale}{For \code{plot(type = "line")}: \code{"raw"} (default), \code{"z"} (z-scores
+per measure) or \code{"relative"} (rescaled to 0-1 per measure). \code{type = "bar"}
+always shows raw values.}
 }
 \value{
-A tidy \code{data.frame} of class \code{c("psychnet_centrality", "data.frame")}, one row per node, with a \code{node} column and one column per
-requested measure (\code{strength} = sum of absolute edge weights,
-\code{expected_influence} = sum of signed edge weights, by default;
-\code{betweenness} and \code{closeness} are normalized, see Details); \code{plot()}
-draws it and returns it invisibly. For a \link{psychnet_group} the result is a
-per-group list (see \link{psychnet_result_group}).
+A data frame of class \code{psychnet_centrality}, one row per node, with
+a \code{node} column and one column per requested measure, named as in
+\code{measures}. \code{plot()} draws it and returns it invisibly. For a
+\link{psychnet_group}, one table per group (see \link{psychnet_result_group}).
 }
 \description{
-Summarizes each node's position in a fitted network as a tidy table. For
-psychometric networks the recommended measures are strength (the sum of
-absolute edge weights) and expected influence (the signed sum, so negative
-edges offset positive ones; Robinaugh, Millner & McNally 2016). Betweenness
-and closeness follow Opsahl, Agneessens and Skvoretz (2010) on the
-inverted absolute weights. For a directed network (e.g. \code{\link[=relimp_network]{relimp_network()}})
-strength and expected influence sum the outgoing edges.
+\code{net_centralities()} computes the centrality of each node in a network, by
+default its strength and expected influence. Centrality indices summarize the
+position of each node in a network; for psychometric networks, whose edges
+are signed and weighted, the most informative are strength, the sum of the
+absolute weights of a node's edges, and expected influence, the sum of their
+signed weights, in which negative edges offset positive ones (Robinaugh,
+Millner & McNally, 2016). A node with high strength is strongly connected to
+the other variables; expected influence also shows whether these connections
+are, on balance, positive or negative.
+
+On request the function adds two-step expected influence, which also counts
+the expected influence a node passes on through its neighbours, and
+betweenness and closeness, which are computed on shortest paths through the
+absolute edge weights, inverted to distances (Opsahl, Agneessens & Skvoretz,
+2010). Because betweenness and closeness ignore the sign of an edge, they are
+less suited to signed networks. Further measures can be supplied as a
+function (\code{centrality_fn}). For a directed network, such as one from
+\code{\link[=relimp_network]{relimp_network()}}, strength and expected influence sum a node's outgoing
+edges.
+
+It returns one row per node, with one column per requested measure.
+
+Whether differences in centrality can be interpreted depends on their
+accuracy and stability; see \code{\link[=net_boot]{net_boot()}}, \code{\link[=difference_test]{difference_test()}} and
+\code{\link[=net_stability]{net_stability()}}. Centrality with respect to communities is computed by
+\code{\link[=net_bridge]{net_bridge()}}, and the betweenness of edges by \code{\link[=net_edge_betweenness]{net_edge_betweenness()}}.
 }
 \details{
-\strong{Scaling of betweenness and closeness.} Both are \emph{normalized}, as igraph's
-\code{betweenness(normalized = TRUE)} / \code{closeness(normalized = TRUE)}:
-betweenness is divided by the number of node pairs not involving the node,
-\code{(p - 1)(p - 2) / 2}, and closeness is the number of reachable nodes over
-the sum of distances to them (the inverse mean distance). They therefore
-differ from \code{qgraph::centrality_auto()}, which reports raw betweenness
-(path counts) and closeness as \code{1 / sum(distances)}.
+Two-step expected influence is the node's expected influence plus the sum,
+over its neighbours, of each edge weight times that neighbour's expected
+influence.
+
+Betweenness and closeness are normalized, as in igraph's
+\code{betweenness(normalized = TRUE)} and \code{closeness(normalized = TRUE)}:
+betweenness is divided by the number of pairs of other nodes,
+\code{(p - 1)(p - 2) / 2}, and closeness is the number of reachable nodes divided
+by the sum of the distances to them (the inverse mean distance). They
+therefore differ from \code{qgraph::centrality_auto()}, which reports
+betweenness as a count of paths and closeness as \code{1 / sum(distances)}.
 }
 \section{Functions}{
 \itemize{
-\item \code{plot(psychnet_centrality)}: One panel per measure (see \code{type}, \code{scale}).
-Raises \code{psychnet_bad_input} for a \code{measures} entry that is not a measure
-column, skips a column with no finite value with a \code{psychnet_plot_skipped}
-warning, and errors (\code{psychnet_nothing_to_plot}) when none has one.
+\item \code{plot(psychnet_centrality)}: One panel per measure, nodes sorted by value
+(\code{type = "bar"}) or in a shared order (\code{type = "line"}).
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is not a fitted network or a square numeric
+matrix, a measure is not built in and \code{centrality_fn} does not supply it,
+\code{centrality_fn} returns something other than a named list of one numeric
+value per node (or names that are not the node labels), or a group holds
+within- and between-person networks. \code{plot()} raises \code{psychnet_bad_input}
+for a \code{measures} entry that is not a measure column,
+\code{psychnet_plot_skipped} (warning) when it skips a measure without finite
+values, and \code{psychnet_nothing_to_plot} (an error) when no requested
+measure has one.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 cent <- net_centralities(ebic_glasso(cor_matrix = S, n = 250))
@@ -103,4 +127,9 @@ Identifying highly influential nodes in the complicated grief network.
 Opsahl, T., Agneessens, F., & Skvoretz, J. (2010). Node centrality in
 weighted networks: Generalizing degree and shortest paths. \emph{Social
 Networks}, 32(3), 245-251. \doi{10.1016/j.socnet.2010.03.006}
+}
+\seealso{
+\code{\link[=net_boot]{net_boot()}} and \code{\link[=net_stability]{net_stability()}} for the accuracy and stability
+of centralities; \code{\link[=net_bridge]{net_bridge()}}; \code{\link[=net_edge_betweenness]{net_edge_betweenness()}};
+\code{\link[=net_predict]{net_predict()}} for node predictability.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/huge.R
 \name{huge_network}
 \alias{huge_network}
-\title{Nonparanormal graphical model (huge)}
+\title{Estimate a nonparanormal Gaussian graphical model}
 \usage{
 huge_network(
   data = NULL,
@@ -19,50 +19,105 @@ huge_network(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied (then the transform is skipped).}
+\item{data}{A numeric data frame or matrix with one row per observation.
+Not needed when \code{cor_matrix} is given.}
 
-\item{cor_matrix}{Optional pre-transformed correlation matrix; if given, \code{n}
-is required, \code{data} and \code{npn} are ignored.}
+\item{cor_matrix}{A correlation matrix of already transformed data, used
+instead of \code{data}; no transformation is applied and \code{n} is required.}
 
-\item{n}{Sample size (required when \code{cor_matrix} is supplied): a single
-finite number >= 1.}
+\item{n}{Sample size, required with \code{cor_matrix}: a single finite number= 1. Ignored when data is given.}
 
-\item{npn}{Nonparanormal transform: \code{"shrinkage"} (default), \code{"truncation"},
-or \code{"skeptic"} (Spearman).}
+\item{npn}{The transformation: \code{"shrinkage"} (default), \code{"truncation"} or
+\code{"skeptic"}. Ignored with \code{cor_matrix}.}
 
-\item{gamma}{EBIC hyperparameter. Default 0.5.}
+\item{gamma}{EBIC hyperparameter, a number >= 0; larger values favour
+sparser networks. Default \code{0.5}.}
 
-\item{nlambda}{Number of penalties on the path. Default 100.}
+\item{nlambda}{Number of penalties scanned, a whole number >= 2. Default
+\code{100}.}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
+(0, 1). Default \code{0.01}.}
 
-\item{threshold}{Partial correlations with absolute value below this are
-zeroed: a single number >= 0, default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
-graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
+\item{threshold}{Absolute partial correlation below which an edge is set to
+zero after estimation: a single number >= 0. Default \code{0}. A logical value
+is refused. A positive value leaves the certificate missing.}
 
-\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
-(default, with the nonparanormal transform applied per column over observed
-values) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
+\item{na_method}{Handling of missing values in \code{data}: \code{"pairwise"}
+(default) transforms each variable over its observed values and uses
+pairwise-complete correlations; \code{"listwise"} drops incomplete rows first.}
 
-\item{native}{Solver switch for the glasso path: \code{TRUE} (default) uses the
-pure-R solver; \code{FALSE} delegates to the \code{glasso} Fortran package (in
-\code{Suggests}). See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
+\item{native}{\code{TRUE} (default) uses the package's own graphical lasso
+solver; \code{FALSE} uses the \code{glasso} package, which must be installed. See
+\code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{labels}{Optional node labels, one unique label per network node.}
+\item{labels}{Optional node labels, one unique label per node of the
+network.}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
-with \verb{$precision}, \verb{$lambda}, \verb{$gamma}, \verb{$cor_matrix} (the transformed
-correlation), \verb{$npn}, \verb{$ebic}, and \verb{$kkt}.
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}) whose edge
+weights are partial correlations on the transformed scale.
+\code{as.data.frame()} returns one row per edge with columns \code{from}, \code{to} and
+\code{weight}; \code{\link[=certificate]{certificate()}} reports the check. The object also stores the
+precision matrix (\code{precision}), the selected penalty (\code{lambda}),
+\code{gamma}, the transformed correlation matrix (\code{cor_matrix}), the
+transformation used (\code{npn}, \code{"precomputed"} with \code{cor_matrix}) and the
+EBIC of the selected network (\code{ebic}).
 }
 \description{
-Estimates a Gaussian graphical model after a rank-based nonparanormal
-transform that relaxes the multivariate-normal assumption, then selects the
-L1 penalty by EBIC and refits to the certified optimum. Equivalent in purpose
-to \code{huge::huge()} (nonparanormal) / \code{bootnet}'s \code{"huge"} default, but pure
-base R and self-certified via \code{\link[=glasso_kkt]{glasso_kkt()}} on the transformed correlation.
+\code{huge_network()} estimates a nonparanormal Gaussian graphical model: a
+regularized partial-correlation network for variables that are normal only
+after an unknown monotone transformation. The nonparanormal model (Liu et
+al., 2009) relaxes the assumption of the Gaussian graphical model that the
+variables are jointly normal, an assumption that skewed or heavy-tailed
+questionnaire and symptom data often violate, so the network of partial
+correlations is defined on the transformed scale and is unaffected by the
+shape of each variable's distribution.
+
+The transformation is estimated from the ranks of the observations.
+\code{huge_network()} transforms the data, computes the correlation matrix of
+the transformed variables and estimates a regularized partial-correlation
+network on it with the EBIC graphical lasso, as in \code{\link[=ebic_glasso]{ebic_glasso()}}. \code{npn}
+chooses the transformation: normal scores of the ranks with shrinkage
+(default) or truncation, or the "skeptic", a correlation derived from
+Spearman's rank correlation.
+
+The returned network is the optimum of the penalized likelihood at the
+selected penalty, which \code{\link[=certificate]{certificate()}} checks.
+
+For approximately normal data, \code{\link[=ebic_glasso]{ebic_glasso()}} fits the same model without
+the transformation; its \code{cor_method = "auto"} treats ordinal items through
+polychoric correlations instead. The model is the one fitted by
+\code{huge::huge()} with the nonparanormal transformation.
 }
+\details{
+The shrinkage transform replaces each observation by
+\eqn{\Phi^{-1}(r / (n + 1))}, with \eqn{r} its rank among the \eqn{n}
+observed values of the variable. The truncation transform uses
+\eqn{\Phi^{-1}(r / n)} truncated to \eqn{[\delta, 1 - \delta]}, with
+\eqn{\delta = 1 / (4 n^{1/4} \sqrt{\pi \log n})}. The skeptic uses
+\eqn{2 \sin(\pi \rho_S / 6)}, with \eqn{\rho_S} Spearman's correlation. A
+correlation matrix that is not positive definite (possible for the skeptic
+and for pairwise data) is adjusted to the nearest positive-definite matrix
+before estimation.
+
+The penalty path, the EBIC and the certificate are those of
+\code{\link[=ebic_glasso]{ebic_glasso()}} with its default settings; the certificate is computed by
+\code{\link[=glasso_kkt]{glasso_kkt()}} on the transformed correlation matrix. After a positive
+\code{threshold} the certificate is missing; \code{print()} still shows the value for
+the network before thresholding.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when an argument is out of range, \code{threshold} is
+logical, \code{cor_matrix} is not a finite, symmetric, positive semi-definite
+matrix with a positive diagonal, \code{n} is missing with \code{cor_matrix},
+\code{data} has fewer than two usable variables, a pair of variables is never
+observed together, \code{labels} do not match the nodes, or \code{native = FALSE}
+without the \code{glasso} package; \code{psychnet_constant_variable} (warning)
+when a constant or all-missing column is dropped.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(300 * 5), 300, 5)
@@ -77,4 +132,13 @@ graphs. \emph{Journal of Machine Learning Research}, 10, 2295-2328.
 Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
 Gaussian graphical models. \emph{Advances in Neural Information Processing
 Systems}, 23, 604-612.
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2008). Sparse inverse
+covariance estimation with the graphical lasso. \emph{Biostatistics}, 9(3),
+432-441. \doi{10.1093/biostatistics/kxm045}
+}
+\seealso{
+\code{\link[=ebic_glasso]{ebic_glasso()}} for the untransformed model; \code{\link[=certificate]{certificate()}} and
+\code{\link[=glasso_kkt]{glasso_kkt()}} for the check; \code{\link[=psychnet]{psychnet()}}, which routes
+\code{method = "huge"} here; \link[=psychnet-class]{psychnet} for the result.
 }

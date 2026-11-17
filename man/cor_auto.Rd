@@ -2,48 +2,80 @@
 % Please edit documentation in R/cor_auto.R
 \name{cor_auto}
 \alias{cor_auto}
-\title{Automatic correlation matrix (polychoric / polyserial / Pearson)}
+\title{Compute correlations suited to ordinal and continuous variables}
 \usage{
 cor_auto(data, ordinal_max_levels = 7L, na_method = c("pairwise", "listwise"))
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations).}
+\item{data}{A numeric data frame or matrix with one row per observation.}
 
-\item{ordinal_max_levels}{Maximum distinct values for a variable to count as
-ordinal: a whole number >= 2. Default 7.}
+\item{ordinal_max_levels}{Largest number of distinct values for an
+integer-valued variable to be treated as ordinal: a whole number >= 2.
+Default \code{7}.}
 
-\item{na_method}{\code{"pairwise"} (default) or \code{"listwise"}.}
+\item{na_method}{Handling of missing values: \code{"pairwise"} (default) uses
+the observations available for each pair; \code{"listwise"} drops incomplete
+rows first.}
 }
 \value{
-A correlation matrix with the variable names as dimnames. An invalid
-\code{ordinal_max_levels} is an error of class \code{psychnet_bad_input}.
+A symmetric correlation matrix with the variable names as row and
+column names, one row and column per variable kept.
 }
 \description{
-Detects ordinal variables (integer-valued with at most \code{ordinal_max_levels}
-levels) and returns the correlation matrix using a polychoric correlation for
-ordinal-ordinal pairs, a polyserial correlation for ordinal-continuous pairs,
-and Pearson otherwise, projected to the nearest positive-definite matrix. The
-base-R counterpart of \code{qgraph::cor_auto()}; this is the correlation
-\code{bootnet}/\code{qgraph} use by default for Likert data.
+\code{cor_auto()} computes a correlation matrix suited to a mix of ordinal and
+continuous variables: polychoric correlations between ordinal items,
+polyserial correlations between an ordinal item and a continuous variable,
+and Pearson correlations otherwise. The polychoric correlation assumes that
+each ordinal item is a coarse categorization of a normally distributed
+latent variable and estimates the correlation between the latent variables
+(Olsson, 1979); the polyserial correlation does the same for an ordinal
+item paired with a continuous variable (Olsson et al., 1982).
+
+Questionnaire items are usually recorded on a few ordered categories, such
+as a five-point Likert scale, and treating these codes as continuous and
+computing Pearson correlations understates the association between the
+underlying traits. \code{cor_auto()} decides for each variable whether it is
+ordinal (integer values with at most \code{ordinal_max_levels} distinct values)
+and computes a polychoric correlation for each pair of ordinal variables, a
+polyserial correlation for each ordinal-continuous pair and a Pearson
+correlation otherwise.
+
+It returns the resulting matrix adjusted to the nearest positive-definite
+correlation matrix, so that it can be used by the network estimators.
+
+Network estimators for ordinal data commonly start from this correlation
+matrix. The estimators use the same correlations when given
+\code{cor_method = "auto"}, for example \code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=ggm_modselect]{ggm_modselect()}} and
+\code{\link[=cor_network]{cor_network()}}. The function corresponds to \code{qgraph::cor_auto()}.
 }
 \details{
-The polychoric correlation is the two-step estimator of Olsson (1979):
-thresholds fixed at the marginal normal quantiles, then the contingency-table
-likelihood maximised over the correlation; it matches \code{psych}/\code{qgraph} to
-about 1e-5. The polyserial correlation is the Olsson, Drasgow & Dorans
-(1982) \emph{ad-hoc} estimator (the closed form
-\eqn{r_{xy}\,\sigma_y / \sum_k \phi(\tau_k)}), not the two-step
-maximum-likelihood polyserial that \code{qgraph::cor_auto()} obtains through
-\code{lavaan}. Both are consistent; on finite samples they differ by up to about
-0.006, so a mixed ordinal / continuous correlation matrix will not
-reproduce \code{qgraph::cor_auto()} exactly.
+The polychoric correlation is the two-step estimator of Olsson (1979): the
+thresholds are fixed at the normal quantiles of the cumulative marginal
+proportions, and the likelihood of the contingency table is then maximized
+over the correlation. The polyserial correlation is the ad hoc estimator of
+Olsson, Drasgow and Dorans (1982),
+\eqn{r_{xy}\,\sigma_y / \sum_k \phi(\tau_k)}, rather than the two-step
+maximum-likelihood estimator that \code{qgraph::cor_auto()} obtains through
+\code{lavaan}. Both are consistent, but on finite samples they differ slightly
+(by up to about 0.006 in simulations), so a matrix that mixes ordinal and
+continuous variables does not reproduce \code{qgraph::cor_auto()} exactly.
 
-An ordered-factor column of a data frame enters as its integer level codes
-and is then ordinal whenever it has at most \code{ordinal_max_levels} levels.
-Unordered factors, character and logical columns are dropped with a
-\code{psychnet_dropped_columns} message; constant columns with a
-\code{psychnet_constant_variable} warning.
+An ordered factor in a data frame enters as its integer level codes and is
+ordinal whenever it has at most \code{ordinal_max_levels} levels. Unordered
+factors, character and logical columns are dropped with a message, and
+constant columns with a warning. A pair with no estimable association,
+such as an item observed at a single level, has correlation 0.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{ordinal_max_levels} or \code{na_method} is invalid,
+\code{data} has no numeric columns or fewer than two usable variables, or a
+pair of variables has fewer than two joint observations;
+\code{psychnet_constant_variable} (warning) when a constant or all-missing
+column is dropped. A \code{psychnet_dropped_columns} message names
+non-numeric columns that were dropped.
+}
+
 \examples{
 set.seed(1)
 z <- matrix(stats::rnorm(300 * 4), 300, 4) \%*\% chol(0.5^abs(outer(1:4, 1:4, "-")))
@@ -57,4 +89,8 @@ correlation coefficient. \emph{Psychometrika}, 44(4), 443-460.
 
 Olsson, U., Drasgow, F., & Dorans, N. J. (1982). The polyserial correlation
 coefficient. \emph{Psychometrika}, 47(3), 337-347. \doi{10.1007/BF02294164}
+}
+\seealso{
+\code{\link[=ebic_glasso]{ebic_glasso()}}, \code{\link[=cor_network]{cor_network()}} and the other estimators, which
+accept \code{cor_method = "auto"}.
 }

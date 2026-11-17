@@ -2,40 +2,59 @@
 % Please edit documentation in R/centrality.R
 \name{net_edge_betweenness}
 \alias{net_edge_betweenness}
-\title{Edge betweenness centrality}
+\title{Compute the edge betweenness of a network}
 \usage{
 net_edge_betweenness(x, invert = TRUE, labels = NULL)
 }
 \arguments{
-\item{x}{A \code{psychnet} object or a square weighted adjacency matrix. A
-\code{psychnet} is directed when its \code{directed} field says so; a bare matrix is
-treated as directed when it is not symmetric (\code{isSymmetric()}), with
-\code{x[i, j]} the edge \code{i -> j}.}
+\item{x}{A fitted network (\link[=psychnet-class]{psychnet}) or a square weighted adjacency
+matrix. A bare matrix that is not symmetric is treated as directed, the
+entry in row i and column j being the edge from node i to node j.}
 
-\item{invert}{If \code{TRUE} (default) edge weights are inverted to distances
-(strong association = short path). Set \code{FALSE} to treat weights as distances.}
+\item{invert}{If \code{TRUE} (default), edge weights are inverted to distances
+(strong association = short path); if \code{FALSE}, weights are distances.}
 
-\item{labels}{Optional node labels (used when \code{x} is a bare matrix): one
-unique label per node.}
+\item{labels}{Optional node labels for a bare matrix, one unique label per
+node.}
 }
 \value{
-A tidy \code{data.frame}, one row per edge: \code{from}, \code{to},
-\code{edge_betweenness} (count of shortest paths through the edge). Undirected
-networks give one row per unordered edge (counting each unordered node
-pair once); directed networks one row per arc, counting ordered pairs.
+A data frame with one row per edge and columns \code{from}, \code{to} and
+\code{edge_betweenness} (the number of shortest paths through the edge). An
+undirected network has one row per edge, counting each pair of nodes
+once; a directed network has one row per arc, counting ordered pairs.
 }
 \description{
-For each edge, the number of weighted shortest paths (across all node
-pairs) that pass through it - a high value marks an edge that bridges
-otherwise distant parts of the network. When a pair is joined by several
-equally short paths each counts as its share (\verb{1 / number of geodesics}), so
-the value is the raw, unnormalized edge betweenness (igraph's
-\code{edge_betweenness()}), not a proportion: on the path \code{a-b-c-d-e} the four
-edges score 4, 6, 6, 4. Geodesics are computed on inverse absolute
-weights, so strong edges count as short, matching \code{\link[=net_centralities]{net_centralities()}}'s node
-betweenness/closeness.
+\code{net_edge_betweenness()} computes the betweenness of each edge in a network.
+Edge betweenness describes the role of an edge in connecting the network: it
+counts how many of the shortest paths between pairs of nodes run through the
+edge. An edge with high betweenness links parts of the network that would
+otherwise be far apart, for example two groups of closely related symptoms.
+
+The function finds shortest paths on the absolute edge weights, inverted to
+distances so that a strong association is a short step (with
+\code{invert = FALSE} the weights are used as distances). When two nodes are
+joined by several equally short paths, each path counts as its share,
+1 / (number of such paths).
+
+It returns one row per edge. The value is a count, as returned by
+\code{igraph::edge_betweenness()}, not a proportion: on the path a-b-c-d-e the
+four edges score 4, 6, 6 and 4.
+
+For the betweenness of nodes, use \code{\link[=net_centralities]{net_centralities()}}; for the connections
+of nodes to predefined communities, use \code{\link[=net_bridge]{net_bridge()}}.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is not a fitted network or a square numeric
+matrix, contains non-finite weights, or \code{labels} does not give one unique
+label per node.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 net_edge_betweenness(ebic_glasso(cor_matrix = S, n = 400))
+}
+\seealso{
+\code{\link[=net_centralities]{net_centralities()}} for node betweenness and other measures;
+\code{\link[=net_bridge]{net_bridge()}} for bridge centrality.
 }

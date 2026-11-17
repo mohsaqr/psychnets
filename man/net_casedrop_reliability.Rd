@@ -4,7 +4,7 @@
 \alias{net_casedrop_reliability}
 \alias{print.psychnet_casedrop}
 \alias{plot.psychnet_casedrop}
-\title{Edge-weight stability coefficient (case-dropping subset bootstrap)}
+\title{Assess the stability of edge weights when cases are dropped}
 \usage{
 net_casedrop_reliability(
   data,
@@ -24,85 +24,118 @@ net_casedrop_reliability(
 \method{plot}{psychnet_casedrop}(x, ...)
 }
 \arguments{
-\item{data}{Data frame or matrix (rows = observations), resampled exactly as
-given (see \code{\link[=net_boot]{net_boot()}}), or a \code{psychnet_group} (case-dropped per level).}
+\item{data}{A data frame or matrix with one row per observation, or a
+\link{psychnet_group} estimated from a data set (assessed per group).}
 
-\item{method}{Estimator (see \code{\link[=psychnet]{psychnet()}}). Default \code{"glasso"}.}
+\item{method}{The estimator, as in \code{\link[=psychnet]{psychnet()}}. Default \code{"glasso"}.}
 
-\item{drop_prop}{Proportions of cases to drop. Default \code{seq(0.1, 0.9, 0.1)}.}
+\item{drop_prop}{Proportions of cases to drop, each in (0, 1). Default
+\code{seq(0.1, 0.9, by = 0.1)}. Each must remove at least one case and keep at
+least two.}
 
-\item{iter}{Subsets per proportion. Default 100.}
+\item{iter}{Number of subsets per proportion. Default \code{100}.}
 
-\item{threshold}{Correlation a subset must exceed (strictly) to count as
-stable. A single number in (0, 1). Default 0.7.}
+\item{threshold}{Edge-weight correlation a subset must exceed to count as
+stable, a number in (0, 1). Default \code{0.7}.}
 
-\item{certainty}{Share of stable subsets that must be exceeded (strictly).
-A single number in (0, 1). Default 0.95.}
+\item{certainty}{Share of stable subsets that must be exceeded, a number in
+(0, 1). Default \code{0.95}.}
 
-\item{cor_method}{Correlation method for the edge-vector comparison:
-\code{"pearson"} (default, as in bootnet), \code{"spearman"}, or \code{"kendall"}.}
+\item{cor_method}{Correlation between subset and full-sample edge weights:
+\code{"pearson"} (default, as in \code{bootnet}), \code{"spearman"} or \code{"kendall"}.}
 
-\item{labels}{Optional node labels.}
+\item{labels}{Optional node labels, one per node.}
 
-\item{estimator_args}{Named list of estimator arguments. \code{cor_method},
-\code{iter}, \code{threshold} and \code{drop_prop} are arguments of this diagnostic (the
-edge comparison), so an estimator's own \code{cor_method} or \code{threshold} must
-go here, e.g. \code{estimator_args = list(cor_method = "spearman")}; values in
-\code{...} with those names never reach the estimator.}
+\item{estimator_args}{Named list of arguments for the estimator. Use it for
+an estimator argument that shares a name with an argument of this
+function, e.g. \code{estimator_args = list(cor_method = "spearman")}; such
+names given in \code{...} do not reach the estimator.}
 
-\item{...}{Passed to the estimator by \code{net_casedrop_reliability()};
-ignored by the methods.}
+\item{...}{Further arguments for the estimator
+(\code{net_casedrop_reliability()}); ignored by the methods.}
 
 \item{x}{A \code{psychnet_casedrop} object.}
 }
 \value{
-A tidy \code{data.frame} (class \code{psychnet_casedrop}), one row per metric
-per drop proportion, with columns \code{metric}, \code{drop_prop} (nominal),
-\code{actual_drop} (the proportion actually dropped after rounding to whole
+A data frame of class \code{psychnet_casedrop}, one row per metric and
+drop proportion, with columns \code{metric} (\code{"correlation"},
+\code{"mean_abs_dev"}, \code{"median_abs_dev"} or \code{"max_abs_dev"}), \code{drop_prop}
+(nominal), \code{actual_drop} (the proportion dropped after rounding to whole
 cases), \code{mean}, \code{sd} and \code{n_valid} (subsets in which the metric was
-defined; \code{mean}/\code{sd} are \code{NA} when too few were). The edge-weight
-CS-coefficient is stored with it and shown when the result is printed.
-Undefined correlations raise a \code{psychnet_undefined_statistic} warning; a
-constant full-sample edge vector (e.g. an empty network) raises a
-\code{psychnet_constant_centrality} warning (its CS-coefficient is 0).
-A failed subset fit raises a \code{psychnet_resample_failed} warning carrying
-the first error; a failed full-sample fit raises a
-\code{psychnet_estimation_failed} error with the estimator's message. \code{plot()}
-draws the four similarity metrics (correlation, mean/median/max absolute
-deviation) against the proportion dropped, each with a +/- 1 SD band, the
-correlation panel carrying the threshold and the CS-coefficient. \code{print()}
-and \code{plot()} return \code{x} invisibly.
+defined; \code{mean} and \code{sd} are \code{NA} when too few were). The edge-weight
+CS-coefficient and the correlation of every subset are kept with the
+table; \code{print()} shows the CS-coefficient above the table. \code{plot()} draws
+the four metrics against the proportion dropped, each with a band of
++/- 1 SD, and marks \code{threshold} and the CS-coefficient on the correlation
+panel. \code{print()} and \code{plot()} return \code{x} invisibly. For a
+\link{psychnet_group}, the function returns one result per group.
 }
 \description{
-The edge-vector complement to \code{\link[=net_stability]{net_stability()}}. For each drop proportion the
-network is re-estimated on random case-dropped subsets and the subset
-edge-weight vector is compared with the full-sample one. The edge-weight
-CS-coefficient follows the rule of \code{bootnet::corStability()} (Epskamp,
-Borsboom & Fried 2018): a subset is stable when its edge-vector correlation
-is strictly greater than \code{threshold}, and the CS-coefficient is the largest
-drop proportion at which the share of stable subsets is strictly greater
-than \code{certainty} (0 when no proportion qualifies).
+\code{net_casedrop_reliability()} assesses how stable the edge weights of a
+network are when cases are dropped. It applies the case-dropping procedure
+of Epskamp, Borsboom and Fried (2018) to the edge weights rather than to node
+centralities: the network is re-estimated on subsets from which an
+increasing proportion of cases has been removed, and each subset's edge
+weights are compared with the full-sample edge weights. The edge weights
+state which variables are associated, and how strongly; if the network
+describes the population rather than the particular sample, the edge weights
+estimated from a subset of the cases should resemble those of the full
+sample.
+
+The function draws \code{iter} subsets without replacement at every proportion in
+\code{drop_prop}, re-estimates the network on each, and compares the subset and
+full-sample edge weights by their correlation and by the mean, median and
+maximum absolute difference. It summarizes each of these metrics by drop
+proportion and computes an edge-weight CS-coefficient: the largest
+proportion at which the share of subsets whose edge-weight correlation
+exceeds \code{threshold} itself exceeds \code{certainty}, or 0 when no proportion
+qualifies.
+
+It returns one row per metric and drop proportion, with the edge-weight
+CS-coefficient kept alongside the table.
+
+\code{\link[=net_stability]{net_stability()}} applies the same procedure to node centralities, and
+\code{\link[=net_split_reliability]{net_split_reliability()}} compares networks estimated on two halves of the
+sample.
 }
 \details{
-The correlation follows bootnet's \code{cor0()}: 0 when either edge vector is
-constant (for example an empty subset network), undefined when fewer than
-two edges are available. Unlike bootnet, which drops undefined correlations
-from the share (\code{na.rm = TRUE}), psychnets counts an undefined correlation
-(and a failed subset fit) as failing, so the CS-coefficient is never raised
-by subsets that could not be compared.
+Both comparisons in the CS rule are strict, as in \code{bootnet::corStability()}.
+The edge-weight correlation of a subset is 0 when either edge-weight vector
+is constant (for example an empty subset network), and undefined when fewer
+than two edges are available. An undefined correlation, or a subset on
+which the network could not be estimated, counts as not exceeding
+\code{threshold}, so such subsets never raise the CS-coefficient (\code{bootnet}
+instead leaves undefined correlations out). Each subset is passed to the
+estimator as the full data would be (see \code{\link[=net_boot]{net_boot()}}).
 }
 \section{Functions}{
 \itemize{
-\item \code{print(psychnet_casedrop)}: The metric table and the edge-weight
-CS-coefficient.
+\item \code{print(psychnet_casedrop)}: The edge-weight CS-coefficient,
+followed by the table of metrics.
 
-\item \code{plot(psychnet_casedrop)}: Similarity metrics by drop proportion.
+\item \code{plot(psychnet_casedrop)}: The four metrics against the
+proportion of cases dropped.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} for an invalid argument, including drop proportions
+that remove no case or keep fewer than two, and for a group that was not
+estimated from a data set; \code{psychnet_estimation_failed} when the network
+cannot be estimated on the full data; \code{psychnet_resample_failed} (warning)
+when some subsets cannot be estimated, naming the first error, and as an
+error when none can; \code{psychnet_undefined_statistic} (warning) when the
+edge-weight correlation is undefined in some subsets;
+\code{psychnet_constant_centrality} (warning) when the full-sample edge weights
+are all equal (for example an empty network), which makes the
+CS-coefficient 0; \code{psychnet_constant_variable} (warning) when a constant
+column is dropped.
+}
+
 \examples{
-# `method`, `iter`, and `drop_prop` are chosen so the example runs quickly;
-# the defaults (method = "glasso", iter = 100, drop_prop = seq(0.1, 0.9,
-# 0.1)) are what a real reliability assessment should use.
+# method, iter and drop_prop are chosen so the example runs quickly; a
+# real analysis uses the defaults (method = "glasso", iter = 100,
+# drop_prop = seq(0.1, 0.9, 0.1)).
 rel <- net_casedrop_reliability(SRL_Claude, method = "pcor", iter = 5,
                                 drop_prop = c(0.25, 0.5))
 rel
@@ -112,4 +145,8 @@ plot(rel)
 Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 psychological networks and their accuracy. \emph{Behavior Research Methods},
 50(1), 195-212.
+}
+\seealso{
+\code{\link[=net_stability]{net_stability()}} for centralities; \code{\link[=net_split_reliability]{net_split_reliability()}} for
+split-half agreement; \code{\link[=net_boot]{net_boot()}} for bootstrap intervals of each edge.
 }

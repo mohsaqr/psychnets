@@ -2,43 +2,75 @@
 % Please edit documentation in R/certificate.R
 \name{certificate}
 \alias{certificate}
-\title{Correctness certificate of a fitted network}
+\title{Check that a fitted network solves its estimator}
 \usage{
 certificate(x, tol = 1e-06)
 }
 \arguments{
-\item{x}{A \link{psychnet} object.}
+\item{x}{A fitted network, an object of class \code{psychnet} (\link[=psychnet-class]{psychnet}).}
 
-\item{tol}{Tolerance below which the fit is flagged \code{certified = TRUE}: a
-single finite number >= 0. Default \code{1e-6}. Anything else is an error of
-class \code{psychnet_bad_input}.}
+\item{tol}{Tolerance at or below which the network is reported as
+certified: a single finite number >= 0. Default \code{1e-6}.}
 }
 \value{
-A one-row \code{data.frame} with columns \code{method}, \code{certificate} (the
-residual; smaller is better), \code{kind} (\code{"kkt"} for the optimization
-certificates, \code{"structural"} for TMFG/relimp, \code{"none"} for cor/pcor), and
-\code{certified} (logical: residual at or below \code{tol}; \code{NA} when no applicable
-certificate is available). Correlation networks use kind \code{"none"} and are
-reported as \code{TRUE} because no optimization claim is made.
+A data frame with one row and columns \code{method} (the estimator),
+\code{certificate} (the violation; smaller is better), \code{kind} (\code{"kkt"} for an
+optimality certificate, \code{"structural"} for TMFG and relative importance,
+\code{"none"} for correlation and partial-correlation networks) and
+\code{certified} (\code{TRUE} when \code{certificate} is at or below \code{tol}). For a
+network changed after fitting, or a fit that did not converge,
+\code{certificate} and \code{certified} are \code{NA}. For correlation and
+partial-correlation networks \code{certificate} is \code{NA} and \code{certified} is
+\code{TRUE}, because no optimization claim is made.
 }
 \description{
-Regularized or constrained estimators in \code{psychnets} self-certify: each
-fitted network carries a residual that reports how far it sits from the
-optimum of its own objective (a KKT / stationarity residual), or -- for the
-structural methods (TMFG, relative importance) -- whether the graph
-satisfies the identity that defines it. This verb returns that certificate
-as a tidy one-row \code{data.frame}, so correctness is read the same way for
-every method.
+\code{certificate()} measures how far a fitted network is from the solution of
+its estimator. For a regularized or constrained estimator such as the
+graphical lasso, this is the largest violation of the optimality
+(Karush–Kuhn–Tucker) conditions; a value near zero means the network is
+the optimum, up to numerical precision.
+
+Such an estimator defines the network as the solution of an optimization
+problem; the graphical lasso, for example, maximizes a penalized
+likelihood. Any solution must satisfy the problem's optimality conditions,
+so whether a returned network is that solution can be checked without a
+second solver; the amount by which the network violates the conditions is
+its certificate. The information-filtering (TMFG) and relative-importance
+networks are not optima of an objective; for them the certificate checks
+the identity that defines the graph. A network changed after fitting, by a
+threshold or by pruning, is no longer the solution that was checked, and
+its certificate is reported as missing.
+
+\code{certificate()} returns the value together with the kind of certificate
+and whether it falls below a tolerance.
+
+Correlation and partial-correlation networks involve no optimization and
+have no certificate. To check a precision matrix or regression
+coefficients that are not stored in a fitted network, call
+\code{\link[=glasso_kkt]{glasso_kkt()}}, \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} or \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} directly.
 }
 \details{
-The residual is near machine zero for a correctly solved problem. A graph
-altered after fitting (post-estimation \code{threshold}, Wald pruning in
-\code{\link[=ising_sampler]{ising_sampler()}}) or an external-engine fit without an available residual
-reports \code{NA} rather than being presented as certified. \code{cor} and \code{pcor} have
-no optimization to certify and report \code{NA} with kind \code{"none"}.
+The optimality certificates are computed by \code{\link[=glasso_kkt]{glasso_kkt()}} (graphical lasso
+networks), \code{\link[=ggm_support_kkt]{ggm_support_kkt()}} (unregularized networks restricted to a
+graph) and \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} (nodewise Ising and mixed graphical models).
+The structural certificates are \code{\link[=tmfg_certificate]{tmfg_certificate()}}, the number of
+violated TMFG properties (0 to 4), and \code{\link[=lmg_certificate]{lmg_certificate()}}, the largest
+difference between the summed importance shares of a node's predictors and
+that node's explained variance.
 }
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{x} is not a \code{psychnet} network or \code{tol} is
+not a single finite number >= 0.
+}
+
 \examples{
 S <- 0.4^abs(outer(1:6, 1:6, "-"))
 certificate(ebic_glasso(cor_matrix = S, n = 250))
 certificate(tmfg_network(cor_matrix = S))
+}
+\seealso{
+\code{\link[=glasso_kkt]{glasso_kkt()}}, \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}, \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}},
+\code{\link[=tmfg_certificate]{tmfg_certificate()}} and \code{\link[=lmg_certificate]{lmg_certificate()}} for the individual checks;
+\code{\link[=psychnet]{psychnet()}} for the estimators.
 }

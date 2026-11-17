@@ -228,10 +228,8 @@
     })
 }
 
-#' @describeIn net_centralities One panel per measure (see `type`, `scale`).
-#'   Raises `psychnet_bad_input` for a `measures` entry that is not a measure
-#'   column, skips a column with no finite value with a `psychnet_plot_skipped`
-#'   warning, and errors (`psychnet_nothing_to_plot`) when none has one.
+#' @describeIn net_centralities One panel per measure, nodes sorted by value
+#'   (`type = "bar"`) or in a shared order (`type = "line"`).
 #' @export
 plot.psychnet_centrality <- function(x, type = c("bar", "line"),
                                      scale = c("raw", "z", "relative"),
@@ -311,9 +309,10 @@ plot.psychnet_centrality <- function(x, type = c("bar", "line"),
   unique(ms)
 }
 
-#' @describeIn net_boot Edge, centrality, difference or predictability
-#'   intervals (see `type`). Significant edges are filled points on solid
-#'   segments, non-significant ones open points on dashed segments.
+#' @describeIn net_boot Edge, centrality or predictability intervals, or a
+#'   matrix of pairwise difference tests (see `type`). Edges whose interval
+#'   excludes zero are filled points on solid segments, the others open points
+#'   on dashed segments.
 #' @export
 plot.psychnet_bootstrap <- function(x, type = c("edges", "centrality",
                                                  "edge_diff", "centrality_diff",
@@ -374,14 +373,15 @@ plot.psychnet_bootstrap <- function(x, type = c("edges", "centrality",
   invisible(x)
 }
 
-#' @describeIn difference_test The bootnet "significance box" matrix: items on
-#'   both axes ordered by observed value, the diagonal showing that value, and
-#'   an off-diagonal cell filled when the pair differs (diverging blue when the
-#'   row item is larger, red when smaller; every cell also prints the sign as
-#'   `+` / `-`, followed by significance stars). `style = "forest"` draws one
-#'   row per pair instead: the difference with its interval, a reference line
-#'   at zero, significant pairs as filled points on solid segments and the
-#'   rest as open points on dashed segments.
+#' @describeIn difference_test The matrix of pairwise differences used by
+#'   `bootnet`: items on both axes, ordered by observed value, with that value
+#'   on the diagonal. An off-diagonal cell is filled when the pair differs
+#'   (blue when the row item is larger, red when it is smaller), and every cell
+#'   prints the sign of the difference (`+` or `-`), followed by stars for a
+#'   significant pair. `style = "forest"` instead draws one row per pair: the
+#'   difference with its interval and a reference line at zero, significant
+#'   pairs as filled points on solid segments and the others as open points
+#'   on dashed segments.
 #' @param x A `psychnet_difference` data frame from `difference_test()`.
 #' @param style For `plot()`: `"box"` (default) or `"forest"`.
 #' @param ... Unused.
@@ -410,8 +410,11 @@ plot.psychnet_difference <- function(x, style = c("box", "forest"), ...) {
 
 # ---- stability -------------------------------------------------------------
 
-#' @describeIn net_stability Case-dropping curves with the CS-coefficients;
-#'   each measure has its own Okabe-Ito colour, line type and point shape.
+#' @describeIn net_stability The mean correlation with the full-sample
+#'   centralities against the proportion of cases dropped, one line per
+#'   measure (each with its own colour, line type and point shape) with a
+#'   band of +/- 1 SD, the `threshold` as a dashed line, and each measure's
+#'   CS-coefficient in the legend.
 #' @export
 plot.psychnet_stability <- function(x, ...) {
   tab <- x$table
@@ -447,9 +450,9 @@ plot.psychnet_stability <- function(x, ...) {
 
 # ---- network comparison test ----------------------------------------------
 
-#' @describeIn net_compare Permutation null of S or M, or the per-edge
-#'   differences (see `type`); significant edges are labelled `*` as well as
-#'   coloured.
+#' @describeIn net_compare The permutation distribution of S or M with the
+#'   observed value marked, or the observed difference of every edge (see
+#'   `type`); significant edges are coloured and marked `*`.
 #' @export
 plot.psychnet_nct <- function(x, type = c("strength", "structure", "edges"),
                               alpha = 0.05, ...) {
@@ -492,8 +495,8 @@ plot.psychnet_nct <- function(x, type = c("strength", "structure", "edges"),
 
 # ---- network ---------------------------------------------------------------
 
-#' @describeIn psychnet-class Draws the network with `cograph::splot()` (a
-#'   Suggested package; an error says so when it is not installed).
+#' @describeIn psychnet-class Draws the network with `cograph::splot()`,
+#'   passing `...` on; needs the suggested package `cograph`.
 #' @export
 plot.psychnet <- function(x, ...) {
   if (!requireNamespace("cograph", quietly = TRUE)) {

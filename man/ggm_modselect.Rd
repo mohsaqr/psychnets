@@ -2,7 +2,7 @@
 % Please edit documentation in R/ggmmodselect.R
 \name{ggm_modselect}
 \alias{ggm_modselect}
-\title{Stepwise Gaussian graphical model selection (ggmModSelect)}
+\title{Select an unregularized Gaussian graphical model by stepwise search}
 \usage{
 ggm_modselect(
   data = NULL,
@@ -20,64 +20,108 @@ ggm_modselect(
 )
 }
 \arguments{
-\item{data}{Numeric data frame or matrix (rows = observations). Optional if
-\code{cor_matrix} is supplied.}
+\item{data}{A numeric data frame or matrix with one row per observation.
+Not needed when \code{cor_matrix} is given.}
 
-\item{cor_matrix}{Optional correlation matrix; if given, \code{n} is required.}
+\item{cor_matrix}{A correlation matrix to use instead of \code{data}; a
+covariance matrix is rescaled to a correlation matrix. \code{n} is then
+required.}
 
-\item{n}{Sample size (required when \code{cor_matrix} is supplied): a single
-finite number >= 1.}
+\item{n}{Sample size, required with \code{cor_matrix}: a single finite number= 1. Ignored when data is given.}
 
-\item{gamma}{EBIC hyperparameter. Default \code{0}, matching
-\code{qgraph::ggmModSelect()}: because the selected graph is refit with the
-\emph{unregularized} MLE (no edge shrinkage), the extra EBIC penalty is not
-needed, so gamma 0 (plain BIC) is the method's intended setting. (The
-regularized GGMs \code{\link[=ebic_glasso]{ebic_glasso()}} and \code{\link[=huge_network]{huge_network()}} keep gamma 0.5.)}
+\item{gamma}{EBIC hyperparameter, a number >= 0. Default \code{0} (the ordinary
+BIC).}
 
-\item{stepwise}{If \code{TRUE} (default), refine the best glasso-path graph by a
-greedy single-edge add/drop search.}
+\item{stepwise}{Whether to refine the best candidate graph by adding and
+removing single edges. Default \code{TRUE}.}
 
-\item{nlambda}{Number of glasso penalties scanned for candidate graphs (a
-whole number >= 2).}
+\item{nlambda}{Number of graphical lasso penalties used to generate
+candidate graphs, a whole number >= 2. Default \code{100}.}
 
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
-(0, 1).}
+(0, 1). Default \code{0.01}.}
 
-\item{threshold}{Partial correlations with absolute value below this are
-zeroed: a single number >= 0, default 0. With a positive value \verb{$kkt} is \code{NA} for the returned
-graph and the pre-threshold residual is stored as \verb{$fit_kkt}.}
+\item{threshold}{Absolute partial correlation below which an edge is set to
+zero after estimation: a single number >= 0. Default \code{0}. A logical value
+is refused. A positive value leaves the certificate missing.}
 
-\item{cor_method}{Correlation used when \code{data} is supplied: \code{"pearson"}
-(default), \code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric/polyserial,
-the \code{qgraph}/\code{bootnet} default for ordinal items). See \code{\link[=cor_auto]{cor_auto()}}.}
+\item{cor_method}{Correlation computed from \code{data}: \code{"pearson"} (default),
+\code{"spearman"}, \code{"kendall"}, or \code{"auto"} (polychoric and polyserial
+correlations for ordinal items; see \code{\link[=cor_auto]{cor_auto()}}).}
 
-\item{na_method}{Missing-data handling when \code{data} is supplied: \code{"pairwise"}
+\item{na_method}{Handling of missing values in \code{data}: \code{"pairwise"}
 (default) or \code{"listwise"}. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
 
-\item{native}{Solver switch for generating candidate supports: \code{TRUE}
-(default) uses the pure-R solver; \code{FALSE} delegates to the \code{glasso} Fortran
-package (in \code{Suggests}). The reported precision is the unregularized refit
-either way. See \code{\link[=ebic_glasso]{ebic_glasso()}}.}
+\item{native}{Solver for the candidate graphs: \code{TRUE} (default) the
+package's own graphical lasso, \code{FALSE} the \code{glasso} package, which must
+be installed. The returned network is the unregularized fit either way.}
 
-\item{labels}{Optional node labels, one unique label per network node.}
+\item{labels}{Optional node labels, one unique label per node of the
+network.}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the partial-correlation matrix,
-with \verb{$precision}, \verb{$support} (the selected graph), \verb{$gamma}, \verb{$ebic},
-\verb{$cor_matrix}, and \verb{$kkt}. Invalid arguments raise \code{psychnet_bad_input}.
-A candidate or stepwise fit that errors is skipped and reported by one
-\code{psychnet_fit_failed} warning; a selected fit whose certificate exceeds
-\code{1e-6} raises a \code{psychnet_no_converge} warning; if no candidate can be
-fitted at all the call errors (\code{psychnet_no_converge}).
+A fitted network of class \code{psychnet} (\link[=psychnet-class]{psychnet}) whose edge
+weights are partial correlations. \code{as.data.frame()} returns one row per
+edge with columns \code{from}, \code{to} and \code{weight}; \code{\link[=certificate]{certificate()}} reports the
+check. The object also stores the precision matrix (\code{precision}), the
+selected graph as a logical matrix (\code{support}), \code{gamma}, the correlation
+matrix (\code{cor_matrix}) and the EBIC of the selected graph (\code{ebic}).
 }
 \description{
-Selects a GGM by extended-BIC model search over edge sets generated from the
-glasso path, refitting the \emph{unregularized} maximum-likelihood precision on
-each candidate graph, with an optional stepwise add/drop search. Unlike the
-graphical lasso, retained edges are not shrunk. Equivalent in purpose to
-\code{qgraph::ggmModSelect()}, but pure base R and self-certified via
-\code{\link[=ggm_support_kkt]{ggm_support_kkt()}}.
+\code{ggm_modselect()} selects an unregularized Gaussian graphical model: it
+chooses which edges are present and then estimates them by maximum
+likelihood, so the partial correlations it reports are not shrunk. In a
+Gaussian graphical model variables are nodes joined by partial
+correlations, with a missing edge meaning conditional independence; a
+regularized estimate such as the graphical lasso instead shrinks every
+retained edge towards zero, and Williams et al. (2019) discuss when the
+unregularized approach is preferable to regularization.
+
+\code{ggm_modselect()} generates candidate graphs from the graphical lasso over
+a sequence of penalties, fits the unregularized maximum-likelihood model on
+each candidate and keeps the one with the lowest extended Bayesian
+information criterion (EBIC). With \code{stepwise = TRUE} (default) it then
+adds or removes single edges as long as the EBIC improves.
+
+The returned network is the maximum-likelihood network on the selected
+graph, which \code{\link[=certificate]{certificate()}} checks.
+
+For a regularized network use \code{\link[=ebic_glasso]{ebic_glasso()}}; for all partial
+correlations without selection use \code{\link[=pcor_network]{pcor_network()}}. The procedure is the
+one of \code{qgraph::ggmModSelect()}.
 }
+\details{
+The EBIC of a graph with \eqn{E} edges is
+\eqn{-2L + E \log n + 4 \gamma E \log p}, where \eqn{L} is the
+log-likelihood of the maximum-likelihood fit on that graph. Because the
+retained edges are not shrunk, the default \code{gamma = 0} (the ordinary BIC)
+is the intended setting, as in \code{qgraph::ggmModSelect()}; the regularized
+\code{\link[=ebic_glasso]{ebic_glasso()}} and \code{\link[=huge_network]{huge_network()}} default to \code{0.5}.
+
+The stepwise search visits every pair of variables in turn, adds or removes
+the edge, and keeps the change whenever the EBIC decreases; it stops when a
+full pass brings no improvement (at most 200 passes). A correlation matrix
+with no off-diagonal association returns the empty network without a
+search.
+
+The certificate is computed by \code{\link[=ggm_support_kkt]{ggm_support_kkt()}}. After a positive
+\code{threshold} it is missing; \code{print()} still shows the value for the network
+before thresholding.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when an argument is out of range, \code{threshold} is
+logical, \code{cor_matrix} is not a finite, symmetric, positive semi-definite
+matrix with a positive diagonal, \code{n} is missing with \code{cor_matrix},
+\code{data} has fewer than two usable variables, \code{labels} do not match the
+nodes, or \code{native = FALSE} without the \code{glasso} package;
+\code{psychnet_no_converge} (error) when no candidate graph can be fitted;
+\code{psychnet_fit_failed} (warning) when some candidate fits failed and were
+skipped; \code{psychnet_no_converge} (warning) when the selected fit's
+certificate exceeds \code{1e-6}; \code{psychnet_constant_variable} (warning) when
+a constant or all-missing column is dropped.
+}
+
 \examples{
 S <- 0.5^abs(outer(1:6, 1:6, "-"))
 ggm_modselect(cor_matrix = S, n = 250)
@@ -91,4 +135,9 @@ Williams, D. R., Rhemtulla, M., Wysocki, A. C., & Rast, P.
 Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria for
 Gaussian graphical models. \emph{Advances in Neural Information Processing
 Systems}, 23, 604-612.
+}
+\seealso{
+\code{\link[=ebic_glasso]{ebic_glasso()}} for the regularized network; \code{\link[=certificate]{certificate()}} and
+\code{\link[=ggm_support_kkt]{ggm_support_kkt()}} for the check; \code{\link[=psychnet]{psychnet()}}, which routes
+\code{method = "ggm"} here; \link[=psychnet-class]{psychnet} for the result.
 }

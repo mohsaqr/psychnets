@@ -655,154 +655,181 @@
 
 # ---- the verb ----------------------------------------------------------------
 
-#' Panel graphical VAR network (panel-GVAR)
+#' Estimate temporal, contemporaneous and between-person networks from panel data
 #'
-#' Estimates the three networks of the panel graphical vector-autoregressive
-#' model (Epskamp 2020) from few-wave, many-person panel data: a directed
-#' **temporal** network (within-person lag-1 effects), an undirected
-#' **contemporaneous** network (partial correlations of the within-person
-#' innovations), and an undirected **between**-person network (partial
-#' correlations of the stable person means). The within-person process is a
-#' stationary VAR(1) around a random intercept; means are stationary across
-#' waves. This is the model fitted by `psychonetrics::panelgvar()`, estimated by
-#' maximum likelihood in base R.
+#' @description
+#' `panel_gvar()` estimates temporal, contemporaneous and between-person
+#' networks from panel data, which follow many persons over a few measurement
+#' waves. It fits the panel graphical vector-autoregressive (panel-GVAR)
+#' model, which separates three kinds of association among the measured
+#' variables (Epskamp, 2020).
 #'
-#' By default the full (saturated) model is returned: every edge with its
-#' standard error, p-value, 95% Wald interval and a `significant` flag at
-#' `alpha`, drawn solid (significant) or dashed (not) by `plot()`.
+#' The **temporal** network is directed: an edge from A to B is the
+#' within-person effect of A at one wave on B at the next, given all other
+#' variables, and a self-loop is an autoregressive effect. The
+#' **contemporaneous** network holds the partial correlations among a
+#' person's deviations at the same wave that the temporal effects leave
+#' unexplained. The **between** network holds the partial correlations among
+#' the persons' stable means. Together they distinguish variables that
+#' predict one another over time within persons, that vary together within
+#' persons at the same wave, and that differ together between persons.
 #'
-#' `select = "ebic"` instead minimizes F + lambda * sum|theta| over the
-#' temporal (autoregressive diagonal included), contemporaneous and between
-#' parameters, for 50 log-spaced lambdas from the smallest penalty that empties
-#' every network, keeping the lambda with the lowest EBIC = -2 logL + k log n
-#' + 4 k gamma log V (k free parameters, V wave x variable columns). The solver
-#' (accelerated proximal gradient, then an active-set Newton polish) stays
-#' inside the model's domain and is certified by the lasso KKT conditions; the
-#' selected lambda is re-solved from three starts. The likelihood is not
-#' convex, so the certificate proves a stationary point, and `print()` reports
-#' how many starts agree.
+#' The model is fitted by maximum likelihood to long data (one row per
+#' person and wave) or wide data (one row per person). By default every
+#' edge is estimated and reported with its standard error, p-value, 95% Wald
+#' interval and a `significant` flag at `alpha`. `select = "prune"` removes
+#' the edges that are not significant and refits the model, then adds back
+#' removed edges that improve the fit (`stepup`). `select = "ebic"`
+#' estimates the three networks with a lasso penalty chosen by the extended
+#' Bayesian information criterion (EBIC), the panel counterpart of
+#' [ebic_glasso()]. The fitted model is checked against its optimality
+#' conditions (see Details), and `as.data.frame(x, what = "diagnostics")`
+#' reports the result.
 #'
-#' With `select = "prune"` the saturated model is fitted, every temporal,
-#' contemporaneous, and between edge whose Wald p-value exceeds `alpha` is fixed
-#' to zero in a single pass, and the model is refitted -- the
-#' `psychonetrics::prune()` default workflow (`recursive = TRUE` repeats until
-#' every remaining edge is significant). Then, with `stepup = TRUE` (default),
-#' the `psychonetrics::stepup()` search adds pruned edges back one at a time
-#' while modification indices, chi-square difference tests and BIC support
-#' them, so `select = "prune"` equals psychonetrics'
-#' `panelgvar() |> runmodel() |> prune() |> stepup()`.
+#' The result is a `psychnet_panelgvar` object holding the three networks
+#' ([psychnet_panelgvar]).
 #'
-#' @param data A data.frame (or matrix). Either **long** (one row per person per
-#'   wave; give `vars`, `id`, `wave`) or **wide** (one row per person; give
+#' The model needs at least three waves. For a network from cross-sectional
+#' data, use [psychnet()]; for networks of within-person deviations without a
+#' temporal model, [scale_within()]. The model is the one fitted by
+#' `psychonetrics::panelgvar()`.
+#'
+#' @details
+#' Write \eqn{y_{it}} for the scores of person \eqn{i} at wave \eqn{t}. The
+#' model is \eqn{y_{it} = \mu + b_i + w_{it}}, with means \eqn{\mu} shared by
+#' all waves, stable person deviations \eqn{b_i} with covariance
+#' \eqn{\Sigma_b}, and a stationary within-person process
+#' \eqn{w_{it} = B w_{i,t-1} + \zeta_{it}} with innovation covariance
+#' \eqn{\Sigma_\zeta}. The temporal network is \eqn{B} (the edge from \eqn{j}
+#' to \eqn{i} is \eqn{B_{ij}}); the contemporaneous and between networks are
+#' the partial correlations implied by \eqn{\Sigma_\zeta} and \eqn{\Sigma_b}.
+#' When the means drift across waves, `standardize = "z_per_wave"` removes
+#' the drift.
+#'
+#' Pruning fixes to zero, in one pass, every temporal, contemporaneous and
+#' between edge whose Wald p-value (after `adjust`) exceeds `alpha`, and
+#' refits; `recursive = TRUE` repeats until every remaining edge is
+#' significant. The step-up search then frees the removed edge with the
+#' largest modification index while that index is significant at `alpha`,
+#' and keeps it when the likelihood-ratio test of the refit is significant at
+#' `alpha` and, with `criterion = "bic"`, BIC decreases; the first rejected
+#' edge ends the search. This is psychonetrics' `prune()` followed by
+#' `stepup()`.
+#'
+#' With `select = "ebic"`, the lasso penalty applies to the temporal
+#' (autoregressive effects included), contemporaneous and between parameters
+#' on the data scale, over `nlambda` log-spaced values from the smallest
+#' penalty that empties every network down to `lambda_min_ratio` times that
+#' value. The selected penalty minimizes
+#' \eqn{\mathrm{EBIC} = -2 \log L + k \log n + 4 \gamma k \log V}, with
+#' \eqn{k} the number of nonzero free parameters, \eqn{n} the number of
+#' persons and \eqn{V} the number of wave-by-variable columns. Penalized
+#' estimates below `1e-5` in absolute value on the data scale are set to
+#' zero before the certificate is computed.
+#'
+#' The certificate is the largest absolute gradient of the likelihood over
+#' the free parameters or, for `select = "ebic"` without `refit`, the largest
+#' violation of the lasso optimality (Karush–Kuhn–Tucker) conditions. Pruned
+#' and penalized models are refitted or re-solved after selection, so the
+#' certificate refers to the networks returned. It is computed on
+#' standardized variables and does not depend on the variables' units. The
+#' likelihood is not convex: a value near zero shows a stationary point, and
+#' the fit is started from several points whose agreement is reported.
+#'
+#' @param data A data frame or matrix: **long** (one row per person per wave;
+#'   give `vars`, `id` and `wave`) or **wide** (one row per person; give
 #'   `vars` as a design matrix).
-#' @param vars Long data: character vector of the variable columns. Wide data: a
-#'   character matrix of column names, one row per variable and one column per
-#'   wave (the `psychonetrics` `vars` design); its row names become the labels.
-#' @param id,wave Long data only: names of the person-identifier and wave
-#'   columns. Person identifiers and waves must be non-missing, and neither
-#'   column may be one of `vars`. Waves are put in time order: a factor by its
-#'   level order; numeric, date or time waves by value; character waves that
-#'   are all numbers (`"1"`, `"2"`, `"10"`) numerically; any other character
-#'   waves alphabetically, with a `psychnet_wave_order` warning naming the
-#'   order used (pass a factor to set it).
-#' @param select Edge selection. `"none"` (default): every edge is estimated
-#'   and reported with its standard error and p-value -- significance is shown,
-#'   not imposed (the `psychonetrics` default). `"prune"`: remove edges with
-#'   p > `alpha` and refit, then step up (see `stepup`) -- psychonetrics'
-#'   `prune() |> stepup()`. `"ebic"`: penalized maximum likelihood (lasso on
-#'   every temporal, contemporaneous and between parameter) with the penalty
-#'   chosen by EBIC along a path -- psychonetrics'
-#'   `panelgvar(estimator = "PML")`, the panel counterpart of [ebic_glasso()].
-#' @param gamma,nlambda,lambda_min_ratio For `select = "ebic"`: the EBIC
-#'   hyperparameter (default 0.5), the number of penalty values on the path
-#'   (50; a finite integer >= 2) and the smallest as a fraction of the largest (1e-4) --
-#'   psychonetrics' `find_penalized_lambda()` defaults.
-#' @param refit For `select = "ebic"`: refit the selected network by
-#'   unpenalized maximum likelihood (standard errors and p-values then come
-#'   from that refit). Default `FALSE`: the penalized estimates are returned,
-#'   and standard errors, p-values and `significant` are `NA` (they do not
-#'   apply to lasso estimates).
-#' @param alpha Significance level for the `significant` flag, the solid/dashed
-#'   edges of `plot()`, and `select = "prune"`. Default `0.01`
-#'   (`psychonetrics::prune()`'s default).
-#' @param adjust Multiplicity correction applied to the edge p-values before
-#'   pruning, one of [stats::p.adjust.methods]. Default `"none"`
-#'   (`psychonetrics::prune()`'s default). Used only with `select = "prune"`
-#'   (a `psychnet_ignored_argument` warning says so otherwise); the p-values
-#'   and `significant` flags reported in the edge and parameter tables are
+#' @param vars Long data: the names of the variable columns. Wide data: a
+#'   character matrix of column names with one row per variable and one
+#'   column per wave (the `psychonetrics` design); its row names become the
+#'   labels.
+#' @param id,wave Long data only: the names of the person and wave columns.
+#'   Neither may contain missing values or be one of `vars`, and each person
+#'   has at most one row per wave. Waves are ordered by factor level order,
+#'   by value for numbers, dates and times, numerically for character values
+#'   that are all numbers, and alphabetically (with a warning) for any other
+#'   character values; pass a factor to set the order.
+#' @param select Edge selection: `"none"` (default) estimates every edge and
+#'   reports its significance; `"prune"` removes non-significant edges and
+#'   refits (see Details); `"ebic"` estimates penalized networks with the
+#'   penalty chosen by EBIC.
+#' @param alpha Significance level, in (0, 1), for the `significant` flag,
+#'   the solid and dashed edges of `plot()`, and pruning. Default `0.01`, as
+#'   in `psychonetrics::prune()`.
+#' @param adjust Multiplicity correction for the p-values tested in pruning,
+#'   one of [stats::p.adjust.methods]. Default `"none"`. Used only with
+#'   `select = "prune"`; the reported p-values and `significant` flags are
 #'   always unadjusted.
-#' @param recursive Logical; repeat pruning until no edge has `p > alpha`.
-#'   Default `FALSE`.
-#' @param stepup Logical; after pruning, run the `psychonetrics::stepup()`
-#'   search: re-add the pruned edge with the largest modification index while
-#'   it is significant at `alpha` and the refit passes a chi-square difference
-#'   test at `alpha` (and lowers BIC, with `criterion = "bic"`). Default `TRUE`,
-#'   because one-pass pruning can remove parameters that substitute for each
-#'   other (e.g. an autoregression and correlated cross-lagged effects), each
-#'   non-significant alone but not jointly. `FALSE` reproduces
-#'   `psychonetrics::prune()` alone. Used only with `select = "prune"`.
-#' @param criterion Step-up acceptance criterion besides the chi-square test:
-#'   `"bic"` (default, as `psychonetrics::stepup()`) or `"none"`.
-#' @param standardize Rescale the data before fitting, as psychonetrics'
-#'   `panelvar(standardize =)`: `"none"` (default), `"z"` (one mean and SD per
-#'   variable, pooled over waves), or `"z_per_wave"` (z-score every variable
-#'   separately within every wave). `"z_per_wave"` removes wave-to-wave drift
-#'   in means and variances -- useful when the stationary-means assumption
-#'   fails, at the price of no longer modelling that drift -- and makes the
-#'   edges standardized. Standardization uses the available values (SD with
-#'   denominator n - 1) before listwise deletion.
-#' @param labels Optional node labels (default: `vars` for long data, the design
-#'   row names for wide data).
-#' @param na_method Missing-data handling. Only `"listwise"` is supported: a
-#'   person missing any wave/variable is dropped (with a warning giving the
-#'   count). A pairwise covariance is not a likelihood for this model and full-
-#'   information ML is not yet implemented, so `"pairwise"` is refused.
-#' @return An object of class `c("psychnet_panelgvar", "netobject_group")`: a
-#'   named list of three [psychnet] networks, `temporal` (directed; edge
-#'   `from -> to` is the lag-1 effect of `from` on `to`), `contemporaneous`,
-#'   and `between` (undirected partial correlations). Being a
-#'   `netobject_group`, it plots as a grid with `cograph::splot()`. Read it with
-#'   `as.data.frame()`: `what = "edges"` (one row per edge with standard error,
-#'   p-value and 95% Wald interval; the temporal autoregressive effects are the
-#'   `from == to` rows), `what = "parameters"` (every model
-#'   parameter), `what = "fit"` (one row of fit indices: chi-square, CFI,
-#'   TLI, RMSEA, AIC, BIC), `what = "variance"` (one row per variable: the
-#'   between-person share of its variance), `what = "covariance"` (the
-#'   innovation and between-person covariance matrices, one row per entry),
-#'   `what = "path"` (for `select = "ebic"`: one row per penalty value on the
-#'   lambda path), or `what = "diagnostics"` (one
-#'   row: the score
-#'   certificate -- largest absolute gradient of the ML fit function on the
-#'   free parameters, or the lasso KKT residual for `select = "ebic"` --
-#'   boundary flag, SE availability, and how many of the optimizer
-#'   starts reached the best optimum). Fitting, inference and the certificate
-#'   run on standardized variables (pooled SD per variable), so they are
-#'   unit-free and the certificate does not depend on the variables' units;
-#'   the model is scale-equivariant, so estimates and standard errors map back
-#'   exactly and are returned on the data scale.
-#'
-#'   Errors are classed: `psychnet_bad_input` for unusable input (fewer than
-#'   three waves, too few persons, non-numeric, missing or duplicated columns,
-#'   duplicated or missing labels, an argument outside its allowed values, a
-#'   requested `"pairwise"`), `psychnet_no_converge` if the optimizer ends at an
-#'   infeasible point. Warnings are classed too: `psychnet_no_converge` (score
-#'   above `1e-6` at an interior solution), `psychnet_boundary` (the final
-#'   contemporaneous or between covariance is near-singular, i.e. partial
-#'   correlations near +/-1 -- common with three waves; those estimates are
-#'   unreliable, and the score, which need not vanish there, is quoted in the
-#'   message),
-#'   `psychnet_singular_information` (some parameters are not identified at
-#'   the returned estimate: their standard errors are NA, the others exact),
-#'   `psychnet_approximate_se` (the fit being pruned had a singular information;
-#'   the parameters it does not identify were treated as having infinite
-#'   standard errors, so pruning removes them), and
-#'   `psychnet_listwise_drop` (persons removed for missing values),
-#'   `psychnet_wave_order` (non-numeric character waves ordered
-#'   alphabetically) and `psychnet_ignored_argument` (`adjust` without
-#'   pruning).
+#' @param recursive With `select = "prune"`: repeat pruning until no edge has
+#'   p > `alpha`. Default `FALSE`.
+#' @param stepup With `select = "prune"`: after pruning, add back removed
+#'   edges that improve the fit (see Details). Default `TRUE`, because
+#'   one-pass pruning can remove parameters that are each non-significant but
+#'   jointly significant, such as an autoregression and correlated
+#'   cross-lagged effects. `FALSE` gives pruning alone.
+#' @param criterion With `stepup`: `"bic"` (default) also requires BIC to
+#'   decrease when an edge is added; `"none"` uses the significance tests
+#'   only.
+#' @param gamma,nlambda,lambda_min_ratio With `select = "ebic"`: the EBIC
+#'   hyperparameter (default `0.5`), the number of penalty values (default
+#'   `50`, a whole number >= 2), and the smallest penalty as a fraction of the
+#'   largest (default `1e-4`).
+#' @param refit With `select = "ebic"`: refit the selected networks by
+#'   unpenalized maximum likelihood, so that standard errors and p-values are
+#'   available. Default `FALSE` returns the penalized estimates, for which
+#'   standard errors, p-values and `significant` are `NA`.
+#' @param standardize Rescaling before fitting: `"none"` (default), `"z"`
+#'   (one mean and standard deviation per variable, pooled over waves), or
+#'   `"z_per_wave"` (each variable z-scored within each wave). `"z_per_wave"`
+#'   removes changes in means and variances across waves, which the model
+#'   would otherwise assume absent, and makes the edges standardized.
+#'   Standardization uses the available values before listwise deletion.
+#' @param labels Optional node labels, unique and non-empty (default: `vars`
+#'   for long data, the design row names for wide data).
+#' @param na_method Only `"listwise"` (default): a person with any missing
+#'   value is dropped. `"pairwise"` is refused, because a pairwise covariance
+#'   is not a likelihood for this model.
+#' @return An object of class `c("psychnet_panelgvar", "netobject_group")`
+#'   ([psychnet_panelgvar]): a named list of three networks of class
+#'   `psychnet`, `temporal` (directed), `contemporaneous` and `between`
+#'   (undirected). `as.data.frame()` gives one row per edge with its standard
+#'   error, p-value and Wald interval; `as.data.frame(x, what = ...)` gives
+#'   the `"parameters"`, `"fit"` indices, `"variance"` decomposition,
+#'   `"covariance"` matrices, EBIC `"path"` or `"diagnostics"`, whose `score`
+#'   column is the certificate. `summary()` gives one row per network and
+#'   `plot()` draws the three networks.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `data`, `vars`, `id` or `wave` cannot be
+#'   resolved (columns missing or duplicated, `id` and `wave` the same or
+#'   among `vars`, missing persons or waves, a person with two rows in one
+#'   wave), a variable is not numeric, there are fewer than two variables or
+#'   fewer than three waves, there are no more complete persons than
+#'   wave-by-variable columns, the stacked covariance is singular, a variable
+#'   does not vary as `standardize` requires, `labels` is invalid, an
+#'   argument is outside its allowed values, or `na_method` is not
+#'   `"listwise"`; `psychnet_no_converge` (error) when no start reaches a
+#'   feasible optimum, the fitted model is worse than its nested baseline, or
+#'   no penalized model is feasible. Warnings: `psychnet_no_converge` when the
+#'   score exceeds `1e-6` at an interior solution; `psychnet_boundary` when
+#'   the contemporaneous or between covariance is near singular (partial
+#'   correlations near +/-1, common with three waves), so estimates involving
+#'   it are unreliable; `psychnet_singular_information` when some parameters
+#'   are not identified at the estimate (their standard errors are `NA`);
+#'   `psychnet_approximate_se` when a fit being pruned had a singular
+#'   information and its unidentified parameters were pruned;
+#'   `psychnet_listwise_drop` when persons are removed for missing values;
+#'   `psychnet_wave_order` when character waves are ordered alphabetically;
+#'   `psychnet_ignored_argument` when `adjust` is set without pruning.
+#' @seealso [psychnet_panelgvar] for reading the fit; [ebic_glasso()] for
+#'   cross-sectional data; [scale_within()]; [certificate()] for the
+#'   certificates of the other estimators.
 #' @references Epskamp, S. (2020). Psychometric network models from time-series
 #'   and panel data. *Psychometrika*, 85(1), 206-231.
 #'   \doi{10.1007/s11336-020-09697-3}
+#'
+#'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+#'   for Gaussian graphical models. *Advances in Neural Information Processing
+#'   Systems*, 23, 604-612.
 #' @examples
 #' # srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
 #' # effort in one week drives efficacy in the next.
@@ -1240,50 +1267,93 @@ panel_gvar <- function(data, vars, id = NULL, wave = NULL,
   out
 }
 
-#' Read a panel graphical VAR fit
+#' Read the networks, parameters and fit of a panel graphical VAR
 #'
-#' Methods for the object returned by [panel_gvar()].
+#' @description
+#' A `psychnet_panelgvar` object holds the three networks of a panel
+#' graphical vector-autoregressive model fitted by [panel_gvar()]: the
+#' directed temporal network of lag-1 within-person effects, the
+#' contemporaneous network of within-person partial correlations at the same
+#' wave, and the between network of partial correlations among the persons'
+#' stable means. Its methods read the fitted model as tidy tables, summarize
+#' it, and draw the three networks side by side.
 #'
-#' @param x,object A `psychnet_panelgvar` object.
-#' @param what For `as.data.frame()`: `"edges"` (default; one row per estimated
-#'   edge across the three networks, with standard error, p-value and 95% Wald
-#'   interval -- temporal rows include the autoregressive `from == to`
-#'   effects), `"parameters"` (every model parameter, including means, scaling
-#'   `delta`s, and fixed/pruned entries), `"fit"` (one row of fit indices), or
-#'   `"diagnostics"` (one row: persons `n`, `waves`, the ML `score`
-#'   certificate, `boundary` / `boundary_part`, `se_available`, and
-#'   `starts_agree` of `starts` optimizer starts reaching the best optimum --
-#'   of the saturated fit, or with `select = "ebic"` of the penalized solve at
-#'   the selected lambda, or of its refit when `refit = TRUE`; agreement is
-#'   judged on the unit-free standardized objective), `"variance"` (one row
-#'   per variable: the model-implied
-#'   `between`-person variance, the stationary `within`-person variance, and
-#'   `share_between`, their ratio to the total -- an intraclass correlation),
-#'   `"covariance"` (one row per entry of the lower triangle, diagonal
-#'   included, of the innovation (contemporaneous) and between-person
-#'   covariance matrices on the data scale: columns `matrix` (`"innovation"`
-#'   or `"between"`), `row`, `col`, `value`), or `"path"` (`select = "ebic"`
-#'   only, else a `psychnet_bad_input` error: one row per lambda on the
-#'   penalty path, columns `lambda` (data-scale penalty), `ebic`, `edges`
-#'   (non-zero penalized parameters), `kkt` (lasso KKT residual), `final`
-#'   (re-solved to certification) and `selected` (the lambda returned)).
-#' @param include_zero For `what = "edges"`: also return pruned (fixed-zero)
-#'   edges. Default `FALSE`.
-#' @param row.names,optional Ignored (S3 consistency).
-#' @param ... Passed to `cograph::splot()` by `plot()`; named arguments
-#'   override the plotting defaults, with unique argument abbreviations
-#'   accepted. Otherwise ignored.
-#' @return `as.data.frame()`: a data.frame as described under `what`. The edge
-#'   table has columns `network`, `from`, `to`, `weight`, `se`, `p`,
-#'   `ci_lower`, `ci_upper`, `significant` (p < the fit's `alpha`); the
-#'   parameter table has `matrix`, `row`, `col`,
-#'   `estimate`, `se`, `p`, `ci_lower`, `ci_upper`, `fixed`; the diagnostics
-#'   row has `n`, `waves`, `score`, `boundary`, `boundary_part`,
-#'   `se_available`, `starts_agree`, `starts`; the variance table has
-#'   `variable`, `between`, `within`, `share_between`. `print()` and
-#'   `plot()` return `x` invisibly. `summary()` returns a data.frame with one
-#'   row per network (`network`, `directed`, `nodes`, `edges`, `significant`,
-#'   `mean_abs_weight`).
+#' `as.data.frame()` gives the edges by default and, through `what`, the
+#' full parameter table, the fit indices, the split of each variable's
+#' variance into between- and within-person parts, the innovation and
+#' between-person covariances, the EBIC penalty path, or the diagnostics
+#' that include the certificate. `summary()` counts the edges of each
+#' network, and `plot()` draws the networks with significance shown by line
+#' type.
+#'
+#' `as.data.frame()` and `summary()` return data frames; `print()` and
+#' `plot()` return the object invisibly.
+#'
+#' @param x,object A `psychnet_panelgvar` object from [panel_gvar()].
+#' @param what For `as.data.frame()`, the table to return:
+#'   \describe{
+#'     \item{`"edges"`}{(default) one row per estimated edge of the three
+#'       networks, with standard error, p-value and 95% Wald interval; the
+#'       autoregressive effects are the temporal rows with `from == to`.}
+#'     \item{`"parameters"`}{every model parameter, including the means, the
+#'       scale parameters and the edges fixed to zero.}
+#'     \item{`"fit"`}{one row of fit indices.}
+#'     \item{`"diagnostics"`}{one row: the number of persons and waves, the
+#'       certificate (`score`), whether the solution is on a boundary,
+#'       whether standard errors are available, and how many optimizer starts
+#'       reached the best optimum. The starts are those of the full model,
+#'       of the penalized solution at the selected penalty with
+#'       `select = "ebic"`, or of its refit with `refit = TRUE`.}
+#'     \item{`"variance"`}{one row per variable: the model-implied
+#'       between-person variance, the stationary within-person variance, and
+#'       the between-person share of the total (an intraclass correlation).}
+#'     \item{`"covariance"`}{one row per entry of the lower triangle,
+#'       diagonal included, of the innovation (contemporaneous) and
+#'       between-person covariance matrices, on the data scale.}
+#'     \item{`"path"`}{only for `select = "ebic"`: one row per penalty value
+#'       on the EBIC path.}
+#'   }
+#' @param include_zero For `what = "edges"`: also return edges fixed to zero
+#'   by pruning or the penalty. Default `FALSE`.
+#' @param row.names,optional Ignored.
+#' @param ... For `plot()`, passed to `cograph::splot()`; named arguments
+#'   override the plotting defaults, and unique abbreviations are accepted.
+#'   Ignored by the other methods.
+#' @return `as.data.frame()` returns a data frame:
+#'   \describe{
+#'     \item{edges}{columns `network`, `from`, `to`, `weight`, `se`, `p`,
+#'       `ci_lower`, `ci_upper` and `significant` (p < the fit's `alpha`;
+#'       `NA` for penalized estimates). A temporal edge from `from` to `to`
+#'       is the effect of `from` at one wave on `to` at the next.}
+#'     \item{parameters}{columns `matrix` (`mu`, `beta`,
+#'       `omega_zeta_within`, `delta_zeta_within`, `omega_zeta_between`,
+#'       `delta_zeta_between`), `row`, `col`, `estimate`, `se`, `p`,
+#'       `ci_lower`, `ci_upper` and `fixed`.}
+#'     \item{fit}{columns `logl`, `npar`, `df`, `chisq`, `pvalue`,
+#'       `baseline_chisq`, `baseline_df`, `cfi`, `tli`, `rmsea`, `aic` and
+#'       `bic`.}
+#'     \item{diagnostics}{columns `n`, `waves`, `score`, `boundary`,
+#'       `boundary_part`, `se_available`, `starts_agree` and `starts`.}
+#'     \item{variance}{columns `variable`, `between`, `within` and
+#'       `share_between`.}
+#'     \item{covariance}{columns `matrix` (`"innovation"` or `"between"`),
+#'       `row`, `col` and `value`.}
+#'     \item{path}{columns `lambda` (the penalty on the data scale), `ebic`,
+#'       `edges` (nonzero penalized parameters), `kkt` (the lasso
+#'       certificate), `final` (re-solved to full precision) and `selected`
+#'       (the penalty returned).}
+#'   }
+#'   `summary()` returns a data frame with one row per network and columns
+#'   `network`, `directed`, `nodes`, `edges`, `significant` (`NA` for
+#'   penalized estimates) and `mean_abs_weight`, autoregressive effects
+#'   excluded. `print()` and
+#'   `plot()` return `x` invisibly.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `what` is not one of the listed tables,
+#'   `what = "path"` is requested for a fit without `select = "ebic"`,
+#'   `plot()` is called without the `cograph` package, or a plotting argument
+#'   is ambiguous or given twice.
+#' @seealso [panel_gvar()] for fitting the model.
 #' @examples
 #' # srl_panel: 100 students x 4 weeks, simulated from a panel-GVAR in which
 #' # effort in one week drives efficacy in the next.
@@ -1478,16 +1548,16 @@ summary.psychnet_panelgvar <- function(object, ...) {
 #' @rdname psychnet_panelgvar
 #' @param edge_labels For `plot()`: print each edge's weight on it. Default
 #'   `TRUE`.
-#' @details By default, `plot()` draws the three networks side by side on one shared circle
-#'   layout (so a node sits in the same place in every panel), with the
-#'   temporal autoregressive effects as self-loops. Line type shows
-#'   significance: solid edges have p < `alpha` (the fit's `alpha`), dashed
-#'   edges do not (an edge without a p-value counts as not significant). Colour
-#'   shows sign -- blue positive, vermillion negative (Okabe-Ito) -- and the
-#'   signed weight is printed on each edge, so sign never rests on colour
-#'   alone. A network with nothing estimated shows "no edges". It needs the
-#'   `cograph` package. If `edge_style` is overridden, the legend no longer
-#'   assigns significance to solid or dashed lines.
+#' @details `plot()` draws the three networks side by side on one circle
+#'   layout, so each node has the same position in every panel, with the
+#'   autoregressive effects as self-loops. Solid edges are significant at the
+#'   fit's `alpha` and dashed edges are not (an edge without a p-value counts
+#'   as not significant); for penalized estimates every selected edge is
+#'   solid. Colour shows sign, blue for positive and vermillion for negative,
+#'   and the signed weight is printed on each edge, so sign does not rest on
+#'   colour alone. A network without edges is marked "no edges". Overriding
+#'   `edge_style` removes the significance key from the legend. Plotting
+#'   needs the `cograph` package.
 #' @export
 plot.psychnet_panelgvar <- function(x, edge_labels = TRUE, ...) {
   if (!requireNamespace("cograph", quietly = TRUE)) {

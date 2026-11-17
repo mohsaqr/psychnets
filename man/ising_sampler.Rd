@@ -2,7 +2,7 @@
 % Please edit documentation in R/ising_unreg.R
 \name{ising_sampler}
 \alias{ising_sampler}
-\title{Unregularized Ising network for binary data}
+\title{Estimate an unregularized Ising network for binary items}
 \usage{
 ising_sampler(
   data,
@@ -16,59 +16,109 @@ ising_sampler(
 )
 }
 \arguments{
-\item{data}{Binary data frame or matrix (rows = observations): numeric 0/1,
-logical, or two-level factor columns, as in \code{\link[=ising_fit]{ising_fit()}}.}
+\item{data}{Binary data: a data frame or matrix with one row per
+observation, with numeric 0/1, logical, or two-level factor columns, as
+in \code{\link[=ising_fit]{ising_fit()}}. A constant column is dropped.}
 
-\item{rule}{Edge-combination rule: \code{"AND"} (default) or \code{"OR"}.}
+\item{rule}{\code{"AND"} (default) keeps an edge when both nodewise estimates
+are nonzero; \code{"OR"} when either is.}
 
-\item{alpha}{Significance level for Wald edge pruning; \code{NULL} (default) keeps
-every edge.}
+\item{alpha}{Significance level for pruning, a number in (0, 1). Default
+\code{NULL} keeps every edge.}
 
-\item{adjust}{Multiple-comparison adjustment for the edge p-values (any
-\link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+\item{adjust}{Multiplicity correction for the p-values used in pruning,
+one of \link[stats:p.adjust.methods]{stats::p.adjust.methods}. Default \code{"none"}. Used only with
+\code{alpha}.}
 
-\item{min_sum}{Minimum row sum-score; rows below it are dropped before
-fitting. \code{NULL} (default) keeps every row.}
+\item{min_sum}{Minimum number of endorsed items per row; rows below it are
+dropped before fitting. Default \code{NULL} keeps every row.}
 
-\item{weights}{Optional non-negative observation weights, one per input row
-after missing-data preparation. When \code{min_sum} is used, weights are filtered
-alongside their corresponding rows. Rescaled to a maximum of 1, so only
-relative sizes matter (see \code{\link[=ising_fit]{ising_fit()}}). \code{NULL} (default) is unweighted.}
+\item{weights}{Optional non-negative observation weights, one per row after
+missing-data handling (and filtered with \code{min_sum}). Only their relative
+sizes matter. Default \code{NULL} (unweighted).}
 
-\item{na_method}{Missing-data handling: \code{"pairwise"} (default, mode-impute) or
-\code{"listwise"}. See \code{\link[=ising_fit]{ising_fit()}}.}
+\item{na_method}{\code{"pairwise"} (default) fills each missing value with the
+item's more frequent value; \code{"listwise"} drops rows with a missing value.}
 
 \item{labels}{Optional node labels: one per node, or one per input column.}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the symmetric weight matrix,
-with \verb{$thresholds} (node intercepts), \verb{$rule}, \verb{$p_values}, \verb{$nodewise}
-(for \code{\link[=net_predict]{net_predict()}}), and \verb{$kkt} (worst nodewise score residual).
-If Wald pruning changes any coefficient, \verb{$kkt} is \code{NA} for the altered
-fit; \verb{$fit_kkt} retains the unpruned residual and \verb{$certificate_target}
-identifies it as \code{"pre_pruning_fit"}.
-
-Under (quasi-)complete separation -- a node perfectly predicted by the
-others -- the unpenalized maximum-likelihood estimate does not exist: the
-coefficients grow without bound and the score tends to zero, so a small
-residual would certify nothing. The fit then raises a
-\code{psychnet_separation} warning naming the nodes, \verb{$kkt} is \code{NA} and
-\verb{$certificate_target} is \code{"nonconverged_fit"}; use the penalized
-\code{\link[=ising_fit]{ising_fit()}} instead. Any other failure to converge raises
-\code{psychnet_no_converge} with the same certificate treatment. A singular
-Fisher information raises \code{psychnet_singular_information}. Input errors
-are of class \code{psychnet_bad_input}.
+An undirected network of class \code{psychnet} (\link[=psychnet-class]{psychnet}).
+\code{as.data.frame()} gives one row per edge (\code{from}, \code{to}, \code{weight}),
+\code{\link[=certificate]{certificate()}} the maximum-likelihood certificate, and \code{\link[=net_predict]{net_predict()}}
+the predictability of each node. The certificate is missing when
+pruning removed a coefficient or when a regression did not converge.
+The object also stores the node thresholds (\code{thresholds}), the
+unadjusted Wald p-values of the nodewise coefficients (\code{p_values}, row =
+the regressed item), the certificate of the unpruned fit (\code{fit_kkt}) and
+what the certificate refers to (\code{certificate_target}:
+\code{"returned_network"}, \code{"pre_pruning_fit"} or \code{"nonconverged_fit"}).
 }
 \description{
-Estimates an Ising model by \emph{unpenalized} nodewise logistic regression, with
-optional Wald p-value edge pruning, combined by the AND (default) or OR rule.
-The unregularized counterpart of \code{\link[=ising_fit]{ising_fit()}}; self-certified by the
-maximum-likelihood score residual (see \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} at \code{lambda = 0}).
+\code{ising_sampler()} estimates an unregularized Ising network from binary
+items, in which edges can be kept or removed by their statistical
+significance rather than by a penalty. The Ising model describes binary
+items through a threshold for each item and an interaction for each pair,
+the association between two items after conditioning on all others (van
+Borkulo et al., 2014); estimated without a penalty, the interactions are
+maximum-likelihood estimates, not shrunk toward zero.
+
+The function regresses each item on all other items by ordinary
+(unpenalized) logistic regression. With \code{alpha}, every coefficient whose
+Wald p-value, optionally adjusted for multiplicity, exceeds \code{alpha} is set
+to zero. Every pair is estimated twice, once in each item's regression;
+the AND rule (default) keeps an edge when both estimates remain nonzero,
+the OR rule when either does, and the edge weight is the mean of the two.
+The certificate is the largest violation of the maximum-likelihood
+optimality conditions (the score equations) across the regressions, so a
+value near zero shows that every regression is at its maximum. Pruning
+sets coefficients to zero after fitting, without refitting; the pruned
+network is no longer the solution that was checked, and its certificate is
+reported as missing.
+
+The result is an undirected network of class \code{psychnet}
+(\link[=psychnet-class]{psychnet}).
+
+Unpenalized estimates need many more observations than items. When an
+item is perfectly predicted by the others (separation), its
+maximum-likelihood estimate does not exist; the penalized \code{\link[=ising_fit]{ising_fit()}} is
+the alternative then, and in small samples generally.
 }
+\details{
+Edge weights and thresholds are on the log-odds scale of the 0/1 coding,
+as in \code{\link[=ising_fit]{ising_fit()}}. The multiplicity correction (\code{adjust}) is applied over
+all nodewise coefficients, two per pair, before the AND or OR rule. After
+pruning, the thresholds are recomputed from the retained coefficients; the
+remaining coefficients keep their unpruned estimates.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when a column is not binary, fewer than two usable
+columns remain, \code{rule}, \code{alpha}, \code{adjust}, \code{min_sum}, \code{weights} or
+\code{labels} is invalid, or \code{min_sum} removes every row (or every row with
+positive weight); \code{psychnet_constant_variable} (warning) when a constant
+column is dropped; \code{psychnet_separation} (warning) when items are
+perfectly predicted by the others, so their estimates do not exist;
+\code{psychnet_no_converge} (warning) when a regression fails to converge for
+another reason; \code{psychnet_singular_information} (warning) when an item's
+Fisher information is singular, so its Wald p-values are unreliable.
+}
+
 \examples{
 b <- dichotomize(SRL_GPT)
-ising_sampler(b)                 # every edge, certified ML fit
+ising_sampler(b)                 # every edge; certificate near zero
 pruned <- ising_sampler(b, alpha = 0.05)
 as.data.frame(pruned)
-certificate(pruned)              # NA: pruning altered the ML solution
+certificate(pruned)              # missing: pruning changed the fit
+}
+\references{
+van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
+Boschloo, L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
+constructing networks from binary data. \emph{Scientific Reports}, 4, 5918.
+\doi{10.1038/srep05918}
+}
+\seealso{
+\code{\link[=ising_fit]{ising_fit()}} for the penalized model; \code{\link[=dichotomize]{dichotomize()}} to prepare
+items; \code{\link[=certificate]{certificate()}} and \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} for the optimality check;
+\code{\link[=net_predict]{net_predict()}}; \code{\link[=psychnet]{psychnet()}} with \code{method = "ising_sampler"}.
 }

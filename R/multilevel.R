@@ -93,36 +93,52 @@
        occasion = levels(occ))
 }
 
-#' Action frequencies from an event log
+#' Count the actions of each actor and session in an event log
 #'
-#' Converts a long event log -- one row per event, with an actor, an action, and
-#' optionally a session and time -- into a frequency table: one row per occasion,
-#' one column per distinct action, holding that action's count. The conversion
-#' mirrors the "frequency" format of the Nestimate event pipeline. An occasion is
-#' one (actor, session) cell; with `compute_sessions = TRUE` the `time` column is
-#' used to split each actor into sessions wherever the gap between consecutive
-#' events exceeds `time_threshold`. This is the frequency input that
-#' [psychnet()] builds internally for event data (`source = "eventdata"`).
+#' @description
+#' `event_frequencies()` counts how often each action occurred in each
+#' occasion of an event log, where an occasion is an actor, or an actor's
+#' session. This table of action frequencies is what a network of actions,
+#' which shows which actions tend to occur together in the same occasion, is
+#' estimated from.
 #'
-#' @param data A long event log (data frame), one row per event.
-#' @param actor Column(s) naming the actor / subject. Default `"Actor"`.
-#' @param action Column naming the action / state. Default `"Action"`.
-#' @param session Optional column(s) naming an explicit session within an actor.
-#' @param time Optional column used to compute sessions from gaps (see
-#'   `compute_sessions`); it is not used for any temporal model.
-#' @param compute_sessions If `TRUE`, split each actor into sessions from the
-#'   `time` gaps (a new session starts when the gap exceeds `time_threshold`).
-#'   Default `TRUE`.
-#' @param time_threshold Maximum gap (in the units of `time`, seconds for a
-#'   timestamp) between consecutive events before a new session begins. Default
-#'   `900` (15 minutes), as in Nestimate.
-#' @return A `data.frame` with one row per occasion: an `actor` column
-#'   (character), a `session` column (character occasion label: the actor and
-#'   session values joined by `"."`, followed by the computed session number
-#'   when `compute_sessions` splits by `time`), and one numeric (double) count
-#'   column per action. Errors of class `psychnet_bad_input` when a column is
-#'   missing, `actor` or `session` has missing values, or `time` cannot be
-#'   parsed.
+#' In an event log each row records one action by one actor, such as a
+#' student reading, taking a quiz or writing a note; behavioural and learning
+#' data often arrive in this form. Occasions are formed by `actor`, by
+#' `actor` and `session` when sessions are given, and, with `time` and
+#' `compute_sessions = TRUE`, by splitting an actor's events into sessions
+#' wherever the gap between consecutive events exceeds `time_threshold`.
+#'
+#' The result is a data frame with one row per occasion and one column per
+#' distinct action, holding the count.
+#'
+#' [psychnet()] performs this conversion itself when given an event log, so the
+#' function is needed only to inspect or reuse the table. Events with a missing
+#' or empty action are not counted.
+#'
+#' @param data A data frame with one row per event.
+#' @param actor Column(s) identifying the actor. Default `"Actor"`.
+#' @param action Column holding the action. Default `"Action"`.
+#' @param session Optional column(s) identifying sessions within an actor.
+#' @param time Optional column of event times (numbers, dates, date-times or
+#'   timestamps as text), used only to split sessions.
+#' @param compute_sessions Whether to split each actor's events into sessions
+#'   at gaps in `time` longer than `time_threshold`. Default `TRUE`; has no
+#'   effect without `time`.
+#' @param time_threshold Longest gap between consecutive events within one
+#'   session, in the units of `time` (seconds for date-times). Default `900`
+#'   (15 minutes).
+#' @return A data frame with one row per occasion and columns `actor`,
+#'   `session` (an occasion label joining the actor, the session and, when
+#'   sessions are computed from `time`, the session number, separated by
+#'   `"."`) and one numeric column of counts per action.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `data` is not a data frame, a named column is
+#'   missing, `action` has fewer than two distinct values, `actor` or
+#'   `session` has missing values, or `time` cannot be read as numbers or
+#'   timestamps.
+#' @seealso [psychnet()] with `actor` to estimate a network from an event log;
+#'   [psychnet_multilevel] for within-actor and between-actor networks.
 #' @examples
 #' ev <- data.frame(
 #'   Actor   = rep(c("a", "b"), each = 6),
@@ -326,18 +342,46 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
   .fit_design(des, method, threshold, gamma, ...)
 }
 
-#' Within / between event-data networks
+#' Within-actor and between-actor networks from event data
 #'
-#' The object returned by [psychnet()] for nested event data with
-#' `standardize = FALSE`: a pair of Gaussian graphical networks decomposing the
-#' actor-by-action frequency covariance into a within-actor and a between-actor
-#' part.
+#' @description
+#' A `psychnet_multilevel` object holds a pair of Gaussian graphical
+#' networks estimated from event data with several occasions per actor: a
+#' within-actor network and a between-actor network. [psychnet()] returns it
+#' for event data (an event log, or a table of action frequencies with one
+#' row per occasion and an `id` column) with several occasions per actor and
+#' `standardize = FALSE`, estimating both networks with the chosen method.
+#'
+#' When the same actors, such as students in a learning environment,
+#' contribute several occasions (sessions), the association between the
+#' frequencies of two actions has two sources. Within actors, it shows
+#' whether an actor who performs one action more often than usual on an
+#' occasion also performs the other more often. Between actors, it shows
+#' whether actors who perform one action more often on average also perform
+#' the other more often. The two can differ in size and even in sign. The
+#' within network is estimated from each occasion's deviations from its
+#' actor's mean action frequencies, with the pooled within-actor degrees of
+#' freedom (occasions minus actors) as sample size; the between network from
+#' the actors' mean frequencies, with the number of actors as sample size.
+#'
+#' `print()` reports the numbers of actors, occasions, nodes and edges,
+#' `summary()` and `as.data.frame()` return data frames, and `plot()` draws
+#' the two networks side by side.
+#'
+#' With `standardize = TRUE` (the default), [psychnet()] returns only the
+#' within-actor network, as a single `psychnet`. For persons measured at
+#' fixed waves, with effects from one wave to the next, use [panel_gvar()].
 #'
 #' @param x,object A `psychnet_multilevel` object.
-#' @param ... Ignored by `print`, `summary` and `as.data.frame`; passed to
-#'   `cograph::splot()` by `plot`.
-#' @return `x`, invisibly (for `print`), after printing the numbers of actors and
-#'   occasions and each network's node and edge counts.
+#' @param ... Passed to `cograph::splot()` by `plot()`; ignored by the other
+#'   methods.
+#' @return `print()` returns `x` invisibly, after printing the numbers of
+#'   actors and occasions and each network's numbers of nodes and edges.
+#' @section Conditions:
+#'   `psychnet_bad_input` from `plot()` when the `cograph` package is not
+#'   installed.
+#' @seealso [psychnet()] for fitting; [event_frequencies()] for the
+#'   conversion of an event log; [psychnet-class] for the two networks.
 #' @examples
 #' set.seed(1)
 #' ev <- data.frame(
@@ -366,10 +410,10 @@ print.psychnet_multilevel <- function(x, ...) {
 }
 
 #' @rdname psychnet_multilevel
-#' @param row.names,optional Ignored (S3 consistency).
-#' @return For `as.data.frame`, the two edge lists stacked with a leading
-#'   `level` column (`"within"` or `"between"`): columns `level`, `from`, `to`,
-#'   `weight`, one row per edge.
+#' @param row.names,optional Ignored.
+#' @return `as.data.frame()` returns one row per edge of the two networks,
+#'   with columns `level` (`"within"` or `"between"`), `from`, `to` and
+#'   `weight`.
 #' @export
 as.data.frame.psychnet_multilevel <- function(x, row.names = NULL,
                                               optional = FALSE, ...) {
@@ -380,10 +424,10 @@ as.data.frame.psychnet_multilevel <- function(x, row.names = NULL,
 }
 
 #' @rdname psychnet_multilevel
-#' @return For `summary`, a data frame with one row per level (`"within"`,
-#'   `"between"`): columns `level`, `nodes`, `edges`, `mean_abs_weight` (0
-#'   for a network without edges) and `n` (the level's effective sample
-#'   size: pooled within-actor degrees of freedom, or the number of actors).
+#' @return `summary()` returns a data frame with one row per level
+#'   (`"within"`, `"between"`) and columns `level`, `nodes`, `edges`,
+#'   `mean_abs_weight` (0 for a network without edges) and `n` (the sample
+#'   size used at that level).
 #' @export
 summary.psychnet_multilevel <- function(object, ...) {
   rows <- lapply(c("within", "between"), function(lv) {
@@ -398,9 +442,8 @@ summary.psychnet_multilevel <- function(object, ...) {
 }
 
 #' @rdname psychnet_multilevel
-#' @return For `plot`, `x` invisibly, after drawing the within and between
-#'   networks side by side with `cograph::splot()` (a Suggested package; a
-#'   `psychnet_bad_input` error says so when it is not installed).
+#' @return `plot()` draws the two networks side by side with
+#'   `cograph::splot()` and returns `x` invisibly.
 #' @export
 plot.psychnet_multilevel <- function(x, ...) {
   if (!requireNamespace("cograph", quietly = TRUE)) {

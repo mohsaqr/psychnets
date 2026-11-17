@@ -60,22 +60,46 @@
   list(pred = pred, lmg = lmg, r2_full = r2[2^m])
 }
 
-#' Relative-importance (LMG / Shapley) certificate
+#' Check the decomposition of a relative-importance network
 #'
-#' Checks two identities. By Shapley efficiency, the importance shares a node
-#' receives from its predictors sum exactly to that node's full-model
-#' R-squared; and that full-model R-squared must equal the closed form
-#' \eqn{1 - 1 / (S^{-1})_{jj}}. The first alone cannot detect a wrong subset
-#' solver (efficiency holds for any set function), so the second anchors the
-#' full model independently. When `S` is singular (reciprocal condition number
-#' below 1e-12) the closed form does not exist and only efficiency is checked.
-#' The certificate does not verify the individual subset R-squared values
-#' between the empty and the full model.
+#' @description
+#' `lmg_certificate()` checks the decomposition stored in a relative-importance
+#' network from [relimp_network()]. Such a network divides the \eqn{R^2} of
+#' each variable, regressed on all the others, among its predictors; it is
+#' defined by a decomposition rather than as the optimum of an objective, and
+#' two identities must hold for that decomposition to be correct.
 #'
-#' @param x A [psychnet] object produced by [relimp_network()].
-#' @return The larger of the two deviations (scalar); 0 = exact decomposition.
-#'   An `x` that is not a relimp network is an error of class
-#'   `psychnet_bad_input`.
+#' The shares a node receives must sum exactly to its \eqn{R^2}, which is the
+#' efficiency property of the Shapley value. And that \eqn{R^2} must be the
+#' one implied by the correlation matrix, which has a closed form. Together
+#' they show that the stored shares add up to the variance each node's
+#' predictors actually explain.
+#'
+#' `lmg_certificate()` returns the larger of the two deviations: a value near
+#' zero confirms the decomposition, up to numerical precision.
+#'
+#' [certificate()] reports the same value for a fitted network. The check
+#' does not verify the \eqn{R^2} of the individual subset
+#' regressions between the empty and the full model, and the sum identity
+#' alone would hold for any set of subset values; the closed form is what ties
+#' the full model to the data.
+#'
+#' @details
+#' For outcome \eqn{j} with shares \eqn{w_{kj}} and full-model \eqn{R^2_j},
+#' the two deviations are \eqn{\max_j |\sum_k w_{kj} - R^2_j|} and
+#' \eqn{\max_j |R^2_j - (1 - 1 / (S^{-1})_{jj})|}. When the correlation matrix
+#' \eqn{S} is singular (reciprocal condition number below `1e-12`) the closed
+#' form does not exist and only the first deviation is returned. For a
+#' network with `normalized = TRUE` the unscaled shares are used.
+#'
+#' @param x A relative-importance network from [relimp_network()]
+#'   ([psychnet-class]).
+#' @return A single number, the larger of the two deviations; 0 for an exact
+#'   decomposition.
+#' @section Conditions:
+#'   `psychnet_bad_input` when `x` is not a network from [relimp_network()].
+#' @seealso [relimp_network()]; [certificate()]; [tmfg_certificate()], the
+#'   other structural check.
 #' @examples
 #' S <- 0.4^abs(outer(1:5, 1:5, "-"))
 #' lmg_certificate(relimp_network(cor_matrix = S))
@@ -88,38 +112,80 @@ lmg_certificate <- function(x) {
   .lmg_residual(weights, x$r2, x$cor_matrix)
 }
 
-#' Relative-importance network (LMG / Shapley)
+#' Estimate a directed relative-importance network
 #'
-#' Builds a directed network in which the edge predictor -> outcome is the
-#' predictor's LMG (Shapley) share of the outcome node's regression R-squared.
-#' Equivalent in purpose to `relaimpo::calc.relimp(type = "lmg")` applied
-#' nodewise / `bootnet`'s `"relimp"` default, pure base R and self-certified via
-#' [lmg_certificate()].
+#' @description
+#' `relimp_network()` estimates a directed relative-importance network: for
+#' each variable, how much of its variance the other variables explain
+#' together and how that explained variance is shared among them. Each
+#' variable is regressed on all the others, and its \eqn{R^2} is divided among
+#' the predictors by the LMG method (Lindeman et al., 1980; Groemping, 2006):
+#' a predictor's share is its increase in \eqn{R^2} when it enters the
+#' regression, averaged over all orders in which the predictors can enter,
+#' which is the Shapley value of the predictor.
 #'
-#' @param data Numeric data frame or matrix (rows = observations). Optional if
-#'   `cor_matrix` is supplied.
-#' @param cor_matrix Optional correlation matrix.
-#' @param n Accepted and ignored. The decomposition is computed from the
-#'   correlation matrix alone; the argument exists so a uniform
-#'   `(cor_matrix =, n =)` call shared with the other estimators works.
-#' @param cor_method Correlation when `data` is supplied: `"pearson"` (default),
-#'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric/polyserial; see [cor_auto()]).
-#' @param max_nodes Refuse to run above this many nodes (the cost grows as
-#'   `2^(p-1)` per node): a whole number >= 2. Default 21.
-#' @param normalized If `TRUE`, rescale each outcome's incoming importance
-#'   shares to sum to 1, matching `bootnet`/`relaimpo`'s normalized reporting.
-#'   The default `FALSE` keeps raw LMG shares that sum to the outcome R-squared.
-#' @param na_method Missing-data handling when `data` is supplied: `"pairwise"`
+#' The shares are non-negative and sum to the \eqn{R^2}. The network is
+#' directed: the edge from a predictor to an outcome carries the predictor's
+#' share of the outcome's explained variance, so the two edges between a pair
+#' of variables can differ. `relimp_network()` computes these shares for every
+#' variable from raw data or a correlation matrix. With `normalized = TRUE`
+#' each outcome's shares are rescaled to sum to 1, giving proportions of
+#' explained variance rather than proportions of total variance. The
+#' computation considers every subset of predictors, so its cost doubles with
+#' each added variable; `max_nodes` limits the network size.
+#'
+#' It returns the network of shares; the identity that defines the
+#' decomposition is checked by [certificate()].
+#'
+#' For undirected conditional associations use [ebic_glasso()] or
+#' [pcor_network()]. The shares are those of
+#' `relaimpo::calc.relimp(type = "lmg")` applied to each variable in turn.
+#'
+#' @details
+#' The \eqn{R^2} of each subset regression is computed from the correlation
+#' matrix. The certificate, computed by [lmg_certificate()], checks that each
+#' outcome's shares sum to its full-model \eqn{R^2} and that this \eqn{R^2}
+#' agrees with its closed form from the inverse correlation matrix.
+#'
+#' @param data A numeric data frame or matrix with one row per observation.
+#'   Not needed when `cor_matrix` is given.
+#' @param cor_matrix A correlation matrix to use instead of `data`; it must be
+#'   symmetric and positive semi-definite, and a covariance matrix is rescaled
+#'   to a correlation matrix.
+#' @param n Accepted and ignored: the decomposition needs only the
+#'   correlation matrix. It exists so that a call written for the other
+#'   estimators, `(cor_matrix = , n = )`, also works here.
+#' @param cor_method Correlation computed from `data`: `"pearson"` (default),
+#'   `"spearman"`, `"kendall"`, or `"auto"` (polychoric and polyserial
+#'   correlations for ordinal items; see [cor_auto()]).
+#' @param max_nodes Largest number of variables accepted, a whole number >= 2.
+#'   Default `21`; larger networks are refused.
+#' @param normalized Whether to rescale each outcome's incoming shares to sum
+#'   to 1, as `bootnet` and `relaimpo` report them. Default `FALSE`, which keeps
+#'   shares that sum to the outcome's \eqn{R^2}.
+#' @param na_method Handling of missing values in `data`: `"pairwise"`
 #'   (default) or `"listwise"`. See [ebic_glasso()].
-#' @param labels Optional node labels, one unique label per network node.
-#' @return A `psychnet` object whose `$weights` is the directed importance matrix
-#'   (`weights[k, j]` = importance of `k` for outcome `j`), with `$r2` (per-node
-#'   full-model R-squared), `$cor_matrix`, and `$kkt` (the decomposition
-#'   residual, see [lmg_certificate()]). With `normalized = FALSE` (default) each outcome's incoming
-#'   shares sum to its R-squared (`colSums($weights) == $r2`); with
-#'   `normalized = TRUE` they are rescaled to sum to 1, `$raw_importance` holds
-#'   the unscaled shares, and `$kkt` (like [lmg_certificate()]) is computed from
-#'   those raw shares.
+#' @param labels Optional node labels, one unique label per node of the
+#'   network.
+#' @return A fitted network of class `psychnet` ([psychnet-class]), directed,
+#'   whose edge weights are importance shares. `as.data.frame()` returns one
+#'   row per edge with columns `from` (the predictor), `to` (the outcome) and
+#'   `weight`; [certificate()] reports the structural check. The object also
+#'   stores each node's full-model \eqn{R^2} (`r2`), the correlation matrix
+#'   (`cor_matrix`), whether the shares were normalized (`normalized`) and,
+#'   with `normalized = TRUE`, the unscaled shares (`raw_importance`), from
+#'   which the certificate is computed. The sample size is recorded when the
+#'   network is built from `data` and is `NA` with `cor_matrix`.
+#' @section Conditions:
+#'   `psychnet_bad_input` when there are more variables than `max_nodes`,
+#'   `max_nodes` or `normalized` is invalid, `cor_matrix` is not a finite,
+#'   symmetric, positive semi-definite matrix with a positive diagonal, or
+#'   `labels` do not match the nodes; `psychnet_constant_variable` (warning)
+#'   when a constant or all-missing column is dropped.
+#' @seealso [lmg_certificate()] and [certificate()] for the check;
+#'   [ebic_glasso()] and [pcor_network()] for undirected networks;
+#'   [psychnet()], which routes `method = "relimp"` here; [psychnet-class] for
+#'   the result.
 #' @references Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980).
 #'   *Introduction to bivariate and multivariate analysis*. Scott, Foresman.
 #'

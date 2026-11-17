@@ -2,7 +2,7 @@
 % Please edit documentation in R/mgm.R
 \name{mgm_fit}
 \alias{mgm_fit}
-\title{Mixed graphical model}
+\title{Estimate a mixed graphical model for continuous and binary variables}
 \usage{
 mgm_fit(
   data,
@@ -20,112 +20,145 @@ mgm_fit(
 )
 }
 \arguments{
-\item{data}{Data frame or matrix (rows = observations). Columns are
-continuous, binary, or -- with \code{native = FALSE} -- multi-level categorical
-(a \code{factor}/\code{character} column, or a numeric one caught by the detection
-rule below). A column with fewer than two distinct observed values carries
-no information and is dropped, as in every other estimator. A \code{character}
-column with more than 10 distinct values is refused as an identifier
-(convert it with \code{factor()} if it really is a categorical node), and a
-column declared \code{"c"} via \code{types} with more than 10 distinct values is
-refused as a mislabelled continuous variable.}
+\item{data}{A data frame or matrix with one row per observation. Columns
+are continuous, binary, or (with \code{native = FALSE}) categorical with more
+than two levels. With \code{native = TRUE} every column must be numeric.
+Columns with fewer than two distinct observed values are dropped. A
+character column with more than 10 distinct values is refused as an
+identifier; convert it with \code{factor()} if it is a categorical variable.}
 
-\item{gamma}{EBIC hyperparameter. Default 0.25.}
+\item{gamma}{EBIC hyperparameter, a single number >= 0; larger values give
+sparser networks. Default \code{0.25}.}
 
-\item{types}{Optional character vector of node types (\code{"g"} gaussian, \code{"c"}
-categorical); auto-detected if \code{NULL}. Detection follows \code{mgm::mgm()}'s own
-rule: a \code{factor}/\code{character} column is categorical, and so is a numeric
-column with 10 or fewer distinct integer values. A numeric column promoted
-by that integer rule is warned about by name, because it switches the node
-from gaussian to categorical -- a different model, not a different encoding.
-Likert and count items hit this rule routinely.}
+\item{types}{Node types, one per column of \code{data}: \code{"g"} (Gaussian) or
+\code{"c"} (categorical). Default \code{NULL} detects them as \code{mgm::mgm()} does:
+factor and character columns are categorical, and so are numeric columns
+with at most 10 distinct integer values. Such a numeric column with more
+than two values is named in a warning, because it changes the model for
+that node; Likert items often meet this rule. A non-factor column
+declared \code{"c"} with more than 10 distinct values is refused.}
 
-\item{nlambda}{Number of penalties per nodewise path. Default 100.}
+\item{nlambda}{Number of penalty values on each nodewise path, a whole
+number >= 2. Default \code{100}.}
 
-\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest.
-With \code{native = FALSE}, omitting the argument retains glmnet's reference
-default for compatibility; an explicitly supplied value is honored.}
+\item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
+(0, 1). Default \code{0.01}. With \code{native = FALSE}, leaving it unset uses
+glmnet's own default, as \code{mgm::mgm()} does.}
 
-\item{threshold}{Post-selection coefficient threshold: \code{"LW"} (default),
-\code{"HW"}, or \code{"none"}, matching \code{mgm::mgm()}.}
+\item{threshold}{Threshold on the selected coefficients: \code{"LW"} (default),
+\code{"HW"} or \code{"none"} (see Details), as in \code{mgm::mgm()}.}
 
-\item{rule}{Edge-combination rule: \code{"AND"} (default) or \code{"OR"}.}
+\item{rule}{\code{"AND"} (default) keeps an edge when both nodewise estimates
+are nonzero; \code{"OR"} when either is.}
 
-\item{moderators}{Optional moderator variable: a single column index (a
-whole number) or a single column name. When
-supplied, fits a \emph{moderated} MGM (that variable moderates every pairwise
-edge) and returns a \code{psychnet_moderated} object to be read with
-\code{\link[=condition]{condition()}} and \code{as.data.frame()}. Honours \code{native} like the unmoderated path: the default base
-kernel is pure R and KKT-certified, and covers gaussian and binary nodes;
-\code{native = FALSE} uses \code{glmnet} and additionally allows multi-level
-categorical nodes. \code{weights} are not supported in this mode.}
+\item{moderators}{Optional moderator: one column of \code{data}, by name or by
+position. The moderated model lets this variable change the strength of
+every pairwise edge and returns a \code{psychnet_moderated} fit, read with
+\code{\link[=condition]{condition()}} and \code{as.data.frame()}. Needs at least three variables and
+does not accept \code{weights}. Default \code{NULL}.}
 
-\item{weights}{Optional non-negative observation weights, one per row of the
-(NA-prepared) data. Weights are rescaled to a maximum of 1, as in
-\code{mgm::mgm()} (\code{weights / max(weights)}, effective sample size
-\code{sum(weights)}), so only their relative sizes matter. \code{NULL} (default) is
-unweighted.}
+\item{weights}{Optional non-negative observation weights, one per row after
+missing-data handling. Only their relative sizes matter, as in
+\code{mgm::mgm()}. Requires \code{native = TRUE}. Default \code{NULL} (unweighted).}
 
-\item{na_method}{Missing-data handling: \code{"pairwise"} (default) single-imputes
-each column over its observed values (mean for continuous, modal level for
-binary and multi-level categorical), keeping the full sample; \code{"listwise"}
-drops incomplete rows. Applies identically on both engines.}
+\item{na_method}{\code{"pairwise"} (default) fills each missing value with the
+variable's mean (continuous) or most frequent level (categorical) and
+keeps every row; \code{"listwise"} drops rows with a missing value. The two
+agree for complete data.}
 
-\item{native}{Solver switch. \code{TRUE} (default) uses psychnet's own pure-R,
-dependency-free, self-certified L1 path (KKT ~1e-9). \code{FALSE} delegates each
-per-node fit to the \code{glmnet} package with mgm's exact EBIC/LW path (gaussian
-lasso for continuous nodes, multinomial lasso for categorical ones), so
-the returned edge magnitudes byte-match \code{abs(mgm::mgm()$pairwise$wadj)}
-(to ~1e-6) at the cost of glmnet's looser self-certificate. \code{native = FALSE}
-needs the optional \code{glmnet} package (Suggests); \code{weights} are supported with
-\code{native = TRUE} only.
-
-Only \code{native = FALSE} supports \strong{multi-level} categorical nodes: the base
-kernel is a binomial solver, so a node with more than two levels errors
-there by name. One-hot encoding is not an equivalent workaround -- it turns
-one k-level node into k separate nodes, which is a different model. A
-network containing a multi-level node cannot be passed to \code{\link[=net_predict]{net_predict()}},
-because a k-level predictor occupies k-1 design columns and so has no
-one-coefficient-per-variable representation.}
+\item{native}{\code{TRUE} (default) uses the package's own solver, for
+continuous and binary variables. \code{FALSE} fits each regression with the
+\code{glmnet} package (which must be installed), following \code{mgm::mgm()}; it
+also allows categorical variables with more than two levels, but not
+\code{weights}, and its certificate reflects glmnet's convergence tolerance.
+A network with a multi-level categorical node cannot be passed to
+\code{\link[=net_predict]{net_predict()}}. One-hot encoding such a variable is not equivalent: it
+turns one node into several.}
 
 \item{labels}{Optional node labels: one per node, or one per input column
 (labels of dropped constant columns are then discarded).}
 }
 \value{
-A \code{psychnet} object whose \verb{$weights} is the symmetric standardized
-weight matrix, with \verb{$types}, \verb{$levels} (number of levels per node, 1 for
-gaussian), \verb{$fit_kkt} (the worst nodewise stationarity residual of the
-penalized fits) and \verb{$kkt}. The \code{"LW"}/\code{"HW"} threshold zeroes
-coefficients AFTER the penalized fit, so a thresholded network is no longer
-the optimum the residual certifies: when the threshold removed any
-coefficient, \verb{$kkt} is \code{NA} (read with \code{\link[=certificate]{certificate()}}) and
-\verb{$certificate_target} is \code{"pre_threshold_fit"}, exactly as for a
-thresholded \code{\link[=ebic_glasso]{ebic_glasso()}}; otherwise \verb{$kkt} equals \verb{$fit_kkt} and the
-target is \code{"returned_network"}. Use \code{threshold = "none"} for a certified
-network. A nodewise fit that does not reach its optimum raises a
-\code{psychnet_no_converge} warning naming the node; invalid arguments raise
-\code{psychnet_bad_input}. Node order in
-\verb{$weights} and \verb{$nodes} is always the column order of the input \code{data},
-never sorted, and a k-level categorical stays ONE node. A
-binary-binary edge carries the sign of its nodewise-logistic coefficient;
-\code{mgm::mgm()} reports the same edge as a magnitude only (its sign is
-undefined for a categorical-categorical interaction), so compare such edges
-on \code{abs()}. Continuous columns are standardized internally, binary
-predictors enter the graph on their 0/1 dummy scale, and binary-response
-logit coefficients are converted to \code{mgm}'s two-class multinomial scale
-before edge aggregation. With these conventions the edge magnitudes match
-\code{mgm::mgm} closely for gaussian-gaussian, gaussian-binary, and binary-binary
-edges alike; weak edges near the EBIC/threshold boundary can still differ in
-support because the penalty is selected on an independent base-R path.
+An undirected network of class \code{psychnet} (\link[=psychnet-class]{psychnet}); with
+\code{moderators}, a \code{psychnet_moderated} fit (see \code{\link[=condition]{condition()}}).
+\code{as.data.frame()} gives one row per edge (\code{from}, \code{to}, \code{weight}),
+\code{\link[=certificate]{certificate()}} the largest optimality violation of the nodewise
+regressions (missing when the threshold removed a coefficient), and
+\code{\link[=net_predict]{net_predict()}} the predictability of each node. The object also stores
+the node types (\code{types}), the number of levels per node (\code{levels}, 1 for
+continuous) and the certificate of the regressions before thresholding
+(\code{fit_kkt}).
 }
 \description{
-Estimates a mixed graphical model by nodewise L1-penalized regression -- a
-gaussian (linear) lasso for continuous nodes and a logistic lasso for binary
-nodes -- with per-node EBIC selection, combined by the AND (default) or OR
-rule. Equivalent in purpose to \code{mgm::mgm()}, but pure base R and
-self-certified: each node's regression reports its stationarity (KKT)
-residual (see \code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}}).
+\code{mgm_fit()} estimates a mixed graphical model: one network for variables
+of different types, such as continuous symptom ratings and binary
+indicators. An edge connects two variables that remain associated after
+conditioning on all other variables, and an absent edge indicates
+conditional independence (Haslbeck & Waldorp, 2020), so the network shows
+which variables are directly related when they cannot all be treated as
+Gaussian or all as binary.
+
+The function regresses each variable on all others with the L1-penalized
+(lasso) regression suited to its type, linear for continuous and logistic
+for binary variables, and selects each variable's penalty by the extended
+Bayesian information criterion (EBIC). Small coefficients are then removed
+by a threshold (\code{threshold}, default \code{"LW"}), and the two estimates of
+each pair are combined by the AND rule (default) or the OR rule into an
+undirected edge whose weight is their mean. Variable types are detected
+from the data or given in \code{types}. Each regression is checked against its
+optimality (Karush–Kuhn–Tucker) conditions; \code{\link[=certificate]{certificate()}} reports the
+largest violation. A threshold that removes a coefficient changes the
+network after fitting, so its certificate is then reported as missing;
+\code{threshold = "none"} keeps it. With \code{moderators}, the function instead
+fits a moderated model in which one variable can change the strength of
+every edge; see \code{\link[=condition]{condition()}}.
+
+The result is an undirected network of class \code{psychnet}
+(\link[=psychnet-class]{psychnet}), or a \code{psychnet_moderated} fit with \code{moderators}.
+
+For binary data only, use \code{\link[=ising_fit]{ising_fit()}}; for continuous data only,
+\code{\link[=ebic_glasso]{ebic_glasso()}}. Categorical variables with more than two levels need
+\code{native = FALSE}. The model is the one fitted by \code{mgm::mgm()}.
 }
+\details{
+Continuous variables are standardized before fitting, binary predictors
+enter as 0/1 indicators, and the coefficient of a binary response is
+expressed on the two-class multinomial scale of \code{mgm::mgm()} (half the
+logistic coefficient). Edge magnitudes are therefore comparable with those
+of \code{mgm::mgm()}. A binary-binary edge keeps the sign of its logistic
+coefficient, whereas \code{mgm::mgm()} reports such an edge without a sign;
+compare those edges on their absolute value. Weak edges near the selection
+or threshold boundary can differ between the two engines.
+
+With \eqn{\beta_i} the selected coefficients of variable \eqn{i}, \eqn{q}
+the number of its predictor columns (\eqn{p - 1} for \eqn{p} continuous or
+binary variables) and \eqn{n} the sample size, the \code{"LW"} threshold
+removes coefficients smaller in absolute value than
+\eqn{\|\beta_i\|_2 \sqrt{\log(q) / n}}, and the \code{"HW"} threshold those
+smaller than \eqn{\sqrt{\log(q) / n}}.
+
+Node order is the column order of \code{data}, and a categorical variable with
+several levels remains one node.
+}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{data} is not a data frame or matrix, \code{types}
+is not one \code{"g"}/\code{"c"} per column, a character column looks like an
+identifier, a non-factor column declared \code{"c"} has more than 10 values,
+a categorical variable has more than two levels or a column is not
+numeric with \code{native = TRUE}, \code{moderators} does not name one column or
+names a dropped constant column, a moderated model has fewer than three
+variables or is given \code{weights}, \code{weights} is combined with
+\code{native = FALSE}, \code{native = FALSE} is requested without the \code{glmnet}
+package, or \code{gamma}, \code{nlambda}, \code{lambda_min_ratio}, \code{weights} or
+\code{labels} is invalid; \code{psychnet_type_promotion} (warning) when a numeric
+column with more than two values is detected as categorical;
+\code{psychnet_no_converge} (warning) when a nodewise regression does not
+reach its optimum; \code{psychnet_degenerate_sample} (warning) when a binary
+variable takes a single value on every row with positive weight. The
+last two are raised with \code{native = TRUE}.
+}
+
 \examples{
 set.seed(1)
 f <- stats::rnorm(400)
@@ -140,4 +173,14 @@ as.data.frame(fit)
 Haslbeck, J. M. B., & Waldorp, L. J. (2020). mgm: Estimating
 time-varying mixed graphical models in high-dimensional data. \emph{Journal of
 Statistical Software}, 93(8), 1-46. \doi{10.18637/jss.v093.i08}
+
+Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
+for Gaussian graphical models. \emph{Advances in Neural Information Processing
+Systems}, 23, 604-612.
+}
+\seealso{
+\code{\link[=condition]{condition()}} for the moderated model; \code{\link[=ising_fit]{ising_fit()}} for binary
+data; \code{\link[=ebic_glasso]{ebic_glasso()}} for continuous data; \code{\link[=certificate]{certificate()}} and
+\code{\link[=glm_lasso_kkt]{glm_lasso_kkt()}} for the optimality check; \code{\link[=net_predict]{net_predict()}};
+\code{\link[=psychnet]{psychnet()}} with \code{method = "mgm"}.
 }

@@ -3,7 +3,7 @@
 \name{difference_test}
 \alias{difference_test}
 \alias{plot.psychnet_difference}
-\title{Bootstrapped difference test for edges or centralities}
+\title{Test differences between edges or between centralities within a network}
 \usage{
 difference_test(boot, type = "edge", ci = NULL, p_adjust = "none")
 
@@ -12,15 +12,15 @@ difference_test(boot, type = "edge", ci = NULL, p_adjust = "none")
 \arguments{
 \item{boot}{A \code{psychnet_bootstrap} object from \code{\link[=net_boot]{net_boot()}}.}
 
-\item{type}{Quantity to compare: \code{"edge"} (default), or any one centrality
-measure bootstrapped by \code{\link[=net_boot]{net_boot()}} (e.g. \code{"strength"},
-\code{"expected_influence"}).}
+\item{type}{What to compare: \code{"edge"} (default) or one centrality measure
+bootstrapped by \code{\link[=net_boot]{net_boot()}}, such as \code{"strength"} or
+\code{"expected_influence"}.}
 
-\item{ci}{Confidence level for the difference interval: a single number in
-(0, 1). Defaults to the level used by the bootstrap object.}
+\item{ci}{Confidence level of the difference interval, a number in (0, 1).
+Default: the level used by \code{boot}.}
 
-\item{p_adjust}{Multiple-comparison adjustment for the pairwise p-values (any
-\link[stats:p.adjust]{stats::p.adjust} method). Default \code{"none"}.}
+\item{p_adjust}{Multiplicity adjustment for the p-values, any method of
+\code{\link[stats:p.adjust]{stats::p.adjust()}}. Default \code{"none"}.}
 
 \item{x}{A \code{psychnet_difference} data frame from \code{difference_test()}.}
 
@@ -29,49 +29,80 @@ measure bootstrapped by \code{\link[=net_boot]{net_boot()}} (e.g. \code{"strengt
 \item{...}{Unused.}
 }
 \value{
-A tidy data frame, one row per pair, with \code{item1}, \code{item2}, the two
-observed values, their observed difference, the percentile interval of the
-bootstrap difference (\code{lower}, \code{upper}), the two-sided \code{p_value}, and a
-logical \code{significant}; class \code{psychnet_difference}, so \code{plot()} draws
-it. Edges are labelled \code{A--B}, or \code{A->B} for a directed estimator. An
-invalid \code{boot}, \code{type} or \code{ci} is a \code{psychnet_bad_input} error. \code{plot()}
-returns \code{x} invisibly.
+A data frame of class \code{psychnet_difference}, one row per pair, with
+columns \code{item1}, \code{item2}, \code{value1}, \code{value2} (the two observed values),
+\code{obs_diff} (\code{value1 - value2}), \code{lower}, \code{upper} (percentile interval of
+the bootstrapped difference), \code{p_value} and \code{significant} (the interval
+excludes zero). Edges are labelled \code{A--B}, or \code{A->B} for a directed
+estimator. \code{plot()} draws the table and returns \code{x} invisibly.
 }
 \description{
-Tests, within a single network, whether two edge weights or two node
-centralities differ. For every pair it forms the per-resample difference from
-the stored bootstrap draws, takes the percentile interval of that difference,
-and flags the pair \code{significant} when the interval excludes zero; it also
-reports the two-sided bootstrap p-value (Epskamp, Borsboom & Fried 2018).
-This is the within-network counterpart to the edge accuracy intervals
-reported by \code{\link[=net_boot]{net_boot()}}.
+\code{difference_test()} tests whether pairs of edges, or pairs of nodes on one
+centrality measure, differ within a single network. It uses the bootstrapped
+difference test (Epskamp, Borsboom & Fried, 2018), which computes the
+difference of a pair in every bootstrap resample and treats the pair as
+different when the resulting interval excludes zero, that is, when the
+difference exceeds what sampling variation alone would produce. Interpreting
+one edge as stronger than another, or one node as more central than another,
+requires such a difference.
+
+The function reads the resampled values stored by \code{\link[=net_boot]{net_boot()}} and tests
+every pair of edges (\code{type = "edge"}) or every pair of nodes on one
+bootstrapped centrality measure.
+
+For each pair it returns the observed difference, the percentile interval of
+the bootstrapped difference, a two-sided bootstrap p-value and whether the
+interval excludes zero.
+
+The test compares estimates within one network. To compare the same edge
+or the global strength between two groups, use \code{\link[=net_compare]{net_compare()}}; for the
+interval of each edge or centrality on its own, use \code{\link[=net_boot]{net_boot()}}.
+}
+\details{
+The p-value of a pair is twice the smaller of the shares of resamples in
+which the difference is positive or negative, with resamples in which it is
+exactly zero split evenly between the two, and capped at 1. \code{significant}
+is decided by the interval at level \code{ci} and is not changed by \code{p_adjust},
+which adjusts only \code{p_value}.
 }
 \section{Functions}{
 \itemize{
-\item \code{plot(psychnet_difference)}: The bootnet "significance box" matrix: items on
-both axes ordered by observed value, the diagonal showing that value, and
-an off-diagonal cell filled when the pair differs (diverging blue when the
-row item is larger, red when smaller; every cell also prints the sign as
-\code{+} / \code{-}, followed by significance stars). \code{style = "forest"} draws one
-row per pair instead: the difference with its interval, a reference line
-at zero, significant pairs as filled points on solid segments and the
-rest as open points on dashed segments.
+\item \code{plot(psychnet_difference)}: The matrix of pairwise differences used by
+\code{bootnet}: items on both axes, ordered by observed value, with that value
+on the diagonal. An off-diagonal cell is filled when the pair differs
+(blue when the row item is larger, red when it is smaller), and every cell
+prints the sign of the difference (\code{+} or \code{-}), followed by stars for a
+significant pair. \code{style = "forest"} instead draws one row per pair: the
+difference with its interval and a reference line at zero, significant
+pairs as filled points on solid segments and the others as open points
+on dashed segments.
 
 }}
+\section{Conditions}{
+
+\code{psychnet_bad_input} when \code{boot} is not a \code{psychnet_bootstrap} object,
+\code{type} is not a bootstrapped quantity, \code{ci} or \code{p_adjust} is invalid, or
+fewer than two items can be compared.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(stats::rnorm(150 * 5), 150, 5) \%*\% chol(0.4^abs(outer(1:5, 1:5, "-")))
 colnames(x) <- paste0("V", 1:5)
-# method = "pcor" keeps this example fast; the "glasso" default (and
-# n_boot >= 1000) is what a real analysis should use.
+# method = "pcor" and n_boot = 50 keep this example fast; a real analysis
+# uses the "glasso" default and n_boot >= 1000.
 bs <- net_boot(x, method = "pcor", n_boot = 50, cores = 1)
 dt <- difference_test(bs, type = "strength")
 dt
-plot(dt)                   # significance-box matrix
-plot(dt, style = "forest") # forest plot
+plot(dt)                   # matrix of pairwise differences
+plot(dt, style = "forest") # one interval per pair
 }
 \references{
 Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
 psychological networks and their accuracy: A tutorial paper. \emph{Behavior
 Research Methods}, 50(1), 195-212. \doi{10.3758/s13428-017-0862-1}
+}
+\seealso{
+\code{\link[=net_boot]{net_boot()}} for the resamples; \code{\link[=net_compare]{net_compare()}} for differences
+between groups.
 }

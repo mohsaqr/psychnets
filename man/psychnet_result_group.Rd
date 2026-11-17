@@ -4,7 +4,7 @@
 \alias{psychnet_result_group}
 \alias{print.psychnet_result_group}
 \alias{as.data.frame.psychnet_result_group}
-\title{Per-group framework results}
+\title{Results of an analysis applied to networks per group}
 \usage{
 \method{print}{psychnet_result_group}(x, ...)
 
@@ -13,24 +13,30 @@
 \arguments{
 \item{x}{A \code{psychnet_result_group} object.}
 
-\item{...}{Ignored.}
+\item{...}{Ignored by \code{print()}; passed by \code{as.data.frame()} to the
+\code{as.data.frame()} method of each group's result (for example \code{what}).}
 
-\item{row.names, optional}{Ignored (S3 consistency).}
+\item{row.names, optional}{Ignored.}
 }
 \value{
-\code{x}, invisibly (for \code{print}), after printing each group's result
-under a group heading.
+\code{print()} returns \code{x} invisibly, after printing each group's
+result under a group heading.
 
-For \code{as.data.frame}, the per-group tables stacked with a \code{group}
-column: each group's result converted by its own \code{as.data.frame()}
-method, with \code{...} (e.g. \verb{what =}) passed on to it. An error converting
-any group's result is raised, not dropped.
+\code{as.data.frame()} returns the groups' tables, each converted by its
+own \code{as.data.frame()} method, stacked with a leading \code{group} column. An
+error in converting any group's result is raised, not skipped.
 }
 \description{
-The list returned by a framework verb (\code{\link[=net_centralities]{net_centralities()}}, \code{\link[=net_predict]{net_predict()}},
-\code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}}) applied to a \link{psychnet_group}: one result per
-group level, keyed by level. \code{as.data.frame()} stacks the per-group tables
-with a leading \code{group} column.
+A \code{psychnet_result_group} holds the results of an analysis applied to
+networks estimated per group, such as their centralities or bootstrapped
+edges: one result per group, keyed by group level, so that they can be
+printed together and combined into one table.
+
+It is returned when a \link{psychnet_group} is passed to \code{\link[=net_centralities]{net_centralities()}},
+\code{\link[=net_predict]{net_predict()}}, \code{\link[=net_boot]{net_boot()}}, \code{\link[=net_stability]{net_stability()}},
+\code{\link[=net_casedrop_reliability]{net_casedrop_reliability()}} or \code{\link[=net_split_reliability]{net_split_reliability()}}. \code{print()} shows
+each group's result under a heading, and \code{as.data.frame()} stacks the
+groups' tables with a leading \code{group} column.
 }
 \examples{
 d <- rbind(data.frame(SRL_GPT, source = "GPT"),
@@ -39,4 +45,8 @@ nets <- psychnet(d, method = "glasso", group = "source")
 cent <- net_centralities(nets)
 cent
 as.data.frame(cent)
+}
+\seealso{
+\link{psychnet_group} for the networks; the analysis functions listed
+above for the columns of each table.
 }

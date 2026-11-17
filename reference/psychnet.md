@@ -115,10 +115,10 @@ psychnet(
 - within:
 
   Optional person-identifier column. Each variable is centred and scaled
-  within persons over all rows before estimation (see
-  [`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md)),
-  and the person column is not a node. With `group`, rows are matched by
-  person so that
+  within persons over all rows before estimation (each person's mean
+  subtracted and the result divided by the person's standard deviation,
+  as `mlVAR::mlVAR(scaleWithin = TRUE)`), and the person column is not a
+  node. With `group`, rows are matched by person so that
   [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
   can pair two levels (`paired = TRUE`). Without `group`, a person's
   rows are pooled and are not independent. Numeric tables only.

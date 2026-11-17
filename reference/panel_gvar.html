@@ -28,7 +28,7 @@ The result is a psychnet_panelgvar object holding the three networks
 (psychnet_panelgvar).
 The model needs at least three waves. For a network from cross-sectional
 data, use psychnet(); for networks of within-person deviations without a
-temporal model, scale_within(). The model is the one fitted by
+temporal model, psychnet() with within. The model is the one fitted by
 psychonetrics::panelgvar()."><meta property="og:description" content="panel_gvar() estimates temporal, contemporaneous and between-person
 networks from panel data, which follow many persons over a few measurement
 waves. It fits the panel graphical vector-autoregressive (panel-GVAR)
@@ -58,7 +58,7 @@ The result is a psychnet_panelgvar object holding the three networks
 (psychnet_panelgvar).
 The model needs at least three waves. For a network from cross-sectional
 data, use psychnet(); for networks of within-person deviations without a
-temporal model, scale_within(). The model is the one fitted by
+temporal model, psychnet() with within. The model is the one fitted by
 psychonetrics::panelgvar()."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -67,7 +67,7 @@ psychonetrics::panelgvar()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,7 +141,7 @@ reports the result.</p>
 (<a href="psychnet_panelgvar.html">psychnet_panelgvar</a>).</p>
 <p>The model needs at least three waves. For a network from cross-sectional
 data, use <code><a href="psychnet.html">psychnet()</a></code>; for networks of within-person deviations without a
-temporal model, <code><a href="scale_within.html">scale_within()</a></code>. The model is the one fitted by
+temporal model, <code><a href="psychnet.html">psychnet()</a></code> with <code>within</code>. The model is the one fitted by
 <code><a href="https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html" class="external-link">psychonetrics::panelgvar()</a></code>.</p>
     </div>
 
@@ -357,7 +357,7 @@ Systems</em>, 23, 604-612.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><a href="psychnet_panelgvar.html">psychnet_panelgvar</a> for reading the fit; <code><a href="ebic_glasso.html">ebic_glasso()</a></code> for
-cross-sectional data; <code><a href="scale_within.html">scale_within()</a></code>; <code><a href="certificate.html">certificate()</a></code> for the
+cross-sectional data; <code><a href="psychnet.html">psychnet()</a></code> with <code>within</code>; <code><a href="certificate.html">certificate()</a></code> for the
 certificates of the other estimators.</p></div>
     </div>
 

@@ -38,8 +38,8 @@ The model needs at least three waves. For a network from cross-sectional
 data, use
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md);
 for networks of within-person deviations without a temporal model,
-[`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md).
-The model is the one fitted by
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+with `within`. The model is the one fitted by
 [`psychonetrics::panelgvar()`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html).
 
 ## Usage
@@ -261,7 +261,8 @@ Processing Systems*, 23, 604-612.
 for reading the fit;
 [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
 for cross-sectional data;
-[`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md);
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+with `within`;
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
 for the certificates of the other estimators.
 

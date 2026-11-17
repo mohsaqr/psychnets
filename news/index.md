@@ -1,508 +1,81 @@
 # Changelog
 
-## psychnets 0.8.1
+## psychnets 0.8.2
 
-This release collects the changes made since the CRAN release 0.5.2,
-listed below by development version.
+### New features
 
-- [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md)
-  stops a fit whose items are (quasi-)completely separated as soon as
-  the separation is detected, instead of after up to 400 further
-  iterations; on separated data it is about four times faster. Fits
-  without separation return the same numbers as before.
+- [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
+  estimates the panel graphical VAR model (Epskamp, 2020) from few-wave
+  panel data: a temporal, a contemporaneous and a between-person
+  network, by maximum likelihood. Edges are selected with
+  `select = c("none", "prune", "ebic")`; `standardize` follows
+  psychonetrics. New dataset `srl_panel` and a vignette.
+- `psychnet(within = )` estimates within-person networks: each variable
+  is centered and scaled within persons, as
+  `mlVAR::mlVAR(scaleWithin = TRUE)`. With `group`,
+  [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  then pairs the occasions by person.
+- [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
+  accepts two networks of one grouped
+  [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+  result, gains `na_method`, and reports the unadjusted p-value
+  (`p_raw`) next to the adjusted one.
+- [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+  and
+  [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
+  gain `cor_method`.
+- New [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
+  methods and `what =` options for stability, bootstrap, moderated MGM
+  and panel GVAR results;
+  [`summary()`](https://rdrr.io/r/base/summary.html) and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) for
+  multilevel networks.
 
-## psychnets 0.7.2
+### Changes to results
 
 - [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
-  accepts two networks of one `psychnet(..., group = )` result directly:
-  `net_compare(nets$model1, nets$model2)` is the same test as
-  `net_compare(nets, c("model1", "model2"))`. Each grouped network keeps
-  its rows, persons (with `within =`) and fitting settings, so pairing,
-  labels and settings follow the group. A network fitted on its own
-  keeps no data to permute and is refused with a `psychnet_bad_input`
-  error, as are the same level twice and networks from two different
-  [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-  calls.
-
-## psychnets 0.7.0
-
-Most changes are input validation and conditions that were silent
-before; the ones marked **(numbers change)** alter returned values.
-
-### Changes to returned numbers
-
-- **(numbers change)**
-  [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
-  computes the CS-coefficient with the rule of
-  `bootnet::corStability()`, the source of the 0.25/0.5 guidance:
-  Pearson correlations (`cor0`: 0 when one side is constant) and strict
-  `>` for both `threshold` and `certainty`. New
-  `cor_method = c("pearson", "spearman")`; Spearman was the only option
-  before. Undefined correlations still count as failing (bootnet drops
-  them).
+  stores the network-structure test as `$structure` (M) and the
+  global-strength test as `$strength` (S), with the letters of van
+  Borkulo et al. (2022); `$M` and `$S` raise a `psychnet_renamed` error.
+- [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
+  computes the CS-coefficient as `bootnet::corStability()`;
   [`net_casedrop_reliability()`](https://pak.dynasite.org/psychnets/reference/net_casedrop_reliability.md)
-  uses the same rule and its `cor_method` default changes from
-  `"spearman"` to `"pearson"`. `threshold` and `certainty` must lie in
-  (0, 1).
-- **(numbers change)**
-  [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md):
-  gaussian nodes are solved to optimality instead of stopping after 100
-  sweeps. On collinear items the residual falls from about 5e-5
-  (uncertified) to about 1e-15, and the fit is faster. Default edge
-  weights move by up to about 1e-7 (no edge added or removed). A fit
-  that still misses its optimum warns `psychnet_no_converge`.
-- **(numbers change for weighted fits)**
-  [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md),
+  now defaults to `cor_method = "pearson"`.
+- [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
+  refits the lambdas near the EBIC minimum before choosing one, and
+  returns absent edges as exact zeros.
+- [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md)
+  solves gaussian nodes to optimality (edge weights move by up to about
+  1e-7).
+- [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md),
   [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)
   and
   [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md)
   rescale `weights` to a maximum of 1, as
-  [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) does, so only
-  relative weights matter (weights summing to 1 used to return an empty
-  network). With `min_sum`, the rescaling uses the retained rows only.
-- **(numbers change)** `net_bridge(normalize = TRUE)`: the 2-step bridge
-  expected influence is normalized by the number of nodes, as in
-  [`networktools::bridge()`](https://rdrr.io/pkg/networktools/man/bridge.html),
-  not the number of communities.
-- **(numbers change)**
-  [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md):
-  a split in which one half network is empty and the other is not has
-  edge correlation 0 (bootnet’s `cor0()`); such splits used to be
-  dropped, inflating the mean correlation. Only splits where both halves
-  are constant are undefined.
-- [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md)
-  reads `value` in the moderator’s own coding: a level of a categorical
-  moderator (1/2, `"treat"`, …) or the raw scale of a continuous one. It
-  used an internal 0-based code or a z value, and a value that is not a
-  level silently returned the reference group; that is now an error.
-- [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md):
-  character waves that are all numbers are ordered numerically (“10”
-  used to sort before “2”, fitting the waves out of time order); other
-  character waves warn `psychnet_wave_order`. The Fisher-scoring polish
-  halves its step instead of stopping, removing spurious
-  `psychnet_no_converge` warnings.
-- [`net_boot()`](https://pak.dynasite.org/psychnets/reference/net_boot.md)
-  and the case-dropping verbs catch a failing resample inside its own
-  draw, so results are identical for any `cores` (one failing draw used
-  to void a whole forked chunk).
-
-### Certificates
-
-- [`mgm_fit()`](https://pak.dynasite.org/psychnets/reference/mgm_fit.md):
-  when the LW/HW threshold removes a coefficient, `$kkt` is `NA` with
-  the pre-threshold residual in `$fit_kkt`, as for every other
-  post-thresholded estimator (it reported the pre-threshold residual as
-  certified).
-- [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md)
-  warns `psychnet_separation` under (quasi-)complete separation and no
-  longer certifies such a fit. Separation is detected by a drift test
-  (the objective still rising along the direction the fit moves), so an
-  extreme but finite fit is still certified.
-- A binary node left constant by `min_sum` filtering or zero weights is
-  degenerate (no finite intercept): `psychnet_degenerate_sample` warning
-  and no certificate, instead of a certified fit with a huge threshold.
-- [`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md)
-  also checks each node’s full-model R^2 against its closed form (the
-  efficiency identity alone holds for any set function).
-- [`logo_network()`](https://pak.dynasite.org/psychnets/reference/logo_network.md)
-  refuses ill-conditioned clique blocks (`psychnet_singular`) instead of
-  returning a network that fails its own certificate.
-- [`ggm_modselect()`](https://pak.dynasite.org/psychnets/reference/ggm_modselect.md)
-  reports failed candidate fits (`psychnet_fit_failed`) and uncertified
-  results (`psychnet_no_converge`);
-  [`ggm_support_kkt()`](https://pak.dynasite.org/psychnets/reference/ggm_support_kkt.md)
-  symmetrizes a triangular support;
-  [`print()`](https://rdrr.io/r/base/print.html) labels the TMFG and
-  relimp certificates as structural.
-
-### Input handling
-
-- Every input-contract error is a classed condition
-  (`psychnet_bad_input`, subclass of `psychnet_error`), and `threshold`,
-  `alpha`, `n`, `labels`, `gamma`, `nlambda`, `lambda_min_ratio`, `ci`,
-  `cores`, `iter`, `drop_prop`, `moderators` and the certificate
-  helpers’ arguments are validated. `threshold = TRUE` (qgraph’s logical
-  form) and other non-numeric thresholds used to return an empty
-  network.
-- Data frames: ordered factors are kept as ordinal items (so
-  `cor_method = "auto"` treats them like
-  [`qgraph::cor_auto()`](https://rdrr.io/pkg/qgraph/man/cor_auto.html));
-  other non-numeric columns are dropped with a
-  `psychnet_dropped_columns` message and constant columns with a
-  `psychnet_constant_variable` warning.
-  [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)
-  codes logical and two-level factor columns 0/1 instead of dropping
-  them, and
-  [`net_predict()`](https://pak.dynasite.org/psychnets/reference/net_predict.md)
-  encodes new data with the same training coding.
-- Significance thresholding with too few observations (df \<= 0) errors
-  (`psychnet_degenerate_sample`) instead of deleting every edge;
-  [`pcor_network()`](https://pak.dynasite.org/psychnets/reference/pcor_network.md)
-  warns `psychnet_singular` for a singular correlation matrix.
-- [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-  warns `psychnet_ignored_argument` when `threshold` or `gamma` is given
-  to a method that does not use it, and refuses several methods.
-- Resampling verbs report the estimator’s own error
-  (`psychnet_estimation_failed`) instead of “estimation failed”, and a
-  failed draw’s message (`psychnet_resample_failed`).
-- [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md):
-  the edge table gains `p_raw`, the unadjusted permutation p-value, next
-  to `p_value` (adjusted by `p_adjust`; `significant` uses it).
-  Previously the unadjusted values were discarded once an adjustment was
-  requested. The global M and S tests are never adjusted.
-- [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
-  refuses infinite values, lets a `gamma`/`na_method` you supply
-  override a group’s (warning `psychnet_estimator_mismatch`), and labels
-  group-mode edges with the group’s `labels`.
-- Group mode follows factor level order, refuses empty-string levels and
-  levels with fewer than 3 rows, and warns for small levels and for rows
-  with a missing group. Event data refuse missing actors or sessions.
-- `net_centralities(centrality_fn =)` aligns a named result by node
-  label;
-  [`net_edge_betweenness()`](https://pak.dynasite.org/psychnets/reference/net_edge_betweenness.md)
-  treats an asymmetric matrix as directed;
-  [`net_bridge()`](https://pak.dynasite.org/psychnets/reference/net_bridge.md)/[`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md)
-  refuse duplicated or unknown community labels;
-  [`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md)/[`redundancy()`](https://pak.dynasite.org/psychnets/reference/redundancy.md)
-  report listwise-dropped rows.
-  [`net_aggregate()`](https://pak.dynasite.org/psychnets/reference/net_aggregate.md)
-  leaves out a column whose community is `NA` (e.g. an ID) before any
-  preprocessing, and orders numeric communities numerically (`"2"`
-  before `"10"`); character communities stay alphabetical.
-- [`relimp_network()`](https://pak.dynasite.org/psychnets/reference/relimp_network.md)
-  gains an ignored `n` argument (as
-  [`tmfg_network()`](https://pak.dynasite.org/psychnets/reference/tmfg_network.md)).
-
-### New verbs
-
-- [`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md)
-  centers each variable within persons and, by default, divides by the
-  person’s own SD (the within-person standardization of
-  `mlVAR::mlVAR(scaleWithin = TRUE)`, which it reproduces exactly), as a
-  data step before any analysis – e.g. a paired
-  [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
-  of two occasions’ within-person networks. It warns
-  (`psychnet_mirror_deviations`) when no person has more than two
-  observations, where the occasions’ deviations are mirror images and
-  their networks identical by construction, and sets values without
-  within-person variation to `NA` (`psychnet_constant_within`).
-- `psychnet(within = "person")` applies the same scaling inside the
-  front door (over all rows, before `group` splits them), drops the
-  person column from the nodes, and records each row’s person, so
-  `net_compare(nets, c(1, 4))` compares two occasions paired by person,
-  by default (independent of row order; persons seen in one level only
-  are left out with a `psychnet_rows_dropped` warning; `paired = FALSE`
-  overrides). Other groups keep the independent-groups default.
-
-### New accessors
-
-- [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) for
-  [`net_stability()`](https://pak.dynasite.org/psychnets/reference/net_stability.md)
-  results (`what = c("table", "cs", "correlations")`) and for moderated
-  MGM fits;
-  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) on a
-  bootstrap gains
-  `what = c("edges", "centrality", "predictability", "thresholded")`; on
-  a panel GVAR, `what = "path"` (EBIC lambda path) and
-  `what = "covariance"`. `psychnet_multilevel` gains
-  [`summary()`](https://rdrr.io/r/base/summary.html) and
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html).
+  [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) does.
+- `net_bridge(normalize = TRUE)` divides the 2-step bridge expected
+  influence by the number of nodes, as
+  [`networktools::bridge()`](https://rdrr.io/pkg/networktools/man/bridge.html).
 - [`net_split_reliability()`](https://pak.dynasite.org/psychnets/reference/net_split_reliability.md)
-  gains `n_valid` and reports NA rather than NaN; stability and
-  case-drop tables gain `actual_drop` and `n_valid`.
+  gives a split with one empty half a correlation of 0.
+- [`condition()`](https://pak.dynasite.org/psychnets/reference/condition.md)
+  reads `value` in the moderator’s own coding.
+- [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md)
+  warns under (quasi-)complete separation, does not certify such a fit,
+  and stops it early.
+
+### Input and conditions
+
+- Errors and warnings are classed conditions (`psychnet_error`,
+  `psychnet_bad_input`, …), and arguments are validated.
+- Ordered factors are kept as ordinal items;
+  [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)
+  codes logical and two-level factor columns 0/1.
 
 ### Plots
 
-- All plots use the Okabe-Ito palette. Significance is shown by filled
-  vs open points and solid vs dashed segments, series by line type and
-  point shape as well as colour, box-matrix cells print the sign, and
-  the bridge plot styles nodes by community. Every plot restores
-  [`par()`](https://rdrr.io/r/graphics/par.html).
-
-## psychnets 0.6.1
-
-### Complete function-review fixes
-
-- Case-dropping stability now counts undefined correlations and failed
-  fits against the requested certainty, rather than inflating stability
-  by omitting those draws. Two-node edge-reliability diagnostics return
-  available deviation metrics with an unavailable correlation instead of
-  failing.
-- Resampling preserves source-column identities when custom labels and
-  ignored nonnumeric columns are present. Grouped diagnostics forward
-  explicit estimator options, composite grouping keys cannot pool
-  distinct tuples, and groups of within/between models can be printed
-  and summarized.
-- Event-feature missingness follows the requested handling instead of
-  deleting an otherwise varying feature. Within-person centering uses
-  available values per variable. Generic independent-row resampling and
-  NCT now refuse repeated- person event groups: reconstructing these as
-  cross-sectional samples had lost their effective sample size and could
-  change even the observed graph.
-- Panel models refuse missing person identifiers, support empty EBIC
-  networks in all accessors and plots, return CFI = 1 when both
-  estimated noncentralities are zero, and match edge significance
-  without ambiguous label concatenation. Plot abbreviations override
-  defaults, custom line styles no longer carry a misleading significance
-  key, and `nlambda` must be a finite whole integer.
-- Kendall marginal-network significance uses a tie-corrected Kendall
-  test. Kendall significance without raw data, or for full-order partial
-  correlations, is refused rather than applying Pearson p-values.
-  Polyserial estimates are invariant to the numeric spacing of ordinal
-  codes.
-- MGM automatic predictability uses raw-scale Gaussian observations.
-  Public prediction preserves original source columns independently of
-  display labels, applies the training category encoding to numeric and
-  factor inputs alike, and refuses unseen categories.
-- Wald-pruned IsingSampler fits retain their pre-pruning score as
-  `fit_kkt` and report the altered network’s certificate as unavailable.
-  Covariance PSD validation runs in correlation units, including for
-  relative-importance fits.
-- Two-node external Ising/MGM fits work; moderation requires at least
-  three nodes. TMFG certificates now also validate planar
-  stacked-triangulation structure.
-- Small-world null rewiring randomizes undirected edge orientations and
-  retains rejected proposals, removing node-order restrictions and
-  accepted-move bias. NCT plots identify signed global expected
-  influence when `abs = FALSE`.
-
-### Review fixes
-
-- Panel EBIC path diagnostics now recompute the objective and KKT
-  residual after small coefficients are rounded to zero. Infeasible
-  rounded candidates are excluded from selection instead of retaining a
-  stale certificate.
-- `ebic_glasso(refit = "unregularized")` now uses the same confirmed
-  lambda and support as the default penalized fit before the unpenalized
-  refit.
-- Glasso’s returned `ebic_path` includes the rescored EBIC values, so
-  its minimum agrees with the selected lambda and reported EBIC.
-- Panel plots accept overrides such as `node_fill`, `layout`, `title`,
-  and edge colours through `...` without duplicate-argument errors.
-
-### New estimator: panel graphical VAR
-
-- [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
-  estimates the panel graphical vector-autoregressive model
-  (Epskamp 2020) from few-wave, many-person panel data: a directed
-  temporal network (within-person lag-1 effects), a contemporaneous
-  network (partial correlations of the within-person innovations), and a
-  between-person network (partial correlations of the stable person
-  means). The within-person process is a stationary VAR(1) around a
-  random intercept with stationary means – the model of
-  [`psychonetrics::panelgvar()`](https://rdrr.io/pkg/psychonetrics/man/panelvar_family.html)
-  – fitted by maximum likelihood in base R. Long data (`vars`, `id`,
-  `wave`) or wide data (`vars` as a variables-by-waves design matrix)
-  are accepted.
-- Robust on raw-scale, small-sample data: the optimizer works on
-  standardized variables (an exact reparameterization – the model is
-  scale-equivariant) from three deterministic starts (moment-based,
-  neutral, and the fitted baseline), keeps the best, and refuses
-  (`psychnet_no_converge` error) to return a fit worse than its nested
-  baseline. On weekly means of an experience-sampling panel (41 persons,
-  0-100 scales) this reaches a lower objective than psychonetrics on
-  every design compared, where a single unscaled start had diverged.
-- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
-  three networks side by side on one shared circle layout, with the
-  temporal autoregressive effects as self-loops, edge weight labels,
-  solid (significant) vs dashed (not) edges, blue positive / vermillion
-  negative (Okabe-Ito), and “no edges” on an empty network.
-- `as.data.frame(fit, what = "variance")`: per-variable split of the
-  implied variance into the between-person and stationary within-person
-  parts (an intraclass correlation, `share_between`).
-- New dataset `srl_panel`: a synthetic panel of 100 students x 4 weeks
-  on five self-regulated-learning indicators (0-100), simulated once
-  from a panel-GVAR whose structure was taken from real
-  experience-sampling data (the anonymized `esm_srl` data of the
-  idiographic package). New vignette “Panel graphical VAR: temporal,
-  contemporaneous, and between-person networks” works through it.
-- `standardize = c("none", "z", "z_per_wave")`, as psychonetrics’
-  `panelvar(standardize =)`: `"z_per_wave"` z-scores every variable
-  within every wave, removing drift in wave means and variances (matches
-  psychonetrics’ chi-square to three decimals).
-- Penalized EBIC selection, `select = "ebic"` – the panel counterpart of
-  [`ebic_glasso()`](https://pak.dynasite.org/psychnets/reference/ebic_glasso.md)
-  and psychonetrics’ `panelgvar(estimator = "PML")`: lasso on every
-  temporal (autoregressions included), contemporaneous and between
-  parameter, 50-value lambda path from lambda_max with warm starts, EBIC
-  (`gamma = 0.5`), optional unpenalized `refit`. Certified by the lasso
-  KKT conditions (~1e-10); the selected lambda is re-solved from three
-  starts and their agreement reported. Matches psychonetrics’ PML on
-  every simulated design compared (same lambda, same zero pattern,
-  estimates within 3e-3, lower penalized objective); on weekly ESM means
-  psychonetrics’ PML returns an invalid model (non-positive-definite
-  contemporaneous block) while `select = "ebic"` returns a certified
-  one. Lasso estimates carry no p-values (`significant` is `NA`; the
-  plot draws selected edges solid).
-- Robustness: the EBIC choice is reconsidered after the final certified
-  solve (a final solve can change a lambda’s EBIC; the path table marks
-  fully solved rows in `final`); only variances on the optimizer’s
-  actual bound are treated as active constraints (a near-zero but
-  interior variance no longer has its score suppressed in the
-  certificate); all post-fit computation runs on the standardized scale,
-  so data whose variables differ in units by orders of magnitude (or are
-  tiny) fit identically instead of failing a covariance check or
-  crashing in a data-scale solve.
-- Edge selection is one argument, `select = c("none", "prune", "ebic")`.
-- Default output is the full model (the psychonetrics default, where
-  `prune()` is a separate step). Every edge is reported with its SE,
-  p-value, Wald CI and a new `significant` column (p \< `alpha`);
-  [`print()`](https://rdrr.io/r/base/print.html) and
-  [`summary()`](https://rdrr.io/r/base/summary.html) count significant
-  edges per network, and
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws
-  significant edges solid and non-significant ones dashed (sign by
-  colour plus the signed weight label, with a line-type key).
-  `select = "prune"` runs prune + step-up.
-- Step-up search after pruning (`stepup = TRUE`, the default when
-  pruning; `criterion = c("bic", "none")`), equal to
-  [`psychonetrics::stepup()`](https://rdrr.io/pkg/psychonetrics/man/stepup.html):
-  re-add the pruned edge with the largest modification index while it is
-  significant, passes a chi-square difference test, and lowers BIC.
-  One-pass pruning alone can remove parameters that substitute for each
-  other (an autoregression and correlated cross-lagged effects): on
-  weekly ESM means it removed 22 parameters that were jointly
-  significant (chi-square 76.9, p = 5e-8), and step-up restores the two
-  that matter. Modification indices match psychonetrics’; the selected
-  supports match psychonetrics’ `prune()` and `prune() |> stepup()` on
-  every well-identified design compared. `stepup = FALSE` reproduces
-  `prune()` alone.
-- Variances estimated at zero (Heywood cases) are treated as active
-  bound constraints: left out of the information (their SE is NA, the
-  others keep valid SEs) and certified by the bound KKT condition. A fit
-  whose information is singular is pruned with infinite standard errors
-  for the parameters it does not identify (rather than a pseudo-inverse,
-  which would understate them). Boundary warnings now name the part on
-  (or heading for) the boundary, e.g. “between-person variance of V2 at
-  zero”.
-- `as.data.frame(fit, what = "diagnostics")`: one row with persons,
-  waves, the ML score certificate, boundary flag, SE availability, and
-  how many of the three starts reached the best optimum (fewer than
-  three = competing local optima).
-- Pruning follows
-  [`psychonetrics::prune()`](https://rdrr.io/pkg/psychonetrics/man/prune.html):
-  Wald p-values from the expected Fisher information, `alpha = 0.01`,
-  optional `adjust` (any `p.adjust` method) and `recursive`.
-- Self-certified: the ML score on the free parameters is recomputed by a
-  forward-mode Jacobian (independent of the optimizer’s reverse-mode
-  gradient) and reported by
-  [`print()`](https://rdrr.io/r/base/print.html); it is ~1e-13 on the
-  validation designs.
-- Validated against psychonetrics 0.17.8 on three designs (3 x 4, 5 x 5,
-  and a BH-adjusted n = 150 case): identical pruned support in every
-  case, and psychonetrics’ own fit function rates the psychnets estimate
-  as the deeper optimum (its default optimizer stops with a gradient
-  near 1e-3, which moves estimates by up to ~1e-3). Fit indices
-  (chi-square, CFI, TLI, RMSEA, AIC, BIC) agree to that tolerance.
-- Read the fit with `as.data.frame(fit)` (edges with SE, p, Wald CI),
-  `as.data.frame(fit, what = "parameters")`,
-  `as.data.frame(fit, what = "fit")`, or
-  `as.data.frame(fit, what = "diagnostics")`. The object is a
-  `netobject_group`, so
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) /
-  [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-  draws the three networks as a grid.
-- Classed conditions: `psychnet_bad_input` errors (fewer than three
-  waves, too few persons, `na_method = "pairwise"`, …), and
-  `psychnet_boundary`, `psychnet_singular_information`,
-  `psychnet_listwise_drop`, `psychnet_no_converge` warnings. A
-  near-singular contemporaneous or between covariance (partial
-  correlations near +/-1, common with three waves) is flagged rather
-  than reported silently.
-- Missing data: listwise only. Full-information ML (psychonetrics’
-  default when data have missing values) is not yet implemented, and a
-  pairwise covariance is refused because it is not a likelihood for this
-  model.
-- `net_crosswalk("panelgvar")` maps the psychonetrics arguments.
-- No existing estimator’s numbers changed.
-
-### `ebic_glasso()`: absent edges are exact zeros
-
-- An edge the EBIC selection counted as absent could be returned in
-  `$weights` as a floating-point residue of about 1e-17 instead of 0
-  (the `$edges` table already dropped it). This happened when the
-  selected lambda sat at max\|S_ij\| (the empty graph) after the
-  positive-definite projection, and in a substantial share of sparse
-  fits generally. Anything that compares weights with zero read the
-  residue as an edge; in
-  [`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)
-  two empty networks gave M = S = 5.6e-17 and a false p = 0.02 instead
-  of 1. Precision entries with \|theta_ij\| \<= 1e-10 – the same rule
-  the EBIC uses to count edges – are now returned as exact zeros, so the
-  network has exactly the support the EBIC scored. Every edge above
-  1e-10 is unchanged.
-
-### `ebic_glasso()`: the selected lambda is the exact EBIC minimum
-
-- The lambda path is scanned at a loose tolerance (`1e-4`) and only the
-  chosen lambda was refit tightly. The scan can leave an entry that is
-  zero at the optimum just above the 1e-10 edge-count threshold; one
-  miscounted edge raises that lambda’s EBIC by exactly log(n) + 4 gamma
-  log(p) and can hide the true minimum. Every lambda whose scan EBIC is
-  within two edge penalties of the best is now refit at the refit
-  tolerance and rescored, and the lowest exact EBIC wins. Default engine
-  only; `engine = "glasso"` is unchanged. About 40% more time per fit.
-
-### Network comparison test (`net_compare()`) fixes
-
-- **BREAKING – the M and S letters were the wrong way round.** In van
-  Borkulo et al. (2022) and `NetworkComparisonTest`, M is the
-  network-structure test (largest absolute edge difference) and S the
-  global-strength test; psychnets printed and stored them swapped, so a
-  write-up copied from [`print()`](https://rdrr.io/r/base/print.html)
-  reported the wrong statistic. The tests are now stored as
-  `$structure` (M) and `$strength` (S); reading the old `$M` / `$S`
-  raises a `psychnet_renamed` error that says which field to use, rather
-  than silently returning the other test. Printed and tabled labels use
-  the NCT letters. `$strength$by_group` (shown by
-  [`print()`](https://rdrr.io/r/base/print.html)) holds each network’s
-  global strength, NCT’s `glstrinv.sep`; with `abs = FALSE` the test is
-  labelled global expected influence, as in NCT.
-
-On complete data every returned number is unchanged, and under a shared
-seed the M, S and per-edge p-values equal `NetworkComparisonTest::NCT()`
-2.2.2 exactly.
-
-- **Missing values no longer erase a variable.** A single `NA` made
-  every correlation of that variable `NA`, which was then replaced by 0,
-  so the variable lost all its edges in the observed networks and in
-  every permutation, with no warning. New
-  `na_method = c("pairwise", "listwise")` (default `"pairwise"`, as for
-  the estimators): pairwise correlations with the median co-observation
-  count as the sample size; listwise drops incomplete rows (whole pairs
-  in a paired design).
-- A constant variable now enters the network as an isolated node through
-  an explicit rule (the convention of every psychnets estimator for a
-  constant column); a constant variable in an observed group raises a
-  `psychnet_constant_variable` warning. A variable that becomes constant
-  in a permuted split (a rare binary item) is handled the same way, so
-  the statistic is defined on every split and the test stays exact.
-- With pairwise missing data, a variable pair sharing fewer than two
-  observed rows (in a group or a permuted split) has an undefined
-  correlation and is refused with `psychnet_degenerate_sample` instead
-  of being set to 0.
-- Columns that differ in name or order raise `psychnet_bad_input`
-  (unchanged rule, now a classed condition with the offending names).
-- Group mode (`net_compare(psychnet(d, group = "g"))`) forwards the
-  group’s `gamma` and `na_method`, and warns
-  (`psychnet_estimator_mismatch`) when the group was built with a
-  non-glasso `method`, a `threshold`, or other estimator settings: the
-  networks compared are then EBIC-glasso networks, not the group’s own.
-- Argument validation: `iter` must be a single whole number (2.7 was
-  truncated, `"10"` was accepted); malformed arguments raise
-  `psychnet_bad_input`.
-- Printing the result shows everything: the two groups by name (the
-  argument names, or the group levels in group mode), M and S with each
-  group’s global strength, the number of differing edges, and every edge
-  (largest difference first) with both groups’ weights, rounded p-values
-  and `*` for p \< 0.05 (`print(fit, n = 10)` shortens the edge list).
-  As tables, [`summary()`](https://rdrr.io/r/base/summary.html) gives
-  the M and S tests and
-  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) one row
-  per edge (`from`, `to`, `weight_1`, `weight_2`, `difference`,
-  `p_value`, `significant`).
-- `plot(type = "edges")` marks significant edges with `*` as well as
-  colour.
+- All plots use the Okabe-Ito palette and show significance by fill and
+  line type as well as colour.
 
 ## psychnets 0.5.2
 

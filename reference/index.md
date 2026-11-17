@@ -74,8 +74,6 @@ measurements.
   [`summary(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
   [`plot(`*`<psychnet_multilevel>`*`)`](https://pak.dynasite.org/psychnets/reference/psychnet_multilevel.md)
   : Within-actor and between-actor networks from event data
-- [`scale_within()`](https://pak.dynasite.org/psychnets/reference/scale_within.md)
-  : Center and scale variables within persons
 
 ## Groups and event data
 

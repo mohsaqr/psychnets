@@ -51,7 +51,7 @@ ising_fit(), ising_sampler() and mgm_fit()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -192,8 +192,10 @@ level and a <a href="psychnet_group.html">psychnet_group</a> is returned.</p></d
 
 <dt id="arg-within">within<a class="anchor" aria-label="anchor" href="#arg-within"></a></dt>
 <dd><p>Optional person-identifier column. Each variable is centred
-and scaled within persons over all rows before estimation (see
-<code><a href="scale_within.html">scale_within()</a></code>), and the person column is not a node. With <code>group</code>,
+and scaled within persons over all rows before estimation (each
+person's mean subtracted and the result divided by the person's standard
+deviation, as <code>mlVAR::mlVAR(scaleWithin = TRUE)</code>), and the person column
+is not a node. With <code>group</code>,
 rows are matched by person so that <code><a href="net_compare.html">net_compare()</a></code> can pair two levels
 (<code>paired = TRUE</code>). Without <code>group</code>, a person's rows are pooled and are
 not independent. Numeric tables only.</p></dd>

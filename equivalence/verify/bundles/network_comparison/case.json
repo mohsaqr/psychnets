@@ -1,0 +1,582 @@
+{
+  "schema": "prova.verification-case/1",
+  "title": "Network comparison test (permutation)",
+  "description": "The network comparison test of two independent groups (n = 120 each, five variables; the package's fixture configuration 1): EBIC glasso networks at gamma = 0.5, absolute weighted differences, 15 permutations after set.seed(1). The reference is NetworkComparisonTest::NCT() on the same data and seed, kept in tests/testthat/fixtures/nct-reference.rds (the reference package is not installed here, so its side is retained, not rerun). With the same seed both draw the same permutations, so the p-values are comparable one to one. The fixture holds edge p-values in NCT's edge order (upper triangle, column by column), which is the order psychnets reports.",
+  "covers": [
+    "net_compare()"
+  ],
+  "generator": "psychnets equivalence/verify/export-bundles.R",
+  "created_at": "2026-11-18",
+  "sides": [
+    {
+      "id": "psychnets",
+      "name": "psychnets",
+      "version": "0.8.3",
+      "primary": true,
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "nct",
+      "name": "NetworkComparisonTest",
+      "version": "2.2.2",
+      "authority": "open-source",
+      "source": "retained",
+      "role": "kept in tests/testthat/fixtures/nct-reference.rds",
+      "command": "NetworkComparisonTest::NCT(a, b, gamma = 0.5, it = 15, paired = FALSE, abs = TRUE, weighted = TRUE, test.edges = TRUE, edges = \"all\")"
+    }
+  ],
+  "sections": [
+    {
+      "id": "code",
+      "title": "Code",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/script.R",
+          "bytes": 939,
+          "sha256": "3f0c4b23f97c45ed04f8802b3cbc6267d7709e159bb5f3039514f874fa0aaeb6",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/group_a.csv",
+              "data/group_b.csv"
+            ]
+          }
+        },
+        {
+          "side": "nct",
+          "path": "nct/make-nct.R",
+          "bytes": 2066,
+          "sha256": "e50a4d4860e65620e01a4fc3b333071ba4da169e793527c14c7240a31153d767",
+          "label": "Fixture script that ran the reference",
+          "type": "code",
+          "language": "r"
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "title": "Raw output",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/console.txt",
+          "bytes": 3760,
+          "sha256": "4a917441a8115113f7ae5520edda1864e8a662656881c44837d1b04c8dad556f",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "nct",
+          "path": "nct/values.csv",
+          "bytes": 1882,
+          "sha256": "392525f20fc1e777b213df564cef66f7a8bde9f7422348eefee5fb50cde5f34d",
+          "label": "Values kept in the fixture",
+          "type": "table"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": [
+        {
+          "path": "data/group_a.csv",
+          "bytes": 10763,
+          "sha256": "743048d8fafb7af88842dd5def3e3e21568867c53e0a29ffa8cc837f59c8c332",
+          "label": "Group 1"
+        },
+        {
+          "path": "data/group_b.csv",
+          "bytes": 10841,
+          "sha256": "f7331b15fea82077ecb90ec3739bf20a2a2a5c52af27624aeb3806b44e1f509d",
+          "label": "Group 2"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "quantity": "p: network structure",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.0625,
+        "nct": 0.0625
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: global strength",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.0625,
+        "nct": 0.0625
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V1 -- V2",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.0625,
+        "nct": 0.0625
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V1 -- V3",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.0625,
+        "nct": 0.0625
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V2 -- V3",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.0625,
+        "nct": 0.0625
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V1 -- V4",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.875,
+        "nct": 0.875
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V2 -- V4",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.0625,
+        "nct": 0.0625
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V3 -- V4",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.1875,
+        "nct": 0.1875
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V1 -- V5",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.3125,
+        "nct": 0.3125
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V2 -- V5",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.4375,
+        "nct": 0.4375
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V3 -- V5",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.1875,
+        "nct": 0.1875
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "p: edge V4 -- V5",
+      "kind": "p value",
+      "values": {
+        "psychnets": 0.875,
+        "nct": 0.875
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V1 -- V2",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.238232345371109,
+        "nct": 0.23823470537873
+      },
+      "baseline": "nct",
+      "difference": 2.36000762079969e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V1 -- V3",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.320746911655906,
+        "nct": 0.320753595704888
+      },
+      "baseline": "nct",
+      "difference": 6.68404898152009e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V2 -- V3",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.0600786219750703,
+        "nct": 0.0600543635472668
+      },
+      "baseline": "nct",
+      "difference": 2.42584278035141e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V1 -- V4",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.205852289266518,
+        "nct": 0.205882295968379
+      },
+      "baseline": "nct",
+      "difference": 3.00067018614014e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V2 -- V4",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.314328700922167,
+        "nct": 0.314339396981418
+      },
+      "baseline": "nct",
+      "difference": 1.06960592505256e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V3 -- V4",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.187881195857122,
+        "nct": 0.187874692819119
+      },
+      "baseline": "nct",
+      "difference": 6.50303800225904e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V1 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.253710174521851,
+        "nct": 0.253734058988942
+      },
+      "baseline": "nct",
+      "difference": 2.38844670911176e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V2 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.185219820037893,
+        "nct": 0.185238282935725
+      },
+      "baseline": "nct",
+      "difference": 1.84628978312507e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V3 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.314914007939945,
+        "nct": 0.314916195857671
+      },
+      "baseline": "nct",
+      "difference": 2.18791772621518e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 1: V4 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.0895315059245285,
+        "nct": 0.08950837751744
+      },
+      "baseline": "nct",
+      "difference": 2.31284070885823e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V1 -- V2",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.608188302413624,
+        "nct": 0.608188780461899
+      },
+      "baseline": "nct",
+      "difference": 4.78048274299425e-07,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V1 -- V3",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0,
+        "nct": 0
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V2 -- V3",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.29750029150998,
+        "nct": 0.297499850665561
+      },
+      "baseline": "nct",
+      "difference": 4.40844419691278e-07,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V1 -- V4",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.160748046963288,
+        "nct": 0.160750349813325
+      },
+      "baseline": "nct",
+      "difference": 2.30285003685604e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V2 -- V4",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0,
+        "nct": 0
+      },
+      "baseline": "nct",
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V3 -- V4",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.0206545009435034,
+        "nct": 0.0206530898425067
+      },
+      "baseline": "nct",
+      "difference": 1.41110099673158e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V1 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.10836043761844,
+        "nct": 0.108345364183185
+      },
+      "baseline": "nct",
+      "difference": 1.5073435254892e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V2 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.062337674694321,
+        "nct": 0.0623493513951681
+      },
+      "baseline": "nct",
+      "difference": 1.16767008470492e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V3 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.130012020899015,
+        "nct": 0.130010510364172
+      },
+      "baseline": "nct",
+      "difference": 1.51053484237496e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "weight, group 2: V4 -- V5",
+      "kind": "edge weight",
+      "values": {
+        "psychnets": 0.124846550169399,
+        "nct": 0.124848131214362
+      },
+      "baseline": "nct",
+      "difference": 1.58104496263134e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "global strength, group 1",
+      "kind": "global strength",
+      "values": {
+        "psychnets": 2.17049557347211,
+        "nct": 2.17053596569958
+      },
+      "baseline": "nct",
+      "difference": 4.03922274685442e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "global strength, group 2",
+      "kind": "global strength",
+      "values": {
+        "psychnets": 1.51264782521157,
+        "nct": 1.51264542794018
+      },
+      "baseline": "nct",
+      "difference": 2.39727139317303e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    }
+  ]
+}

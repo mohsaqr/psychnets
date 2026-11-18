@@ -1,0 +1,1018 @@
+{
+  "schema": "prova.verification-case/1",
+  "title": "Local clustering coefficients of a signed weighted network",
+  "description": "The seven local clustering coefficients (Watts-Strogatz, Zhang, Onnela, each unsigned and signed, and Barrat) of the same ten-node signed network, against qgraph::clustcoef_auto().",
+  "covers": [
+    "net_clustering()"
+  ],
+  "generator": "psychnets equivalence/verify/export-bundles.R",
+  "created_at": "2026-11-18",
+  "sides": [
+    {
+      "id": "psychnets",
+      "name": "psychnets",
+      "version": "0.8.3",
+      "primary": true,
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "qgraph",
+      "name": "qgraph",
+      "version": "1.10.1",
+      "authority": "open-source",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    }
+  ],
+  "sections": [
+    {
+      "id": "code",
+      "title": "Code",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/script.R",
+          "bytes": 138,
+          "sha256": "fde21e880c52b4ff728df79ad221dd4e1e0054ea190814d88febb22a2dd63765",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "key": "node",
+            "reads": [
+              "data/network.tsv"
+            ]
+          }
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/script.R",
+          "bytes": 207,
+          "sha256": "f15a837091d1086da5db01468d28ed2401ee0cfbd09d678f7668a5df07e6647b",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "key": "node",
+            "reads": [
+              "data/network.tsv"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "title": "Raw output",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/console.txt",
+          "bytes": 1316,
+          "sha256": "48384de427201323682440b50acdb6008cda9ecef840594163628c281222ebf5",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/console.txt",
+          "bytes": 1410,
+          "sha256": "c4a99ea83c82876e5e7157bad3b32dce1412ccb0d298a02dc6cf6c4f7db50e40",
+          "label": "R console",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": [
+        {
+          "path": "data/network.tsv",
+          "bytes": 729,
+          "sha256": "461a974f429eafae386c6350c480439d7d2d50b01db5d24fa54f79b59188989f",
+          "label": "Network"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "quantity": "clustWS: A1",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.666666666666667,
+        "qgraph": 0.666666666666667
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: A2",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.6,
+        "qgraph": 0.6
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: A3",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.666666666666667,
+        "qgraph": 0.666666666666667
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: A4",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.7,
+        "qgraph": 0.7
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: A5",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.619047619047619,
+        "qgraph": 0.619047619047619
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: C1",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.8,
+        "qgraph": 0.8
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: C2",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.619047619047619,
+        "qgraph": 0.619047619047619
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: C3",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.714285714285714,
+        "qgraph": 0.714285714285714
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: C4",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.733333333333333,
+        "qgraph": 0.733333333333333
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustWS: C5",
+      "kind": "clustWS",
+      "values": {
+        "psychnets": 0.619047619047619,
+        "qgraph": 0.619047619047619
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: A1",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0,
+        "qgraph": 0
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: A2",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.466666666666667,
+        "qgraph": 0.466666666666667
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: A3",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.533333333333333,
+        "qgraph": 0.533333333333333
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: A4",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.7,
+        "qgraph": 0.7
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: A5",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.428571428571429,
+        "qgraph": 0.428571428571429
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: C1",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.533333333333333,
+        "qgraph": 0.533333333333333
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: C2",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.428571428571429,
+        "qgraph": 0.428571428571429
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: C3",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.428571428571429,
+        "qgraph": 0.428571428571429
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: C4",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.333333333333333,
+        "qgraph": 0.333333333333333
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustWS: C5",
+      "kind": "signed_clustWS",
+      "values": {
+        "psychnets": 0.619047619047619,
+        "qgraph": 0.619047619047619
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: A1",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.100842582218918,
+        "qgraph": 0.100842582218918
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: A2",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.0956217174151646,
+        "qgraph": 0.0956217174151646
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: A3",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.115375556561093,
+        "qgraph": 0.115375556561093
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: A4",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.0989019646112827,
+        "qgraph": 0.0989019646112827
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: A5",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.146067717214847,
+        "qgraph": 0.146067717214847
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: C1",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.126342532195219,
+        "qgraph": 0.126342532195219
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: C2",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.0853616221894392,
+        "qgraph": 0.0853616221894392
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: C3",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.113495056016127,
+        "qgraph": 0.113495056016127
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: C4",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.0939445611753851,
+        "qgraph": 0.093944561175385
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustZhang: C5",
+      "kind": "clustZhang",
+      "values": {
+        "psychnets": 0.0772493908242303,
+        "qgraph": 0.0772493908242303
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: A1",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.0681597155132922,
+        "qgraph": 0.0681597155132922
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: A2",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.0935753348413698,
+        "qgraph": 0.0935753348413698
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: A3",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.114866987399059,
+        "qgraph": 0.114866987399059
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: A4",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.0989019646112827,
+        "qgraph": 0.0989019646112827
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: A5",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.145935055814413,
+        "qgraph": 0.145935055814413
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: C1",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.121780378534732,
+        "qgraph": 0.121780378534732
+      },
+      "difference": 2.77555756156289e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: C2",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.0809289017184868,
+        "qgraph": 0.0809289017184868
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: C3",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.108767066164819,
+        "qgraph": 0.108767066164819
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: C4",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.0864261935848988,
+        "qgraph": 0.0864261935848988
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustZhang: C5",
+      "kind": "signed_clustZhang",
+      "values": {
+        "psychnets": 0.0772493908242303,
+        "qgraph": 0.0772493908242303
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: A1",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0414253530731876,
+        "qgraph": 0.0414253530731876
+      },
+      "difference": 6.93889390390723e-18,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: A2",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0671977778288475,
+        "qgraph": 0.0671977778288476
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: A3",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0713388443343603,
+        "qgraph": 0.0713388443343603
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: A4",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.078698658377787,
+        "qgraph": 0.078698658377787
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: A5",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0464526147330044,
+        "qgraph": 0.0464526147330044
+      },
+      "difference": 6.93889390390723e-18,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: C1",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0715388889915074,
+        "qgraph": 0.0715388889915074
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: C2",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0620990773530389,
+        "qgraph": 0.0620990773530389
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: C3",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0581155901589927,
+        "qgraph": 0.0581155901589927
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: C4",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0822594808326389,
+        "qgraph": 0.0822594808326389
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustOnnela: C5",
+      "kind": "clustOnnela",
+      "values": {
+        "psychnets": 0.0513845730882216,
+        "qgraph": 0.0513845730882216
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: A1",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.00837137879288009,
+        "qgraph": 0.00837137879288009
+      },
+      "difference": 1.73472347597681e-18,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: A2",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0580132105656529,
+        "qgraph": 0.0580132105656529
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: A3",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0657059977633737,
+        "qgraph": 0.0657059977633737
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: A4",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.078698658377787,
+        "qgraph": 0.078698658377787
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: A5",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0436011343725311,
+        "qgraph": 0.0436011343725311
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: C1",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0592177009427011,
+        "qgraph": 0.0592177009427011
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: C2",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.050110263729038,
+        "qgraph": 0.050110263729038
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: C3",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0458512781089761,
+        "qgraph": 0.0458512781089761
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: C4",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0547934031790522,
+        "qgraph": 0.0547934031790522
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "signed_clustOnnela: C5",
+      "kind": "signed_clustOnnela",
+      "values": {
+        "psychnets": 0.0513845730882216,
+        "qgraph": 0.0513845730882216
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: A1",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.638693214158839,
+        "qgraph": 0.638693214158839
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: A2",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.648641824897362,
+        "qgraph": 0.648641824897362
+      },
+      "difference": 2.22044604925031e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: A3",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.711781678023869,
+        "qgraph": 0.711781678023869
+      },
+      "difference": 1.11022302462516e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: A4",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.710927723346458,
+        "qgraph": 0.710927723346458
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: A5",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.631736676657791,
+        "qgraph": 0.631736676657791
+      },
+      "difference": 1.11022302462516e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: C1",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.825609078430018,
+        "qgraph": 0.825609078430018
+      },
+      "difference": 1.11022302462516e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: C2",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.629685504442526,
+        "qgraph": 0.629685504442526
+      },
+      "difference": 2.22044604925031e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: C3",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.706175709045804,
+        "qgraph": 0.706175709045804
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: C4",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.747062272351679,
+        "qgraph": 0.747062272351679
+      },
+      "difference": 1.11022302462516e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "clustBarrat: C5",
+      "kind": "clustBarrat",
+      "values": {
+        "psychnets": 0.575911097941472,
+        "qgraph": 0.575911097941472
+      },
+      "difference": 1.11022302462516e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    }
+  ]
+}

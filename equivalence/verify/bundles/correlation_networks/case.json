@@ -1,0 +1,420 @@
+{
+  "schema": "prova.verification-case/1",
+  "title": "Correlation and partial correlation networks",
+  "description": "Pearson correlations and partial correlations of the five scales of the bundled SRL_Claude data (n = 300). Base R computes the partial correlations from the inverse of the correlation matrix; qgraph computes both networks with qgraph(graph = \"cor\" / \"pcor\"). No threshold on any side.",
+  "covers": [
+    "cor_network()",
+    "pcor_network()"
+  ],
+  "generator": "psychnets equivalence/verify/export-bundles.R",
+  "created_at": "2026-11-18",
+  "sides": [
+    {
+      "id": "psychnets",
+      "name": "psychnets",
+      "version": "0.8.3",
+      "primary": true,
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "stats",
+      "name": "base R (stats)",
+      "version": "4.6.2",
+      "authority": "independent",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "qgraph",
+      "name": "qgraph",
+      "version": "1.10.1",
+      "authority": "open-source",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    }
+  ],
+  "sections": [
+    {
+      "id": "code",
+      "title": "Code",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/script.R",
+          "bytes": 488,
+          "sha256": "2f213c676277ef4cfc7b5313b2ad6eff70a9f8a9a5607181d9ae9e81f10e90a4",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/srl.csv"
+            ]
+          }
+        },
+        {
+          "side": "stats",
+          "path": "stats/script.R",
+          "bytes": 570,
+          "sha256": "74f011ba146db8658dd49d6834e1712d171002ffdd571a99268407c91d5582fd",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/srl.csv"
+            ]
+          }
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/script.R",
+          "bytes": 646,
+          "sha256": "5d68b00d7ad2b91ce6da353b96b87d1e8065efc064b9caec80da639880a3cae4",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/srl.csv"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "title": "Raw output",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/console.txt",
+          "bytes": 986,
+          "sha256": "c24831eadc122c89d8564f98f1f672c19d2d652afbeedc22c8684bb29b61b445",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "stats",
+          "path": "stats/console.txt",
+          "bytes": 1673,
+          "sha256": "0547216336e1ff5ef37c3fff5d7c5b9061dd24f8c78fe549ad57040476887a63",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/console.txt",
+          "bytes": 1752,
+          "sha256": "38d4dc4d05dc22785430b7ffcc5244963f86dbe2b581f8651dd4d9719bc2428a",
+          "label": "R console",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": [
+        {
+          "path": "data/srl.csv",
+          "bytes": 20015,
+          "sha256": "2369369eea55416b81ac733c04488b2768c629a6eba616d073b9f138a8285545",
+          "label": "SRL_Claude"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "quantity": "cor: CSU -- IV",
+      "kind": "correlation",
+      "values": {
+        "psychnets": 0.736862412188533,
+        "stats": 0.736862412188533,
+        "qgraph": 0.736862412188533
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: CSU -- SE",
+      "kind": "correlation",
+      "values": {
+        "psychnets": 0.532554575074579,
+        "stats": 0.532554575074579,
+        "qgraph": 0.532554575074579
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: IV -- SE",
+      "kind": "correlation",
+      "values": {
+        "psychnets": 0.264354966999703,
+        "stats": 0.264354966999703,
+        "qgraph": 0.264354966999703
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: CSU -- SR",
+      "kind": "correlation",
+      "values": {
+        "psychnets": 0.901325977445724,
+        "stats": 0.901325977445724,
+        "qgraph": 0.901325977445724
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: IV -- SR",
+      "kind": "correlation",
+      "values": {
+        "psychnets": 0.827624682961139,
+        "stats": 0.827624682961139,
+        "qgraph": 0.827624682961139
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: SE -- SR",
+      "kind": "correlation",
+      "values": {
+        "psychnets": 0.5917780023648,
+        "stats": 0.5917780023648,
+        "qgraph": 0.5917780023648
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: CSU -- TA",
+      "kind": "correlation",
+      "values": {
+        "psychnets": -0.175655459018837,
+        "stats": -0.175655459018837,
+        "qgraph": -0.175655459018837
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: IV -- TA",
+      "kind": "correlation",
+      "values": {
+        "psychnets": -0.276384065596016,
+        "stats": -0.276384065596016,
+        "qgraph": -0.276384065596016
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: SE -- TA",
+      "kind": "correlation",
+      "values": {
+        "psychnets": -0.544387167537556,
+        "stats": -0.544387167537556,
+        "qgraph": -0.544387167537556
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "cor: SR -- TA",
+      "kind": "correlation",
+      "values": {
+        "psychnets": -0.43567034154343,
+        "stats": -0.43567034154343,
+        "qgraph": -0.43567034154343
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: CSU -- IV",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": -0.0271982534955537,
+        "stats": -0.0271982534955538,
+        "qgraph": -0.0271982534955535
+      },
+      "difference": 2.46330733588707e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: CSU -- SE",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": 0.24100875589453,
+        "stats": 0.24100875589453,
+        "qgraph": 0.24100875589453
+      },
+      "difference": 8.32667268468867e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: IV -- SE",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": -0.456537288037695,
+        "stats": -0.456537288037695,
+        "qgraph": -0.456537288037697
+      },
+      "difference": 1.83186799063151e-15,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: CSU -- SR",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": 0.754984948468901,
+        "stats": 0.754984948468901,
+        "qgraph": 0.754984948468901
+      },
+      "difference": 4.44089209850063e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: IV -- SR",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": 0.583929416205764,
+        "stats": 0.583929416205764,
+        "qgraph": 0.583929416205764
+      },
+      "difference": 5.55111512312578e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: SE -- SR",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": 0.213389574470271,
+        "stats": 0.213389574470271,
+        "qgraph": 0.213389574470271
+      },
+      "difference": 1.94289029309402e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: CSU -- TA",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": 0.604242606629843,
+        "stats": 0.604242606629843,
+        "qgraph": 0.604242606629842
+      },
+      "difference": 3.33066907387547e-16,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: IV -- TA",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": -0.0136943913127557,
+        "stats": -0.0136943913127558,
+        "qgraph": -0.0136943913127577
+      },
+      "difference": 1.90646110009851e-15,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: SE -- TA",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": -0.42777817776949,
+        "stats": -0.42777817776949,
+        "qgraph": -0.42777817776949
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "pcor: SR -- TA",
+      "kind": "partial correlation",
+      "values": {
+        "psychnets": -0.484010057233739,
+        "stats": -0.484010057233739,
+        "qgraph": -0.484010057233738
+      },
+      "difference": 1.27675647831893e-15,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    }
+  ]
+}

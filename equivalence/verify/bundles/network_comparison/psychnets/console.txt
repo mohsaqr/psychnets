@@ -1,0 +1,82 @@
+
+> group_a <- utils::read.csv("../data/group_a.csv")
+
+> group_b <- utils::read.csv("../data/group_b.csv")
+
+> set.seed(1)
+
+> fit <- net_compare(data1 = group_a, data2 = group_b, iter = 15L, gamma = 0.5, paired = FALSE,
++                    abs = TRUE, weighted = TRUE, p_adjust = "none")
+
+> fit
+Network Comparison Test: group_a vs group_b
+15 permutations, independent groups, n = 120 and 120
+
+  Test                  Statistic       p
+  M  network structure      0.370   0.062 
+  S  global strength        0.658   0.062 
+       group_a 2.170 vs group_b 1.513
+  E  edges differing      0 of 10
+
+  Edges, largest difference first
+  Edge     group_a  group_b  |diff|       p
+  V1 - V2    0.238    0.608   0.370   0.062 
+  V1 - V3    0.321    0.000   0.321   0.062 
+  V2 - V4    0.314    0.000   0.314   0.062 
+  V2 - V3    0.060    0.298   0.237   0.062 
+  V3 - V5    0.315    0.130   0.185   0.188 
+  V3 - V4    0.188    0.021   0.167   0.188 
+  V1 - V5    0.254    0.108   0.145   0.312 
+  V2 - V5    0.185    0.062   0.123   0.438 
+  V1 - V4    0.206    0.161   0.045   0.875 
+  V4 - V5    0.090    0.125   0.035   0.875 
+
+  * p < 0.05
+
+> tests <- summary(fit)
+
+> edges <- as.data.frame(fit)
+
+> result <- rbind(
++   with(tests, data.frame(quantity = paste("p:", test), kind = "p value", value = p_value)),
++   with(edges, data.frame(quantity = paste("p: edge", from, "--", to), kind = "p value", value = p_value)),
++   with(edges, data.frame(quantity = paste("weight, group 1:", from, "--", to), kind = "edge weight", value = weight_1)),
++   with(edges, data.frame(quantity = paste("weight, group 2:", from, "--", to), kind = "edge weight", value = weight_2)),
++   data.frame(quantity = paste("global strength, group", seq_len(2L)), kind = "global strength", value = fit$strength$by_group))
+
+> result
+                    quantity            kind      value
+1       p: network structure         p value 0.06250000
+2         p: global strength         p value 0.06250000
+3           p: edge V1 -- V2         p value 0.06250000
+4           p: edge V1 -- V3         p value 0.06250000
+5           p: edge V2 -- V3         p value 0.06250000
+6           p: edge V1 -- V4         p value 0.87500000
+7           p: edge V2 -- V4         p value 0.06250000
+8           p: edge V3 -- V4         p value 0.18750000
+9           p: edge V1 -- V5         p value 0.31250000
+10          p: edge V2 -- V5         p value 0.43750000
+11          p: edge V3 -- V5         p value 0.18750000
+12          p: edge V4 -- V5         p value 0.87500000
+13 weight, group 1: V1 -- V2     edge weight 0.23823235
+14 weight, group 1: V1 -- V3     edge weight 0.32074691
+15 weight, group 1: V2 -- V3     edge weight 0.06007862
+16 weight, group 1: V1 -- V4     edge weight 0.20585229
+17 weight, group 1: V2 -- V4     edge weight 0.31432870
+18 weight, group 1: V3 -- V4     edge weight 0.18788120
+19 weight, group 1: V1 -- V5     edge weight 0.25371017
+20 weight, group 1: V2 -- V5     edge weight 0.18521982
+21 weight, group 1: V3 -- V5     edge weight 0.31491401
+22 weight, group 1: V4 -- V5     edge weight 0.08953151
+23 weight, group 2: V1 -- V2     edge weight 0.60818830
+24 weight, group 2: V1 -- V3     edge weight 0.00000000
+25 weight, group 2: V2 -- V3     edge weight 0.29750029
+26 weight, group 2: V1 -- V4     edge weight 0.16074805
+27 weight, group 2: V2 -- V4     edge weight 0.00000000
+28 weight, group 2: V3 -- V4     edge weight 0.02065450
+29 weight, group 2: V1 -- V5     edge weight 0.10836044
+30 weight, group 2: V2 -- V5     edge weight 0.06233767
+31 weight, group 2: V3 -- V5     edge weight 0.13001202
+32 weight, group 2: V4 -- V5     edge weight 0.12484655
+33  global strength, group 1 global strength 2.17049557
+34  global strength, group 2 global strength 1.51264783

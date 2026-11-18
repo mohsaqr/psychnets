@@ -1,0 +1,869 @@
+{
+  "schema": "prova.verification-case/1",
+  "title": "Panel graphical VAR, saturated model",
+  "description": "The saturated panel graphical VAR (temporal, contemporaneous and between-person networks) of a simulated panel: 400 persons, four waves, three variables (the package's fixture design \"default\"), by maximum likelihood without pruning. The reference is psychonetrics::panelgvar() |> runmodel() on the same data, kept in tests/testthat/fixtures/psychonetrics-panelgvar.rds (psychonetrics is not installed here, so its side is retained, not rerun). The fixture holds the 24 estimates and standard errors as bare vectors in psychonetrics' parameter order; they are named here by position from psychnets' parameter table, the pairing the package's own test uses. psychnets is called with the long panel; the fixture was made from the same panel in wide form.",
+  "covers": [
+    "panel_gvar()"
+  ],
+  "generator": "psychnets equivalence/verify/export-bundles.R",
+  "created_at": "2026-11-18",
+  "sides": [
+    {
+      "id": "psychnets",
+      "name": "psychnets",
+      "version": "0.8.3",
+      "primary": true,
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "psychonetrics",
+      "name": "psychonetrics",
+      "version": "0.17.8",
+      "authority": "open-source",
+      "source": "retained",
+      "role": "kept in tests/testthat/fixtures/psychonetrics-panelgvar.rds",
+      "command": "psychonetrics::runmodel(psychonetrics::panelgvar(data, vars = design))"
+    }
+  ],
+  "sections": [
+    {
+      "id": "code",
+      "title": "Code",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/script.R",
+          "bytes": 792,
+          "sha256": "80cd7a94e216a81815d1da1e8072d56c0637fcc980289ca36dddd725080113c6",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/panel.csv"
+            ]
+          }
+        },
+        {
+          "side": "psychonetrics",
+          "path": "psychonetrics/make-panelgvar.R",
+          "bytes": 4368,
+          "sha256": "7a0a1bd048fe45d9fec4af51b3c06ff24308ee058b978134589770ebebaeb6d9",
+          "label": "Fixture script that ran the reference",
+          "type": "code",
+          "language": "r"
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "title": "Raw output",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/console.txt",
+          "bytes": 7560,
+          "sha256": "2683d1621dfca4e5f52f222f5f825458671059569510b24422f50bc4085d5f11",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "psychonetrics",
+          "path": "psychonetrics/values.csv",
+          "bytes": 3257,
+          "sha256": "137ad935629ad008835ccd48c0039c576ca7b2bd5dc4059ba6696a7b0ddba6fb",
+          "label": "Values kept in the fixture",
+          "type": "table"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": [
+        {
+          "path": "data/panel.csv",
+          "bytes": 92101,
+          "sha256": "b822222edd4ae5fdfdd2e98eace3f6e4873912e7ae249ebe5ebbd7d6080d935f",
+          "label": "Panel (long)"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "quantity": "estimate: mu V1 NA",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 1.00421775476564,
+        "psychonetrics": 1.00425860442903
+      },
+      "baseline": "psychonetrics",
+      "difference": 4.08496633881317e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: mu V2 NA",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 1.93414679423152,
+        "psychonetrics": 1.93412619804762
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.05961839019331e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: mu V3 NA",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 3.01108316687635,
+        "psychonetrics": 3.01106151002732
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.16568490354341e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: omega_zeta_within V2 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.276707373411112,
+        "psychonetrics": 0.276688153146226
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.92202648868212e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: omega_zeta_within V3 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": -0.0678287451221282,
+        "psychonetrics": -0.0677996123792285
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.91327428997151e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: omega_zeta_within V3 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.0233173236786116,
+        "psychonetrics": 0.0232596923367083
+      },
+      "baseline": "psychonetrics",
+      "difference": 5.76313419032824e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: delta_zeta_within V1 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.962998981391525,
+        "psychonetrics": 0.96300921269805
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.02313065248882e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: delta_zeta_within V2 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.98508373782834,
+        "psychonetrics": 0.985128862265048
+      },
+      "baseline": "psychonetrics",
+      "difference": 4.51244367080106e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: delta_zeta_within V3 V3",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 1.00525084248277,
+        "psychonetrics": 1.00526607252025
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.52300374720582e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V1 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.398028811816348,
+        "psychonetrics": 0.398058792273139
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.99804567908679e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V2 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.275679285832473,
+        "psychonetrics": 0.275697913970685
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.86281382120179e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V3 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": -0.0447824582449308,
+        "psychonetrics": -0.0447615404021879
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.0917842742843e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V1 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.00428203611650657,
+        "psychonetrics": 0.00427295857584735
+      },
+      "baseline": "psychonetrics",
+      "difference": 9.07754065921501e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V2 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.376448791528016,
+        "psychonetrics": 0.376389617024963
+      },
+      "baseline": "psychonetrics",
+      "difference": 5.91745030525948e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V3 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": -0.159726866669035,
+        "psychonetrics": -0.159760629401441
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.37627324057954e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V1 V3",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.03716984241136,
+        "psychonetrics": 0.0371771921453462
+      },
+      "baseline": "psychonetrics",
+      "difference": 7.34973398622274e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V2 V3",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.0468573892349878,
+        "psychonetrics": 0.04684274279575
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.46464392378823e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: beta V3 V3",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.393288023535879,
+        "psychonetrics": 0.393271872334334
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.61512015450782e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: omega_zeta_between V2 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.114245404938229,
+        "psychonetrics": 0.114279853445643
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.44485074140338e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: omega_zeta_between V3 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.51969671016522,
+        "psychonetrics": 0.5197114491824
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.47390171800765e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: omega_zeta_between V3 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": -0.0887474204186277,
+        "psychonetrics": -0.0888898953972467
+      },
+      "baseline": "psychonetrics",
+      "difference": 0.000142474978619023,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: delta_zeta_between V1 V1",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.606346303555343,
+        "psychonetrics": 0.606370147877415
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.38443220718088e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: delta_zeta_between V2 V2",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.924415111711816,
+        "psychonetrics": 0.924424561141554
+      },
+      "baseline": "psychonetrics",
+      "difference": 9.44942973857277e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "estimate: delta_zeta_between V3 V3",
+      "kind": "estimate",
+      "values": {
+        "psychnets": 0.724877291743143,
+        "psychonetrics": 0.724839433654475
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.78580886679636e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: mu V1 NA",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0502509471385843,
+        "psychonetrics": 0.0502529865405294
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.03940194507674e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: mu V2 NA",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.061705528124888,
+        "psychonetrics": 0.0617055308605993
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.73571127556993e-09,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: mu V3 NA",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0564796184329253,
+        "psychonetrics": 0.0564786520964137
+      },
+      "baseline": "psychonetrics",
+      "difference": 9.66336511587507e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: omega_zeta_within V2 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0310113140132943,
+        "psychonetrics": 0.0310116400843383
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.26071044016302e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: omega_zeta_within V3 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0331400426734635,
+        "psychonetrics": 0.0331401766747035
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.34001240034709e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: omega_zeta_within V3 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0338028136864393,
+        "psychonetrics": 0.0338028335514426
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.98650033852998e-08,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: delta_zeta_within V1 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.022519258102638,
+        "psychonetrics": 0.022519508644345
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.50541706964258e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: delta_zeta_within V2 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0236320793168753,
+        "psychonetrics": 0.023633034809219
+      },
+      "baseline": "psychonetrics",
+      "difference": 9.55492343746034e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: delta_zeta_within V3 V3",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0237911510857084,
+        "psychonetrics": 0.0237915022957052
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.51209996803797e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V1 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0487259294495458,
+        "psychonetrics": 0.0487264279998711
+      },
+      "baseline": "psychonetrics",
+      "difference": 4.9855032538404e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V2 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0424248359842742,
+        "psychonetrics": 0.0424264199923447
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.5840080704807e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V3 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0419926097260355,
+        "psychonetrics": 0.0419929639462582
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.54220222709145e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V1 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0401544874473153,
+        "psychonetrics": 0.0401526915914681
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.79585584717673e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V2 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0496263009765907,
+        "psychonetrics": 0.0496253104278495
+      },
+      "baseline": "psychonetrics",
+      "difference": 9.90548741197639e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V3 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0399590539790808,
+        "psychonetrics": 0.0399574227789821
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.63120009877976e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V1 V3",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.039956796394579,
+        "psychonetrics": 0.0399560665504109
+      },
+      "baseline": "psychonetrics",
+      "difference": 7.29844168143035e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V2 V3",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0413037659879661,
+        "psychonetrics": 0.0413046556491904
+      },
+      "baseline": "psychonetrics",
+      "difference": 8.89661224239002e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: beta V3 V3",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0485811837455495,
+        "psychonetrics": 0.048580618800902
+      },
+      "baseline": "psychonetrics",
+      "difference": 5.64944647452048e-07,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: omega_zeta_between V2 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.171938351781811,
+        "psychonetrics": 0.17191905090268
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.93008791304072e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: omega_zeta_between V3 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.143942858025918,
+        "psychonetrics": 0.143937652118228
+      },
+      "baseline": "psychonetrics",
+      "difference": 5.20590769056972e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: omega_zeta_between V3 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.157624130933691,
+        "psychonetrics": 0.157609937471297
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.41934623943962e-05,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: delta_zeta_between V1 V1",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.0985835162512391,
+        "psychonetrics": 0.0985870134222848
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.49717104565495e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: delta_zeta_between V2 V2",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.070168292274579,
+        "psychonetrics": 0.0701587167702904
+      },
+      "baseline": "psychonetrics",
+      "difference": 9.57550428866416e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "se: delta_zeta_between V3 V3",
+      "kind": "standard error",
+      "values": {
+        "psychnets": 0.108709585900798,
+        "psychonetrics": 0.108702678702437
+      },
+      "baseline": "psychonetrics",
+      "difference": 6.90719836096698e-06,
+      "measure": "absolute",
+      "tolerance": 0.005,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: logl",
+      "kind": "fit statistic",
+      "values": {
+        "psychnets": -7444.21977023224,
+        "psychonetrics": -7444.21978161435
+      },
+      "baseline": "psychonetrics",
+      "difference": 1.13821142804227e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: chisq",
+      "kind": "fit statistic",
+      "values": {
+        "psychnets": 70.9710892052847,
+        "psychonetrics": 70.971111969513
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.276422830505e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: baseline_chisq",
+      "kind": "fit statistic",
+      "values": {
+        "psychnets": 532.128922173028,
+        "psychonetrics": 532.12892266416
+      },
+      "baseline": "psychonetrics",
+      "difference": 4.91131913804566e-07,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: bic",
+      "kind": "fit statistic",
+      "values": {
+        "psychnets": 15032.2346895951,
+        "psychonetrics": 15032.2347123593
+      },
+      "baseline": "psychonetrics",
+      "difference": 2.27642285608454e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: cfi",
+      "kind": "fit index",
+      "values": {
+        "psychnets": 0.98898077919425,
+        "psychonetrics": 0.988980728745663
+      },
+      "baseline": "psychonetrics",
+      "difference": 5.0448586308427e-08,
+      "measure": "absolute",
+      "tolerance": 1e-05,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: tli",
+      "kind": "fit index",
+      "values": {
+        "psychnets": 0.986476410829307,
+        "psychonetrics": 0.986476348915132
+      },
+      "baseline": "psychonetrics",
+      "difference": 6.19141742319584e-08,
+      "measure": "absolute",
+      "tolerance": 1e-05,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "fit: rmsea",
+      "kind": "fit index",
+      "values": {
+        "psychnets": 0.0137222022115079,
+        "psychonetrics": 0.0137222336306771
+      },
+      "baseline": "psychonetrics",
+      "difference": 3.14191692663002e-08,
+      "measure": "absolute",
+      "tolerance": 1e-05,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    }
+  ]
+}

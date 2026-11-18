@@ -1,0 +1,57 @@
+
+> answers <- as.matrix(utils::read.csv("../data/bfi6_binary.csv"))
+
+> edge_names <- function(m) {
++   upper <- upper.tri(m)
++   paste(rownames(m)[row(m)[upper]], "--", colnames(m)[col(m)[upper]])
++ }
+
+> items <- colnames(answers)
+
+> # one column per regressed item: its intercept, then its coefficient on every item (0 on itself)
+> nodewise <- sapply(items, function(item) {
++   others <- setdiff(items, item)
++   fit <- glm(answers[, item] ~ answers[, others], family = binomial,
++              control = glm.control(epsilon = 1e-12, maxit = 100))
++   replace(setNames(numeric(length(items) + 1), c("threshold", items)), c("threshold", others), coef(fit))
++ })
+
+> nodewise
+                  A1         A2         A3         A4         A5        C1
+threshold  0.1078184 -0.1151561 -1.1911976 -0.5607997 -1.1130737 0.2457664
+A1         0.0000000 -0.9695263 -0.5424992 -0.2453150 -0.3537928 0.4917514
+A2        -0.9676002  0.0000000  1.2123082  0.7286340  0.8381510 0.5408528
+A3        -0.5300201  1.2028704  0.0000000  0.7389669  1.6006313 0.2637962
+A4        -0.2474670  0.7311905  0.7471153  0.0000000  0.8044130 0.3137788
+A5        -0.3511083  0.8373587  1.6017859  0.8030275  0.0000000 0.2746798
+C1         0.4953916  0.5543027  0.2634997  0.3159637  0.2811084 0.0000000
+
+> weights <- (nodewise[items, ] + t(nodewise[items, ])) / 2
+
+> result <- rbind(
++   data.frame(quantity = paste("weight:", edge_names(weights)), kind = "edge weight", value = weights[upper.tri(weights)]),
++   data.frame(quantity = paste("threshold:", items), kind = "threshold", value = nodewise["threshold", ]))
+
+> result
+           quantity        kind      value
+1  weight: A1 -- A2 edge weight -0.9685632
+2  weight: A1 -- A3 edge weight -0.5362597
+3  weight: A2 -- A3 edge weight  1.2075893
+4  weight: A1 -- A4 edge weight -0.2463910
+5  weight: A2 -- A4 edge weight  0.7299123
+6  weight: A3 -- A4 edge weight  0.7430411
+7  weight: A1 -- A5 edge weight -0.3524505
+8  weight: A2 -- A5 edge weight  0.8377548
+9  weight: A3 -- A5 edge weight  1.6012086
+10 weight: A4 -- A5 edge weight  0.8037202
+11 weight: A1 -- C1 edge weight  0.4935715
+12 weight: A2 -- C1 edge weight  0.5475777
+13 weight: A3 -- C1 edge weight  0.2636480
+14 weight: A4 -- C1 edge weight  0.3148713
+15 weight: A5 -- C1 edge weight  0.2778941
+A1    threshold: A1   threshold  0.1078184
+A2    threshold: A2   threshold -0.1151561
+A3    threshold: A3   threshold -1.1911976
+A4    threshold: A4   threshold -0.5607997
+A5    threshold: A5   threshold -1.1130737
+C1    threshold: C1   threshold  0.2457664

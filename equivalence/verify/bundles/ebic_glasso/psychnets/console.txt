@@ -1,0 +1,67 @@
+
+> items <- utils::read.csv("../data/bfi10.csv")
+
+> fit <- ebic_glasso(data = items, gamma = 0.5, nlambda = 100L, lambda_min_ratio = 0.01,
++                    threshold = 0, cor_method = "pearson", penalize_diagonal = FALSE,
++                    native = TRUE, refit = TRUE)
+
+> fit
+<psychnet> glasso network
+  nodes: 10   edges: 32   (undirected)
+  lambda: 0.0235   gamma: 0.5
+  optimality (KKT residual): 9.18e-10
+
+> edges <- as.data.frame(fit, include_zero = TRUE)
+
+> result <- rbind(
++   with(edges, data.frame(quantity = paste("weight:", from, "--", to), kind = "partial correlation", value = weight)),
++   data.frame(quantity = "selected lambda", kind = "penalty", value = fit$lambda))
+
+> result
+           quantity                kind        value
+1  weight: A1 -- A2 partial correlation -0.231812728
+2  weight: A1 -- A3 partial correlation -0.099588901
+3  weight: A2 -- A3 partial correlation  0.280795756
+4  weight: A1 -- A4 partial correlation  0.000000000
+5  weight: A2 -- A4 partial correlation  0.150537076
+6  weight: A3 -- A4 partial correlation  0.162527825
+7  weight: A1 -- A5 partial correlation -0.008440776
+8  weight: A2 -- A5 partial correlation  0.144631004
+9  weight: A3 -- A5 partial correlation  0.346158899
+10 weight: A4 -- A5 partial correlation  0.106313889
+11 weight: A1 -- C1 partial correlation  0.031060424
+12 weight: A2 -- C1 partial correlation  0.000000000
+13 weight: A3 -- C1 partial correlation  0.000000000
+14 weight: A4 -- C1 partial correlation  0.000000000
+15 weight: A5 -- C1 partial correlation  0.038986230
+16 weight: A1 -- C2 partial correlation  0.042981865
+17 weight: A2 -- C2 partial correlation  0.000000000
+18 weight: A3 -- C2 partial correlation  0.017616436
+19 weight: A4 -- C2 partial correlation  0.114391440
+20 weight: A5 -- C2 partial correlation  0.000000000
+21 weight: C1 -- C2 partial correlation  0.288062354
+22 weight: A1 -- C3 partial correlation  0.014858204
+23 weight: A2 -- C3 partial correlation  0.094889065
+24 weight: A3 -- C3 partial correlation  0.000000000
+25 weight: A4 -- C3 partial correlation  0.000000000
+26 weight: A5 -- C3 partial correlation  0.004461434
+27 weight: C1 -- C3 partial correlation  0.124242732
+28 weight: C2 -- C3 partial correlation  0.177070995
+29 weight: A1 -- C4 partial correlation  0.076063784
+30 weight: A2 -- C4 partial correlation -0.005102851
+31 weight: A3 -- C4 partial correlation  0.000000000
+32 weight: A4 -- C4 partial correlation  0.000000000
+33 weight: A5 -- C4 partial correlation  0.000000000
+34 weight: C1 -- C4 partial correlation -0.149629747
+35 weight: C2 -- C4 partial correlation -0.178950899
+36 weight: C3 -- C4 partial correlation -0.121930745
+37 weight: A1 -- C5 partial correlation  0.000000000
+38 weight: A2 -- C5 partial correlation  0.000000000
+39 weight: A3 -- C5 partial correlation -0.003460026
+40 weight: A4 -- C5 partial correlation -0.121479780
+41 weight: A5 -- C5 partial correlation -0.044294608
+42 weight: C1 -- C5 partial correlation -0.033859985
+43 weight: C2 -- C5 partial correlation -0.052917695
+44 weight: C3 -- C5 partial correlation -0.163395876
+45 weight: C4 -- C5 partial correlation  0.343288137
+46  selected lambda             penalty  0.023502752

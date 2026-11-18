@@ -1,0 +1,35 @@
+quantity,kind,value
+p: network structure,p value,0.062500000000000000
+p: global strength,p value,0.062500000000000000
+p: edge V1 -- V2,p value,0.062500000000000000
+p: edge V1 -- V3,p value,0.062500000000000000
+p: edge V2 -- V3,p value,0.062500000000000000
+p: edge V1 -- V4,p value,0.875000000000000000
+p: edge V2 -- V4,p value,0.062500000000000000
+p: edge V3 -- V4,p value,0.187500000000000000
+p: edge V1 -- V5,p value,0.312500000000000000
+p: edge V2 -- V5,p value,0.437500000000000000
+p: edge V3 -- V5,p value,0.187500000000000000
+p: edge V4 -- V5,p value,0.875000000000000000
+weight, group 1: V1 -- V2,edge weight,0.238234705378730149
+weight, group 1: V1 -- V3,edge weight,0.320753595704887817
+weight, group 1: V2 -- V3,edge weight,0.060054363547266836
+weight, group 1: V1 -- V4,edge weight,0.205882295968379286
+weight, group 1: V2 -- V4,edge weight,0.314339396981417718
+weight, group 1: V3 -- V4,edge weight,0.187874692819119310
+weight, group 1: V1 -- V5,edge weight,0.253734058988941746
+weight, group 1: V2 -- V5,edge weight,0.185238282935724669
+weight, group 1: V3 -- V5,edge weight,0.314916195857671444
+weight, group 1: V4 -- V5,edge weight,0.089508377517439952
+weight, group 2: V1 -- V2,edge weight,0.608188780461898504
+weight, group 2: V1 -- V3,edge weight,0.000000000000000000
+weight, group 2: V2 -- V3,edge weight,0.297499850665560561
+weight, group 2: V1 -- V4,edge weight,0.160750349813324728
+weight, group 2: V2 -- V4,edge weight,0.000000000000000000
+weight, group 2: V3 -- V4,edge weight,0.020653089842506678
+weight, group 2: V1 -- V5,edge weight,0.108345364183184620
+weight, group 2: V2 -- V5,edge weight,0.062349351395168055
+weight, group 2: V3 -- V5,edge weight,0.130010510364172188
+weight, group 2: V4 -- V5,edge weight,0.124848131214361682
+global strength, group 1,global strength,2.170535965699579073
+global strength, group 2,global strength,1.512645427940176868

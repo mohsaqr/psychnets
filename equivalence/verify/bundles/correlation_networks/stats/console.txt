@@ -1,0 +1,40 @@
+
+> srl <- utils::read.csv("../data/srl.csv")
+
+> edge_names <- function(m) {
++   upper <- upper.tri(m)
++   paste(rownames(m)[row(m)[upper]], "--", colnames(m)[col(m)[upper]])
++ }
+
+> correlations <- cor(srl, method = "pearson")
+
+> partials <- -cov2cor(solve(correlations))
+
+> result <- rbind(
++   data.frame(quantity = paste("cor:", edge_names(correlations)), kind = "correlation",
++              value = correlations[upper.tri(correlations)]),
++   data.frame(quantity = paste("pcor:", edge_names(partials)), kind = "partial correlation",
++              value = partials[upper.tri(partials)]))
+
+> result
+          quantity                kind       value
+1   cor: CSU -- IV         correlation  0.73686241
+2   cor: CSU -- SE         correlation  0.53255458
+3    cor: IV -- SE         correlation  0.26435497
+4   cor: CSU -- SR         correlation  0.90132598
+5    cor: IV -- SR         correlation  0.82762468
+6    cor: SE -- SR         correlation  0.59177800
+7   cor: CSU -- TA         correlation -0.17565546
+8    cor: IV -- TA         correlation -0.27638407
+9    cor: SE -- TA         correlation -0.54438717
+10   cor: SR -- TA         correlation -0.43567034
+11 pcor: CSU -- IV partial correlation -0.02719825
+12 pcor: CSU -- SE partial correlation  0.24100876
+13  pcor: IV -- SE partial correlation -0.45653729
+14 pcor: CSU -- SR partial correlation  0.75498495
+15  pcor: IV -- SR partial correlation  0.58392942
+16  pcor: SE -- SR partial correlation  0.21338957
+17 pcor: CSU -- TA partial correlation  0.60424261
+18  pcor: IV -- TA partial correlation -0.01369439
+19  pcor: SE -- TA partial correlation -0.42777818
+20  pcor: SR -- TA partial correlation -0.48401006

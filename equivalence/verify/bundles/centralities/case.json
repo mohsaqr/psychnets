@@ -1,0 +1,702 @@
+{
+  "schema": "prova.verification-case/1",
+  "title": "Node centralities of a signed weighted network",
+  "description": "Strength, expected influence, closeness and betweenness of a ten-node signed network (the EBIC graphical lasso network of the bfi items, rounded to six decimals). Shortest paths run over 1 / |weight|. psychnets reports closeness and betweenness normalized as igraph does (normalized = TRUE); qgraph::centrality_auto() reports closeness as 1 / sum of distances and betweenness as a count of paths, so the qgraph script multiplies closeness by (p - 1) and divides betweenness by (p - 1)(p - 2) / 2, as psychnets' documentation states the relation.",
+  "covers": [
+    "net_centralities()"
+  ],
+  "generator": "psychnets equivalence/verify/export-bundles.R",
+  "created_at": "2026-11-18",
+  "sides": [
+    {
+      "id": "psychnets",
+      "name": "psychnets",
+      "version": "0.8.3",
+      "primary": true,
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "qgraph",
+      "name": "qgraph",
+      "version": "1.10.1",
+      "authority": "open-source",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "igraph",
+      "name": "igraph",
+      "version": "2.3.4",
+      "authority": "open-source",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    }
+  ],
+  "sections": [
+    {
+      "id": "code",
+      "title": "Code",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/script.R",
+          "bytes": 216,
+          "sha256": "97d2ed6828172f16a697af9a66c7b82130b05221fec47241a484fd99860cf50f",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "key": "node",
+            "reads": [
+              "data/network.tsv"
+            ]
+          }
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/script.R",
+          "bytes": 461,
+          "sha256": "366c16f320242ae1976e3b22574995ed14e22abb111cf562a11f03cd5e9f8cda",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "key": "node",
+            "reads": [
+              "data/network.tsv"
+            ]
+          }
+        },
+        {
+          "side": "igraph",
+          "path": "igraph/script.R",
+          "bytes": 614,
+          "sha256": "8f76b80481e39c1096b092eb5965711bda2163e85e2ea9e46ea8ba01948000ba",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "key": "node",
+            "reads": [
+              "data/network.tsv"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "title": "Raw output",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/console.txt",
+          "bytes": 855,
+          "sha256": "b0c9978089799ac4d0f620ee62610abbd6806c6b0611c4b89203ef2cf6724e6a",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/console.txt",
+          "bytes": 1134,
+          "sha256": "aa22b5dbfa4b42d74d756dbbb4f6349d916fcc0e47f82f7c7fba68c78f90ea15",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "igraph",
+          "path": "igraph/console.txt",
+          "bytes": 1476,
+          "sha256": "9e5ad809179975570142824a584db4cd8a8c1119605199275b268570c8ea947c",
+          "label": "R console",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": [
+        {
+          "path": "data/network.tsv",
+          "bytes": 729,
+          "sha256": "461a974f429eafae386c6350c480439d7d2d50b01db5d24fa54f79b59188989f",
+          "label": "Network"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "quantity": "strength: A1",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.504806,
+        "qgraph": 0.504806,
+        "igraph": 0.504806
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: A2",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.907799,
+        "qgraph": 0.907799,
+        "igraph": 0.907799
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: A3",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.910142,
+        "qgraph": 0.910142,
+        "igraph": 0.910142
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: A4",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.65526,
+        "qgraph": 0.65526,
+        "igraph": 0.65526
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: A5",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.693282,
+        "qgraph": 0.693282,
+        "igraph": 0.693282
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: C1",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.665842,
+        "qgraph": 0.665842,
+        "igraph": 0.665842
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: C2",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.871989,
+        "qgraph": 0.871989,
+        "igraph": 0.871989
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: C3",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.700848,
+        "qgraph": 0.700848,
+        "igraph": 0.700848
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: C4",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.874979,
+        "qgraph": 0.874979,
+        "igraph": 0.874979
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "strength: C5",
+      "kind": "strength",
+      "values": {
+        "psychnets": 0.762697,
+        "qgraph": 0.762697,
+        "igraph": 0.762697
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: A1",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": -0.17488,
+        "qgraph": -0.17488,
+        "igraph": -0.17488
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: A2",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.433931,
+        "qgraph": 0.433931,
+        "igraph": 0.433931
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: A3",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.704054,
+        "qgraph": 0.704054,
+        "igraph": 0.704054
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: A4",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.412298,
+        "qgraph": 0.412298,
+        "igraph": 0.412298
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: A5",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.587812,
+        "qgraph": 0.587812,
+        "igraph": 0.587812
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: C1",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.29886,
+        "qgraph": 0.29886,
+        "igraph": 0.29886
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: C2",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.408255,
+        "qgraph": 0.408255,
+        "igraph": 0.408255
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: C3",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": 0.1302,
+        "qgraph": 0.1302,
+        "igraph": 0.1302
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: C4",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": -0.0362749999999999,
+        "qgraph": -0.0362749999999999,
+        "igraph": -0.0362749999999999
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "expected_influence: C5",
+      "kind": "expected_influence",
+      "values": {
+        "psychnets": -0.076115,
+        "qgraph": -0.076115,
+        "igraph": -0.076115
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: A1",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0772302495633502,
+        "qgraph": 0.0772302495633502,
+        "igraph": 0.0772302495633502
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: A2",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0920123973048894,
+        "qgraph": 0.0920123973048894,
+        "igraph": 0.0920123973048894
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: A3",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0904336391610154,
+        "qgraph": 0.0904336391610154,
+        "igraph": 0.0904336391610154
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: A4",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.102884579621781,
+        "qgraph": 0.102884579621781,
+        "igraph": 0.102884579621781
+      },
+      "difference": 2.77555756156289e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: A5",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0733907111892453,
+        "qgraph": 0.0733907111892453,
+        "igraph": 0.0733907111892453
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: C1",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0762379301234223,
+        "qgraph": 0.0762379301234223,
+        "igraph": 0.0762379301234223
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: C2",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0911410772240075,
+        "qgraph": 0.0911410772240076,
+        "igraph": 0.0911410772240076
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: C3",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0910484111618573,
+        "qgraph": 0.0910484111618573,
+        "igraph": 0.0910484111618573
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: C4",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.0876998173198696,
+        "qgraph": 0.0876998173198696,
+        "igraph": 0.0876998173198697
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "closeness: C5",
+      "kind": "closeness",
+      "values": {
+        "psychnets": 0.091879422792577,
+        "qgraph": 0.091879422792577,
+        "igraph": 0.091879422792577
+      },
+      "difference": 1.38777878078145e-17,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: A1",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.0277777777777778,
+        "qgraph": 0.0277777777777778,
+        "igraph": 0.0277777777777778
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: A2",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.166666666666667,
+        "qgraph": 0.166666666666667,
+        "igraph": 0.166666666666667
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: A3",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.222222222222222,
+        "qgraph": 0.222222222222222,
+        "igraph": 0.222222222222222
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: A4",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.277777777777778,
+        "qgraph": 0.277777777777778,
+        "igraph": 0.277777777777778
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: A5",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0,
+        "qgraph": 0,
+        "igraph": 0
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: C1",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0,
+        "qgraph": 0,
+        "igraph": 0
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: C2",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.0833333333333333,
+        "qgraph": 0.0833333333333333,
+        "igraph": 0.0833333333333333
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: C3",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.0277777777777778,
+        "qgraph": 0.0277777777777778,
+        "igraph": 0.0277777777777778
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: C4",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.138888888888889,
+        "qgraph": 0.138888888888889,
+        "igraph": 0.138888888888889
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "betweenness: C5",
+      "kind": "betweenness",
+      "values": {
+        "psychnets": 0.111111111111111,
+        "qgraph": 0.111111111111111,
+        "igraph": 0.111111111111111
+      },
+      "difference": 0,
+      "measure": "absolute",
+      "tolerance": 1e-10,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    }
+  ]
+}

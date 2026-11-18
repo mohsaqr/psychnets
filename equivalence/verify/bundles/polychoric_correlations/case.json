@@ -1,0 +1,770 @@
+{
+  "schema": "prova.verification-case/1",
+  "title": "Polychoric correlations of ordinal items",
+  "description": "Polychoric correlations of the ten psych::bfi items (six ordered categories each), as used by cor_method = \"auto\". psych::polychoric() and qgraph::cor_auto() (which calls lavaan) are two independent two-step estimators; psych runs with its defaults, which include a continuity correction of 0.5 for empty cells.",
+  "covers": [
+    "cor_auto()",
+    "cor_network()"
+  ],
+  "generator": "psychnets equivalence/verify/export-bundles.R",
+  "created_at": "2026-11-18",
+  "sides": [
+    {
+      "id": "psychnets",
+      "name": "psychnets",
+      "version": "0.8.3",
+      "primary": true,
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "psych",
+      "name": "psych",
+      "version": "2.6.9",
+      "authority": "open-source",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    },
+    {
+      "id": "qgraph",
+      "name": "qgraph",
+      "version": "1.10.1",
+      "authority": "open-source",
+      "source": "live",
+      "run_at": "2026-11-18",
+      "platform": "R version 4.6.2 (2026-10-29), aarch64-apple-darwin23"
+    }
+  ],
+  "sections": [
+    {
+      "id": "code",
+      "title": "Code",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/script.R",
+          "bytes": 283,
+          "sha256": "2473dd259cdcb85ea7861554b00dc58983f942ef5fdcb4ca643acd50dc9838ac",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/bfi10.csv"
+            ]
+          }
+        },
+        {
+          "side": "psych",
+          "path": "psych/script.R",
+          "bytes": 389,
+          "sha256": "a37fbb30ab6ac6581f1c34d9a464db4667e434efa9bedc924b1a5b0d20ac5827",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/bfi10.csv"
+            ]
+          }
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/script.R",
+          "bytes": 400,
+          "sha256": "822b8851bc468fa3c6a5657379814629418e8a109bfb2a95c3345e738ed012b4",
+          "label": "Script",
+          "type": "code",
+          "language": "r",
+          "run": {
+            "engine": "r",
+            "result": "result",
+            "reads": [
+              "data/bfi10.csv"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "title": "Raw output",
+      "items": [
+        {
+          "side": "psychnets",
+          "path": "psychnets/console.txt",
+          "bytes": 3850,
+          "sha256": "4757297ea4f9e30c4fb5bf2fc9addfb2b166f342f78e23e3c102e70a3ed04296",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "psych",
+          "path": "psych/console.txt",
+          "bytes": 2623,
+          "sha256": "e686004de0cfd2f43ef2ddaea8f2db375c8dfebe2c425277a624e293ba0ae920",
+          "label": "R console",
+          "type": "text"
+        },
+        {
+          "side": "qgraph",
+          "path": "qgraph/console.txt",
+          "bytes": 2704,
+          "sha256": "a0c02ceba987a6a64d2e2632110c7e7365e40e2154ab859153cf8911a636f5c0",
+          "label": "R console",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "items": [
+        {
+          "path": "data/bfi10.csv",
+          "bytes": 52690,
+          "sha256": "86d878538a2e55eefe71c9d828a576901a2fc0ff387a3789f655d59b15ee7aff",
+          "label": "bfi items"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "quantity": "A1 -- A2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.410177939920252,
+        "psych": -0.410189408511086,
+        "qgraph": -0.410177783297881
+      },
+      "difference": 1.16252132055794e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- A3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.323901075685577,
+        "psych": -0.323883174379077,
+        "qgraph": -0.323901205107419
+      },
+      "difference": 1.80307283418335e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- A3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.560809547079561,
+        "psych": 0.560797062625899,
+        "qgraph": 0.560809628596061
+      },
+      "difference": 1.25659701617487e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- A4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.173381086284503,
+        "psych": -0.173395534616109,
+        "qgraph": -0.173380924120504
+      },
+      "difference": 1.46104956048609e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- A4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.395770730408193,
+        "psych": 0.395785976203872,
+        "qgraph": 0.395770707107441
+      },
+      "difference": 1.52690964306812e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- A4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.414094203460759,
+        "psych": 0.414102172567194,
+        "qgraph": 0.414094317950571
+      },
+      "difference": 7.96910643546811e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- A5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.229524830341856,
+        "psych": -0.229535938335515,
+        "qgraph": -0.229524750529332
+      },
+      "difference": 1.11878061825332e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- A5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.446463890937516,
+        "psych": 0.446460144516139,
+        "qgraph": 0.446463856776909
+      },
+      "difference": 3.74642137679349e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- A5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.574350046998134,
+        "psych": 0.574366005917457,
+        "qgraph": 0.574350035226859
+      },
+      "difference": 1.59706905982215e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A4 -- A5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.360573079759905,
+        "psych": 0.360590007498365,
+        "qgraph": 0.360573229910853
+      },
+      "difference": 1.69277384593491e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- C1",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.00565036133696211,
+        "psych": -0.0056503613818143,
+        "qgraph": -0.00565034865816782
+      },
+      "difference": 1.27236464827693e-08,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- C1",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.118789048593819,
+        "psych": 0.118802966098541,
+        "qgraph": 0.118789103425084
+      },
+      "difference": 1.39175047218221e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- C1",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.127581811833881,
+        "psych": 0.127599201413479,
+        "qgraph": 0.127581815136935
+      },
+      "difference": 1.73895795984313e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A4 -- C1",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.116620570358488,
+        "psych": 0.116631755057338,
+        "qgraph": 0.116620690619531
+      },
+      "difference": 1.11846988496422e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A5 -- C1",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.165416708511108,
+        "psych": 0.165399246705276,
+        "qgraph": 0.165416724429314
+      },
+      "difference": 1.74777240379564e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- C2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.00741080774664756,
+        "psych": 0.00741080778277374,
+        "qgraph": 0.00741080015836014
+      },
+      "difference": 7.6244135996037e-09,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- C2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.157145113187387,
+        "psych": 0.157164626926629,
+        "qgraph": 0.157145162803131
+      },
+      "difference": 1.95137392416667e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- C2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.154862538055617,
+        "psych": 0.154881988893432,
+        "qgraph": 0.154862608479692
+      },
+      "difference": 1.94508378146829e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A4 -- C2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.268598815777653,
+        "psych": 0.268595364486611,
+        "qgraph": 0.268598780899195
+      },
+      "difference": 3.45129104162289e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A5 -- C2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.141325805086592,
+        "psych": 0.141305931192166,
+        "qgraph": 0.141325809486969
+      },
+      "difference": 1.98782948026555e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C1 -- C2",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.4909753170236,
+        "psych": 0.490978294012591,
+        "qgraph": 0.490975471809115
+      },
+      "difference": 2.97698899126564e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.0235114765127302,
+        "psych": -0.023511477117393,
+        "qgraph": -0.0235113432763371
+      },
+      "difference": 1.33841055877104e-07,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.224388412596752,
+        "psych": 0.224408352068094,
+        "qgraph": 0.224388507456967
+      },
+      "difference": 1.99394713413514e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.154165203381355,
+        "psych": 0.154146340851228,
+        "qgraph": 0.154165208146728
+      },
+      "difference": 1.88672954993252e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A4 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.169089626412298,
+        "psych": 0.169108432010263,
+        "qgraph": 0.169089728603113
+      },
+      "difference": 1.88055979656876e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A5 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.15401160911454,
+        "psych": 0.153992927829662,
+        "qgraph": 0.154011613925568
+      },
+      "difference": 1.86860959063007e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C1 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.352978718777453,
+        "psych": 0.352989777470564,
+        "qgraph": 0.352978776648617
+      },
+      "difference": 1.10586931105217e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C2 -- C3",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.407846686090389,
+        "psych": 0.407862300565812,
+        "qgraph": 0.407846616384292
+      },
+      "difference": 1.56841815200925e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.145090429358628,
+        "psych": 0.145108854064795,
+        "qgraph": 0.145090458851214
+      },
+      "difference": 1.84247061668086e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.190859311620021,
+        "psych": -0.190862250596658,
+        "qgraph": -0.190859364228066
+      },
+      "difference": 2.93897663666831e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.16808986594569,
+        "psych": -0.168071029358712,
+        "qgraph": -0.168089915752502
+      },
+      "difference": 1.88863937898853e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A4 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.199491347395742,
+        "psych": -0.199476942094229,
+        "qgraph": -0.199491237093768
+      },
+      "difference": 1.4405301512338e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A5 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.163576765461611,
+        "psych": -0.163559335206827,
+        "qgraph": -0.163576772132885
+      },
+      "difference": 1.74369260576013e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C1 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.41068746073705,
+        "psych": -0.410700282496948,
+        "qgraph": -0.410687342258308
+      },
+      "difference": 1.29402386402355e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C2 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.443991396227068,
+        "psych": -0.443987319125043,
+        "qgraph": -0.443991384221327
+      },
+      "difference": 4.07710202426914e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C3 -- C4",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.394419716379884,
+        "psych": -0.394426150173692,
+        "qgraph": -0.394419589099186
+      },
+      "difference": 6.56107450647259e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A1 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.0551718401389928,
+        "psych": 0.0551739913902815,
+        "qgraph": 0.0551717841482683
+      },
+      "difference": 2.2072420131844e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A2 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.159169988845686,
+        "psych": -0.159150254642216,
+        "qgraph": -0.159170018317599
+      },
+      "difference": 1.9763675383061e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A3 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.186351774280156,
+        "psych": -0.186346170170583,
+        "qgraph": -0.186351631117323
+      },
+      "difference": 5.60410957270441e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A4 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.286457400142368,
+        "psych": -0.286450698579724,
+        "qgraph": -0.286457318560596
+      },
+      "difference": 6.70156264404032e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "A5 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.19938547116213,
+        "psych": -0.199405014551279,
+        "qgraph": -0.199385600937613
+      },
+      "difference": 1.9543389149973e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C1 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.3015310950664,
+        "psych": -0.301517931038026,
+        "qgraph": -0.3015312532434
+      },
+      "difference": 1.33222053734228e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C2 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.337407636258812,
+        "psych": -0.337424221067883,
+        "qgraph": -0.337407708968373
+      },
+      "difference": 1.6584809070519e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C3 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": -0.388681621012708,
+        "psych": -0.388686634055676,
+        "qgraph": -0.388681455347023
+      },
+      "difference": 5.17870865301973e-06,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    },
+    {
+      "quantity": "C4 -- C5",
+      "kind": "polychoric correlation",
+      "values": {
+        "psychnets": 0.534661700528642,
+        "psych": 0.53467674349564,
+        "qgraph": 0.534661696200499
+      },
+      "difference": 1.50472951413461e-05,
+      "measure": "absolute",
+      "tolerance": 0.001,
+      "rule": "largest difference between any two sides",
+      "status": "agree"
+    }
+  ]
+}

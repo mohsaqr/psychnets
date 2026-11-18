@@ -1,0 +1,36 @@
+
+> srl <- utils::read.csv("../data/srl.csv")
+
+> correlations <- as.data.frame(cor_network(data = srl, cor_method = "pearson"))
+
+> partials <- as.data.frame(pcor_network(data = srl, cor_method = "pearson"))
+
+> correlations
+   from to     weight
+1   CSU IV  0.7368624
+2   CSU SE  0.5325546
+3    IV SE  0.2643550
+4   CSU SR  0.9013260
+5    IV SR  0.8276247
+6    SE SR  0.5917780
+7   CSU TA -0.1756555
+8    IV TA -0.2763841
+9    SE TA -0.5443872
+10   SR TA -0.4356703
+
+> partials
+   from to      weight
+1   CSU IV -0.02719825
+2   CSU SE  0.24100876
+3    IV SE -0.45653729
+4   CSU SR  0.75498495
+5    IV SR  0.58392942
+6    SE SR  0.21338957
+7   CSU TA  0.60424261
+8    IV TA -0.01369439
+9    SE TA -0.42777818
+10   SR TA -0.48401006
+
+> result <- rbind(
++   with(correlations, data.frame(quantity = paste("cor:", from, "--", to), kind = "correlation", value = weight)),
++   with(partials, data.frame(quantity = paste("pcor:", from, "--", to), kind = "partial correlation", value = weight)))

@@ -1,0 +1,38 @@
+
+> library(igraph)
+
+Attaching package: ‘igraph’
+
+The following objects are masked from ‘package:stats’:
+
+    decompose, spectrum
+
+The following object is masked from ‘package:base’:
+
+    union
+
+
+> network <- as.matrix(utils::read.delim("../data/network.tsv", row.names = 1))
+
+> graph <- graph_from_adjacency_matrix(abs(network), mode = "undirected", weighted = TRUE)
+
+> lengths <- 1 / E(graph)$weight
+
+> # expected influence is the signed row sum; igraph has no function of that name
+> result <- data.frame(node = V(graph)$name, strength = strength(graph),
++                      expected_influence = rowSums(network),
++                      closeness = closeness(graph, weights = lengths, normalized = TRUE),
++                      betweenness = betweenness(graph, weights = lengths, normalized = TRUE))
+
+> result
+   node strength expected_influence  closeness betweenness
+A1   A1 0.504806          -0.174880 0.07723025  0.02777778
+A2   A2 0.907799           0.433931 0.09201240  0.16666667
+A3   A3 0.910142           0.704054 0.09043364  0.22222222
+A4   A4 0.655260           0.412298 0.10288458  0.27777778
+A5   A5 0.693282           0.587812 0.07339071  0.00000000
+C1   C1 0.665842           0.298860 0.07623793  0.00000000
+C2   C2 0.871989           0.408255 0.09114108  0.08333333
+C3   C3 0.700848           0.130200 0.09104841  0.02777778
+C4   C4 0.874979          -0.036275 0.08769982  0.13888889
+C5   C5 0.762697          -0.076115 0.09187942  0.11111111

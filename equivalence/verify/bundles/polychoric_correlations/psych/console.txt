@@ -1,0 +1,62 @@
+
+> library(psych)
+
+> items <- utils::read.csv("../data/bfi10.csv")
+
+> edge_names <- function(m) {
++   upper <- upper.tri(m)
++   paste(rownames(m)[row(m)[upper]], "--", colnames(m)[col(m)[upper]])
++ }
+
+> correlations <- polychoric(items)$rho
+
+> result <- data.frame(quantity = edge_names(correlations), kind = "polychoric correlation",
++                      value = correlations[upper.tri(correlations)])
+
+> result
+   quantity                   kind        value
+1  A1 -- A2 polychoric correlation -0.410189409
+2  A1 -- A3 polychoric correlation -0.323883174
+3  A2 -- A3 polychoric correlation  0.560797063
+4  A1 -- A4 polychoric correlation -0.173395535
+5  A2 -- A4 polychoric correlation  0.395785976
+6  A3 -- A4 polychoric correlation  0.414102173
+7  A1 -- A5 polychoric correlation -0.229535938
+8  A2 -- A5 polychoric correlation  0.446460145
+9  A3 -- A5 polychoric correlation  0.574366006
+10 A4 -- A5 polychoric correlation  0.360590007
+11 A1 -- C1 polychoric correlation -0.005650361
+12 A2 -- C1 polychoric correlation  0.118802966
+13 A3 -- C1 polychoric correlation  0.127599201
+14 A4 -- C1 polychoric correlation  0.116631755
+15 A5 -- C1 polychoric correlation  0.165399247
+16 A1 -- C2 polychoric correlation  0.007410808
+17 A2 -- C2 polychoric correlation  0.157164627
+18 A3 -- C2 polychoric correlation  0.154881989
+19 A4 -- C2 polychoric correlation  0.268595364
+20 A5 -- C2 polychoric correlation  0.141305931
+21 C1 -- C2 polychoric correlation  0.490978294
+22 A1 -- C3 polychoric correlation -0.023511477
+23 A2 -- C3 polychoric correlation  0.224408352
+24 A3 -- C3 polychoric correlation  0.154146341
+25 A4 -- C3 polychoric correlation  0.169108432
+26 A5 -- C3 polychoric correlation  0.153992928
+27 C1 -- C3 polychoric correlation  0.352989777
+28 C2 -- C3 polychoric correlation  0.407862301
+29 A1 -- C4 polychoric correlation  0.145108854
+30 A2 -- C4 polychoric correlation -0.190862251
+31 A3 -- C4 polychoric correlation -0.168071029
+32 A4 -- C4 polychoric correlation -0.199476942
+33 A5 -- C4 polychoric correlation -0.163559335
+34 C1 -- C4 polychoric correlation -0.410700282
+35 C2 -- C4 polychoric correlation -0.443987319
+36 C3 -- C4 polychoric correlation -0.394426150
+37 A1 -- C5 polychoric correlation  0.055173991
+38 A2 -- C5 polychoric correlation -0.159150255
+39 A3 -- C5 polychoric correlation -0.186346170
+40 A4 -- C5 polychoric correlation -0.286450699
+41 A5 -- C5 polychoric correlation -0.199405015
+42 C1 -- C5 polychoric correlation -0.301517931
+43 C2 -- C5 polychoric correlation -0.337424221
+44 C3 -- C5 polychoric correlation -0.388686634
+45 C4 -- C5 polychoric correlation  0.534676743

@@ -1,0 +1,56 @@
+quantity,kind,value
+estimate: mu V1 NA,estimate, 1.0042586044290300e+00
+estimate: mu V2 NA,estimate, 1.9341261980476192e+00
+estimate: mu V3 NA,estimate, 3.0110615100273170e+00
+estimate: omega_zeta_within V2 V1,estimate, 2.7668815314622563e-01
+estimate: omega_zeta_within V3 V1,estimate,-6.7799612379228491e-02
+estimate: omega_zeta_within V3 V2,estimate, 2.3259692336708274e-02
+estimate: delta_zeta_within V1 V1,estimate, 9.6300921269804995e-01
+estimate: delta_zeta_within V2 V2,estimate, 9.8512886226504837e-01
+estimate: delta_zeta_within V3 V3,estimate, 1.0052660725202469e+00
+estimate: beta V1 V1,estimate, 3.9805879227313906e-01
+estimate: beta V2 V1,estimate, 2.7569791397068488e-01
+estimate: beta V3 V1,estimate,-4.4761540402187945e-02
+estimate: beta V1 V2,estimate, 4.2729585758473545e-03
+estimate: beta V2 V2,estimate, 3.7638961702496343e-01
+estimate: beta V3 V2,estimate,-1.5976062940144073e-01
+estimate: beta V1 V3,estimate, 3.7177192145346198e-02
+estimate: beta V2 V3,estimate, 4.6842742795749952e-02
+estimate: beta V3 V3,estimate, 3.9327187233433403e-01
+estimate: omega_zeta_between V2 V1,estimate, 1.1427985344564343e-01
+estimate: omega_zeta_between V3 V1,estimate, 5.1971144918240031e-01
+estimate: omega_zeta_between V3 V2,estimate,-8.8889895397246732e-02
+estimate: delta_zeta_between V1 V1,estimate, 6.0637014787741483e-01
+estimate: delta_zeta_between V2 V2,estimate, 9.2442456114155414e-01
+estimate: delta_zeta_between V3 V3,estimate, 7.2483943365447490e-01
+se: mu V1 NA,standard error, 5.0252986540529399e-02
+se: mu V2 NA,standard error, 6.1705530860599260e-02
+se: mu V3 NA,standard error, 5.6478652096413687e-02
+se: omega_zeta_within V2 V1,standard error, 3.1011640084338297e-02
+se: omega_zeta_within V3 V1,standard error, 3.3140176674703502e-02
+se: omega_zeta_within V3 V2,standard error, 3.3802833551442639e-02
+se: delta_zeta_within V1 V1,standard error, 2.2519508644345012e-02
+se: delta_zeta_within V2 V2,standard error, 2.3633034809219019e-02
+se: delta_zeta_within V3 V3,standard error, 2.3791502295705223e-02
+se: beta V1 V1,standard error, 4.8726427999871140e-02
+se: beta V2 V1,standard error, 4.2426419992344699e-02
+se: beta V3 V1,standard error, 4.1992963946258226e-02
+se: beta V1 V2,standard error, 4.0152691591468129e-02
+se: beta V2 V2,standard error, 4.9625310427849526e-02
+se: beta V3 V2,standard error, 3.9957422778982052e-02
+se: beta V1 V3,standard error, 3.9956066550410868e-02
+se: beta V2 V3,standard error, 4.1304655649190357e-02
+se: beta V3 V3,standard error, 4.8580618800902003e-02
+se: omega_zeta_between V2 V1,standard error, 1.7191905090268023e-01
+se: omega_zeta_between V3 V1,standard error, 1.4393765211822793e-01
+se: omega_zeta_between V3 V2,standard error, 1.5760993747129654e-01
+se: delta_zeta_between V1 V1,standard error, 9.8587013422284778e-02
+se: delta_zeta_between V2 V2,standard error, 7.0158716770290369e-02
+se: delta_zeta_between V3 V3,standard error, 1.0870267870243693e-01
+fit: logl,fit statistic,-7.4442197816143535e+03
+fit: chisq,fit statistic, 7.0971111969513004e+01
+fit: baseline_chisq,fit statistic, 5.3212892266416020e+02
+fit: bic,fit statistic, 1.5032234712359299e+04
+fit: cfi,fit index, 9.8898072874566345e-01
+fit: tli,fit index, 9.8647634891513236e-01
+fit: rmsea,fit index, 1.3722233630677131e-02

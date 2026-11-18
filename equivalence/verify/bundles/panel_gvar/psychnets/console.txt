@@ -1,0 +1,133 @@
+
+> panel <- utils::read.csv("../data/panel.csv")
+
+> fit <- panel_gvar(data = panel, vars = c("V1", "V2", "V3"), id = "id", wave = "wave", select = "none")
+
+> fit
+<psychnet_panelgvar> panel graphical VAR (temporal + contemporaneous + between)
+  persons: 400   waves: 4   nodes: 3
+  edges (significant/estimated, p < 0.01): temporal 2/6 (+3/3 autoregressive)   contemporaneous 1/3   between 1/3
+  selection: none (full model)
+  fit: chisq(66) = 70.97, p = 0.316   CFI = 0.989   TLI = 0.986   RMSEA = 0.014
+  optimality (ML score): 2.10e-13
+  starts: 3 of 3 reached the best saturated optimum
+
+> parameters <- as.data.frame(fit, what = "parameters")
+
+> parameters
+               matrix row  col     estimate         se             p
+1                  mu  V1 <NA>  1.004217755 0.05025095  7.580706e-89
+2                  mu  V2 <NA>  1.934146794 0.06170553 1.145709e-215
+3                  mu  V3 <NA>  3.011083167 0.05647962  0.000000e+00
+4   omega_zeta_within  V2   V1  0.276707373 0.03101131  4.546955e-19
+5   omega_zeta_within  V3   V1 -0.067828745 0.03314004  4.068453e-02
+6   omega_zeta_within  V3   V2  0.023317324 0.03380281  4.903173e-01
+7   delta_zeta_within  V1   V1  0.962998981 0.02251926  0.000000e+00
+8   delta_zeta_within  V2   V2  0.985083738 0.02363208  0.000000e+00
+9   delta_zeta_within  V3   V3  1.005250842 0.02379115  0.000000e+00
+10               beta  V1   V1  0.398028812 0.04872593  3.116607e-16
+11               beta  V2   V1  0.275679286 0.04242484  8.136037e-11
+12               beta  V3   V1 -0.044782458 0.04199261  2.862263e-01
+13               beta  V1   V2  0.004282036 0.04015449  9.150753e-01
+14               beta  V2   V2  0.376448792 0.04962630  3.307708e-14
+15               beta  V3   V2 -0.159726867 0.03995905  6.407897e-05
+16               beta  V1   V3  0.037169842 0.03995680  3.522412e-01
+17               beta  V2   V3  0.046857389 0.04130377  2.566025e-01
+18               beta  V3   V3  0.393288024 0.04858118  5.703877e-16
+19 omega_zeta_between  V2   V1  0.114245405 0.17193835  5.063987e-01
+20 omega_zeta_between  V3   V1  0.519696710 0.14394286  3.056808e-04
+21 omega_zeta_between  V3   V2 -0.088747420 0.15762413  5.734131e-01
+22 delta_zeta_between  V1   V1  0.606346304 0.09858352  7.719764e-10
+23 delta_zeta_between  V2   V2  0.924415112 0.07016829  1.234367e-39
+24 delta_zeta_between  V3   V3  0.724877292 0.10870959  2.592840e-11
+      ci_lower     ci_upper fixed
+1   0.90572771  1.102707801 FALSE
+2   1.81320618  2.055087407 FALSE
+3   2.90038515  3.121781185 FALSE
+4   0.21592631  0.337488432 FALSE
+5  -0.13278204 -0.002875455 FALSE
+6  -0.04293497  0.089569621 FALSE
+7   0.91886205  1.007135916 FALSE
+8   0.93876571  1.031401762 FALSE
+9   0.95862104  1.051880642 FALSE
+10  0.30252774  0.493529879 FALSE
+11  0.19252814  0.358830436 FALSE
+12 -0.12708646  0.037521544 FALSE
+13 -0.07441931  0.082983385 FALSE
+14  0.27918303  0.473714554 FALSE
+15 -0.23804517 -0.081408560 FALSE
+16 -0.04114404  0.115483724 FALSE
+17 -0.03409650  0.127811283 FALSE
+18  0.29807065  0.488505394 FALSE
+19 -0.22274757  0.451238382 FALSE
+20  0.23757389  0.801819528 FALSE
+21 -0.39768504  0.220190199 FALSE
+22  0.41312616  0.799566445 FALSE
+23  0.78688779  1.061942437 FALSE
+24  0.51181042  0.937944165 FALSE
+
+> indices <- utils::stack(as.data.frame(fit, what = "fit"),
++                         select = c(logl, chisq, baseline_chisq, bic, cfi, tli, rmsea))
+
+> result <- rbind(
++   with(parameters, data.frame(quantity = paste("estimate:", matrix, row, col), kind = "estimate", value = estimate)),
++   with(parameters, data.frame(quantity = paste("se:", matrix, row, col), kind = "standard error", value = se)),
++   with(indices, data.frame(quantity = paste("fit:", ind), kind = ifelse(ind %in% c("cfi", "tli", "rmsea"), "fit index", "fit statistic"), value = values)))
+
+> result
+                             quantity           kind         value
+1                  estimate: mu V1 NA       estimate  1.004218e+00
+2                  estimate: mu V2 NA       estimate  1.934147e+00
+3                  estimate: mu V3 NA       estimate  3.011083e+00
+4   estimate: omega_zeta_within V2 V1       estimate  2.767074e-01
+5   estimate: omega_zeta_within V3 V1       estimate -6.782875e-02
+6   estimate: omega_zeta_within V3 V2       estimate  2.331732e-02
+7   estimate: delta_zeta_within V1 V1       estimate  9.629990e-01
+8   estimate: delta_zeta_within V2 V2       estimate  9.850837e-01
+9   estimate: delta_zeta_within V3 V3       estimate  1.005251e+00
+10               estimate: beta V1 V1       estimate  3.980288e-01
+11               estimate: beta V2 V1       estimate  2.756793e-01
+12               estimate: beta V3 V1       estimate -4.478246e-02
+13               estimate: beta V1 V2       estimate  4.282036e-03
+14               estimate: beta V2 V2       estimate  3.764488e-01
+15               estimate: beta V3 V2       estimate -1.597269e-01
+16               estimate: beta V1 V3       estimate  3.716984e-02
+17               estimate: beta V2 V3       estimate  4.685739e-02
+18               estimate: beta V3 V3       estimate  3.932880e-01
+19 estimate: omega_zeta_between V2 V1       estimate  1.142454e-01
+20 estimate: omega_zeta_between V3 V1       estimate  5.196967e-01
+21 estimate: omega_zeta_between V3 V2       estimate -8.874742e-02
+22 estimate: delta_zeta_between V1 V1       estimate  6.063463e-01
+23 estimate: delta_zeta_between V2 V2       estimate  9.244151e-01
+24 estimate: delta_zeta_between V3 V3       estimate  7.248773e-01
+25                       se: mu V1 NA standard error  5.025095e-02
+26                       se: mu V2 NA standard error  6.170553e-02
+27                       se: mu V3 NA standard error  5.647962e-02
+28        se: omega_zeta_within V2 V1 standard error  3.101131e-02
+29        se: omega_zeta_within V3 V1 standard error  3.314004e-02
+30        se: omega_zeta_within V3 V2 standard error  3.380281e-02
+31        se: delta_zeta_within V1 V1 standard error  2.251926e-02
+32        se: delta_zeta_within V2 V2 standard error  2.363208e-02
+33        se: delta_zeta_within V3 V3 standard error  2.379115e-02
+34                     se: beta V1 V1 standard error  4.872593e-02
+35                     se: beta V2 V1 standard error  4.242484e-02
+36                     se: beta V3 V1 standard error  4.199261e-02
+37                     se: beta V1 V2 standard error  4.015449e-02
+38                     se: beta V2 V2 standard error  4.962630e-02
+39                     se: beta V3 V2 standard error  3.995905e-02
+40                     se: beta V1 V3 standard error  3.995680e-02
+41                     se: beta V2 V3 standard error  4.130377e-02
+42                     se: beta V3 V3 standard error  4.858118e-02
+43       se: omega_zeta_between V2 V1 standard error  1.719384e-01
+44       se: omega_zeta_between V3 V1 standard error  1.439429e-01
+45       se: omega_zeta_between V3 V2 standard error  1.576241e-01
+46       se: delta_zeta_between V1 V1 standard error  9.858352e-02
+47       se: delta_zeta_between V2 V2 standard error  7.016829e-02
+48       se: delta_zeta_between V3 V3 standard error  1.087096e-01
+49                          fit: logl  fit statistic -7.444220e+03
+50                         fit: chisq  fit statistic  7.097109e+01
+51                fit: baseline_chisq  fit statistic  5.321289e+02
+52                           fit: bic  fit statistic  1.503223e+04
+53                           fit: cfi      fit index  9.889808e-01
+54                           fit: tli      fit index  9.864764e-01
+55                         fit: rmsea      fit index  1.372220e-02

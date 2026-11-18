@@ -1,0 +1,77 @@
+
+> items <- utils::read.csv("../data/bfi10.csv")
+
+> cor_auto(data = items)
+             A1         A2         A3         A4         A5           C1
+A1  1.000000000 -0.4101779 -0.3239011 -0.1733811 -0.2295248 -0.005650361
+A2 -0.410177940  1.0000000  0.5608095  0.3957707  0.4464639  0.118789049
+A3 -0.323901076  0.5608095  1.0000000  0.4140942  0.5743500  0.127581812
+A4 -0.173381086  0.3957707  0.4140942  1.0000000  0.3605731  0.116620570
+A5 -0.229524830  0.4464639  0.5743500  0.3605731  1.0000000  0.165416709
+C1 -0.005650361  0.1187890  0.1275818  0.1166206  0.1654167  1.000000000
+C2  0.007410808  0.1571451  0.1548625  0.2685988  0.1413258  0.490975317
+C3 -0.023511477  0.2243884  0.1541652  0.1690896  0.1540116  0.352978719
+C4  0.145090429 -0.1908593 -0.1680899 -0.1994913 -0.1635768 -0.410687461
+C5  0.055171840 -0.1591700 -0.1863518 -0.2864574 -0.1993855 -0.301531095
+             C2          C3         C4          C5
+A1  0.007410808 -0.02351148  0.1450904  0.05517184
+A2  0.157145113  0.22438841 -0.1908593 -0.15916999
+A3  0.154862538  0.15416520 -0.1680899 -0.18635177
+A4  0.268598816  0.16908963 -0.1994913 -0.28645740
+A5  0.141325805  0.15401161 -0.1635768 -0.19938547
+C1  0.490975317  0.35297872 -0.4106875 -0.30153110
+C2  1.000000000  0.40784669 -0.4439914 -0.33740764
+C3  0.407846686  1.00000000 -0.3944197 -0.38868162
+C4 -0.443991396 -0.39441972  1.0000000  0.53466170
+C5 -0.337407636 -0.38868162  0.5346617  1.00000000
+
+> result <- with(as.data.frame(cor_network(data = items, cor_method = "auto")),
++                data.frame(quantity = paste(from, "--", to), kind = "polychoric correlation", value = weight))
+
+> result
+   quantity                   kind        value
+1  A1 -- A2 polychoric correlation -0.410177940
+2  A1 -- A3 polychoric correlation -0.323901076
+3  A2 -- A3 polychoric correlation  0.560809547
+4  A1 -- A4 polychoric correlation -0.173381086
+5  A2 -- A4 polychoric correlation  0.395770730
+6  A3 -- A4 polychoric correlation  0.414094203
+7  A1 -- A5 polychoric correlation -0.229524830
+8  A2 -- A5 polychoric correlation  0.446463891
+9  A3 -- A5 polychoric correlation  0.574350047
+10 A4 -- A5 polychoric correlation  0.360573080
+11 A1 -- C1 polychoric correlation -0.005650361
+12 A2 -- C1 polychoric correlation  0.118789049
+13 A3 -- C1 polychoric correlation  0.127581812
+14 A4 -- C1 polychoric correlation  0.116620570
+15 A5 -- C1 polychoric correlation  0.165416709
+16 A1 -- C2 polychoric correlation  0.007410808
+17 A2 -- C2 polychoric correlation  0.157145113
+18 A3 -- C2 polychoric correlation  0.154862538
+19 A4 -- C2 polychoric correlation  0.268598816
+20 A5 -- C2 polychoric correlation  0.141325805
+21 C1 -- C2 polychoric correlation  0.490975317
+22 A1 -- C3 polychoric correlation -0.023511477
+23 A2 -- C3 polychoric correlation  0.224388413
+24 A3 -- C3 polychoric correlation  0.154165203
+25 A4 -- C3 polychoric correlation  0.169089626
+26 A5 -- C3 polychoric correlation  0.154011609
+27 C1 -- C3 polychoric correlation  0.352978719
+28 C2 -- C3 polychoric correlation  0.407846686
+29 A1 -- C4 polychoric correlation  0.145090429
+30 A2 -- C4 polychoric correlation -0.190859312
+31 A3 -- C4 polychoric correlation -0.168089866
+32 A4 -- C4 polychoric correlation -0.199491347
+33 A5 -- C4 polychoric correlation -0.163576765
+34 C1 -- C4 polychoric correlation -0.410687461
+35 C2 -- C4 polychoric correlation -0.443991396
+36 C3 -- C4 polychoric correlation -0.394419716
+37 A1 -- C5 polychoric correlation  0.055171840
+38 A2 -- C5 polychoric correlation -0.159169989
+39 A3 -- C5 polychoric correlation -0.186351774
+40 A4 -- C5 polychoric correlation -0.286457400
+41 A5 -- C5 polychoric correlation -0.199385471
+42 C1 -- C5 polychoric correlation -0.301531095
+43 C2 -- C5 polychoric correlation -0.337407636
+44 C3 -- C5 polychoric correlation -0.388681621
+45 C4 -- C5 polychoric correlation  0.534661701

@@ -1,0 +1,37 @@
+
+> answers <- utils::read.csv("../data/bfi6_binary.csv")
+
+> fit <- ising_sampler(data = answers, rule = "AND", alpha = NULL)
+
+> fit
+<psychnet> ising_sampler network
+  nodes: 6   edges: 15   (undirected)
+  optimality (KKT residual): 2.92e-09
+
+> result <- rbind(
++   with(as.data.frame(fit), data.frame(quantity = paste("weight:", from, "--", to), kind = "edge weight", value = weight)),
++   data.frame(quantity = paste("threshold:", names(fit$thresholds)), kind = "threshold", value = unname(fit$thresholds)))
+
+> result
+           quantity        kind      value
+1  weight: A1 -- A2 edge weight -0.9685632
+2  weight: A1 -- A3 edge weight -0.5362597
+3  weight: A2 -- A3 edge weight  1.2075893
+4  weight: A1 -- A4 edge weight -0.2463911
+5  weight: A2 -- A4 edge weight  0.7299123
+6  weight: A3 -- A4 edge weight  0.7430411
+7  weight: A1 -- A5 edge weight -0.3524505
+8  weight: A2 -- A5 edge weight  0.8377548
+9  weight: A3 -- A5 edge weight  1.6012086
+10 weight: A4 -- A5 edge weight  0.8037202
+11 weight: A1 -- C1 edge weight  0.4935715
+12 weight: A2 -- C1 edge weight  0.5475777
+13 weight: A3 -- C1 edge weight  0.2636480
+14 weight: A4 -- C1 edge weight  0.3148713
+15 weight: A5 -- C1 edge weight  0.2778941
+16    threshold: A1   threshold  0.1078184
+17    threshold: A2   threshold -0.1151561
+18    threshold: A3   threshold -1.1911976
+19    threshold: A4   threshold -0.5607997
+20    threshold: A5   threshold -1.1130738
+21    threshold: C1   threshold  0.2457664

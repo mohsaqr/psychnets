@@ -1,6 +1,15 @@
 # Changelog
 
+## psychnets 0.8.3
+
+- A nodewise logistic fit that approaches a finite optimum slowly
+  (nearly collinear predictors) is no longer reported as separated.
+  0.8.2 could stop such a fit early with a separation warning in
+  [`ising_sampler()`](https://pak.dynasite.org/psychnets/reference/ising_sampler.md).
+
 ## psychnets 0.8.2
+
+CRAN release: 2026-11-18
 
 ### New features
 

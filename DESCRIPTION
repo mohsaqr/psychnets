@@ -1,6 +1,6 @@
 Package: psychnets
 Title: Tidy Clean-Room Psychological Network Modeling
-Version: 0.8.2
+Version: 0.8.3
 Authors@R:
     c(person("Mohammed", "Saqr", email = "saqr@saqr.me",
              role = c("aut", "cre", "cph"),

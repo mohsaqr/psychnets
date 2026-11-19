@@ -53,3 +53,25 @@ test_that("glm_lasso_kkt flags a non-stationary coefficient vector", {
   expect_gt(glm_lasso_kkt(X, y, fit$b0, bad, 0.05, "binomial"),
             glm_lasso_kkt(X, y, fit$b0, fit$beta, 0.05, "binomial"))
 })
+
+test_that("a slow fit with a finite optimum is not reported as separated", {
+  # Nearly collinear predictors; every row has both outcomes, so the
+  # unpenalized optimum is finite (glm() converges near +-230) but the IRLS
+  # continuation approaches it slowly. 0.8.2 stopped it early as separated.
+  g <- expand.grid(z = 0:1, d = c(-1, 1), a = c(-1, 1))
+  X <- cbind(g$a, (g$a + 0.02 * g$d) / sqrt(1 + 0.02^2))
+  w <- ifelse(g$z == (g$d + 1) / 2, 1, 0.01)
+  fit <- .glm_lasso_fit(X, g$z, "binomial", lambda = 0, weights = w)
+  expect_false(fit$separation)
+  expect_true(fit$converged)
+  ref <- suppressWarnings(stats::glm(g$z ~ X, family = stats::quasibinomial,
+                                     weights = w, control = stats::glm.control(epsilon = 1e-14, maxit = 1000)))
+  expect_equal(unname(fit$beta), unname(stats::coef(ref)[-1L]), tolerance = 1e-4)
+})
+
+test_that("a separated fit is still reported as separated", {
+  X <- cbind(a = c(-1, 1, -1, 1, -1, 1), b = c(-1, -1, 1, 1, 0, 0))
+  fit <- .glm_lasso_fit(X, c(0, 1, 0, 1, 0, 1), "binomial", lambda = 0)
+  expect_true(fit$separation)
+  expect_false(fit$converged)
+})

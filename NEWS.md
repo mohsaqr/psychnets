@@ -1,3 +1,9 @@
+# psychnets 0.8.3
+
+* A nodewise logistic fit that approaches a finite optimum slowly (nearly
+  collinear predictors) is no longer reported as separated. 0.8.2 could stop
+  such a fit early with a separation warning in `ising_sampler()`.
+
 # psychnets 0.8.2
 
 ## New features

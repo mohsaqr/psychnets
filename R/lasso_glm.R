@@ -227,31 +227,43 @@
       log1pexp <- ifelse(e > 0, e + log1p(exp(-e)), log1p(exp(e)))
       sum(wobs * (y * e - log1pexp)) / n - lambda * sum(abs(th[-1L]))
     }
-    drifting <- function(th1) {
+    drifting <- function(th1, reach = 10) {
       d <- th1 - th0
       step <- sqrt(sum(d^2))
       eta <- th1[1L] + as.numeric(X %*% th1[-1L])
       if (step > 1e-6) {
         at <- objective(th1)
-        objective(th1 + 10 * d / step) >= at - 1e-12 * max(1, abs(at))
+        ahead <- objective(th1 + reach * d / step)
+        # A missing or infinite objective is no evidence of drift.
+        is.finite(at) && is.finite(ahead) &&
+          ahead >= at - 1e-12 * max(1, abs(at))
       } else {
         any(abs(eta[wobs > 0]) > 30)             # stalled at saturation
       }
     }
-    # The continuation runs in chunks with the drift test (always measured from
-    # th0) after each one. irls() carries no state between passes, so a fit that
-    # converges or reaches the cap takes exactly the passes and gets exactly the
-    # verdict it would in one uninterrupted run; only a fit already drifting
-    # (separation, whose coefficients are arbitrary) stops early instead of
-    # spending up to 4 * max_outer passes of near-zero working weights.
+    # The continuation runs in chunks. irls() carries no state between passes,
+    # so a fit that converges or reaches the cap takes exactly the passes and
+    # gets exactly the verdict (the drift test, measured from th0) it would in
+    # one uninterrupted run. Between chunks a fit stops early only when the
+    # objective still rises 100 units ahead along its drift: by concavity any
+    # finite optimum is then at least that far away, coefficients beyond
+    # e^100 that are separation for any practical purpose. A slow fit whose
+    # finite optimum is nearer runs on to convergence.
     chunk <- 25L
     left <- 4L * max_outer
     repeat {
       passes <- min(chunk, left)
       run <- irls(run$b0, run$beta, passes, floor = 1e-14)
       left <- left - passes
-      separation <- drifting(c(run$b0, run$beta))
-      if (run$converged || separation || left <= 0L) break
+      th <- c(run$b0, run$beta)
+      if (run$converged || left <= 0L) {
+        separation <- drifting(th)
+        break
+      }
+      if (drifting(th, reach = 100)) {
+        separation <- TRUE
+        break
+      }
     }
     if (separation) run$converged <- FALSE
   }

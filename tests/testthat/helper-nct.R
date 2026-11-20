@@ -1,7 +1,6 @@
 # Shared data generator and configurations for the network comparison test.
-# fixtures/make-nct.R freezes net_compare() output and the
-# NetworkComparisonTest::NCT() reference on these, and test-nct.R checks
-# against them, so the generator and the checks can never drift apart.
+# fixtures/make-nct.R freezes net_compare() output on these, and test-nct.R
+# checks against it, so the generator and the checks can never drift apart.
 nct_groups <- function(seed, n = 120, p = 5) {
   set.seed(seed)
   a <- matrix(stats::rnorm(n * p), n, p)

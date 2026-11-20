@@ -20,25 +20,6 @@ test_that("complete-data output is frozen (input handling moves no number)", {
                  label = sprintf("config %d", i))))
 })
 
-test_that("permutation p-values equal NetworkComparisonTest::NCT under the same seed", {
-  skip_slow()
-  ref <- readRDS(test_path("fixtures", "nct-reference.rds"))
-  invisible(lapply(seq_len(nrow(nct_configs)), function(i) {
-    fit <- nct_fit(i)
-    lbl <- sprintf("config %d", i)
-    # same seed -> same permuted rows; the only difference is the glasso
-    # tolerance (qgraph thr = 1e-4), so p-values agree exactly and the
-    # permutation statistics to independent-solver precision
-    expect_equal(fit$strength$p_value, ref[[i]]$strength_p, label = lbl)
-    expect_equal(fit$structure$p_value, ref[[i]]$structure_p, label = lbl)
-    expect_equal(fit$E$p_value, ref[[i]]$E_p, label = lbl)
-    expect_lt(max(abs(fit$strength$perm - ref[[i]]$strength_perm)), 1e-3)
-    expect_lt(max(abs(fit$structure$perm - ref[[i]]$structure_perm)), 1e-3)
-    expect_lt(max(abs(fit$strength$by_group - ref[[i]]$strength_by_group)), 1e-3)
-    expect_lt(max(abs(unname(fit$nw1) - ref[[i]]$nw1)), 1e-3)
-  }))
-})
-
 test_that("a missing cell no longer zeroes the variable's edges (pairwise)", {
   skip_slow()
   g <- nct_groups(1)

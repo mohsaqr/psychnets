@@ -94,27 +94,6 @@ test_that("N7: a continuous moderator is conditioned on its raw scale", {
   expect_equal(fit_s$moderator_scale, stats::sd(d_shift$m))
 })
 
-test_that("N7: raw-scale condition() equals mgm::condition() at the z value", {
-  skip_if(Sys.getenv("PSYCHNET_EQUIV_TESTS") == "")
-  skip_if_not_installed("mgm")
-  skip_if_not_installed("glmnet")
-  set.seed(2); n <- 400
-  m <- stats::rnorm(n, 10, 2); x1 <- stats::rnorm(n); x2 <- stats::rnorm(n)
-  d <- data.frame(x1 = x1, x2 = x2, y = x1 * (m - 10) / 2 + stats::rnorm(n),
-                  m = m)
-  fit <- mgm_fit(d, moderators = 4, native = FALSE)
-  ref <- suppressWarnings(mgm::mgm(
-    as.matrix(d), type = rep("g", 4), level = rep(1, 4), moderators = 4,
-    lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND", threshold = "LW",
-    overparameterize = FALSE, scale = TRUE, pbar = FALSE, signInfo = FALSE,
-    warnings = FALSE))
-  for (v in c(8, 10, 13)) {
-    rr <- mgm::condition(ref, list("4" = (v - mean(m)) / stats::sd(m)))
-    expect_lt(max(abs(unname(condition(fit, v)$weights) - rr$pairwise$wadj)),
-              1e-10)
-  }
-})
-
 # --- N9: condition() validates `value` ----------------------------------------
 
 test_that("N9: condition() refuses a missing, vector, or non-numeric value", {

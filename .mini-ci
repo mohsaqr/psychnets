@@ -7,3 +7,20 @@ node system
 # needs unreleased goes in as: sibling ../DIR
 job test   Rscript -e 'testthat::test_local(stop_on_failure = TRUE)'
 job check  Rscript -e 'r <- rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "never"); print(r); if (r$status != 0 || length(r$errors) || length(r$warnings)) quit(status = 1)'
+
+# Prova Verify: capture of the equivalence tests, run as
+#   mini-ci -- Rscript ../equivalence/psychnets/import-tests.R capture [file-regex]
+# (the standing material git ignores is the copy kept in ../equivalence/psychnets/local; the driver copies it in)
+include ../equivalence/psychnets/local
+include ../equivalence/psychnets/import-tests.R
+include ../equivalence/import-tests-common.R
+include ../prova/.claude/worktrees/verify/reporters/verify-capture.R
+fetch .ci/verify-capture
+# the NCT scripts load the Nestimate source from ../Nestimate; crosscheck_psychaj.R reads psychaj's fixtures
+sibling ../Nestimate
+include ../psychaj/tests/fixtures
+
+# The declared equivalence tests (tests/equivalence, the standard: ../equivalence/STANDARD.md): every
+# comparison with a reference, recorded in .ci/verify-capture/capture.json. Then, on the Mac:
+#   sh ../equivalence/push.sh psychnets
+job verify Rscript -e 'source("tests/equivalence/helper-verify.R"); verify_tests(lib = "~/equiv-lib")'

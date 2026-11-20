@@ -147,14 +147,6 @@ test_that("penalize_diagonal is certified against the matching condition", {
                fit$lambda, tolerance = 1e-3)
 })
 
-test_that("penalize_diagonal matches the glasso Fortran package", {
-  skip_if_not_installed("glasso")
-  S <- ar1(8, 0.5)
-  ours <- .glasso_fit(S, rho = 0.15, penalize_diagonal = TRUE)$wi
-  ref  <- glasso::glasso(S, 0.15, penalize.diagonal = TRUE, thr = 1e-10)$wi
-  expect_lt(max(abs(ours - (ref + t(ref)) / 2)), 1e-6)
-})
-
 test_that("lambda_path and refit reject malformed input", {
   S <- ar1(5, 0.4)
   expect_error(ebic_glasso(cor_matrix = S, n = 200, lambda_path = c(-1, 0.2)),

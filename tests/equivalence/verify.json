@@ -1,0 +1,132 @@
+{
+  "product": "r-psychnets",
+  "collection": "equivalence",
+  "title": "Equivalence tests",
+  "references": {
+    "stats": {
+      "authority": "open-source"
+    },
+    "qgraph": {
+      "authority": "open-source"
+    },
+    "glasso": {
+      "authority": "open-source"
+    },
+    "corpcor": {
+      "authority": "open-source"
+    },
+    "ppcor": {
+      "authority": "open-source"
+    },
+    "psych": {
+      "authority": "open-source"
+    },
+    "lavaan": {
+      "authority": "open-source"
+    },
+    "huge": {
+      "authority": "open-source"
+    },
+    "NetworkToolbox": {
+      "authority": "open-source"
+    },
+    "EGAnet": {
+      "authority": "open-source"
+    },
+    "relaimpo": {
+      "authority": "open-source"
+    },
+    "IsingFit": {
+      "authority": "open-source"
+    },
+    "IsingSampler": {
+      "authority": "open-source"
+    },
+    "mgm": {
+      "authority": "open-source"
+    },
+    "glmnet": {
+      "authority": "open-source"
+    },
+    "igraph": {
+      "authority": "open-source"
+    },
+    "networktools": {
+      "authority": "open-source"
+    },
+    "NetworkComparisonTest": {
+      "authority": "open-source"
+    },
+    "psychonetrics": {
+      "authority": "open-source"
+    },
+    "bootnet": {
+      "authority": "open-source"
+    },
+    "mlVAR": {
+      "authority": "open-source"
+    }
+  },
+  "exports": {
+    "covered": [
+      "cor_network()",
+      "pcor_network()",
+      "psychnet()",
+      "as.data.frame.psychnet()",
+      "summary.psychnet()",
+      "$.psychnet()",
+      "certificate()",
+      "condition()",
+      "cor_auto()",
+      "dichotomize()",
+      "difference_test()",
+      "ebic_glasso()",
+      "event_frequencies()",
+      "ggm_modselect()",
+      "ggm_support_kkt()",
+      "glasso_kkt()",
+      "glm_lasso_kkt()",
+      "huge_network()",
+      "ising_fit()",
+      "ising_sampler()",
+      "lmg_certificate()",
+      "logo_network()",
+      "mgm_fit()",
+      "net_aggregate()",
+      "net_bridge()",
+      "net_centralities()",
+      "net_clustering()",
+      "net_compare()",
+      "net_edge_betweenness()",
+      "net_predict()",
+      "net_smallworld()",
+      "node_predictability()",
+      "panel_gvar()",
+      "redundancy()",
+      "relimp_network()",
+      "tmfg_certificate()",
+      "tmfg_network()",
+      "$.psychnet_nct()",
+      "as.data.frame.psychnet_group()",
+      "as.data.frame.psychnet_multilevel()",
+      "as.data.frame.psychnet_nct()",
+      "as.data.frame.psychnet_panelgvar()",
+      "as.data.frame.psychnet_result_group()",
+      "summary.psychnet_group()",
+      "summary.psychnet_multilevel()",
+      "summary.psychnet_nct()",
+      "summary.psychnet_panelgvar()",
+      "net_boot()",
+      "net_casedrop_reliability()",
+      "net_split_reliability()",
+      "net_stability()",
+      "as.data.frame.psychnet_bootstrap()",
+      "as.data.frame.psychnet_moderated()",
+      "as.data.frame.psychnet_stability()"
+    ],
+    "not_numeric": {
+      "net_crosswalk()": "returns a table of argument names mapping each reference function to its psychnets counterpart; no numbers"
+    },
+    "not_yet": {}
+  }
+}

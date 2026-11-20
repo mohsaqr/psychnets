@@ -123,17 +123,6 @@ test_that("W11: edge betweenness is a path count; node betweenness is normalized
   expect_equal(cen$closeness[1], 1)         # 4 reachable / distance sum 4
 })
 
-test_that("W11: betweenness/closeness equal igraph's normalized versions", {
-  skip_if_not_installed("igraph")
-  W <- rv_fit(7, seed = 7)$weights
-  cen <- net_centralities(W, measures = c("betweenness", "closeness"))
-  G <- igraph::graph_from_adjacency_matrix(abs(W), mode = "undirected",
-                                           weighted = TRUE, diag = FALSE)
-  igraph::E(G)$weight <- 1 / igraph::E(G)$weight
-  expect_equal(cen$betweenness, unname(igraph::betweenness(G, normalized = TRUE)))
-  expect_equal(cen$closeness, unname(igraph::closeness(G, normalized = TRUE)))
-})
-
 # ---- W4: community specification ----------------------------------------------
 
 test_that("W4: bridge communities as a list of label vectors equal the vector form", {

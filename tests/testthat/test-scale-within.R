@@ -23,15 +23,6 @@ test_that("center-only and scale-only follow their definitions", {
                tolerance = 1e-14)
 })
 
-test_that("scale_within equals mlVAR's within-person scaling", {
-  skip_if_not_installed("mlVAR")
-  ave_center <- utils::getFromNamespace("aveCenter", "mlVAR")
-  sw <- .scale_within(srl_panel, "student", v)
-  ref <- lapply(srl_panel[v], function(x)
-    stats::ave(x, srl_panel$student, FUN = function(z) ave_center(z, scale = TRUE)))
-  expect_equal(as.list(sw[v]), ref, tolerance = 1e-14)
-})
-
 test_that("the result is invariant to a per-person shift and positive rescaling", {
   set.seed(4)
   d <- srl_panel

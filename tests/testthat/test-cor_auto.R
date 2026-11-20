@@ -41,27 +41,3 @@ test_that("cor_method = 'auto' is a valid PD correlation and changes the fit", {
   expect_false(isTRUE(all.equal(auto$weights, ebic_glasso(X, cor_method = "pearson")$weights)))
 })
 
-test_that("cor_auto matches psych::polychoric and qgraph::cor_auto", {
-  if (!nzchar(Sys.getenv("PSYCHNET_EQUIV_TESTS"))) {
-    skip("PSYCHNET_EQUIV_TESTS not set; gated external-equivalence suite skipped.")
-  }
-  skip_if_not_installed("psych")
-  set.seed(5)
-  n <- 1000
-  Sig <- 0.5^abs(outer(1:4, 1:4, "-"))
-  z <- matrix(stats::rnorm(n * 4), n, 4) %*% chol(Sig)
-  X <- apply(z, 2, function(c) as.integer(cut(c, c(-Inf, -1, 0, 1, Inf))))
-  ours <- cor_auto(X)
-  ref <- suppressWarnings(psych::polychoric(X)$rho)
-  expect_lt(max(abs(ours - ref)[upper.tri(ours)]), 1e-3)
-
-  if (requireNamespace("qgraph", quietly = TRUE)) {
-    qg <- tryCatch(
-      suppressWarnings(suppressMessages(qgraph::cor_auto(X, verbose = FALSE))),
-      error = function(e) {
-        skip(paste("qgraph::cor_auto unavailable with the installed lavaan:",
-                   conditionMessage(e)))
-      })
-    expect_lt(max(abs(ours - qg)[upper.tri(ours)]), 1e-3)
-  }
-})

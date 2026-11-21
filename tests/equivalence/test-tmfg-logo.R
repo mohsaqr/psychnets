@@ -81,3 +81,168 @@ test_that("tmfg_certificate() counts no violated TMFG property, as igraph and a 
   expect_reference(certificate(fit)$certificate, violations, reference = "igraph", covers = "certificate()",
                    quantity = "certificate of tmfg_network()", tolerance = 0)
 })
+
+# The graphs tmfg_certificate() is given below: TMFGs built by tmfg_network() on several correlation matrices,
+# and graphs that are not TMFGs. tmfg_certificate() reads the graph a network stores as `adjacency`; the only way
+# to give it a graph that tmfg_network() would never build is to put that graph in a network of the same size.
+#' A TMFG network of p nodes whose stored graph is replaced by `adjacency`
+as_network_of <- \(adjacency) {
+  p <- ncol(adjacency)
+  fit <- tmfg_network(cor_matrix = 0.5^abs(outer(seq_len(p), seq_len(p), "-")))
+  dimnames(adjacency) <- dimnames(fit$adjacency)
+  fit$adjacency <- adjacency
+  fit
+}
+#' The complete graph on p nodes, as a logical adjacency matrix
+complete_graph <- \(p) {
+  adjacency <- matrix(TRUE, p, p)
+  diag(adjacency) <- FALSE
+  adjacency
+}
+#' A logical adjacency matrix of p nodes with the given edges (a two-column matrix of node numbers)
+graph_of <- \(p, edges) {
+  adjacency <- matrix(FALSE, p, p)
+  adjacency[edges] <- TRUE
+  adjacency[edges[, 2:1, drop = FALSE]] <- TRUE
+  adjacency
+}
+#' The correlations of n draws of a p-variable three-factor model, seeded
+factor_correlations <- \(p, n, seed) {
+  set.seed(seed)
+  loadings <- matrix(stats::runif(p * 3L, -0.8, 0.8), p, 3L)
+  draws <- matrix(stats::rnorm(n * 3L), n, 3L) %*% t(loadings) + matrix(stats::rnorm(n * p), n, p)
+  colnames(draws) <- sprintf("X%02d", seq_len(p))
+  stats::cor(draws)
+}
+
+#' The icosahedron: 12 nodes, 30 edges (3(p - 2)), maximal planar and not chordal; its nodes are the cyclic
+#' permutations of (0, +-1, +-golden ratio), two nodes adjacent at distance 2
+icosahedron <- \() {
+  golden <- (1 + sqrt(5)) / 2
+  base <- as.matrix(expand.grid(0, c(-1, 1), c(-golden, golden)))
+  points <- rbind(base, base[, c(3L, 1L, 2L)], base[, c(2L, 3L, 1L)])
+  distance <- as.matrix(stats::dist(points))
+  abs(distance - 2) < 1e-9
+}
+
+bfi_tmfg <- tmfg_network(data = items)
+bfi_graph <- bfi_tmfg$adjacency
+bfi_edges <- which(upper.tri(bfi_graph) & bfi_graph, arr.ind = TRUE)
+bfi_gaps <- which(upper.tri(bfi_graph) & !bfi_graph, arr.ind = TRUE)
+#' The bfi TMFG with edges removed and added (rows of bfi_edges / bfi_gaps)
+bfi_changed <- \(remove = integer(), add = integer()) {
+  adjacency <- bfi_graph
+  adjacency[bfi_edges[remove, , drop = FALSE]] <- FALSE
+  adjacency[bfi_edges[remove, 2:1, drop = FALSE]] <- FALSE
+  adjacency[bfi_gaps[add, , drop = FALSE]] <- TRUE
+  adjacency[bfi_gaps[add, 2:1, drop = FALSE]] <- TRUE
+  as_network_of(adjacency)
+}
+
+certificate_networks <- list(
+  "TMFG, p = 4" = tmfg_network(cor_matrix = 0.5^abs(outer(1:4, 1:4, "-"))),
+  "TMFG, p = 6" = tmfg_network(cor_matrix = 0.3 + 0.7 * diag(6) + 0.2 * (abs(outer(1:6, 1:6, "-")) == 1)),
+  "TMFG, bfi10 (p = 10)" = bfi_tmfg,
+  "TMFG, three-factor model, p = 20" = tmfg_network(cor_matrix = factor_correlations(20L, 300L, seed = 11L)),
+  "TMFG, three-factor model, p = 45" = tmfg_network(cor_matrix = factor_correlations(45L, 500L, seed = 12L)),
+  "bfi TMFG, first edge removed" = bfi_changed(remove = 1L),
+  "bfi TMFG, last edge removed" = bfi_changed(remove = nrow(bfi_edges)),
+  "bfi TMFG, first non-edge added" = bfi_changed(add = 1L),
+  "bfi TMFG, last non-edge added" = bfi_changed(add = nrow(bfi_gaps)),
+  "bfi TMFG, one edge moved to a non-edge" = bfi_changed(remove = 1L, add = 1L),
+  "K5" = as_network_of(complete_graph(5L)),
+  "K3,3" = as_network_of(graph_of(6L, as.matrix(expand.grid(1:3, 4:6)))),
+  "K5 with a sixth node on one edge" = as_network_of(graph_of(6L, rbind(which(upper.tri(complete_graph(5L)), arr.ind = TRUE),
+                                                                         c(1L, 6L), c(2L, 6L)))),
+  "triangle with three common neighbours" = as_network_of(graph_of(6L, rbind(c(1L, 2L), c(1L, 3L), c(2L, 3L),
+                                                                              as.matrix(expand.grid(1:3, 4:6))))),
+  "two disjoint K4" = as_network_of(graph_of(8L, rbind(which(upper.tri(complete_graph(4L)), arr.ind = TRUE),
+                                                       which(upper.tri(complete_graph(4L)), arr.ind = TRUE) + 4L))),
+  "K7 and two isolated nodes" = as_network_of(graph_of(9L, which(upper.tri(complete_graph(7L)), arr.ind = TRUE))),
+  "6-cycle" = as_network_of(graph_of(6L, cbind(1:6, c(2:6, 1L)))),
+  "octahedron" = as_network_of(complete_graph(6L) & !graph_of(6L, rbind(c(1L, 2L), c(3L, 4L), c(5L, 6L)))),
+  "icosahedron" = as_network_of(icosahedron())
+)
+
+# The Python side: for each graph, its edge count, chordality, connectedness and planarity in NetworkX.
+networkx_properties_script <- '
+import json, sys
+import networkx as nx
+graphs = json.load(open(sys.argv[1]))
+out = {"networkx": nx.__version__}
+for name, spec in graphs.items():
+    G = nx.Graph()
+    G.add_nodes_from(range(1, spec["p"] + 1))
+    G.add_edges_from(tuple(edge) for edge in spec["edges"])
+    out[name] = {"edges": G.number_of_edges(), "chordal": nx.is_chordal(G),
+                 "connected": nx.is_connected(G), "planar": nx.check_planarity(G)[0]}
+json.dump(out, open(sys.argv[2], "w"))
+'
+#' Edge count, chordality, connectedness and planarity of each network's graph, by NetworkX
+networkx_properties <- \(networks) {
+  graphs <- lapply(networks, \(fit) {
+    adjacency <- unname(fit$adjacency)
+    list(p = ncol(adjacency), edges = unname(which(upper.tri(adjacency) & adjacency, arr.ind = TRUE)))
+  })
+  files <- c(input = tempfile(fileext = ".json"), script = tempfile(fileext = ".py"), output = tempfile(fileext = ".json"))
+  on.exit(unlink(files), add = TRUE, after = FALSE)
+  jsonlite::write_json(graphs, files[["input"]], auto_unbox = TRUE, digits = NA)
+  writeLines(networkx_properties_script, files[["script"]])
+  status <- system2(verify_python(), c("-I", files[["script"]], files[["input"]], files[["output"]]))
+  stopifnot("NetworkX did not run" = identical(status, 0L))
+  found <- jsonlite::read_json(files[["output"]])
+  stopifnot("NetworkX is not the version verify.json states (3.7)" = identical(found$networkx, "3.7"))
+  found
+}
+#' Skip, recorded, when the interpreter of verify_python() cannot import NetworkX (reticulate may be bound to
+#' another Python, so the helper's own module check is not asked)
+skip_without_networkx <- \() {
+  python <- verify_python()
+  found <- nzchar(python) &&
+    identical(system2(python, c("-c", shQuote("import networkx")), stdout = FALSE, stderr = FALSE), 0L)
+  if (!found) skip_without_reference("networkx")
+}
+#' The violated TMFG properties of a graph of p nodes, from its edge count, chordality, connectedness, planarity
+violated_properties <- \(p, edges, chordal, connected, planar) {
+  c("edge count 3(p - 2)", "chordal", "connected", "planar")[c(edges != 3L * (p - 2L), !chordal, !connected, !planar)]
+}
+
+# Where the count is wrong: the planarity test is the stacked-triangulation structure, which finds no fault in a
+# graph without the triangles it inspects, so a non-planar graph that is also not chordal is counted as planar.
+planarity_defects <- list(
+  "K3,3" = "tmfg_certificate() counts a non-planar graph that is not chordal as planar (K3,3: 2 violated properties, NetworkX 3); FINDINGS.md",
+  "bfi TMFG, last non-edge added" = "tmfg_certificate() counts a non-planar graph that is not chordal as planar (bfi TMFG with an edge added: 2 violated properties, NetworkX 3); FINDINGS.md"
+)
+
+test_that("tmfg_certificate() counts the TMFG properties NetworkX finds violated, graph by graph", {
+  skip_without_networkx()
+  found <- networkx_properties(certificate_networks)
+  # A count of properties: an integer, compared exactly.
+  invisible(Map(\(name, fit) {
+    p <- ncol(fit$adjacency)
+    graph <- found[[name]]
+    violated <- violated_properties(p, graph$edges, graph$chordal, graph$connected, graph$planar)
+    expect_reference(tmfg_certificate(fit), length(violated), reference = "networkx", covers = "tmfg_certificate()",
+                     quantity = sprintf("number of violated TMFG properties: %s", name), tolerance = 0,
+                     note = sprintf("NetworkX %s: %d edges for p = %d; violated: %s.", found$networkx, graph$edges, p,
+                                    if (length(violated)) toString(violated) else "none"),
+                     defect = planarity_defects[[name]])
+  }, names(certificate_networks), certificate_networks))
+})
+
+test_that("tmfg_certificate() counts the TMFG properties igraph finds violated, graph by graph", {
+  skip_without_reference("igraph")
+  skip_without_networkx()
+  planar <- vapply(networkx_properties(certificate_networks)[names(certificate_networks)], \(graph) graph$planar, logical(1))
+  invisible(Map(\(name, fit) {
+    graph <- igraph::graph_from_adjacency_matrix(fit$adjacency * 1, mode = "undirected", diag = FALSE)
+    p <- ncol(fit$adjacency)
+    violated <- violated_properties(p, igraph::ecount(graph), igraph::is_chordal(graph)$chordal,
+                                    igraph::is_connected(graph), planar[[name]])
+    expect_reference(tmfg_certificate(fit), length(violated), reference = "igraph", covers = "tmfg_certificate()",
+                     quantity = sprintf("number of violated TMFG properties: %s", name), tolerance = 0,
+                     note = sprintf("Edge count, chordality and connectedness by igraph, planarity by NetworkX's check_planarity (igraph has no planarity test); violated: %s.",
+                                    if (length(violated)) toString(violated) else "none"),
+                     defect = planarity_defects[[name]])
+  }, names(certificate_networks), certificate_networks))
+})

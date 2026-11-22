@@ -144,7 +144,7 @@ fit
 #>   as.data.frame(fit) for main and moderation effects; condition(fit, value) for the network at a moderator value.
 as.data.frame(fit)            # main and moderation effects per edge
 #>   from to main_effect interaction moderated involves_moderator
-#> 1   x1  y           0   0.5665183      TRUE              FALSE
+#> 1   x1  y           0   0.5639497      TRUE              FALSE
 condition(fit, value = 1)     # no x1-y edge
 #> <psychnet> mgm_moderated network
 #>   nodes: 4   edges: 0   (undirected)
@@ -152,6 +152,6 @@ condition(fit, value = 2)     # the x1-y edge appears
 #> <psychnet> mgm_moderated network
 #>   nodes: 4   edges: 1   (undirected)
 as.data.frame(fit, value = 2) # the same network as an edge list
-#>   from to   weight
-#> 1   x1  y 0.646064
+#>   from to    weight
+#> 1   x1  y 0.6447854
 ```

@@ -144,20 +144,34 @@ net_crosswalk("IsingFit")
 #> 11 IsingFit::IsingFit ising_fit                 -          weights
 #> 12 IsingFit::IsingFit ising_fit                 -        na_method
 #> 13 IsingFit::IsingFit ising_fit                 -           labels
-#>             status                                   note
-#> 1          renamed                        binary 0/1 data
-#> 2        identical                           default 0.25
-#> 3          renamed      AND=TRUE/FALSE -> rule='AND'/'OR'
-#> 4  default differs      -Inf vs NULL (both keep all rows)
-#> 5   reference only              psychnet is binomial-only
-#> 6   reference only                   psychnet never plots
-#> 7   reference only           psychnet has no progress bar
-#> 8   reference only psychnet uses its own full lambda path
-#> 9    psychnet only                     lambda-path length
-#> 10   psychnet only              smallest penalty fraction
-#> 11   psychnet only                    observation weights
-#> 12   psychnet only                      pairwise/listwise
-#> 13   psychnet only                            node labels
+#>             status
+#> 1          renamed
+#> 2        identical
+#> 3          renamed
+#> 4  default differs
+#> 5   reference only
+#> 6   reference only
+#> 7   reference only
+#> 8   reference only
+#> 9    psychnet only
+#> 10   psychnet only
+#> 11   psychnet only
+#> 12   psychnet only
+#> 13   psychnet only
+#>                                                                        note
+#> 1                                                           binary 0/1 data
+#> 2                                                              default 0.25
+#> 3                                         AND=TRUE/FALSE -> rule='AND'/'OR'
+#> 4                                         -Inf vs NULL (both keep all rows)
+#> 5                                                 psychnet is binomial-only
+#> 6                                                      psychnet never plots
+#> 7                                              psychnet has no progress bar
+#> 8                               both select on glmnet's default lambda path
+#> 9                                   lambda-path length (glmnet default 100)
+#> 10 smallest penalty fraction (glmnet default: 1e-4, 0.01 if n < predictors)
+#> 11                                                      observation weights
+#> 12                                                        pairwise/listwise
+#> 13                                                              node labels
 net_crosswalk("panelgvar")
 #>                   reference   psychnet          ref_arg     psychnet_arg
 #> 1  psychonetrics::panelgvar panel_gvar             data             data

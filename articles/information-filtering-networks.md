@@ -286,7 +286,7 @@ logo_spearman <- psychnet(data = SRL_GPT, method = "logo",
 summary(logo_spearman)
 #> <psychnet> logo network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 1.44e-15
+#>   optimality (KKT residual): 1.67e-15
 #>   edge weight: range [-0.301, 0.440], mean 0.191
 as.data.frame(logo_spearman)
 #>   from to      weight
@@ -300,8 +300,8 @@ as.data.frame(logo_spearman)
 #> 8   IV TA  0.12358306
 #> 9   SR TA -0.30091058
 certificate(logo_spearman)
-#>   method certificate kind certified
-#> 1   logo 1.44329e-15  kkt      TRUE
+#>   method  certificate kind certified
+#> 1   logo 1.665335e-15  kkt      TRUE
 ```
 
 The rank-based backbone contains the same nine pairs. The positive edges

@@ -44,7 +44,7 @@ ising_fit(
   gamma = 0.25,
   rule = c("AND", "OR"),
   nlambda = 100L,
-  lambda_min_ratio = 0.01,
+  lambda_min_ratio = NULL,
   min_sum = NULL,
   weights = NULL,
   na_method = c("pairwise", "listwise"),
@@ -81,10 +81,10 @@ ising_fit(
 - lambda_min_ratio:
 
   Smallest penalty as a fraction of the largest, in (0, 1). Default
-  `0.01`. With `native = FALSE`, leaving it unset uses glmnet's own
-  default, as
+  `NULL` uses glmnet's default, as
   [`IsingFit::IsingFit()`](https://rdrr.io/pkg/IsingFit/man/isingfit.html)
-  does.
+  does: `1e-4`, or `0.01` when there are fewer observations than
+  predictors. Both engines select from glmnet's path (see Details).
 
 - min_sum:
 
@@ -133,6 +133,18 @@ nodewise regressions (`nodewise`).
 
 ## Details
 
+Each regression's penalty is chosen by the EBIC from glmnet's default
+path (Friedman, Hastie & Tibshirani 2010), as in
+[`IsingFit::IsingFit()`](https://rdrr.io/pkg/IsingFit/man/isingfit.html):
+`nlambda` penalties spaced evenly on the log scale from the smallest
+penalty that sets every coefficient to zero down to `lambda_min_ratio`
+times it, stopped early by glmnet's rule (from the fifth penalty on,
+when the explained deviance grows by less than 1e-5, relative for a
+continuous response, or exceeds 0.999). The native solver fits each
+penalty to its optimality conditions, so its weights agree with
+[`IsingFit::IsingFit()`](https://rdrr.io/pkg/IsingFit/man/isingfit.html)
+up to glmnet's convergence tolerance.
+
 Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
 The weight of an edge is the change in the log-odds of one item when the
 other is endorsed, averaged over the two regressions; an item's
@@ -157,6 +169,11 @@ van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F., Boschloo,
 L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
 constructing networks from binary data. *Scientific Reports*, 4, 5918.
 [doi:10.1038/srep05918](https://doi.org/10.1038/srep05918)
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. *Journal of
+Statistical Software*, 33(1), 1-22.
+[doi:10.18637/jss.v033.i01](https://doi.org/10.18637/jss.v033.i01)
 
 Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
 for Gaussian graphical models. *Advances in Neural Information
@@ -187,16 +204,16 @@ fit <- ising_fit(b)
 fit
 #> <psychnet> ising network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 1.45e-09
+#>   optimality (KKT residual): 8.65e-10
 as.data.frame(fit)
 #>   from to    weight
-#> 1  CSU IV 2.3063761
-#> 2  CSU SE 1.8399656
-#> 3   IV SE 1.2860533
-#> 4  CSU SR 1.7394177
-#> 5   IV SR 1.9836011
-#> 6   SE SR 0.7570295
+#> 1  CSU IV 2.3226325
+#> 2  CSU SE 1.8563260
+#> 3   IV SE 1.2819940
+#> 4  CSU SR 1.7682981
+#> 5   IV SR 1.9940481
+#> 6   SE SR 0.7660948
 certificate(fit)
 #>   method  certificate kind certified
-#> 1  ising 1.451526e-09  kkt      TRUE
+#> 1  ising 8.650803e-10  kkt      TRUE
 ```

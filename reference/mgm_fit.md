@@ -45,7 +45,7 @@ mgm_fit(
   gamma = 0.25,
   types = NULL,
   nlambda = 100L,
-  lambda_min_ratio = 0.01,
+  lambda_min_ratio = NULL,
   threshold = c("LW", "HW", "none"),
   rule = c("AND", "OR"),
   moderators = NULL,
@@ -93,8 +93,10 @@ mgm_fit(
 - lambda_min_ratio:
 
   Smallest penalty as a fraction of the largest, in (0, 1). Default
-  `0.01`. With `native = FALSE`, leaving it unset uses glmnet's own
-  default, as [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) does.
+  `NULL` uses glmnet's default, as
+  [`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) does: `1e-4`, or
+  `0.01` when there are fewer observations than predictors. Both engines
+  select from glmnet's path (see Details).
 
 - threshold:
 
@@ -167,6 +169,18 @@ and the certificate of the regressions before thresholding (`fit_kkt`).
 
 ## Details
 
+Each regression's penalty is chosen by the EBIC from glmnet's default
+path (Friedman, Hastie & Tibshirani 2010), as in
+[`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html): `nlambda`
+penalties spaced evenly on the log scale from the smallest penalty that
+sets every coefficient to zero down to `lambda_min_ratio` times it,
+stopped early by glmnet's rule (from the fifth penalty on, when the
+explained deviance grows by less than 1e-5, relative for a continuous
+response, or exceeds 0.999). The native solver fits each penalty to its
+optimality conditions, so its weights agree with
+[`mgm::mgm()`](https://rdrr.io/pkg/mgm/man/mgm.html) up to glmnet's
+convergence tolerance.
+
 Continuous variables are standardized before fitting, binary predictors
 enter as 0/1 indicators, and the coefficient of a binary response is
 expressed on the two-class multinomial scale of
@@ -214,6 +228,11 @@ time-varying mixed graphical models in high-dimensional data. *Journal
 of Statistical Software*, 93(8), 1-46.
 [doi:10.18637/jss.v093.i08](https://doi.org/10.18637/jss.v093.i08)
 
+Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. *Journal of
+Statistical Software*, 33(1), 1-22.
+[doi:10.18637/jss.v033.i01](https://doi.org/10.18637/jss.v033.i01)
+
 Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
 for Gaussian graphical models. *Advances in Neural Information
 Processing Systems*, 23, 604-612.
@@ -246,10 +265,10 @@ fit <- mgm_fit(d)
 fit
 #> <psychnet> mgm network
 #>   nodes: 4   edges: 3   (undirected)
-#>   optimality (KKT residual): 1.01e-10
+#>   optimality (KKT residual): 4.99e-11
 as.data.frame(fit)
 #>   from to    weight
-#> 1   g1 g2 0.3421962
-#> 2   g1 b1 0.3288350
-#> 3   g2 b1 0.3589604
+#> 1   g1 g2 0.3403544
+#> 2   g1 b1 0.3256438
+#> 3   g2 b1 0.3573982
 ```

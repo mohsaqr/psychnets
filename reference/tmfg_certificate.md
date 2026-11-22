@@ -44,11 +44,13 @@ confirms a valid TMFG.
 
 Four properties are checked on the stored graph: the number of edges is
 \\3(p - 2)\\; the graph is chordal, tested by maximum-cardinality
-search; it is connected; and it is planar. For a connected chordal graph
-with \\3(p - 2)\\ edges, planarity is checked as the structure of a
-stacked triangulation: no triangle has more than two common neighbours,
-and no triangle has two common neighbours that are adjacent to each
-other.
+search; it is connected; and it is planar. Planarity is decided for any
+graph by the left-right planarity test (de Fraysseix & Rosenstiehl,
+1985; Brandes, 2009), the linear-time test of NetworkX's
+`check_planarity()`, which decides the same property as the test of
+Boyer and Myrvold (2004). Each property is tested on its own, so a graph
+that breaks several of them, such as \\K\_{3,3}\\ (too few edges, not
+chordal, not planar), counts each one.
 
 ## Conditions
 
@@ -61,6 +63,18 @@ Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network filtering for
 big data: Triangulated maximally filtered graph. *Journal of Complex
 Networks*, 5(2), 161-178.
 [doi:10.1093/comnet/cnw015](https://doi.org/10.1093/comnet/cnw015)
+
+de Fraysseix, H., & Rosenstiehl, P. (1985). A characterization of planar
+graphs by Tremaux orders. *Combinatorica*, 5(2), 127-135.
+[doi:10.1007/BF02579375](https://doi.org/10.1007/BF02579375)
+
+Brandes, U. (2009). *The left-right planarity test*. Manuscript,
+University of Konstanz.
+
+Boyer, J. M., & Myrvold, W. J. (2004). On the cutting edge: Simplified
+O(n) planarity by edge addition. *Journal of Graph Algorithms and
+Applications*, 8(3), 241-273.
+[doi:10.7155/jgaa.00091](https://doi.org/10.7155/jgaa.00091)
 
 ## See also
 

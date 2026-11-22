@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -197,16 +197,16 @@ the network with the AND rule.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span>
-<span><span class="co">#&gt;   edge weight: range [0.196, 0.632], mean 0.413</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.59e-11</span></span>
+<span><span class="co">#&gt;   edge weight: range [0.198, 0.649], mean 0.420</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from    to    weight</span></span>
-<span><span class="co">#&gt; 1  CSU    IV 0.5179205</span></span>
-<span><span class="co">#&gt; 2  CSU    SE 0.4850679</span></span>
-<span><span class="co">#&gt; 3   IV    SE 0.1970362</span></span>
-<span><span class="co">#&gt; 4  CSU SR_hi 0.4509658</span></span>
-<span><span class="co">#&gt; 5   IV SR_hi 0.6323683</span></span>
-<span><span class="co">#&gt; 6   SE SR_hi 0.1956633</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  CSU    IV 0.5186459</span></span>
+<span><span class="co">#&gt; 2  CSU    SE 0.4857298</span></span>
+<span><span class="co">#&gt; 3   IV    SE 0.1975632</span></span>
+<span><span class="co">#&gt; 4  CSU SR_hi 0.4674247</span></span>
+<span><span class="co">#&gt; 5   IV SR_hi 0.6487223</span></span>
+<span><span class="co">#&gt; 6   SE SR_hi 0.2038918</span></span></code></pre></div>
 <p>The network has 6 edges, all positive, with weights from 0.196 to
 0.632. The strongest joins intrinsic value and high self-regulation
 (0.632): with the other variables held constant, respondents with higher
@@ -232,7 +232,7 @@ that the network is the optimum of its objective.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    mgm 4.997067e-11  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    mgm 2.589419e-11  kkt      TRUE</span></span></code></pre></div>
 <p>The violation is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5.00</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">5.00 \times 10^{-11}</annotation></semantics></math>,
 so the edges are the solutions of the penalized regressions. The
@@ -247,10 +247,10 @@ edge weights, and expected influence, the signed sum.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">mixed_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    node  strength expected_influence</span></span>
-<span><span class="co">#&gt; 1   CSU 1.4539542          1.4539542</span></span>
-<span><span class="co">#&gt; 2    IV 1.3473249          1.3473249</span></span>
-<span><span class="co">#&gt; 3    SE 0.8777674          0.8777674</span></span>
-<span><span class="co">#&gt; 4 SR_hi 1.2789974          1.2789974</span></span>
+<span><span class="co">#&gt; 1   CSU 1.4718004          1.4718004</span></span>
+<span><span class="co">#&gt; 2    IV 1.3649314          1.3649314</span></span>
+<span><span class="co">#&gt; 3    SE 0.8871848          0.8871848</span></span>
+<span><span class="co">#&gt; 4 SR_hi 1.3200388          1.3200388</span></span>
 <span><span class="co">#&gt; 5 TA_hi 0.0000000          0.0000000</span></span></code></pre></div>
 <p>Cognitive strategy use has the largest strength (1.454), followed by
 intrinsic value (1.347) and high self-regulation (1.279). All edges are
@@ -275,8 +275,8 @@ the proportion in the larger category (Haslbeck &amp; Waldorp, 2018).
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">mixed_net</span>, data <span class="op">=</span> <span class="va">mixed_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    node     type metric predictability accuracy</span></span>
-<span><span class="co">#&gt; 1   CSU gaussian     R2      0.8131079       NA</span></span>
-<span><span class="co">#&gt; 2    IV gaussian     R2      0.7757368       NA</span></span>
+<span><span class="co">#&gt; 1   CSU gaussian     R2      0.8131598       NA</span></span>
+<span><span class="co">#&gt; 2    IV gaussian     R2      0.7757803       NA</span></span>
 <span><span class="co">#&gt; 3    SE gaussian     R2      0.7153497       NA</span></span>
 <span><span class="co">#&gt; 4 SR_hi   binary    nCC      0.7391304     0.88</span></span>
 <span><span class="co">#&gt; 5 TA_hi   binary    nCC      0.0000000     0.50</span></span></code></pre></div>
@@ -300,17 +300,17 @@ it.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mixed_or</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; mgm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 5.00e-11</span></span>
-<span><span class="co">#&gt;   edge weight: range [-0.168, 0.632], mean 0.330</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.59e-11</span></span>
+<span><span class="co">#&gt;   edge weight: range [-0.186, 0.649], mean 0.334</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixed_or</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from    to     weight</span></span>
-<span><span class="co">#&gt; 1   CSU    IV  0.5179205</span></span>
-<span><span class="co">#&gt; 2   CSU    SE  0.4850679</span></span>
-<span><span class="co">#&gt; 3    IV    SE  0.1970362</span></span>
-<span><span class="co">#&gt; 4   CSU SR_hi  0.4509658</span></span>
-<span><span class="co">#&gt; 5    IV SR_hi  0.6323683</span></span>
-<span><span class="co">#&gt; 6    SE SR_hi  0.1956633</span></span>
-<span><span class="co">#&gt; 7 SR_hi TA_hi -0.1681336</span></span></code></pre></div>
+<span><span class="co">#&gt; 1   CSU    IV  0.5186459</span></span>
+<span><span class="co">#&gt; 2   CSU    SE  0.4857298</span></span>
+<span><span class="co">#&gt; 3    IV    SE  0.1975632</span></span>
+<span><span class="co">#&gt; 4   CSU SR_hi  0.4674247</span></span>
+<span><span class="co">#&gt; 5    IV SR_hi  0.6487223</span></span>
+<span><span class="co">#&gt; 6    SE SR_hi  0.2038918</span></span>
+<span><span class="co">#&gt; 7 SR_hi TA_hi -0.1861295</span></span></code></pre></div>
 <p>The OR network has 7 edges: the six AND edges with the same weights
 and a negative edge between high self-regulation and high test anxiety
 (-0.168). Respondents in the upper half of self-regulation are less

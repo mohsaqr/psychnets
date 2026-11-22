@@ -94,7 +94,7 @@ stepwise_net <- psychnet(data = SRL_GPT, method = "ggm")
 summary(stepwise_net)
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 9   (undirected)
-#>   optimality (KKT residual): 1.22e-15
+#>   optimality (KKT residual): 7.77e-16
 #>   edge weight: range [-0.370, 0.422], mean 0.196
 ```
 
@@ -141,7 +141,7 @@ zero shows that the network is the optimum of its objective.
 
 certificate(stepwise_net)
 #>   method  certificate kind certified
-#> 1    ggm 1.221245e-15  kkt      TRUE
+#> 1    ggm 7.771561e-16  kkt      TRUE
 ```
 
 The violation is at the level of machine precision (below $`10^{-14}`$),
@@ -269,7 +269,7 @@ spearman_net <- psychnet(data = SRL_GPT, method = "ggm",
 summary(spearman_net)
 #> <psychnet> ggm network
 #>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 6.66e-16
+#>   optimality (KKT residual): 8.88e-16
 #>   edge weight: range [-0.266, 0.483], mean 0.245
 as.data.frame(spearman_net)
 #>   from to     weight
@@ -282,7 +282,7 @@ as.data.frame(spearman_net)
 #> 7   SR TA -0.2664620
 certificate(spearman_net)
 #>   method  certificate kind certified
-#> 1    ggm 6.661338e-16  kkt      TRUE
+#> 1    ggm 8.881784e-16  kkt      TRUE
 ```
 
 The rank-based selection keeps 7 edges instead of 9. The edges among the

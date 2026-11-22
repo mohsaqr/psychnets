@@ -61,7 +61,7 @@ To fit the moderated model, use mgm_fit() with moderators."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -232,7 +232,7 @@ the conditioned network.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   as.data.frame(fit) for main and moderation effects; condition(fit, value) for the network at a moderator value.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>            <span class="co"># main and moderation effects per edge</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   from to main_effect interaction moderated involves_moderator</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   x1  y           0   0.5665183      TRUE              FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   x1  y           0   0.5639497      TRUE              FALSE</span>
 <span class="r-in"><span><span class="fu">condition</span><span class="op">(</span><span class="va">fit</span>, value <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>     <span class="co"># no x1-y edge</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; mgm_moderated network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 4   edges: 0   (undirected)</span>
@@ -240,8 +240,8 @@ the conditioned network.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; mgm_moderated network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 4   edges: 1   (undirected)</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, value <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="co"># the same network as an edge list</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   from to   weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   x1  y 0.646064</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   from to    weight</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   x1  y 0.6447854</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -103,16 +103,16 @@ ising_net <- psychnet(data = binary_data, method = "ising", rule = "AND")
 summary(ising_net)
 #> <psychnet> ising network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 4.90e-10
-#>   edge weight: range [0.853, 2.192], mean 1.573
+#>   optimality (KKT residual): 2.53e-09
+#>   edge weight: range [0.868, 2.201], mean 1.582
 as.data.frame(ising_net)
 #>   from to    weight
-#> 1  CSU IV 2.0693278
-#> 2  CSU SE 2.1915348
-#> 3   IV SE 0.9334331
-#> 4  CSU SR 0.8529154
-#> 5   IV SR 2.1108751
-#> 6   SE SR 1.2808939
+#> 1  CSU IV 2.0823827
+#> 2  CSU SE 2.2005411
+#> 3   IV SE 0.9297109
+#> 4  CSU SR 0.8683591
+#> 5   IV SR 2.1232839
+#> 6   SE SR 1.2884921
 ```
 
 The network has 6 edges, all positive and all among the four learning
@@ -140,7 +140,7 @@ the network is the optimum of its objective.
 
 certificate(ising_net)
 #>   method  certificate kind certified
-#> 1  ising 4.895834e-10  kkt      TRUE
+#> 1  ising 2.531323e-09  kkt      TRUE
 ```
 
 The violation is $`4.90 \times 10^{-10}`$, so the interactions are the
@@ -158,10 +158,10 @@ influence, the signed sum.
 
 net_centralities(ising_net)
 #>   node strength expected_influence
-#> 1  CSU 5.113778           5.113778
-#> 2   IV 5.113636           5.113636
-#> 3   SE 4.405862           4.405862
-#> 4   SR 4.244684           4.244684
+#> 1  CSU 5.151283           5.151283
+#> 2   IV 5.135377           5.135377
+#> 3   SE 4.418744           4.418744
+#> 4   SR 4.280135           4.280135
 #> 5   TA 0.000000           0.000000
 ```
 

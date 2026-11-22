@@ -126,6 +126,6 @@ net_predict(ising_fit(b), data = b)
 #> 1  CSU binary    nCC      0.7744361 0.9000000
 #> 2   IV binary    nCC      0.7769784 0.8966667
 #> 3   SE binary    nCC      0.6641791 0.8500000
-#> 4   SR binary    nCC      0.7101449 0.8666667
+#> 4   SR binary    nCC      0.7173913 0.8700000
 #> 5   TA binary    nCC      0.0000000 0.5000000
 ```

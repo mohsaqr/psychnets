@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,13 @@
       <small>Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.6" id="psychnets-086">psychnets 0.8.6<a class="anchor" aria-label="anchor" href="#psychnets-086"></a></h2>
+<ul><li>
+<code><a href="../reference/tmfg_certificate.html">tmfg_certificate()</a></code> tests planarity for any graph, by the left-right planarity test (de Fraysseix &amp; Rosenstiehl 1985; Brandes 2009), as NetworkX’s <code>check_planarity()</code> does. The earlier stacked-triangulation check was valid only for chordal graphs, so a non-planar graph that is also not chordal was counted planar: K3,3 now violates 3 properties (was 2), as does the bfi TMFG with an edge added. The verdict (0 = a TMFG) is unchanged.</li>
+<li>
+<code><a href="../reference/ising_fit.html">ising_fit()</a></code> and <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> with the native solver select each node’s penalty on glmnet’s default path, as <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> and <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> do: <code>lambda_min_ratio</code> now defaults to <code>NULL</code>, glmnet’s rule (1e-4, or 0.01 with fewer observations than predictors), and the path stops early by glmnet’s rule. The old grid ended at 0.01 of the largest penalty and could miss the EBIC choice: on six bfi items the Ising edge weights moved by up to 0.0165 and now agree with IsingFit to 1.6e-5; on a mixed Gaussian/binary model an edge of 0.0497 that mgm finds was missing, and the magnitudes now agree with mgm run with glmnet converged to 6e-10. Pass <code>lambda_min_ratio = 0.01</code> for a grid that ends at 0.01.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.5" id="psychnets-085">psychnets 0.8.5<a class="anchor" aria-label="anchor" href="#psychnets-085"></a></h2>
 <ul><li>

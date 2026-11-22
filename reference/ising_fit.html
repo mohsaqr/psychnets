@@ -57,7 +57,7 @@ IsingFit::IsingFit(), which native = FALSE reproduces."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,7 +137,7 @@ checked against its optimality (Karush–Kuhn–Tucker) conditions, and
 <span>  gamma <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AND"</span>, <span class="st">"OR"</span><span class="op">)</span>,</span>
 <span>  nlambda <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  lambda_min_ratio <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  lambda_min_ratio <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_sum <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pairwise"</span>, <span class="st">"listwise"</span><span class="op">)</span>,</span>
@@ -175,8 +175,9 @@ number &gt;= 2. Default <code>100</code>.</p></dd>
 
 <dt id="arg-lambda-min-ratio">lambda_min_ratio<a class="anchor" aria-label="anchor" href="#arg-lambda-min-ratio"></a></dt>
 <dd><p>Smallest penalty as a fraction of the largest, in
-(0, 1). Default <code>0.01</code>. With <code>native = FALSE</code>, leaving it unset uses
-glmnet's own default, as <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> does.</p></dd>
+(0, 1). Default <code>NULL</code> uses glmnet's default, as <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> does:
+<code>1e-4</code>, or <code>0.01</code> when there are fewer observations than predictors.
+Both engines select from glmnet's path (see Details).</p></dd>
 
 
 <dt id="arg-min-sum">min_sum<a class="anchor" aria-label="anchor" href="#arg-min-sum"></a></dt>
@@ -221,7 +222,15 @@ rule (<code>rule</code>) and the nodewise regressions (<code>nodewise</code>).</
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
+    <p>Each regression's penalty is chosen by the EBIC from glmnet's default path
+(Friedman, Hastie &amp; Tibshirani 2010), as in <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code>: <code>nlambda</code> penalties
+spaced evenly on the log scale from the smallest penalty that sets every
+coefficient to zero down to <code>lambda_min_ratio</code> times it, stopped early by
+glmnet's rule (from the fifth penalty on, when the explained deviance grows
+by less than 1e-5, relative for a continuous response, or exceeds 0.999).
+The native solver fits each penalty to its optimality conditions, so its
+weights agree with <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> up to glmnet's convergence tolerance.</p>
+<p>Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
 The weight of an edge is the change in the log-odds of one item when the
 other is endorsed, averaged over the two regressions; an item's threshold
 is its log-odds when every other item is 0.</p>
@@ -247,6 +256,9 @@ has no finite intercept. The last two are raised with <code>native = TRUE</code>
 Boschloo, L., Schoevers, R. A., &amp; Waldorp, L. J. (2014). A new method for
 constructing networks from binary data. <em>Scientific Reports</em>, 4, 5918.
 <a href="https://doi.org/10.1038/srep05918" class="external-link">doi:10.1038/srep05918</a></p>
+<p>Friedman, J., Hastie, T., &amp; Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. <em>Journal of
+Statistical Software</em>, 33(1), 1-22. <a href="https://doi.org/10.18637/jss.v033.i01" class="external-link">doi:10.18637/jss.v033.i01</a></p>
 <p>Foygel, R., &amp; Drton, M. (2010). Extended Bayesian information criteria
 for Gaussian graphical models. <em>Advances in Neural Information Processing
 Systems</em>, 23, 604-612.</p>
@@ -267,18 +279,18 @@ mixed continuous and binary data; <code><a href="dichotomize.html">dichotomize()
 <span class="r-in"><span><span class="va">fit</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; ising network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 5   edges: 6   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 1.45e-09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 8.65e-10</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   from to    weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  CSU IV 2.3063761</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  CSU SE 1.8399656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   IV SE 1.2860533</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  CSU SR 1.7394177</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   IV SR 1.9836011</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   SE SR 0.7570295</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  CSU IV 2.3226325</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  CSU SE 1.8563260</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   IV SE 1.2819940</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  CSU SR 1.7682981</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   IV SR 1.9940481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   SE SR 0.7660948</span>
 <span class="r-in"><span><span class="fu"><a href="certificate.html">certificate</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   method  certificate kind certified</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  ising 1.451526e-09  kkt      TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  ising 8.650803e-10  kkt      TRUE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

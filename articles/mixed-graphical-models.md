@@ -110,16 +110,16 @@ mixed_net <- psychnet(data = mixed_data, method = "mgm")
 summary(mixed_net)
 #> <psychnet> mgm network
 #>   nodes: 5   edges: 6   (undirected)
-#>   optimality (KKT residual): 5.00e-11
-#>   edge weight: range [0.196, 0.632], mean 0.413
+#>   optimality (KKT residual): 2.59e-11
+#>   edge weight: range [0.198, 0.649], mean 0.420
 as.data.frame(mixed_net)
 #>   from    to    weight
-#> 1  CSU    IV 0.5179205
-#> 2  CSU    SE 0.4850679
-#> 3   IV    SE 0.1970362
-#> 4  CSU SR_hi 0.4509658
-#> 5   IV SR_hi 0.6323683
-#> 6   SE SR_hi 0.1956633
+#> 1  CSU    IV 0.5186459
+#> 2  CSU    SE 0.4857298
+#> 3   IV    SE 0.1975632
+#> 4  CSU SR_hi 0.4674247
+#> 5   IV SR_hi 0.6487223
+#> 6   SE SR_hi 0.2038918
 ```
 
 The network has 6 edges, all positive, with weights from 0.196 to 0.632.
@@ -149,7 +149,7 @@ that the network is the optimum of its objective.
 
 certificate(mixed_net)
 #>   method  certificate kind certified
-#> 1    mgm 4.997067e-11  kkt      TRUE
+#> 1    mgm 2.589419e-11  kkt      TRUE
 ```
 
 The violation is $`5.00 \times 10^{-11}`$, so the edges are the
@@ -167,10 +167,10 @@ influence, the signed sum.
 
 net_centralities(mixed_net)
 #>    node  strength expected_influence
-#> 1   CSU 1.4539542          1.4539542
-#> 2    IV 1.3473249          1.3473249
-#> 3    SE 0.8777674          0.8777674
-#> 4 SR_hi 1.2789974          1.2789974
+#> 1   CSU 1.4718004          1.4718004
+#> 2    IV 1.3649314          1.3649314
+#> 3    SE 0.8871848          0.8871848
+#> 4 SR_hi 1.3200388          1.3200388
 #> 5 TA_hi 0.0000000          0.0000000
 ```
 
@@ -196,8 +196,8 @@ needs the data to compute both.
 
 net_predict(mixed_net, data = mixed_data)
 #>    node     type metric predictability accuracy
-#> 1   CSU gaussian     R2      0.8131079       NA
-#> 2    IV gaussian     R2      0.7757368       NA
+#> 1   CSU gaussian     R2      0.8131598       NA
+#> 2    IV gaussian     R2      0.7757803       NA
 #> 3    SE gaussian     R2      0.7153497       NA
 #> 4 SR_hi   binary    nCC      0.7391304     0.88
 #> 5 TA_hi   binary    nCC      0.0000000     0.50
@@ -221,17 +221,17 @@ mixed_or <- psychnet(data = mixed_data, method = "mgm", rule = "OR")
 summary(mixed_or)
 #> <psychnet> mgm network
 #>   nodes: 5   edges: 7   (undirected)
-#>   optimality (KKT residual): 5.00e-11
-#>   edge weight: range [-0.168, 0.632], mean 0.330
+#>   optimality (KKT residual): 2.59e-11
+#>   edge weight: range [-0.186, 0.649], mean 0.334
 as.data.frame(mixed_or)
 #>    from    to     weight
-#> 1   CSU    IV  0.5179205
-#> 2   CSU    SE  0.4850679
-#> 3    IV    SE  0.1970362
-#> 4   CSU SR_hi  0.4509658
-#> 5    IV SR_hi  0.6323683
-#> 6    SE SR_hi  0.1956633
-#> 7 SR_hi TA_hi -0.1681336
+#> 1   CSU    IV  0.5186459
+#> 2   CSU    SE  0.4857298
+#> 3    IV    SE  0.1975632
+#> 4   CSU SR_hi  0.4674247
+#> 5    IV SR_hi  0.6487223
+#> 6    SE SR_hi  0.2038918
+#> 7 SR_hi TA_hi -0.1861295
 ```
 
 The OR network has 7 edges: the six AND edges with the same weights and

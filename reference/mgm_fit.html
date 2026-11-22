@@ -57,7 +57,7 @@ native = FALSE. The model is the one fitted by mgm::mgm()."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,7 +137,7 @@ every edge; see <code><a href="condition.html">condition()</a></code>.</p>
 <span>  gamma <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  types <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nlambda <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  lambda_min_ratio <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  lambda_min_ratio <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LW"</span>, <span class="st">"HW"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AND"</span>, <span class="st">"OR"</span><span class="op">)</span>,</span>
 <span>  moderators <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -183,8 +183,9 @@ number &gt;= 2. Default <code>100</code>.</p></dd>
 
 <dt id="arg-lambda-min-ratio">lambda_min_ratio<a class="anchor" aria-label="anchor" href="#arg-lambda-min-ratio"></a></dt>
 <dd><p>Smallest penalty as a fraction of the largest, in
-(0, 1). Default <code>0.01</code>. With <code>native = FALSE</code>, leaving it unset uses
-glmnet's own default, as <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> does.</p></dd>
+(0, 1). Default <code>NULL</code> uses glmnet's default, as <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> does:
+<code>1e-4</code>, or <code>0.01</code> when there are fewer observations than predictors.
+Both engines select from glmnet's path (see Details).</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
@@ -248,7 +249,15 @@ continuous) and the certificate of the regressions before thresholding
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Continuous variables are standardized before fitting, binary predictors
+    <p>Each regression's penalty is chosen by the EBIC from glmnet's default path
+(Friedman, Hastie &amp; Tibshirani 2010), as in <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code>: <code>nlambda</code> penalties
+spaced evenly on the log scale from the smallest penalty that sets every
+coefficient to zero down to <code>lambda_min_ratio</code> times it, stopped early by
+glmnet's rule (from the fifth penalty on, when the explained deviance grows
+by less than 1e-5, relative for a continuous response, or exceeds 0.999).
+The native solver fits each penalty to its optimality conditions, so its
+weights agree with <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> up to glmnet's convergence tolerance.</p>
+<p>Continuous variables are standardized before fitting, binary predictors
 enter as 0/1 indicators, and the coefficient of a binary response is
 expressed on the two-class multinomial scale of <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> (half the
 logistic coefficient). Edge magnitudes are therefore comparable with those
@@ -290,6 +299,9 @@ last two are raised with <code>native = TRUE</code>.</p>
     <p>Haslbeck, J. M. B., &amp; Waldorp, L. J. (2020). mgm: Estimating
 time-varying mixed graphical models in high-dimensional data. <em>Journal of
 Statistical Software</em>, 93(8), 1-46. <a href="https://doi.org/10.18637/jss.v093.i08" class="external-link">doi:10.18637/jss.v093.i08</a></p>
+<p>Friedman, J., Hastie, T., &amp; Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. <em>Journal of
+Statistical Software</em>, 33(1), 1-22. <a href="https://doi.org/10.18637/jss.v033.i01" class="external-link">doi:10.18637/jss.v033.i01</a></p>
 <p>Foygel, R., &amp; Drton, M. (2010). Extended Bayesian information criteria
 for Gaussian graphical models. <em>Advances in Neural Information Processing
 Systems</em>, 23, 604-612.</p>
@@ -313,12 +325,12 @@ data; <code><a href="ebic_glasso.html">ebic_glasso()</a></code> for continuous d
 <span class="r-in"><span><span class="va">fit</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;psychnet&gt; mgm network</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nodes: 4   edges: 3   (undirected)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 1.01e-10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   optimality (KKT residual): 4.99e-11</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   from to    weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   g1 g2 0.3421962</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   g1 b1 0.3288350</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   g2 b1 0.3589604</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   g1 g2 0.3403544</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   g1 b1 0.3256438</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   g2 b1 0.3573982</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

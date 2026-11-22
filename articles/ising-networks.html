@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -194,16 +194,16 @@ for clarity.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ising network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 6   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 4.90e-10</span></span>
-<span><span class="co">#&gt;   edge weight: range [0.853, 2.192], mean 1.573</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 2.53e-09</span></span>
+<span><span class="co">#&gt;   edge weight: range [0.868, 2.201], mean 1.582</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to    weight</span></span>
-<span><span class="co">#&gt; 1  CSU IV 2.0693278</span></span>
-<span><span class="co">#&gt; 2  CSU SE 2.1915348</span></span>
-<span><span class="co">#&gt; 3   IV SE 0.9334331</span></span>
-<span><span class="co">#&gt; 4  CSU SR 0.8529154</span></span>
-<span><span class="co">#&gt; 5   IV SR 2.1108751</span></span>
-<span><span class="co">#&gt; 6   SE SR 1.2808939</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  CSU IV 2.0823827</span></span>
+<span><span class="co">#&gt; 2  CSU SE 2.2005411</span></span>
+<span><span class="co">#&gt; 3   IV SE 0.9297109</span></span>
+<span><span class="co">#&gt; 4  CSU SR 0.8683591</span></span>
+<span><span class="co">#&gt; 5   IV SR 2.1232839</span></span>
+<span><span class="co">#&gt; 6   SE SR 1.2884921</span></span></code></pre></div>
 <p>The network has 6 edges, all positive and all among the four learning
 constructs, with weights from 0.853 to 2.192. The strongest is
 <code>CSU</code>–<code>SE</code> (2.192): with the other indicators held
@@ -230,7 +230,7 @@ zero shows that the network is the optimum of its objective.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1  ising 4.895834e-10  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  ising 2.531323e-09  kkt      TRUE</span></span></code></pre></div>
 <p>The violation is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4.90</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">4.90 \times 10^{-10}</annotation></semantics></math>,
 so the interactions are the solutions of the penalized regressions. The
@@ -245,10 +245,10 @@ interactions, and expected influence, the signed sum.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node strength expected_influence</span></span>
-<span><span class="co">#&gt; 1  CSU 5.113778           5.113778</span></span>
-<span><span class="co">#&gt; 2   IV 5.113636           5.113636</span></span>
-<span><span class="co">#&gt; 3   SE 4.405862           4.405862</span></span>
-<span><span class="co">#&gt; 4   SR 4.244684           4.244684</span></span>
+<span><span class="co">#&gt; 1  CSU 5.151283           5.151283</span></span>
+<span><span class="co">#&gt; 2   IV 5.135377           5.135377</span></span>
+<span><span class="co">#&gt; 3   SE 4.418744           4.418744</span></span>
+<span><span class="co">#&gt; 4   SR 4.280135           4.280135</span></span>
 <span><span class="co">#&gt; 5   TA 0.000000           0.000000</span></span></code></pre></div>
 <p>Cognitive strategy use and intrinsic value have the highest strength
 (5.114), followed by self-efficacy (4.406) and self-regulation (4.245).

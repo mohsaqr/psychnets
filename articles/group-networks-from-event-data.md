@@ -154,7 +154,7 @@ that the network is the optimum of its objective.
 
 certificate(actor_net)
 #>   method  certificate kind certified
-#> 1 glasso 3.188705e-11  kkt      TRUE
+#> 1 glasso 3.188688e-11  kkt      TRUE
 ```
 
 The violation is $`3.19 \times 10^{-11}`$, so the network is the

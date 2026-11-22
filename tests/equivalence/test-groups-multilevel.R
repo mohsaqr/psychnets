@@ -51,8 +51,7 @@ test_that("as.data.frame() of a group passes include_zero = TRUE on to each netw
   pairs <- length(by_gender) * choose(length(items), 2L)
   expect_reference(nrow(as.data.frame(groups, include_zero = TRUE)), pairs,
                    reference = "independent: two groups times choose(10, 2) node pairs", covers = "as.data.frame.psychnet_group()",
-                   quantity = "rows of as.data.frame(include_zero = TRUE), two groups", tolerance = 0,
-                   defect = "as.data.frame.psychnet_group() does not pass `...` to each network: include_zero = TRUE is ignored and zero edges are dropped; FINDINGS.md")
+                   quantity = "rows of as.data.frame(include_zero = TRUE), two groups", tolerance = 0)
 })
 
 test_that("within-person scaling equals mlVAR's and the definition", {

@@ -1,3 +1,11 @@
+# psychnets 0.8.5
+
+* `as.data.frame()` of a grouped (`psychnet_group`) or multilevel
+  (`psychnet_multilevel`) result now passes `...` on to each network, so
+  `include_zero = TRUE` returns every node pair of every group or level. It
+  was ignored: zero edges were dropped silently (57 rows where 2 x 45 = 90
+  pairs exist on the bundled data by gender).
+
 # psychnets 0.8.3
 
 * A nodewise logistic fit that approaches a finite optimum slowly (nearly

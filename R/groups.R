@@ -205,7 +205,9 @@
 #' two members can be passed to [net_compare()] directly.
 #'
 #' @param x A `psychnet_group` object.
-#' @param ... Ignored.
+#' @param ... Ignored by `print()` and `summary()`; passed by
+#'   `as.data.frame()` to each group's own method (e.g. `include_zero = TRUE`
+#'   for every node pair).
 #' @return `print()` returns `x` invisibly, after printing one row per group
 #'   with its numbers of nodes and edges and its sample size.
 #' @section Conditions:
@@ -239,11 +241,12 @@ print.psychnet_group <- function(x, ...) {
 #' @rdname psychnet_group
 #' @param row.names,optional Ignored.
 #' @return `as.data.frame()` returns a data frame with one row per edge per
-#'   group and columns `group`, `from`, `to` and `weight`.
+#'   group (per node pair with `include_zero = TRUE`) and columns `group`,
+#'   `from`, `to` and `weight`.
 #' @export
 as.data.frame.psychnet_group <- function(x, row.names = NULL,
                                          optional = FALSE, ...) {
-  .stack_by_group(lapply(x, as.data.frame), names(x))
+  .stack_by_group(lapply(x, function(net) as.data.frame(net, ...)), names(x))
 }
 
 #' @rdname psychnet_group

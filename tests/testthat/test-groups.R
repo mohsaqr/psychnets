@@ -128,3 +128,24 @@ test_that("group mode works through the front door for any method", {
   expect_s3_class(g_pcor$A, "psychnet")
   expect_identical(attr(g_pcor, "call")$method, "pcor")
 })
+
+test_that("as.data.frame() of a group passes include_zero on to every group", {
+  # Group B's variables are independent, so its EBIC glasso network is sparse
+  # and dropping zeros changes the row count.
+  set.seed(11)
+  n <- 200
+  f <- stats::rnorm(n)
+  strong <- vapply(1:5, function(j) 0.9 * f + stats::rnorm(n, 0, .5), numeric(n))
+  independent <- matrix(stats::rnorm(n * 5), n, 5)
+  colnames(strong) <- colnames(independent) <- paste0("V", 1:5)
+  d <- data.frame(g = rep(c("A", "B"), each = n), rbind(strong, independent))
+  g <- psychnet(d, method = "glasso", group = "g")
+  all_pairs <- as.data.frame(g, include_zero = TRUE)
+  # Two groups times choose(5, 2) = 10 node pairs.
+  expect_identical(nrow(all_pairs), 20L)
+  expect_identical(as.vector(table(all_pairs$group)), c(10L, 10L))
+  expect_lt(nrow(as.data.frame(g)), 20L)
+  # Each group's rows are that network's own include_zero table.
+  expect_equal(subset(all_pairs, group == "B", select = -group),
+               as.data.frame(g$B, include_zero = TRUE), ignore_attr = TRUE)
+})

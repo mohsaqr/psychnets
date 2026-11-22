@@ -49,6 +49,10 @@ test_that("psychnet eventdata: sessions -> within + between, separating structur
     ((ed$from == a & ed$to == b) | (ed$from == b & ed$to == a)))
   expect_true(has("within", "V3", "V4"))
   expect_true(has("between", "V1", "V2"))
+  # include_zero reaches both levels: 2 levels times choose(4, 2) = 6 pairs.
+  all_pairs <- as.data.frame(ml, include_zero = TRUE)
+  expect_identical(nrow(all_pairs), 12L)
+  expect_identical(as.vector(table(all_pairs$level)), c(6L, 6L))
   expect_lt(certificate(ml$within)$certificate, 1e-6)
   expect_lt(certificate(ml$between)$certificate, 1e-6)
 })

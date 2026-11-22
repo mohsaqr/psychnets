@@ -373,8 +373,9 @@ event_frequencies <- function(data, actor = "Actor", action = "Action",
 #' fixed waves, with effects from one wave to the next, use [panel_gvar()].
 #'
 #' @param x,object A `psychnet_multilevel` object.
-#' @param ... Passed to `cograph::splot()` by `plot()`; ignored by the other
-#'   methods.
+#' @param ... Passed to `cograph::splot()` by `plot()` and by
+#'   `as.data.frame()` to each level's network (e.g. `include_zero = TRUE` for
+#'   every node pair); ignored by the other methods.
 #' @return `print()` returns `x` invisibly, after printing the numbers of
 #'   actors and occasions and each network's numbers of nodes and edges.
 #' @section Conditions:
@@ -411,16 +412,16 @@ print.psychnet_multilevel <- function(x, ...) {
 
 #' @rdname psychnet_multilevel
 #' @param row.names,optional Ignored.
-#' @return `as.data.frame()` returns one row per edge of the two networks,
-#'   with columns `level` (`"within"` or `"between"`), `from`, `to` and
-#'   `weight`.
+#' @return `as.data.frame()` returns one row per edge of the two networks
+#'   (per node pair with `include_zero = TRUE`), with columns `level`
+#'   (`"within"` or `"between"`), `from`, `to` and `weight`.
 #' @export
 as.data.frame.psychnet_multilevel <- function(x, row.names = NULL,
                                               optional = FALSE, ...) {
   tag <- function(df, lv) data.frame(level = rep(lv, nrow(df)), df,
                                       row.names = NULL, stringsAsFactors = FALSE)
-  rbind(tag(as.data.frame(x$within), "within"),
-        tag(as.data.frame(x$between), "between"))
+  rbind(tag(as.data.frame(x$within, ...), "within"),
+        tag(as.data.frame(x$between, ...), "between"))
 }
 
 #' @rdname psychnet_multilevel

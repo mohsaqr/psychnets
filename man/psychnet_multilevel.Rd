@@ -19,8 +19,9 @@
 \arguments{
 \item{x, object}{A \code{psychnet_multilevel} object.}
 
-\item{...}{Passed to \code{cograph::splot()} by \code{plot()}; ignored by the other
-methods.}
+\item{...}{Passed to \code{cograph::splot()} by \code{plot()} and by
+\code{as.data.frame()} to each level's network (e.g. \code{include_zero = TRUE} for
+every node pair); ignored by the other methods.}
 
 \item{row.names, optional}{Ignored.}
 }
@@ -28,9 +29,9 @@ methods.}
 \code{print()} returns \code{x} invisibly, after printing the numbers of
 actors and occasions and each network's numbers of nodes and edges.
 
-\code{as.data.frame()} returns one row per edge of the two networks,
-with columns \code{level} (\code{"within"} or \code{"between"}), \code{from}, \code{to} and
-\code{weight}.
+\code{as.data.frame()} returns one row per edge of the two networks
+(per node pair with \code{include_zero = TRUE}), with columns \code{level}
+(\code{"within"} or \code{"between"}), \code{from}, \code{to} and \code{weight}.
 
 \code{summary()} returns a data frame with one row per level
 (\code{"within"}, \code{"between"}) and columns \code{level}, \code{nodes}, \code{edges},

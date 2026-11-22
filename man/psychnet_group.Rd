@@ -16,7 +16,9 @@
 \arguments{
 \item{x}{A \code{psychnet_group} object.}
 
-\item{...}{Ignored.}
+\item{...}{Ignored by \code{print()} and \code{summary()}; passed by
+\code{as.data.frame()} to each group's own method (e.g. \code{include_zero = TRUE}
+for every node pair).}
 
 \item{row.names, optional}{Ignored.}
 
@@ -27,7 +29,8 @@
 with its numbers of nodes and edges and its sample size.
 
 \code{as.data.frame()} returns a data frame with one row per edge per
-group and columns \code{group}, \code{from}, \code{to} and \code{weight}.
+group (per node pair with \code{include_zero = TRUE}) and columns \code{group},
+\code{from}, \code{to} and \code{weight}.
 
 \code{summary()} returns a data frame with one row per group (or per
 group and \code{level} when a group holds within-actor and between-actor

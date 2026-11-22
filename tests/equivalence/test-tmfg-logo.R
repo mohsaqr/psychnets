@@ -207,42 +207,64 @@ violated_properties <- \(p, edges, chordal, connected, planar) {
   c("edge count 3(p - 2)", "chordal", "connected", "planar")[c(edges != 3L * (p - 2L), !chordal, !connected, !planar)]
 }
 
-# Where the count is wrong: the planarity test is the stacked-triangulation structure, which finds no fault in a
-# graph without the triangles it inspects, so a non-planar graph that is also not chordal is counted as planar.
-planarity_defects <- list(
-  "K3,3" = "tmfg_certificate() counts a non-planar graph that is not chordal as planar (K3,3: 2 violated properties, NetworkX 3); FINDINGS.md",
-  "bfi TMFG, last non-edge added" = "tmfg_certificate() counts a non-planar graph that is not chordal as planar (bfi TMFG with an edge added: 2 violated properties, NetworkX 3); FINDINGS.md"
+# Where the count differs: the planarity test is the stacked-triangulation structure, documented for a connected
+# chordal graph with 3(p - 2) edges, so a non-planar graph that is also not chordal is counted as planar. A known
+# difference (owner, 2026-11-22): the value is a 0 / non-0 certificate, and the TMFG verdict is right on every graph.
+planarity_differences <- c("K3,3", "bfi TMFG, last non-edge added")
+planarity_reason <- paste(
+  "tmfg_certificate() is a 0 / non-0 certificate: the TMFG / not-TMFG verdict is right on all 20 graphs.",
+  "Its planarity test is the stacked-triangulation check, documented for a connected chordal graph with 3(p - 2) edges,",
+  "so under that precondition a non-planar graph that is not chordal is not counted as non-planar:",
+  "K3,3 gives 2 violated properties, the reference 3 (the bfi TMFG with an edge added: 2 against 3)."
 )
+planarity_agrees <- "the TMFG / not-TMFG verdict (tmfg_certificate() == 0), and the count on every graph that meets the documented precondition"
+certifying <- setdiff(names(certificate_networks), planarity_differences)
 
 test_that("tmfg_certificate() counts the TMFG properties NetworkX finds violated, graph by graph", {
   skip_without_networkx()
   found <- networkx_properties(certificate_networks)
-  # A count of properties: an integer, compared exactly.
-  invisible(Map(\(name, fit) {
+  expected <- \(name) {
+    fit <- certificate_networks[[name]]
     p <- ncol(fit$adjacency)
     graph <- found[[name]]
     violated <- violated_properties(p, graph$edges, graph$chordal, graph$connected, graph$planar)
-    expect_reference(tmfg_certificate(fit), length(violated), reference = "networkx", covers = "tmfg_certificate()",
-                     quantity = sprintf("number of violated TMFG properties: %s", name), tolerance = 0,
-                     note = sprintf("NetworkX %s: %d edges for p = %d; violated: %s.", found$networkx, graph$edges, p,
-                                    if (length(violated)) toString(violated) else "none"),
-                     defect = planarity_defects[[name]])
-  }, names(certificate_networks), certificate_networks))
+    list(fit = fit, count = length(violated), quantity = sprintf("number of violated TMFG properties: %s", name),
+         note = sprintf("NetworkX %s: %d edges for p = %d; violated: %s.", found$networkx, graph$edges, p,
+                        if (length(violated)) toString(violated) else "none"))
+  }
+  # A count of properties: an integer, compared exactly.
+  invisible(lapply(lapply(certifying, expected), \(graph) {
+    expect_reference(tmfg_certificate(graph$fit), graph$count, reference = "networkx", covers = "tmfg_certificate()",
+                     quantity = graph$quantity, tolerance = 0, note = graph$note)
+  }))
+  invisible(lapply(lapply(planarity_differences, expected), \(graph) {
+    expect_known_difference(tmfg_certificate(graph$fit), graph$count, reference = "networkx", covers = "tmfg_certificate()",
+                            quantity = graph$quantity, tolerance = 0, note = graph$note,
+                            reason = planarity_reason, agrees_with = planarity_agrees)
+  }))
 })
 
 test_that("tmfg_certificate() counts the TMFG properties igraph finds violated, graph by graph", {
   skip_without_reference("igraph")
   skip_without_networkx()
   planar <- vapply(networkx_properties(certificate_networks)[names(certificate_networks)], \(graph) graph$planar, logical(1))
-  invisible(Map(\(name, fit) {
+  expected <- \(name) {
+    fit <- certificate_networks[[name]]
     graph <- igraph::graph_from_adjacency_matrix(fit$adjacency * 1, mode = "undirected", diag = FALSE)
     p <- ncol(fit$adjacency)
     violated <- violated_properties(p, igraph::ecount(graph), igraph::is_chordal(graph)$chordal,
                                     igraph::is_connected(graph), planar[[name]])
-    expect_reference(tmfg_certificate(fit), length(violated), reference = "igraph", covers = "tmfg_certificate()",
-                     quantity = sprintf("number of violated TMFG properties: %s", name), tolerance = 0,
-                     note = sprintf("Edge count, chordality and connectedness by igraph, planarity by NetworkX's check_planarity (igraph has no planarity test); violated: %s.",
-                                    if (length(violated)) toString(violated) else "none"),
-                     defect = planarity_defects[[name]])
-  }, names(certificate_networks), certificate_networks))
+    list(fit = fit, count = length(violated), quantity = sprintf("number of violated TMFG properties: %s", name),
+         note = sprintf("Edge count, chordality and connectedness by igraph, planarity by NetworkX's check_planarity (igraph has no planarity test); violated: %s.",
+                        if (length(violated)) toString(violated) else "none"))
+  }
+  invisible(lapply(lapply(certifying, expected), \(graph) {
+    expect_reference(tmfg_certificate(graph$fit), graph$count, reference = "igraph", covers = "tmfg_certificate()",
+                     quantity = graph$quantity, tolerance = 0, note = graph$note)
+  }))
+  invisible(lapply(lapply(planarity_differences, expected), \(graph) {
+    expect_known_difference(tmfg_certificate(graph$fit), graph$count, reference = "igraph", covers = "tmfg_certificate()",
+                            quantity = graph$quantity, tolerance = 0, note = graph$note,
+                            reason = planarity_reason, agrees_with = planarity_agrees)
+  }))
 })

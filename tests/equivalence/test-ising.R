@@ -127,3 +127,14 @@ test_that("dichotomize() equals its split rules written out", {
   expect_reference(dichotomize(items, method = "rank"), above_mid_rank, reference = rule, covers = "dichotomize()",
                    quantity = "1 above the middle rank", tolerance = 0)
 })
+
+test_that("dichotomize() at the median and the mean equals bootnet::binarize()", {
+  skip_without_reference("bootnet")
+  items <- utils::head(items, 300L)
+  expect_reference(dichotomize(items, method = "median"), as.matrix(bootnet::binarize(items, split = "median", verbose = FALSE)),
+                   reference = "bootnet", covers = "dichotomize()", quantity = "1 at or above the median, binarize()",
+                   tolerance = 0)
+  expect_reference(dichotomize(items, method = "mean"), as.matrix(bootnet::binarize(items, split = "mean", verbose = FALSE)),
+                   reference = "bootnet", covers = "dichotomize()", quantity = "1 at or above the mean, binarize()",
+                   tolerance = 0)
+})

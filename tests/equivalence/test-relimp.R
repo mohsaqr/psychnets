@@ -44,3 +44,16 @@ test_that("the R-squared and lmg_certificate() equal stats::lm() and the shares'
                    reference = "independent: the LMG shares summed per outcome against stats::lm()'s R-squared",
                    covers = "certificate()", quantity = "certificate of relimp_network()", tolerance = 1e-12)
 })
+
+test_that("lmg_certificate() equals the largest gap between relaimpo's LMG shares and its R-squared", {
+  skip_without_reference("relaimpo")
+  gaps <- vapply(outcomes, \(outcome) {
+    fit <- relaimpo::calc.relimp(stats::lm(stats::reformulate(setdiff(outcomes, outcome), outcome), data = items),
+                                 type = "lmg", rela = FALSE)
+    abs(sum(fit@lmg) - fit@R2)
+  }, numeric(1))
+  # Both are rounding residues near 1e-16: compared absolutely at 1e-12.
+  expect_reference(lmg_certificate(relimp_network(data = items)), max(gaps), reference = "relaimpo",
+                   covers = "lmg_certificate()", quantity = "LMG certificate from relaimpo's shares and R-squared",
+                   tolerance = 1e-12)
+})

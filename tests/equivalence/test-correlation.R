@@ -96,3 +96,22 @@ test_that("correlation p-values and the alpha rule equal stats::cor.test()", {
                    quantity = "correlation kept at alpha = 0.05 after Holm's adjustment, SRL_Claude",
                    tolerance = exact, key = c("from", "to"))
 })
+
+# Parameter recovery: data drawn by simulab from a known AR(1) correlation matrix (rho = 0.4, five variables,
+# n = 5000). The sampling SE of a correlation is at most 1 / sqrt(n) (at rho = 0): the bound, fixed before the
+# run, is 4 / sqrt(5000) = 0.057.
+test_that("psychnet(method = 'cor') recovers the correlation matrix simulab drew the data from", {
+  invisible(lapply(c(1L, 2L, 3L), \(seed) {
+    drawn <- simulab::simulate_correlation(n = 5000L, means = rep(0, 5L), rho = 0.4, structure = "ar1",
+                                           variable_names = paste0("v", seq_len(5L)), seed = seed)
+    truth <- as.data.frame(drawn, what = "correlation")
+    names_ <- paste0("v", seq_len(5L))
+    truth_matrix <- matrix(0, 5L, 5L, dimnames = list(names_, names_))
+    truth_matrix[cbind(match(truth$row, names_), match(truth$column, names_))] <- truth$correlation
+    expect_reference(as.data.frame(psychnet(subset(as.data.frame(drawn), select = -id), method = "cor"), include_zero = TRUE),
+                     ref_edges(truth_matrix),
+                     reference = "independent: recovery of the parameters of simulab simulate_correlation()",
+                     covers = "psychnet()", quantity = sprintf("correlation, AR(1) rho 0.4, n 5000, seed %d", seed),
+                     tolerance = 4 / sqrt(5000), key = c("from", "to"))
+  }))
+})

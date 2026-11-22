@@ -108,3 +108,52 @@ test_that("event_frequencies() counts each actor's actions per session", {
                    covers = "event_frequencies()", quantity = "count of each action per session", tolerance = 0,
                    key = "session")
 })
+
+test_that("within and between networks equal partial correlations of psych::statsBy()'s rwg and rbg", {
+  skip_without_reference(c("psych", "corpcor"))
+  variables <- c("efficacy", "planning", "effort", "enjoyment", "anxiety")
+  fit <- psychnet(srl_panel, id = "student", vars = efficacy:anxiety, method = "pcor", standardize = FALSE)
+  # statsBy(): rwg is the pooled within-person correlation, rbg the correlation of the person means.
+  by_person <- psych::statsBy(srl_panel[c("student", variables)], group = "student", cors = TRUE)
+  named <- \(m) `dimnames<-`(corpcor::cor2pcor(m), list(variables, variables))
+  within <- named(by_person$rwg)
+  between <- named(by_person$rbg)
+  expected <- rbind(data.frame(level = "within", ref_edges(within)), data.frame(level = "between", ref_edges(between)))
+  expect_reference(as.data.frame(fit, include_zero = TRUE), expected, reference = "psych",
+                   covers = c("psychnet()", "as.data.frame.psychnet_multilevel()"),
+                   quantity = "within- and between-person partial correlation, statsBy() rwg / rbg", tolerance = 1e-10,
+                   key = c("level", "from", "to"), note = "corpcor::cor2pcor() of psych::statsBy()'s rwg and rbg")
+  persons <- nrow(by_person$n)
+  sizes <- data.frame(level = c("within", "between"), n = c(sum(by_person$n[, "efficacy"]) - persons, persons),
+                      mean_abs_weight = c(mean(abs(within[upper.tri(within)])), mean(abs(between[upper.tri(between)]))))
+  expect_reference(summary(fit), sizes, reference = "psych", covers = "summary.psychnet_multilevel()",
+                   quantity = "sample size and mean absolute weight per level, statsBy()", tolerance = 1e-10,
+                   key = "level")
+})
+
+test_that("each group's strength and summary equal qgraph and corpcor on that group's rows", {
+  skip_without_reference(c("qgraph", "corpcor"))
+  groups <- psychnet(with_gender, method = "pcor", group = "gender")
+  per_group <- lapply(by_gender, \(x) `dimnames<-`(corpcor::cor2pcor(stats::cor(x)), list(items, items)))
+  strength <- do.call(rbind, lapply(names(per_group), \(level) {
+    network <- per_group[[level]]
+    diag(network) <- 0
+    data.frame(group = level, node = items, strength = unname(qgraph::centrality(network)$OutDegree))
+  }))
+  expect_reference(as.data.frame(net_centralities(groups, measures = "strength")), strength, reference = "qgraph",
+                   covers = c("as.data.frame.psychnet_result_group()", "net_centralities()"),
+                   quantity = "strength per gender, qgraph::centrality() of corpcor's partial correlations",
+                   tolerance = 1e-10, key = c("group", "node"))
+  glasso <- psychnet(with_gender, method = "glasso", group = "gender")
+  expected <- do.call(rbind, lapply(names(by_gender), \(level) {
+    rows <- by_gender[[level]]
+    network <- qgraph::EBICglasso(stats::cor(rows), n = nrow(rows), gamma = 0.5, refit = FALSE, threshold = FALSE,
+                                  thr = 1e-10, maxit = 1e5, verbose = FALSE)
+    weights <- network[upper.tri(network)]
+    data.frame(group = level, edges = sum(weights != 0), mean_abs_weight = mean(abs(weights[weights != 0])))
+  }))
+  # Two solvers of one convex problem (1e-6, as for ebic_glasso()); the edge count must match exactly.
+  expect_reference(summary(glasso), expected, reference = "qgraph", covers = "summary.psychnet_group()",
+                   quantity = "edges and mean absolute weight per gender, qgraph::EBICglasso()", tolerance = 1e-6,
+                   key = "group")
+})

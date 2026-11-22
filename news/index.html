@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,11 @@
       <small>Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.5" id="psychnets-085">psychnets 0.8.5<a class="anchor" aria-label="anchor" href="#psychnets-085"></a></h2>
+<ul><li>
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> of a grouped (<code>psychnet_group</code>) or multilevel (<code>psychnet_multilevel</code>) result now passes <code>...</code> on to each network, so <code>include_zero = TRUE</code> returns every node pair of every group or level. It was ignored: zero edges were dropped silently (57 rows where 2 x 45 = 90 pairs exist on the bundled data by gender).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.3" id="psychnets-083">psychnets 0.8.3<a class="anchor" aria-label="anchor" href="#psychnets-083"></a></h2>
 <ul><li>A nodewise logistic fit that approaches a finite optimum slowly (nearly collinear predictors) is no longer reported as separated. 0.8.2 could stop such a fit early with a separation warning in <code><a href="../reference/ising_sampler.html">ising_sampler()</a></code>.</li>

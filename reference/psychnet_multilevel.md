@@ -63,8 +63,10 @@ plot(x, ...)
 
   Passed to
   [`cograph::splot()`](https://sonsoles.me/cograph/reference/splot.html)
-  by [`plot()`](https://rdrr.io/r/graphics/plot.default.html); ignored
-  by the other methods.
+  by [`plot()`](https://rdrr.io/r/graphics/plot.default.html) and by
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) to each
+  level's network (e.g. `include_zero = TRUE` for every node pair);
+  ignored by the other methods.
 
 - row.names, optional:
 
@@ -77,8 +79,9 @@ after printing the numbers of actors and occasions and each network's
 numbers of nodes and edges.
 
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
-one row per edge of the two networks, with columns `level` (`"within"`
-or `"between"`), `from`, `to` and `weight`.
+one row per edge of the two networks (per node pair with
+`include_zero = TRUE`), with columns `level` (`"within"` or
+`"between"`), `from`, `to` and `weight`.
 
 [`summary()`](https://rdrr.io/r/base/summary.html) returns a data frame
 with one row per level (`"within"`, `"between"`) and columns `level`,

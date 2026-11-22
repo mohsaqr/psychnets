@@ -39,7 +39,7 @@ functions, because they would need resampling at the actor level."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,7 +124,9 @@ functions, because they would need resampling at the actor level.</p>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored.</p></dd>
+<dd><p>Ignored by <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>; passed by
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> to each group's own method (e.g. <code>include_zero = TRUE</code>
+for every node pair).</p></dd>
 
 
 <dt id="arg-row-names-optional">row.names, optional<a class="anchor" aria-label="anchor" href="#arg-row-names-optional"></a></dt>
@@ -140,7 +142,8 @@ functions, because they would need resampling at the actor level.</p>
     <p><code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> returns <code>x</code> invisibly, after printing one row per group
 with its numbers of nodes and edges and its sample size.</p>
 <p><code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> returns a data frame with one row per edge per
-group and columns <code>group</code>, <code>from</code>, <code>to</code> and <code>weight</code>.</p>
+group (per node pair with <code>include_zero = TRUE</code>) and columns <code>group</code>,
+<code>from</code>, <code>to</code> and <code>weight</code>.</p>
 <p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns a data frame with one row per group (or per
 group and <code>level</code> when a group holds within-actor and between-actor
 networks) and columns <code>group</code>, <code>nodes</code>, <code>edges</code> and <code>mean_abs_weight</code>.</p>

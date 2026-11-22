@@ -54,7 +54,10 @@ summary(object, ...)
 
 - ...:
 
-  Ignored.
+  Ignored by [`print()`](https://rdrr.io/r/base/print.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html); passed by
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) to each
+  group's own method (e.g. `include_zero = TRUE` for every node pair).
 
 - row.names, optional:
 
@@ -71,8 +74,8 @@ after printing one row per group with its numbers of nodes and edges and
 its sample size.
 
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns a
-data frame with one row per edge per group and columns `group`, `from`,
-`to` and `weight`.
+data frame with one row per edge per group (per node pair with
+`include_zero = TRUE`) and columns `group`, `from`, `to` and `weight`.
 
 [`summary()`](https://rdrr.io/r/base/summary.html) returns a data frame
 with one row per group (or per group and `level` when a group holds

@@ -163,7 +163,7 @@
 #' @noRd
 .mmg_estimate <- function(mat, types, moderator, gamma, rule, threshold,
                           labels, level = NULL, engine = "base",
-                          nlambda = 100L, lambda_min_ratio = 0.01,
+                          nlambda = 100L, lambda_min_ratio = NULL,
                           moderator_levels = NULL) {
   if (engine == "glmnet" && !requireNamespace("glmnet", quietly = TRUE)) {
     .psn_stop("native = FALSE needs the 'glmnet' package; install it, or keep ",

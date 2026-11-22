@@ -1,3 +1,22 @@
+# psychnets 0.8.6
+
+* `tmfg_certificate()` tests planarity for any graph, by the left-right
+  planarity test (de Fraysseix & Rosenstiehl 1985; Brandes 2009), as
+  NetworkX's `check_planarity()` does. The earlier stacked-triangulation check
+  was valid only for chordal graphs, so a non-planar graph that is also not
+  chordal was counted planar: K3,3 now violates 3 properties (was 2), as does
+  the bfi TMFG with an edge added. The verdict (0 = a TMFG) is unchanged.
+* `ising_fit()` and `mgm_fit()` with the native solver select each node's
+  penalty on glmnet's default path, as `IsingFit::IsingFit()` and
+  `mgm::mgm()` do: `lambda_min_ratio` now defaults to `NULL`, glmnet's rule
+  (1e-4, or 0.01 with fewer observations than predictors), and the path stops
+  early by glmnet's rule. The old grid ended at 0.01 of the largest penalty
+  and could miss the EBIC choice: on six bfi items the Ising edge weights
+  moved by up to 0.0165 and now agree with IsingFit to 1.6e-5; on a mixed
+  Gaussian/binary model an edge of 0.0497 that mgm finds was missing, and the
+  magnitudes now agree with mgm run with glmnet converged to 6e-10. Pass
+  `lambda_min_ratio = 0.01` for a grid that ends at 0.01.
+
 # psychnets 0.8.5
 
 * `as.data.frame()` of a grouped (`psychnet_group`) or multilevel

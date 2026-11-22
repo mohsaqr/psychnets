@@ -9,7 +9,7 @@ mgm_fit(
   gamma = 0.25,
   types = NULL,
   nlambda = 100L,
-  lambda_min_ratio = 0.01,
+  lambda_min_ratio = NULL,
   threshold = c("LW", "HW", "none"),
   rule = c("AND", "OR"),
   moderators = NULL,
@@ -42,8 +42,9 @@ declared \code{"c"} with more than 10 distinct values is refused.}
 number >= 2. Default \code{100}.}
 
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
-(0, 1). Default \code{0.01}. With \code{native = FALSE}, leaving it unset uses
-glmnet's own default, as \code{mgm::mgm()} does.}
+(0, 1). Default \code{NULL} uses glmnet's default, as \code{mgm::mgm()} does:
+\code{1e-4}, or \code{0.01} when there are fewer observations than predictors.
+Both engines select from glmnet's path (see Details).}
 
 \item{threshold}{Threshold on the selected coefficients: \code{"LW"} (default),
 \code{"HW"} or \code{"none"} (see Details), as in \code{mgm::mgm()}.}
@@ -121,6 +122,15 @@ For binary data only, use \code{\link[=ising_fit]{ising_fit()}}; for continuous 
 \code{native = FALSE}. The model is the one fitted by \code{mgm::mgm()}.
 }
 \details{
+Each regression's penalty is chosen by the EBIC from glmnet's default path
+(Friedman, Hastie & Tibshirani 2010), as in \code{mgm::mgm()}: \code{nlambda} penalties
+spaced evenly on the log scale from the smallest penalty that sets every
+coefficient to zero down to \code{lambda_min_ratio} times it, stopped early by
+glmnet's rule (from the fifth penalty on, when the explained deviance grows
+by less than 1e-5, relative for a continuous response, or exceeds 0.999).
+The native solver fits each penalty to its optimality conditions, so its
+weights agree with \code{mgm::mgm()} up to glmnet's convergence tolerance.
+
 Continuous variables are standardized before fitting, binary predictors
 enter as 0/1 indicators, and the coefficient of a binary response is
 expressed on the two-class multinomial scale of \code{mgm::mgm()} (half the
@@ -173,6 +183,10 @@ as.data.frame(fit)
 Haslbeck, J. M. B., & Waldorp, L. J. (2020). mgm: Estimating
 time-varying mixed graphical models in high-dimensional data. \emph{Journal of
 Statistical Software}, 93(8), 1-46. \doi{10.18637/jss.v093.i08}
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. \emph{Journal of
+Statistical Software}, 33(1), 1-22. \doi{10.18637/jss.v033.i01}
 
 Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
 for Gaussian graphical models. \emph{Advances in Neural Information Processing

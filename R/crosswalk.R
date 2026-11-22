@@ -95,8 +95,9 @@
         "-Inf vs NULL (both keep all rows)",
         "psychnet is binomial-only", "psychnet never plots",
         "psychnet has no progress bar",
-        "psychnet uses its own full lambda path",
-        "lambda-path length", "smallest penalty fraction",
+        "both select on glmnet's default lambda path",
+        "lambda-path length (glmnet default 100)",
+        "smallest penalty fraction (glmnet default: 1e-4, 0.01 if n < predictors)",
         "observation weights", "pairwise/listwise", "node labels")),
 
     # ---- mgm::mgm  <->  mgm_fit ------------------------------------------
@@ -117,7 +118,7 @@
         "EBIC tuning, default 0.25", "'and'/'or' -> 'AND'/'OR'",
         "'LW'/'HW'/'none' thresholding rule", "observation weights",
         "explicit #levels; psychnet infers binary vs gaussian",
-        "psychnet always lasso-regularized", "psychnet builds its own path",
+        "psychnet always lasso-regularized", "both use glmnet's default path",
         "psychnet is EBIC-only (no CV)", "no CV folds in psychnet",
         "elastic-net alpha; psychnet is pure lasso", "no alpha selection",
         "no alpha CV", "no alpha EBIC", "max interaction order; psychnet pairwise",
@@ -126,7 +127,8 @@
         "no overparameterized coding", "categorical threshold",
         "sign-info messages", "verbose toggle", "progress bar",
         "warning toggle", "model saving", "data saving",
-        "lambda-path length", "smallest penalty fraction",
+        "lambda-path length (glmnet default 100)",
+        "smallest penalty fraction (glmnet default: 1e-4, 0.01 if n < predictors)",
         "pairwise/listwise", "node labels")),
 
     # ---- psychonetrics::panelgvar (+ runmodel / prune)  <->  panel_gvar ---

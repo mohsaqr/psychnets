@@ -29,17 +29,15 @@ test_that("native = FALSE: the eLasso network and thresholds equal IsingFit::Isi
                    quantity = "threshold, AND rule, native = FALSE", tolerance = 1e-8)
 })
 
-test_that("native = TRUE scans its own penalty grid: a known difference from IsingFit", {
+test_that("native = TRUE: the eLasso network equals IsingFit::IsingFit() on glmnet's path", {
   skip_without_reference("IsingFit")
   and <- isingfit(TRUE)
-  expect_known_difference(as.data.frame(ising_fit(binary, rule = "AND"), include_zero = TRUE), ref_edges(and$weiadj),
-                          reference = "IsingFit", covers = "ising_fit()", quantity = "edge weight, AND rule, native solver",
-                          tolerance = 1e-4, key = c("from", "to"),
-                          reason = paste("The native solver scans its own penalty grid (nlambda = 100 down to lambda_min_ratio",
-                                         "= 0.01 of its lambda_max); IsingFit scans glmnet's default path. The EBIC then",
-                                         "chooses among different candidate penalties, so each item's selected lasso",
-                                         "differs by up to about 0.02 in an edge weight."),
-                          agrees_with = "native = FALSE (glmnet's path), compared above")
+  # The native solver selects on glmnet's default path (lambda_min_ratio 1e-4 here, glmnet's early stop), as
+  # IsingFit does, and solves each penalty to its KKT conditions; IsingFit's glmnet stops at thresh = 1e-7, which
+  # leaves errors of order 1e-5 in an edge weight: 1e-4 bounds them.
+  expect_reference(as.data.frame(ising_fit(binary, rule = "AND"), include_zero = TRUE), ref_edges(and$weiadj),
+                   reference = "IsingFit", covers = "ising_fit()", quantity = "edge weight, AND rule, native solver",
+                   tolerance = 1e-4, key = c("from", "to"))
 })
 
 test_that("the unregularized nodewise model equals IsingSampler::EstimateIsing(method = \"uni\")", {

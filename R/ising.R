@@ -100,7 +100,7 @@
   .psn_check_number(gamma, "gamma", lower = 0)
   .psn_check_number(nlambda, "nlambda", lower = 2, whole = TRUE)
   .psn_check_number(lambda_min_ratio, "lambda_min_ratio", lower = 0, upper = 1,
-                    open = TRUE)
+                    open = TRUE, null_ok = TRUE)
   invisible(TRUE)
 }
 
@@ -153,6 +153,15 @@
 #' `IsingFit::IsingFit()`, which `native = FALSE` reproduces.
 #'
 #' @details
+#' Each regression's penalty is chosen by the EBIC from glmnet's default path
+#' (Friedman, Hastie & Tibshirani 2010), as in `IsingFit::IsingFit()`: `nlambda` penalties
+#' spaced evenly on the log scale from the smallest penalty that sets every
+#' coefficient to zero down to `lambda_min_ratio` times it, stopped early by
+#' glmnet's rule (from the fifth penalty on, when the explained deviance grows
+#' by less than 1e-5, relative for a continuous response, or exceeds 0.999).
+#' The native solver fits each penalty to its optimality conditions, so its
+#' weights agree with `IsingFit::IsingFit()` up to glmnet's convergence tolerance.
+#'
 #' Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
 #' The weight of an edge is the change in the log-odds of one item when the
 #' other is endorsed, averaged over the two regressions; an item's threshold
@@ -170,8 +179,9 @@
 #' @param nlambda Number of penalty values on each nodewise path, a whole
 #'   number >= 2. Default `100`.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest, in
-#'   (0, 1). Default `0.01`. With `native = FALSE`, leaving it unset uses
-#'   glmnet's own default, as `IsingFit::IsingFit()` does.
+#'   (0, 1). Default `NULL` uses glmnet's default, as `IsingFit::IsingFit()` does:
+#'   `1e-4`, or `0.01` when there are fewer observations than predictors.
+#'   Both engines select from glmnet's path (see Details).
 #' @param min_sum Minimum number of endorsed items per row; rows below it are
 #'   dropped before fitting. Default `NULL` keeps every row.
 #' @param weights Optional non-negative observation weights, one per row after
@@ -214,6 +224,10 @@
 #'   constructing networks from binary data. *Scientific Reports*, 4, 5918.
 #'   \doi{10.1038/srep05918}
 #'
+#'   Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths
+#'   for generalized linear models via coordinate descent. *Journal of
+#'   Statistical Software*, 33(1), 1-22. \doi{10.18637/jss.v033.i01}
+#'
 #'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
 #'   for Gaussian graphical models. *Advances in Neural Information Processing
 #'   Systems*, 23, 604-612.
@@ -226,11 +240,10 @@
 #' certificate(fit)
 #' @export
 ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
-                      nlambda = 100L, lambda_min_ratio = 0.01, min_sum = NULL,
+                      nlambda = 100L, lambda_min_ratio = NULL, min_sum = NULL,
                       weights = NULL,
                       na_method = c("pairwise", "listwise"),
                       native = TRUE, labels = NULL) {
-  ratio_missing <- missing(lambda_min_ratio)
   rule <- .psn_match_arg(rule)
   na_method <- .psn_match_arg(na_method)
   engine <- .resolve_native(native, "glmnet")
@@ -250,13 +263,13 @@ ising_fit <- function(data, gamma = 0.25, rule = c("AND", "OR"),
       .psn_stop("native = FALSE does not support `weights`; use native = TRUE.",
            call. = FALSE)
     }
-    out <- .ising_fit_glmnet(mat, gamma, rule, nlambda,
-                             if (ratio_missing) NULL else lambda_min_ratio,
+    out <- .ising_fit_glmnet(mat, gamma, rule, nlambda, lambda_min_ratio,
                              labels)
     out$nodewise$category_levels <- bin$category_levels
     return(out)
   }
 
+  lambda_min_ratio <- lambda_min_ratio %||% .glmnet_default_ratio(nrow(mat), p - 1L)
   fits <- lapply(seq_len(p), function(i) {
     .nodewise_ebic(mat[, -i, drop = FALSE], mat[, i], "binomial",
                    gamma, nlambda, lambda_min_ratio, weights = weights)

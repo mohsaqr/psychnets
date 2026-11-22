@@ -406,7 +406,7 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
 # Nodewise lasso path with EBIC selection for one response column.
 # Returns the EBIC-selected fit: original-scale coefficients, intercept,
 # standardized coefficients (for certification), the lambda, and the KKT value.
-.nodewise_ebic <- function(X, y, family, gamma, nlambda, lambda_min_ratio,
+.nodewise_ebic <- function(X, y, family, gamma, nlambda, lambda_min_ratio = NULL,
                            weights = NULL) {
   n <- nrow(X); p <- ncol(X)
   wobs <- if (is.null(weights)) rep(1, n) else weights
@@ -437,14 +437,27 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
     return(list(beta = numeric(p), b0 = b0_empty, beta_std = numeric(p),
                 lambda = 0, kkt = 0, converged = TRUE, separation = FALSE))
   }
+  # glmnet's default path (Friedman, Hastie & Tibshirani 2010), which IsingFit
+  # and mgm select from: `nlambda` log-spaced values from lambda_max down to
+  # lambda_min_ratio * lambda_max, with lambda_min_ratio = 1e-4 unless there
+  # are fewer observations than predictors (then 0.01).
+  lambda_min_ratio <- lambda_min_ratio %||% .glmnet_default_ratio(n, p)
   lambdas <- exp(seq(log(lambda_max), log(lambda_max * lambda_min_ratio),
                      length.out = nlambda))
+  # Null deviance, for glmnet's path termination below.
+  null_dev <- if (family == "binomial") {
+    -2 * sum(wobs * (y * log(mu0) + (1 - y) * log(1 - mu0)))
+  } else sum(wobs * (y - mu0)^2)
 
   best <- NULL; best_ebic <- Inf
   b0 <- NULL; beta <- NULL
+  ratio_prev <- 0
   # The gaussian quadratic does not change along the path: build its Gram once.
   gram <- if (family == "gaussian") .gauss_gram(Xs, y, wobs) else NULL
-  for (lam in lambdas) {
+  # A loop, not lapply: each fit is warm-started from the previous one and the
+  # path stops early by glmnet's rule, so the iterations are sequential.
+  for (m in seq_along(lambdas)) {
+    lam <- lambdas[[m]]
     fit <- .glm_lasso_fit(Xs, y, family, lam, b0 = b0, beta = beta,
                           weights = weights, gram = gram)
     b0 <- fit$b0; beta <- fit$beta                      # warm start
@@ -463,6 +476,9 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
       best <- list(b0 = fit$b0, beta_std = fit$beta, lambda = lam,
                    converged = fit$converged, separation = fit$separation)
     }
+    ratio <- 1 - dev / null_dev
+    if (.glmnet_path_stops(m, nlambda, family, ratio, ratio_prev)) break
+    ratio_prev <- ratio
   }
   # Inactive coordinates must be EXACT zeros. Coordinate descent can leave
   # BLAS-rounding crumbs (~1e-17) on coordinates whose gradient sits exactly at
@@ -478,6 +494,28 @@ glm_lasso_kkt <- function(X, y, b0, beta, lambda, family = "gaussian",
        lambda = best$lambda, kkt = kkt, ebic = best_ebic,
        converged = best$converged && kkt <= .nodewise_kkt_tol,
        separation = best$separation)
+}
+
+# glmnet's default `lambda.min.ratio`: 0.01 when there are fewer observations
+# than predictors, else 1e-4 (glmnet(); as used by IsingFit and mgm).
+#' @noRd
+.glmnet_default_ratio <- function(n_obs, n_pred) {
+  if (n_obs < n_pred) 0.01 else 1e-4
+}
+
+# glmnet's path termination (glmnet.control(): mnlam = 5, fdev = 1e-5,
+# devmax = 0.999), checked after the m-th penalty from the 5th on. `ratio` is
+# the fraction of null deviance explained at this penalty, `ratio_prev` at the
+# previous one. A binomial path stops when the ratio grows by less than fdev,
+# a gaussian path when it grows by less than fdev of itself; either stops when
+# the ratio exceeds devmax.
+#' @noRd
+.glmnet_path_stops <- function(m, nlambda, family, ratio, ratio_prev,
+                               mnlam = 5L, fdev = 1e-5, devmax = 0.999) {
+  if (m < min(mnlam, nlambda)) return(FALSE)
+  change <- if (family == "binomial") ratio - ratio_prev
+            else if (ratio == 0) Inf else (ratio - ratio_prev) / ratio
+  change < fdev || ratio > devmax
 }
 
 # Stationarity residual above which a nodewise fit is reported as unconverged:

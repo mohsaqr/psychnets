@@ -1,10 +1,10 @@
 # Optional glmnet solver engine for the nodewise estimators (ising_fit, mgm_fit).
 #
 # The default engine = "base" is the pure-R, dependency-free, self-certified
-# nodewise lasso in R/lasso_glm.R (internally optimal, KKT ~1e-9). It agrees
-# with IsingFit / mgm on structure and sign, but selects a slightly different
-# EBIC lambda along an independent path, so its weights are not byte-identical
-# to those packages. engine = "glmnet" swaps the per-node solve to
+# nodewise lasso in R/lasso_glm.R (internally optimal, KKT ~1e-9). It selects
+# on the same path as IsingFit / mgm (glmnet's default lambda sequence and early
+# stop, .nodewise_ebic()), so its weights differ from theirs only by glmnet's
+# convergence tolerance, not byte for byte. engine = "glmnet" swaps the per-node solve to
 # glmnet::glmnet() with the reference's exact lambda path, EBIC formula, df
 # count, thresholding, and AND/OR symmetrization, so the returned network
 # byte-matches IsingFit::IsingFit() / mgm::mgm() (to ~1e-16). This mirrors the

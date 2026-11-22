@@ -9,7 +9,7 @@ ising_fit(
   gamma = 0.25,
   rule = c("AND", "OR"),
   nlambda = 100L,
-  lambda_min_ratio = 0.01,
+  lambda_min_ratio = NULL,
   min_sum = NULL,
   weights = NULL,
   na_method = c("pairwise", "listwise"),
@@ -34,8 +34,9 @@ are nonzero; \code{"OR"} when either is.}
 number >= 2. Default \code{100}.}
 
 \item{lambda_min_ratio}{Smallest penalty as a fraction of the largest, in
-(0, 1). Default \code{0.01}. With \code{native = FALSE}, leaving it unset uses
-glmnet's own default, as \code{IsingFit::IsingFit()} does.}
+(0, 1). Default \code{NULL} uses glmnet's default, as \code{IsingFit::IsingFit()} does:
+\code{1e-4}, or \code{0.01} when there are fewer observations than predictors.
+Both engines select from glmnet's path (see Details).}
 
 \item{min_sum}{Minimum number of endorsed items per row; rows below it are
 dropped before fitting. Default \code{NULL} keeps every row.}
@@ -98,6 +99,15 @@ For unpenalized estimates with significance-based pruning, use
 \code{IsingFit::IsingFit()}, which \code{native = FALSE} reproduces.
 }
 \details{
+Each regression's penalty is chosen by the EBIC from glmnet's default path
+(Friedman, Hastie & Tibshirani 2010), as in \code{IsingFit::IsingFit()}: \code{nlambda} penalties
+spaced evenly on the log scale from the smallest penalty that sets every
+coefficient to zero down to \code{lambda_min_ratio} times it, stopped early by
+glmnet's rule (from the fifth penalty on, when the explained deviance grows
+by less than 1e-5, relative for a continuous response, or exceeds 0.999).
+The native solver fits each penalty to its optimality conditions, so its
+weights agree with \code{IsingFit::IsingFit()} up to glmnet's convergence tolerance.
+
 Edge weights and thresholds are on the log-odds scale of the 0/1 coding.
 The weight of an edge is the change in the log-odds of one item when the
 other is endorsed, averaged over the two regressions; an item's threshold
@@ -130,6 +140,10 @@ van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
 Boschloo, L., Schoevers, R. A., & Waldorp, L. J. (2014). A new method for
 constructing networks from binary data. \emph{Scientific Reports}, 4, 5918.
 \doi{10.1038/srep05918}
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. \emph{Journal of
+Statistical Software}, 33(1), 1-22. \doi{10.18637/jss.v033.i01}
 
 Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
 for Gaussian graphical models. \emph{Advances in Neural Information Processing

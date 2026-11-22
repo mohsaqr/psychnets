@@ -148,6 +148,15 @@
 #' `native = FALSE`. The model is the one fitted by `mgm::mgm()`.
 #'
 #' @details
+#' Each regression's penalty is chosen by the EBIC from glmnet's default path
+#' (Friedman, Hastie & Tibshirani 2010), as in `mgm::mgm()`: `nlambda` penalties
+#' spaced evenly on the log scale from the smallest penalty that sets every
+#' coefficient to zero down to `lambda_min_ratio` times it, stopped early by
+#' glmnet's rule (from the fifth penalty on, when the explained deviance grows
+#' by less than 1e-5, relative for a continuous response, or exceeds 0.999).
+#' The native solver fits each penalty to its optimality conditions, so its
+#' weights agree with `mgm::mgm()` up to glmnet's convergence tolerance.
+#'
 #' Continuous variables are standardized before fitting, binary predictors
 #' enter as 0/1 indicators, and the coefficient of a binary response is
 #' expressed on the two-class multinomial scale of `mgm::mgm()` (half the
@@ -185,8 +194,9 @@
 #' @param nlambda Number of penalty values on each nodewise path, a whole
 #'   number >= 2. Default `100`.
 #' @param lambda_min_ratio Smallest penalty as a fraction of the largest, in
-#'   (0, 1). Default `0.01`. With `native = FALSE`, leaving it unset uses
-#'   glmnet's own default, as `mgm::mgm()` does.
+#'   (0, 1). Default `NULL` uses glmnet's default, as `mgm::mgm()` does:
+#'   `1e-4`, or `0.01` when there are fewer observations than predictors.
+#'   Both engines select from glmnet's path (see Details).
 #' @param threshold Threshold on the selected coefficients: `"LW"` (default),
 #'   `"HW"` or `"none"` (see Details), as in `mgm::mgm()`.
 #' @param rule `"AND"` (default) keeps an edge when both nodewise estimates
@@ -246,6 +256,10 @@
 #'   time-varying mixed graphical models in high-dimensional data. *Journal of
 #'   Statistical Software*, 93(8), 1-46. \doi{10.18637/jss.v093.i08}
 #'
+#'   Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths
+#'   for generalized linear models via coordinate descent. *Journal of
+#'   Statistical Software*, 33(1), 1-22. \doi{10.18637/jss.v033.i01}
+#'
 #'   Foygel, R., & Drton, M. (2010). Extended Bayesian information criteria
 #'   for Gaussian graphical models. *Advances in Neural Information Processing
 #'   Systems*, 23, 604-612.
@@ -260,12 +274,11 @@
 #' as.data.frame(fit)
 #' @export
 mgm_fit <- function(data, gamma = 0.25, types = NULL,
-                    nlambda = 100L, lambda_min_ratio = 0.01,
+                    nlambda = 100L, lambda_min_ratio = NULL,
                     threshold = c("LW", "HW", "none"), rule = c("AND", "OR"),
                     moderators = NULL, weights = NULL,
                     na_method = c("pairwise", "listwise"),
                     native = TRUE, labels = NULL) {
-  ratio_missing <- missing(lambda_min_ratio)
   threshold <- .psn_match_arg(threshold)
   rule <- .psn_match_arg(rule)
   na_method <- .psn_match_arg(na_method)
@@ -393,8 +406,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
     return(.mmg_estimate(mat, types, moderators, gamma = gamma, rule = rule,
                          threshold = threshold, labels = labels,
                          engine = engine, nlambda = nlambda,
-                         lambda_min_ratio = if (engine == "glmnet" && ratio_missing)
-                           NULL else lambda_min_ratio,
+                         lambda_min_ratio = lambda_min_ratio,
                          moderator_levels = category_levels[[moderators]]))
   }
 
@@ -419,7 +431,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
            call. = FALSE)
     }
     return(.mgm_fit_glmnet(df, types, gamma, threshold, rule, nlambda,
-                           if (ratio_missing) NULL else lambda_min_ratio, labels,
+                           lambda_min_ratio, labels,
                            levels_v = levels_v, mat = mat,
                            source_names = source_names,
                            category_levels = category_levels))
@@ -450,6 +462,7 @@ mgm_fit <- function(data, gamma = 0.25, types = NULL,
                         2L, resp_scale[gix], "/")
   }
 
+  lambda_min_ratio <- lambda_min_ratio %||% .glmnet_default_ratio(nrow(mat), p - 1L)
   fits <- lapply(seq_len(p), function(i) {
     fam <- if (types[i] == "c") "binomial" else "gaussian"
     .nodewise_ebic(mat[, -i, drop = FALSE], mat[, i], fam,

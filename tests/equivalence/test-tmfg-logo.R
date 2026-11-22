@@ -207,19 +207,6 @@ violated_properties <- \(p, edges, chordal, connected, planar) {
   c("edge count 3(p - 2)", "chordal", "connected", "planar")[c(edges != 3L * (p - 2L), !chordal, !connected, !planar)]
 }
 
-# Where the count differs: the planarity test is the stacked-triangulation structure, documented for a connected
-# chordal graph with 3(p - 2) edges, so a non-planar graph that is also not chordal is counted as planar. A known
-# difference (owner, 2026-11-22): the value is a 0 / non-0 certificate, and the TMFG verdict is right on every graph.
-planarity_differences <- c("K3,3", "bfi TMFG, last non-edge added")
-planarity_reason <- paste(
-  "tmfg_certificate() is a 0 / non-0 certificate: the TMFG / not-TMFG verdict is right on all 20 graphs.",
-  "Its planarity test is the stacked-triangulation check, documented for a connected chordal graph with 3(p - 2) edges,",
-  "so under that precondition a non-planar graph that is not chordal is not counted as non-planar:",
-  "K3,3 gives 2 violated properties, the reference 3 (the bfi TMFG with an edge added: 2 against 3)."
-)
-planarity_agrees <- "the TMFG / not-TMFG verdict (tmfg_certificate() == 0), and the count on every graph that meets the documented precondition"
-certifying <- setdiff(names(certificate_networks), planarity_differences)
-
 test_that("tmfg_certificate() counts the TMFG properties NetworkX finds violated, graph by graph", {
   skip_without_networkx()
   found <- networkx_properties(certificate_networks)
@@ -233,14 +220,9 @@ test_that("tmfg_certificate() counts the TMFG properties NetworkX finds violated
                         if (length(violated)) toString(violated) else "none"))
   }
   # A count of properties: an integer, compared exactly.
-  invisible(lapply(lapply(certifying, expected), \(graph) {
+  invisible(lapply(lapply(names(certificate_networks), expected), \(graph) {
     expect_reference(tmfg_certificate(graph$fit), graph$count, reference = "networkx", covers = "tmfg_certificate()",
                      quantity = graph$quantity, tolerance = 0, note = graph$note)
-  }))
-  invisible(lapply(lapply(planarity_differences, expected), \(graph) {
-    expect_known_difference(tmfg_certificate(graph$fit), graph$count, reference = "networkx", covers = "tmfg_certificate()",
-                            quantity = graph$quantity, tolerance = 0, note = graph$note,
-                            reason = planarity_reason, agrees_with = planarity_agrees)
   }))
 })
 
@@ -258,13 +240,8 @@ test_that("tmfg_certificate() counts the TMFG properties igraph finds violated, 
          note = sprintf("Edge count, chordality and connectedness by igraph, planarity by NetworkX's check_planarity (igraph has no planarity test); violated: %s.",
                         if (length(violated)) toString(violated) else "none"))
   }
-  invisible(lapply(lapply(certifying, expected), \(graph) {
+  invisible(lapply(lapply(names(certificate_networks), expected), \(graph) {
     expect_reference(tmfg_certificate(graph$fit), graph$count, reference = "igraph", covers = "tmfg_certificate()",
                      quantity = graph$quantity, tolerance = 0, note = graph$note)
-  }))
-  invisible(lapply(lapply(planarity_differences, expected), \(graph) {
-    expect_known_difference(tmfg_certificate(graph$fit), graph$count, reference = "igraph", covers = "tmfg_certificate()",
-                            quantity = graph$quantity, tolerance = 0, note = graph$note,
-                            reason = planarity_reason, agrees_with = planarity_agrees)
   }))
 })

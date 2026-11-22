@@ -61,19 +61,31 @@ test_that("native = FALSE: edge magnitudes equal mgm::mgm() with 3- and 4-level 
   }))
 })
 
-test_that("native = TRUE scans its own penalty grid: a known difference from mgm", {
-  skip_without_reference("mgm")
+test_that("native = TRUE: edge magnitudes equal mgm::mgm() on glmnet's path, glmnet converged", {
+  skip_without_reference(c("mgm", "glmnet"))
   data <- mixed_data()
-  reference <- mgm::mgm(as.matrix(data), type = c("g", "g", "c", "c", "c"), level = c(1, 1, 2, 2, 2),
-                        lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND", threshold = "LW", scale = TRUE,
-                        pbar = FALSE, signInfo = FALSE)
+  fit_mgm <- \() mgm::mgm(as.matrix(data), type = c("g", "g", "c", "c", "c"), level = c(1, 1, 2, 2, 2),
+                          lambdaSel = "EBIC", lambdaGam = 0.25, ruleReg = "AND", threshold = "LW", scale = TRUE,
+                          pbar = FALSE, signInfo = FALSE)
+  reference <- fit_mgm()
+  # mgm's own code with glmnet's coordinate descent run to convergence (glmnet.control(thresh = 1e-14), restored
+  # to glmnet's defaults afterwards): the same path, EBIC and threshold, solved to the optimum.
+  glmnet::glmnet.control(thresh = 1e-14, maxit = 1e7)
+  converged <- tryCatch(fit_mgm(), finally = glmnet::glmnet.control(factory = TRUE))
+  # The native solver selects on glmnet's default path (lambda_min_ratio 1e-4 here, glmnet's early stop), as
+  # mgm does, and solves each penalty to its KKT conditions (about 1e-9).
+  expect_reference(magnitudes(mgm_fit(data, gamma = 0.25)), mgm_edges(converged, data), reference = "mgm",
+                   covers = "mgm_fit()", quantity = "edge magnitude, native solver, glmnet converged",
+                   tolerance = 1e-6, key = c("from", "to"),
+                   note = "mgm::mgm() with glmnet.control(thresh = 1e-14, maxit = 1e7).")
   expect_known_difference(magnitudes(mgm_fit(data, gamma = 0.25)), mgm_edges(reference, data), reference = "mgm",
                           covers = "mgm_fit()", quantity = "edge magnitude, native solver", tolerance = 1e-6,
                           key = c("from", "to"),
-                          reason = paste("The native solver scans its own penalty grid per node (lambda_min_ratio = 0.01);",
-                                         "mgm scans glmnet's default path. The EBIC chooses among different candidate",
-                                         "penalties, so the selected lasso fits differ in the third decimal."),
-                          agrees_with = "native = FALSE (glmnet's path), compared above")
+                          reason = paste("mgm solves each lasso with glmnet at its default convergence threshold",
+                                         "(thresh = 1e-7), which stops about 1.4e-5 short of the optimum in an edge",
+                                         "magnitude. The native solver solves the same penalties on the same path to",
+                                         "their KKT conditions and agrees with mgm run with glmnet converged."),
+                          agrees_with = "mgm::mgm() with glmnet.control(thresh = 1e-14), compared above")
 })
 
 test_that("condition() on a moderated model equals mgm::condition()", {

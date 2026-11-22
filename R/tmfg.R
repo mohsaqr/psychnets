@@ -71,26 +71,212 @@
   TRUE
 }
 
-# For a connected chordal graph with 3(p - 2) edges, planarity is equivalent
-# to being a stacked triangulation: maximal cliques have size four, and no
-# triangle belongs to more than two tetrahedra. A K5 is detected by adjacent
-# common neighbors of a triangle; three common neighbors give a K3,3 subgraph.
-# Together these tests exclude the nonplanar chordal graphs that edge count,
-# connectivity and chordality alone cannot detect.
+# Planarity of an undirected graph by the left-right planarity test
+# (de Fraysseix & Rosenstiehl 1985; Brandes 2009), the linear-time test that
+# NetworkX's check_planarity() implements; it decides the same property as the
+# Boyer & Myrvold (2004) test. `adj` is a symmetric logical adjacency matrix.
+# Both depth-first phases are written iteratively (an explicit vertex stack),
+# so the depth of the search is not bounded by R's expression nesting. The
+# phases are sequential by nature (each step reads the state the previous one
+# left), so they are `while` loops, and the roots are visited in turn.
 #' @noRd
-.tmfg_planar_structure <- function(adj) {
+.is_planar <- function(adj) {
   p <- nrow(adj)
-  if (p < 3L) return(TRUE)
-  for (i in seq_len(p - 2L)) {
-    for (j in which(adj[i, ] & seq_len(p) > i)) {
-      for (k in which(adj[i, ] & adj[j, ] & seq_len(p) > j)) {
-        shared <- which(adj[i, ] & adj[j, ] & adj[k, ])
-        if (length(shared) > 2L ||
-            (length(shared) == 2L && adj[shared[1L], shared[2L]])) return(FALSE)
+  m <- sum(adj[upper.tri(adj)])
+  # Every graph with fewer than five nodes or fewer than nine edges (K3,3 has
+  # nine) is planar; a planar graph has at most 3p - 6 edges (Euler).
+  if (p < 5L || m < 9L) return(TRUE)
+  if (m > 3L * p - 6L) return(FALSE)
+  nbrs <- lapply(seq_len(p), function(v) which(adj[v, ]))
+  st <- new.env(parent = emptyenv())
+  st$from <- st$to <- st$lowpt <- st$lowpt2 <- st$nesting <- integer(m)
+  st$ref <- st$lowpt_edge <- st$stack_bottom <- integer(m)
+  st$ne <- 0L
+  st$oriented <- matrix(FALSE, p, p)
+  st$height <- rep(NA_integer_, p)
+  st$parent_edge <- integer(p)
+
+  # --- phase 1: orientation, heights, lowpoints and nesting depths ---------
+  finish_edge <- function(ep, v) {
+    st$nesting[ep] <- 2L * st$lowpt[ep] + as.integer(st$lowpt2[ep] < st$height[v])
+    e <- st$parent_edge[v]
+    if (e > 0L) {
+      if (st$lowpt[ep] < st$lowpt[e]) {
+        st$lowpt2[e] <- min(st$lowpt[e], st$lowpt2[ep])
+        st$lowpt[e] <- st$lowpt[ep]
+      } else if (st$lowpt[ep] > st$lowpt[e]) {
+        st$lowpt2[e] <- min(st$lowpt2[e], st$lowpt[ep])
+      } else {
+        st$lowpt2[e] <- min(st$lowpt2[e], st$lowpt2[ep])
       }
     }
   }
-  TRUE
+  roots <- integer()
+  next_nb <- rep(1L, p)
+  while (anyNA(st$height)) {
+    root <- which(is.na(st$height))[1L]
+    st$height[root] <- 0L
+    roots <- c(roots, root)
+    stack <- root
+    while (length(stack)) {
+      v <- stack[length(stack)]
+      if (next_nb[v] > length(nbrs[[v]])) {
+        stack <- stack[-length(stack)]
+        e <- st$parent_edge[v]
+        if (e > 0L) finish_edge(e, st$from[e])
+        next
+      }
+      w <- nbrs[[v]][next_nb[v]]
+      next_nb[v] <- next_nb[v] + 1L
+      if (st$oriented[v, w]) next
+      st$oriented[v, w] <- st$oriented[w, v] <- TRUE
+      st$ne <- st$ne + 1L
+      ep <- st$ne
+      st$from[ep] <- v; st$to[ep] <- w
+      st$lowpt[ep] <- st$lowpt2[ep] <- st$height[v]
+      if (is.na(st$height[w])) {
+        st$parent_edge[w] <- ep
+        st$height[w] <- st$height[v] + 1L
+        stack <- c(stack, w)
+      } else {
+        st$lowpt[ep] <- st$height[w]
+        finish_edge(ep, v)
+      }
+    }
+  }
+
+  # --- phase 2: testing, with a stack of conflict pairs --------------------
+  # A conflict pair holds a left and a right interval of return edges, each
+  # (low, high) with 0 for "none"; pairs are numbered, the stack holds numbers.
+  out_edges <- split(seq_len(m), factor(st$from, levels = seq_len(p)))
+  ordered <- lapply(out_edges, function(ids) ids[order(st$nesting[ids], ids)])
+  st$Ll <- st$Lh <- st$Rl <- st$Rh <- integer()
+  st$np <- 0L
+  st$S <- integer()
+  top_S <- function() if (length(st$S)) st$S[[length(st$S)]] else 0L
+  pop_S <- function() {
+    k <- st$S[[length(st$S)]]
+    st$S <- st$S[-length(st$S)]
+    k
+  }
+  push_S <- function(k) st$S <- c(st$S, k)
+  new_pair <- function(rl = 0L, rh = 0L) {
+    st$np <- st$np + 1L
+    k <- st$np
+    st$Ll[k] <- 0L; st$Lh[k] <- 0L; st$Rl[k] <- rl; st$Rh[k] <- rh
+    k
+  }
+  swap <- function(k) {
+    ll <- st$Ll[k]; lh <- st$Lh[k]
+    st$Ll[k] <- st$Rl[k]; st$Lh[k] <- st$Rh[k]
+    st$Rl[k] <- ll; st$Rh[k] <- lh
+  }
+  l_empty <- function(k) st$Ll[k] == 0L && st$Lh[k] == 0L
+  r_empty <- function(k) st$Rl[k] == 0L && st$Rh[k] == 0L
+  l_conflicting <- function(k, b) !l_empty(k) && st$lowpt[st$Lh[k]] > st$lowpt[b]
+  r_conflicting <- function(k, b) !r_empty(k) && st$lowpt[st$Rh[k]] > st$lowpt[b]
+  lowest <- function(k) {
+    if (l_empty(k)) return(st$lowpt[st$Rl[k]])
+    if (r_empty(k)) return(st$lowpt[st$Ll[k]])
+    min(st$lowpt[st$Ll[k]], st$lowpt[st$Rl[k]])
+  }
+  set_ref <- function(edge, value) if (edge > 0L) st$ref[edge] <- value
+
+  add_constraints <- function(ei, e) {
+    P <- new_pair()
+    # merge the return edges of ei into the right interval of P
+    repeat {
+      Q <- pop_S()
+      if (!l_empty(Q)) swap(Q)
+      if (!l_empty(Q)) return(FALSE)
+      if (st$lowpt[st$Rl[Q]] > st$lowpt[e]) {
+        if (r_empty(P)) st$Rh[P] <- st$Rh[Q] else set_ref(st$Rl[P], st$Rh[Q])
+        st$Rl[P] <- st$Rl[Q]
+      } else {
+        set_ref(st$Rl[Q], st$lowpt_edge[e])
+      }
+      if (top_S() == st$stack_bottom[ei]) break
+    }
+    # merge the conflicting return edges of the earlier siblings into the left
+    repeat {
+      t <- top_S()
+      if (t == 0L || !(l_conflicting(t, ei) || r_conflicting(t, ei))) break
+      Q <- pop_S()
+      if (r_conflicting(Q, ei)) swap(Q)
+      if (r_conflicting(Q, ei)) return(FALSE)
+      set_ref(st$Rl[P], st$Rh[Q])
+      if (st$Rl[Q] != 0L) st$Rl[P] <- st$Rl[Q]
+      if (l_empty(P)) st$Lh[P] <- st$Lh[Q] else set_ref(st$Ll[P], st$Lh[Q])
+      st$Ll[P] <- st$Ll[Q]
+    }
+    if (!(l_empty(P) && r_empty(P))) push_S(P)
+    TRUE
+  }
+
+  remove_back_edges <- function(e) {
+    u <- st$from[e]
+    while (length(st$S) && lowest(top_S()) == st$height[u]) pop_S()
+    if (length(st$S)) {
+      P <- pop_S()
+      while (st$Lh[P] != 0L && st$to[st$Lh[P]] == u) st$Lh[P] <- st$ref[st$Lh[P]]
+      if (st$Lh[P] == 0L && st$Ll[P] != 0L) {
+        set_ref(st$Ll[P], st$Rl[P])
+        st$Ll[P] <- 0L
+      }
+      while (st$Rh[P] != 0L && st$to[st$Rh[P]] == u) st$Rh[P] <- st$ref[st$Rh[P]]
+      if (st$Rh[P] == 0L && st$Rl[P] != 0L) {
+        set_ref(st$Rl[P], st$Ll[P])
+        st$Rl[P] <- 0L
+      }
+      push_S(P)
+    }
+    # the reference of e is a highest return edge
+    if (st$lowpt[e] < st$height[u] && length(st$S)) {
+      t <- top_S()
+      hl <- st$Lh[t]; hr <- st$Rh[t]
+      st$ref[e] <- if (hl != 0L && (hr == 0L || st$lowpt[hl] > st$lowpt[hr])) hl else hr
+    }
+  }
+
+  next_edge <- rep(1L, p)
+  started <- logical(m)
+  planar <- TRUE
+  for (root in roots) {
+    stack <- root
+    while (length(stack) && planar) {
+      v <- stack[length(stack)]
+      if (next_edge[v] > length(ordered[[v]])) {
+        stack <- stack[-length(stack)]
+        e <- st$parent_edge[v]
+        if (e > 0L) remove_back_edges(e)
+        next
+      }
+      ei <- ordered[[v]][next_edge[v]]
+      w <- st$to[ei]
+      if (!started[ei]) {
+        started[ei] <- TRUE
+        st$stack_bottom[ei] <- top_S()
+        if (st$parent_edge[w] == ei) {            # a tree edge: descend first
+          stack <- c(stack, w)
+          next
+        }
+        st$lowpt_edge[ei] <- ei                   # a back edge
+        push_S(new_pair(rl = ei, rh = ei))
+      }
+      # integrate the return edges of ei
+      next_edge[v] <- next_edge[v] + 1L
+      if (st$lowpt[ei] < st$height[v]) {
+        e <- st$parent_edge[v]
+        if (identical(ei, ordered[[v]][1L])) {
+          st$lowpt_edge[e] <- st$lowpt_edge[ei]
+        } else if (!add_constraints(ei, e)) {
+          planar <- FALSE
+        }
+      }
+    }
+    if (!planar) break
+  }
+  planar
 }
 
 #' Check that a network has the structure of a TMFG
@@ -117,10 +303,12 @@
 #' @details
 #' Four properties are checked on the stored graph: the number of edges is
 #' \eqn{3(p - 2)}; the graph is chordal, tested by maximum-cardinality search;
-#' it is connected; and it is planar. For a connected chordal graph with
-#' \eqn{3(p - 2)} edges, planarity is checked as the structure of a stacked
-#' triangulation: no triangle has more than two common neighbours, and no
-#' triangle has two common neighbours that are adjacent to each other.
+#' it is connected; and it is planar. Planarity is decided for any graph by
+#' the left-right planarity test (de Fraysseix & Rosenstiehl, 1985; Brandes,
+#' 2009), the linear-time test of NetworkX's `check_planarity()`, which decides
+#' the same property as the test of Boyer and Myrvold (2004). Each property is
+#' tested on its own, so a graph that breaks several of them, such as
+#' \eqn{K_{3,3}} (too few edges, not chordal, not planar), counts each one.
 #'
 #' @param x A TMFG network from [tmfg_network()] ([psychnet-class]).
 #' @return A single integer from 0 to 4, the number of violated properties;
@@ -132,6 +320,17 @@
 #' @references Massara, G. P., Di Matteo, T., & Aste, T. (2016). Network
 #'   filtering for big data: Triangulated maximally filtered graph. *Journal of
 #'   Complex Networks*, 5(2), 161-178. \doi{10.1093/comnet/cnw015}
+#'
+#'   de Fraysseix, H., & Rosenstiehl, P. (1985). A characterization of planar
+#'   graphs by Tremaux orders. *Combinatorica*, 5(2), 127-135.
+#'   \doi{10.1007/BF02579375}
+#'
+#'   Brandes, U. (2009). *The left-right planarity test*. Manuscript,
+#'   University of Konstanz.
+#'
+#'   Boyer, J. M., & Myrvold, W. J. (2004). On the cutting edge: Simplified
+#'   O(n) planarity by edge addition. *Journal of Graph Algorithms and
+#'   Applications*, 8(3), 241-273. \doi{10.7155/jgaa.00091}
 #' @examples
 #' set.seed(1)
 #' x <- matrix(stats::rnorm(200 * 6), 200, 6)
@@ -154,7 +353,7 @@ tmfg_certificate <- function(x) {
     reached <- c(reached, new); frontier <- new
   }
   connected <- length(reached) == p
-  planar <- .tmfg_planar_structure(adj)
+  planar <- .is_planar(adj)
   (!edges_ok) + (!chordal) + (!connected) + (!planar)
 }
 

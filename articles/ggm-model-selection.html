@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -180,7 +180,7 @@ stepwise selection.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 7.77e-16</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.22e-15</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.370, 0.422], mean 0.196</span></span></code></pre></div>
 <p>The selected graph has 9 of the 10 possible edges, with weights from
 -0.370 to 0.422. The edge table gives each unshrunk partial
@@ -222,7 +222,7 @@ zero shows that the network is the optimum of its objective.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    ggm 7.771561e-16  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    ggm 1.221245e-15  kkt      TRUE</span></span></code></pre></div>
 <p>The violation is at the level of machine precision (below
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>14</mn></mrow></msup><annotation encoding="application/x-tex">10^{-14}</annotation></semantics></math>),
 so the reported edges are the exact maximum-likelihood estimates for the
@@ -339,7 +339,7 @@ extreme values.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 8.88e-16</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.266, 0.483], mean 0.245</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to     weight</span></span>
@@ -352,7 +352,7 @@ extreme values.</p>
 <span><span class="co">#&gt; 7   SR TA -0.2664620</span></span>
 <span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    ggm 8.881784e-16  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    ggm 6.661338e-16  kkt      TRUE</span></span></code></pre></div>
 <p>The rank-based selection keeps 7 edges instead of 9. The edges among
 the learning constructs, <code>IV</code>–<code>TA</code> and the
 negative <code>SR</code>–<code>TA</code> edge (-0.266) remain, and the

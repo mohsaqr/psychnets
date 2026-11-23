@@ -123,7 +123,9 @@ divided by the sum of the distances to them (the inverse mean distance).
 They therefore differ from
 [`qgraph::centrality_auto()`](https://rdrr.io/pkg/qgraph/man/centrality_auto.html),
 which reports betweenness as a count of paths and closeness as
-`1 / sum(distances)`.
+`1 / sum(distances)`. A node that reaches no other node (an isolated
+node) has closeness `0`; igraph's `closeness()` leaves it undefined
+(`NaN`).
 
 ## Functions
 

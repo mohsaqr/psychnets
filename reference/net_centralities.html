@@ -51,7 +51,7 @@ net_bridge(), and the betweenness of edges by net_edge_betweenness()."></head><b
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -198,7 +198,9 @@ betweenness is divided by the number of pairs of other nodes,
 <code>(p - 1)(p - 2) / 2</code>, and closeness is the number of reachable nodes divided
 by the sum of the distances to them (the inverse mean distance). They
 therefore differ from <code><a href="https://rdrr.io/pkg/qgraph/man/centrality_auto.html" class="external-link">qgraph::centrality_auto()</a></code>, which reports
-betweenness as a count of paths and closeness as <code>1 / sum(distances)</code>.</p>
+betweenness as a count of paths and closeness as <code>1 / sum(distances)</code>.
+A node that reaches no other node (an isolated node) has closeness <code>0</code>;
+igraph's <code>closeness()</code> leaves it undefined (<code>NaN</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>

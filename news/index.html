@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,12 @@
       <small>Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.7" id="psychnets-087">psychnets 0.8.7<a class="anchor" aria-label="anchor" href="#psychnets-087"></a></h2>
+<ul><li>
+<code><a href="../reference/net_centralities.html">net_centralities()</a></code> documents its closeness of an isolated node (a node that reaches no other): <code>0</code>, where igraph’s <code>closeness()</code> gives <code>NaN</code>. A unit test holds the documented value; whether it should be <code>NaN</code>, as in snajs, is pending the owner’s decision. No number changed.</li>
+<li>Equivalence tests (not part of the package): the tolerances against psych (1.22e-4, <code><a href="https://rdrr.io/r/stats/optimize.html" class="external-link">optimize()</a></code>’s default tolerance), lavaan (1e-6) and psychonetrics run to convergence (1e-4) were tightened; <code><a href="../reference/ising_fit.html">ising_fit()</a></code> is also compared with <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> with glmnet converged (1e-6); the network comparison test runs 100 permutations (with <code>weighted = FALSE</code>, one permuted split differs from NCT, whose glasso leaves an edge at -1.6e-7 that is 0 at the optimum: declared as a known difference); bootstrap and case-dropping summaries are held to each row’s own Monte Carlo standard error, the observed strength to 1e-12, and the CS-coefficient is compared with <code>bootnet::corStability()</code>; <code><a href="../reference/lmg_certificate.html">lmg_certificate()</a></code> is compared where it is not zero.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.6" id="psychnets-086">psychnets 0.8.6<a class="anchor" aria-label="anchor" href="#psychnets-086"></a></h2>
 <ul><li>

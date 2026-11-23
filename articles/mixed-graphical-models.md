@@ -148,8 +148,8 @@ that the network is the optimum of its objective.
 ``` r
 
 certificate(mixed_net)
-#>   method  certificate kind certified
-#> 1    mgm 2.589419e-11  kkt      TRUE
+#>   method certificate kind certified
+#> 1    mgm 2.58942e-11  kkt      TRUE
 ```
 
 The violation is $`5.00 \times 10^{-11}`$, so the edges are the

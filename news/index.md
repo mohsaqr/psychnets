@@ -1,5 +1,30 @@
 # Changelog
 
+## psychnets 0.8.7
+
+- [`net_centralities()`](https://pak.dynasite.org/psychnets/reference/net_centralities.md)
+  documents its closeness of an isolated node (a node that reaches no
+  other): `0`, where igraph’s `closeness()` gives `NaN`. A unit test
+  holds the documented value; whether it should be `NaN`, as in snajs,
+  is pending the owner’s decision. No number changed.
+- Equivalence tests (not part of the package): the tolerances against
+  psych (1.22e-4,
+  [`optimize()`](https://rdrr.io/r/stats/optimize.html)’s default
+  tolerance), lavaan (1e-6) and psychonetrics run to convergence (1e-4)
+  were tightened;
+  [`ising_fit()`](https://pak.dynasite.org/psychnets/reference/ising_fit.md)
+  is also compared with
+  [`IsingFit::IsingFit()`](https://rdrr.io/pkg/IsingFit/man/isingfit.html)
+  with glmnet converged (1e-6); the network comparison test runs 100
+  permutations (with `weighted = FALSE`, one permuted split differs from
+  NCT, whose glasso leaves an edge at -1.6e-7 that is 0 at the optimum:
+  declared as a known difference); bootstrap and case-dropping summaries
+  are held to each row’s own Monte Carlo standard error, the observed
+  strength to 1e-12, and the CS-coefficient is compared with
+  `bootnet::corStability()`;
+  [`lmg_certificate()`](https://pak.dynasite.org/psychnets/reference/lmg_certificate.md)
+  is compared where it is not zero.
+
 ## psychnets 0.8.6
 
 - [`tmfg_certificate()`](https://pak.dynasite.org/psychnets/reference/tmfg_certificate.md)

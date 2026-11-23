@@ -193,7 +193,7 @@ reports it, with `certified = TRUE` when it is below $`10^{-6}`$.
 
 certificate(net)
 #>   method  certificate kind certified
-#> 1 glasso 2.213389e-10  kkt      TRUE
+#> 1 glasso 2.213401e-10  kkt      TRUE
 ```
 
 The violation is $`2.21 \times 10^{-10}`$, so the reported edges are the
@@ -379,7 +379,7 @@ as.data.frame(npn_net)
 #> 10   SR TA -0.34267471
 certificate(npn_net)
 #>   method  certificate kind certified
-#> 1   huge 2.471392e-10  kkt      TRUE
+#> 1   huge 2.471425e-10  kkt      TRUE
 ```
 
 The nonparanormal network keeps all 10 edges with weights from -0.343 to

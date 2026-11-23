@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -190,7 +190,7 @@ estimated and kept, and an edge is flagged as significant at
 <span><span class="co">#&gt;   edges (significant/estimated, p &lt; 0.01): temporal 1/20 (+4/5 autoregressive)   contemporaneous 5/10   between 2/10</span></span>
 <span><span class="co">#&gt;   selection: none (full model)</span></span>
 <span><span class="co">#&gt;   fit: chisq(170) = 207.19, p = 0.0273   CFI = 0.957   TLI = 0.946   RMSEA = 0.047</span></span>
-<span><span class="co">#&gt;   optimality (ML score): 5.91e-13</span></span>
+<span><span class="co">#&gt;   optimality (ML score): 8.16e-13</span></span>
 <span><span class="co">#&gt;   starts: 3 of 3 reached the best saturated optimum</span></span></code></pre></div>
 <p>The model has 100 students in 4 waves. Of the 20 lagged effects
 between variables, 1 is significant, and 4 of the 5 autoregressive
@@ -278,7 +278,7 @@ remove both.</p>
 <span><span class="co">#&gt;   edges (significant/estimated, p &lt; 0.01): temporal 2/2 (+4/4 autoregressive)   contemporaneous 5/5   between 4/4</span></span>
 <span><span class="co">#&gt;   selection: prune (alpha = 0.01, adjust = none; stepup (bic) re-added 3)</span></span>
 <span><span class="co">#&gt;   fit: chisq(200) = 227.13, p = 0.0913   CFI = 0.969   TLI = 0.966   RMSEA = 0.037</span></span>
-<span><span class="co">#&gt;   optimality (ML score): 3.71e-13</span></span>
+<span><span class="co">#&gt;   optimality (ML score): 5.41e-13</span></span>
 <span><span class="co">#&gt;   starts: 3 of 3 reached the best saturated optimum</span></span></code></pre></div>
 <p>The pruned model keeps 4 autoregressive effects, 2 lagged effects
 between variables, and 5 contemporaneous and 4 between-person edges. The
@@ -411,7 +411,7 @@ how many starts reached the same optimum.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"diagnostics"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     n waves        score boundary boundary_part se_available starts_agree</span></span>
-<span><span class="co">#&gt; 1 100     4 5.906386e-13    FALSE          &lt;NA&gt;         TRUE            3</span></span>
+<span><span class="co">#&gt; 1 100     4 8.159029e-13    FALSE          &lt;NA&gt;         TRUE            3</span></span>
 <span><span class="co">#&gt;   starts</span></span>
 <span><span class="co">#&gt; 1      3</span></span></code></pre></div>
 <p>The largest score is below

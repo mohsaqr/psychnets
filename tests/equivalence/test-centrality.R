@@ -66,6 +66,29 @@ test_that("local clustering coefficients equal qgraph::clustcoef_auto()", {
                    tolerance = 1e-10, key = "node")
 })
 
+test_that("closeness and betweenness with an isolated node against igraph", {
+  skip_without_reference("igraph")
+  # The test network with node A1 cut off from every other node.
+  isolated <- network
+  isolated[1L, ] <- 0
+  isolated[, 1L] <- 0
+  graph <- graph_of(isolated)
+  lengths <- 1 / igraph::E(graph)$weight
+  ours <- net_centralities(isolated, measures = c("closeness", "betweenness"))
+  expect_reference(ours, data.frame(node = igraph::V(graph)$name,
+                                    betweenness = igraph::betweenness(graph, weights = lengths, normalized = TRUE)),
+                   reference = "igraph", covers = "net_centralities()", quantity = "betweenness, node A1 isolated",
+                   tolerance = 1e-10, key = "node")
+  # igraph leaves the closeness of a node that reaches no other undefined (NaN); net_centralities() gives 0.
+  # snajs follows igraph (NaN) by the owner's ruling for that library; for psychnets the choice is pending.
+  expect_reference(ours, data.frame(node = igraph::V(graph)$name,
+                                    closeness = igraph::closeness(graph, weights = lengths, normalized = TRUE)),
+                   reference = "igraph", covers = "net_centralities()", quantity = "closeness, node A1 isolated",
+                   tolerance = 1e-10, key = "node",
+                   defect = paste("closeness of an isolated node is 0 in net_centralities(), NaN in igraph;",
+                                  "owner decision pending (snajs ruled NaN); FINDINGS.md"))
+})
+
 test_that("edge betweenness equals igraph::edge_betweenness()", {
   skip_without_reference("igraph")
   graph <- graph_of(network)

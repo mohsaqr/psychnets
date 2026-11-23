@@ -239,6 +239,8 @@ net_edge_betweenness <- function(x, invert = TRUE, labels = NULL) {
 #' by the sum of the distances to them (the inverse mean distance). They
 #' therefore differ from `qgraph::centrality_auto()`, which reports
 #' betweenness as a count of paths and closeness as `1 / sum(distances)`.
+#' A node that reaches no other node (an isolated node) has closeness `0`;
+#' igraph's `closeness()` leaves it undefined (`NaN`).
 #'
 #' @param x A fitted network ([psychnet-class]), a weighted adjacency matrix,
 #'   or a [psychnet_group] (one table per group). For `plot()`, the table

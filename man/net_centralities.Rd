@@ -91,6 +91,8 @@ betweenness is divided by the number of pairs of other nodes,
 by the sum of the distances to them (the inverse mean distance). They
 therefore differ from \code{qgraph::centrality_auto()}, which reports
 betweenness as a count of paths and closeness as \code{1 / sum(distances)}.
+A node that reaches no other node (an isolated node) has closeness \code{0};
+igraph's \code{closeness()} leaves it undefined (\code{NaN}).
 }
 \section{Functions}{
 \itemize{

@@ -24,3 +24,14 @@ test_that("centrality accepts a bare matrix", {
   expect_equal(ct$node, c("a", "b", "c"))
   expect_equal(ct$strength, c(0.5, 0.4, 0.3))
 })
+
+test_that("closeness of an isolated node is 0, as documented", {
+  # A path A - B - C plus an isolated node D: D reaches no other node.
+  w <- matrix(0, 4, 4, dimnames = list(LETTERS[1:4], LETTERS[1:4]))
+  w["A", "B"] <- w["B", "A"] <- 0.5
+  w["B", "C"] <- w["C", "B"] <- 0.25
+  closeness <- net_centralities(w, measures = "closeness")
+  expect_identical(closeness$closeness[closeness$node == "D"], 0)
+  # B reaches A (distance 2) and C (distance 4): 2 / 6.
+  expect_equal(closeness$closeness[closeness$node == "B"], 2 / 6, tolerance = 1e-12)
+})

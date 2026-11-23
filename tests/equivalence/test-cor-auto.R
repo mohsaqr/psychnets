@@ -5,9 +5,14 @@
 
 items <- utils::read.csv(reference_data("data/bfi10.csv"))
 
-# Three two-step estimators with different one-dimensional optimizers and treatments of empty cells; the
-# package's own test held cor_auto() to 1e-3 of both references, and that tolerance is kept.
-two_step <- 1e-3
+# Two-step estimators of the same bivariate likelihood (thresholds from the margins, then rho). The tolerance
+# is that of the reference's one-dimensional optimizer (tightened 2026-11-23 from the inherited 1e-3):
+#   psych::polychoric() maximizes over rho with stats::optimize() at its default tol,
+#     .Machine$double.eps^0.25 = 1.22e-4, so it may stop up to that far from the optimum;
+#   qgraph::cor_auto() calls lavaan::lavCor(), whose optimizer converges far inside 1e-6 (largest difference
+#     1.3e-7 in the 2026-11-23 audit, on sparse five-category items).
+psych_tolerance <- .Machine$double.eps^0.25
+lavaan_tolerance <- 1e-6
 
 simulated_ordinal <- function() {
   set.seed(5)
@@ -21,27 +26,27 @@ test_that("polychoric correlations equal psych::polychoric()", {
   skip_without_reference("psych")
   expect_reference(ref_edges(cor_auto(items), "r"), ref_edges(psych::polychoric(items)$rho, "r"),
                    reference = "psych", covers = "cor_auto()", quantity = "polychoric correlation, bfi items",
-                   tolerance = two_step, key = c("from", "to"),
+                   tolerance = psych_tolerance, key = c("from", "to"),
                    note = "cor_auto() returns a bare matrix (API gap); its upper triangle is compared.")
   expect_reference(as.data.frame(cor_network(data = items, cor_method = "auto"), include_zero = TRUE),
                    ref_edges(psych::polychoric(items)$rho), reference = "psych", covers = "cor_network()",
-                   quantity = "cor_network(cor_method = \"auto\"), bfi items", tolerance = two_step,
+                   quantity = "cor_network(cor_method = \"auto\"), bfi items", tolerance = psych_tolerance,
                    key = c("from", "to"))
   simulated <- simulated_ordinal()
   expect_reference(ref_edges(cor_auto(simulated), "r"), ref_edges(psych::polychoric(simulated)$rho, "r"),
                    reference = "psych", covers = "cor_auto()", quantity = "polychoric correlation, four cut normals",
-                   tolerance = two_step, key = c("from", "to"))
+                   tolerance = psych_tolerance, key = c("from", "to"))
 })
 
 test_that("polychoric correlations equal qgraph::cor_auto() (lavaan)", {
   skip_without_reference(c("qgraph", "lavaan"))
   expect_reference(ref_edges(cor_auto(items), "r"), ref_edges(qgraph::cor_auto(items, verbose = FALSE), "r"),
                    reference = "qgraph", covers = "cor_auto()", quantity = "polychoric correlation, bfi items",
-                   tolerance = two_step, key = c("from", "to"))
+                   tolerance = lavaan_tolerance, key = c("from", "to"))
   simulated <- simulated_ordinal()
   expect_reference(ref_edges(cor_auto(simulated), "r"), ref_edges(qgraph::cor_auto(simulated, verbose = FALSE), "r"),
                    reference = "qgraph", covers = "cor_auto()", quantity = "polychoric correlation, four cut normals",
-                   tolerance = two_step, key = c("from", "to"))
+                   tolerance = lavaan_tolerance, key = c("from", "to"))
 })
 
 test_that("continuous columns: cor_auto() is the Pearson correlation", {

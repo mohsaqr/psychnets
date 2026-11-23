@@ -40,6 +40,24 @@ test_that("native = TRUE: the eLasso network equals IsingFit::IsingFit() on glmn
                    tolerance = 1e-4, key = c("from", "to"))
 })
 
+test_that("native = TRUE: the eLasso network equals IsingFit::IsingFit() with glmnet run to convergence", {
+  skip_without_reference(c("IsingFit", "glmnet"))
+  # IsingFit's own code with glmnet's coordinate descent run to convergence (glmnet.control(thresh = 1e-14),
+  # restored to glmnet's defaults afterwards), as for mgm in test-mgm.R: the same path and EBIC, solved to the
+  # optimum. The native solver solves each penalty to its KKT conditions (about 1e-9): 1e-6.
+  glmnet::glmnet.control(thresh = 1e-14, maxit = 1e7)
+  converged <- tryCatch(isingfit(TRUE), finally = glmnet::glmnet.control(factory = TRUE))
+  fit <- ising_fit(binary, rule = "AND")
+  expect_reference(as.data.frame(fit, include_zero = TRUE), ref_edges(converged$weiadj), reference = "IsingFit",
+                   covers = "ising_fit()", quantity = "edge weight, AND rule, native solver, glmnet converged",
+                   tolerance = 1e-6, key = c("from", "to"),
+                   note = "IsingFit::IsingFit() with glmnet.control(thresh = 1e-14, maxit = 1e7).")
+  expect_reference(fit$thresholds, stats::setNames(converged$thresholds, nodes), reference = "IsingFit",
+                   covers = c("ising_fit()", "$.psychnet()"),
+                   quantity = "threshold, AND rule, native solver, glmnet converged", tolerance = 1e-6,
+                   note = "IsingFit::IsingFit() with glmnet.control(thresh = 1e-14, maxit = 1e7).")
+})
+
 test_that("the unregularized nodewise model equals IsingSampler::EstimateIsing(method = \"uni\")", {
   skip_without_reference("IsingSampler")
   reference <- IsingSampler::EstimateIsing(as.matrix(binary), responses = c(0L, 1L), method = "uni")
@@ -107,8 +125,7 @@ test_that("glm_lasso_kkt() equals the lasso KKT conditions at a glmnet solution"
   residual_l <- max(abs(sum(z - mu_l) / length(z)), abs(gradient_l[active_l] - 0.02 * sign(beta_l[active_l])),
                     pmax(abs(gradient_l[!active_l]) - 0.02, 0))
   expect_reference(glm_lasso_kkt(as.matrix(binary[-1L]), z, b0 = b0_l, beta = beta_l, lambda = 0.02, family = "binomial"),
-                   residual_l, reference = "independent: the lasso KKT conditions at glmnet's gaussian solution, base R",
-                   note = "The same conditions at glmnet's binomial (logistic) solution.",
+                   residual_l, reference = "independent: the lasso KKT conditions at glmnet's binomial solution, base R",
                    covers = "glm_lasso_kkt()", quantity = "lasso KKT residual, binomial", tolerance = 1e-12)
 })
 
@@ -132,7 +149,19 @@ test_that("dichotomize() at the median and the mean equals bootnet::binarize()",
   expect_reference(dichotomize(items, method = "median"), as.matrix(bootnet::binarize(items, split = "median", verbose = FALSE)),
                    reference = "bootnet", covers = "dichotomize()", quantity = "1 at or above the median, binarize()",
                    tolerance = 0)
+  # bootnet's mean split is x >= mean, psychnets' is x > mean (documented "above the mean"); integer items never
+  # equal a non-integer mean, so on these items the two rules give the same split.
   expect_reference(dichotomize(items, method = "mean"), as.matrix(bootnet::binarize(items, split = "mean", verbose = FALSE)),
-                   reference = "bootnet", covers = "dichotomize()", quantity = "1 at or above the mean, binarize()",
-                   tolerance = 0)
+                   reference = "bootnet", covers = "dichotomize()",
+                   quantity = "mean split, binarize() (no value equals its column mean)", tolerance = 0)
+  # A column whose mean is one of its values (1, 2, 3: mean 2): the two rules differ on that value.
+  tied <- data.frame(x = c(1, 2, 3, 1, 2, 3), y = c(2, 2, 2, 4, 4, 4))
+  expect_known_difference(dichotomize(tied, method = "mean"),
+                          as.matrix(bootnet::binarize(tied, split = "mean", verbose = FALSE)), reference = "bootnet",
+                          covers = "dichotomize()", quantity = "mean split, a value equal to its column mean",
+                          tolerance = 0,
+                          reason = paste("dichotomize(method = \"mean\") codes 1 strictly above the column mean, as documented;",
+                                         "bootnet::binarize(split = \"mean\") codes 1 at or above it (x >= mean). A value",
+                                         "equal to the mean (2 in column x) is 0 in psychnets and 1 in bootnet."),
+                          agrees_with = "bootnet::binarize() on values that never equal their column mean, compared above")
 })

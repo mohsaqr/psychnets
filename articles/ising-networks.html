@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Ising networks for binary data">
+<meta name="citation_title" content="Ising networks for binary data">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/ising-networks.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/ising-networks.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567516">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,73 +81,63 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Ising networks for binary data</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/ising-networks.Rmd" class="external-link"><code>vignettes/ising-networks.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/ising-networks.Rmd" class="external-link"><code>vignettes/ising-networks.Rmd</code></a></small>
       <div class="d-none name"><code>ising-networks.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>Much psychological and educational data is binary: a symptom is
-present or absent, a diagnostic criterion is met or not, an item is
-passed or failed, a behaviour is reported or not. Correlations between
-such variables are poorly defined, and partial correlation networks
-built for continuous data do not apply. The Ising model is the network
-model for binary variables. Each edge is an interaction on the log-odds
-scale: a positive edge means that when one variable takes the value 1,
-the other is more likely to take the value 1, with all other variables
-held constant; a negative edge means it is less likely. A missing edge
-means that the association between the two variables is accounted for by
-the rest of the network (van Borkulo et al., 2014).</p>
-<p>This article estimates a regularized Ising network for five binary
-indicators of self-regulated learning, reads its interactions, describes
-the nodes by centrality and by how well each is classified from the
-others, and compares the result with an unregularized estimator.</p>
+<p>Many psychological and educational variables are binary. A symptom
+may be present or absent, a diagnostic criterion may be met or not met,
+an assessment item may be passed or failed, and a behaviour may be
+reported or not reported. These variables represent distinct states
+rather than measurements along a continuous scale. Methods based on
+correlations and partial correlations among continuous variables are
+therefore not always appropriate. The Ising model provides a framework
+for estimating networks of binary variables (van Borkulo et al., 2014),
+and it is closely related to item response theory models, a link that
+connects the network and latent-variable views of the same data (Marsman
+et al., 2018). In an Ising network, each edge represents a conditional
+association on the log-odds scale. A positive edge indicates that, when
+one variable is present, the odds of another variable being present are
+higher, conditional on the remaining variables. A negative edge
+indicates lower conditional odds. An absent edge indicates that the
+association between two variables is not estimated as a direct
+association after accounting for the other variables in the network.</p>
+<p>Psychological networks describe the conditional associations among
+variables within a psychological system. They are now a standard method
+in psychological science, with established procedures for estimation,
+accuracy assessment and reporting (Borsboom et al., 2021; Epskamp et
+al., 2018), and recent work has extended Ising estimation to Bayesian
+structure selection (Marsman et al., 2022). In education, psychological
+networks show how the components of learning and regulation relate to
+one another, rather than treating each component as a separate outcome
+(Saqr et al., 2024). Applications include self-regulation in academic
+writing (Saqr et al., 2021) and the relation between students’
+monitoring events and the phases of regulation (Malmberg et al., 2022).
+Networks can also be estimated for a single learner, which shows how a
+process is organised within that person rather than assuming that the
+group-level network describes every student (Saqr &amp; López-Pernas,
+2024).</p>
+<p>This article demonstrates how to estimate and interpret an Ising
+network using <code>psychnets</code>. The example uses five binary
+indicators of self-regulated learning. It explains how the estimated
+interactions can be interpreted, how node centrality and predictability
+can be examined, and how the regularized network can be compared with an
+unregularized estimator. The data are generated by a large language
+model and are used to illustrate the analysis rather than to draw
+conclusions about students.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
-</h2>
-<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
-Strategies for Learning Questionnaire. The responses were generated by a
-large language model (GPT) in a study of how such models answer
-psychological surveys (Saqr, 2025); they serve as a well-structured
-example and are not evidence about students. The construct scores are
-continuous, so for this example <code><a href="../reference/dichotomize.html">dichotomize()</a></code> with
-<code>method = "rank"</code> codes each score as 1 when it lies in the
-upper half of its distribution and 0 otherwise.</p>
-<ul>
-<li>
-<strong>Nodes:</strong> five binary indicators, 1 for the upper half
-of <code>CSU</code> (cognitive strategy use), <code>IV</code> (intrinsic
-value), <code>SE</code> (self-efficacy), <code>SR</code>
-(self-regulation) and <code>TA</code> (test anxiety).</li>
-<li>
-<strong>Observations:</strong> one row per respondent; the data are
-complete.</li>
-</ul>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">binary_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dichotomize.html">dichotomize</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"rank"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">binary_data</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      CSU IV SE SR TA</span></span>
-<span><span class="co">#&gt; [1,]   0  0  0  0  1</span></span>
-<span><span class="co">#&gt; [2,]   1  1  1  1  1</span></span>
-<span><span class="co">#&gt; [3,]   1  1  1  1  0</span></span>
-<span><span class="co">#&gt; [4,]   0  1  1  0  1</span></span>
-<span><span class="co">#&gt; [5,]   0  0  0  0  1</span></span>
-<span><span class="co">#&gt; [6,]   0  0  0  0  0</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">binary_data</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       CSU        IV        SE        SR        TA </span></span>
-<span><span class="co">#&gt; 0.4966667 0.5366667 0.4766667 0.4600000 0.5000000</span></span></code></pre></div>
-<p>Between 46% and 54% of the respondents are coded 1 on each indicator;
-the split is not exactly half because tied scores stay on the same side.
-Dichotomizing discards information, so it is justified only when the
-research question concerns the two states; naturally binary variables
-are analysed as they are.</p>
-</div>
 <div class="section level2">
 <h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
 </h2>
@@ -172,23 +173,70 @@ is the conditional odds ratio of
 when
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>j</mi></msub><annotation encoding="application/x-tex">X_j</annotation></semantics></math>
 changes from 0 to 1.</p>
-<p>The network is estimated one node at a time. Each node is regressed
-on all the others by
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ℓ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\ell_1</annotation></semantics></math>-penalized
-logistic regression, and the penalty is selected by the extended BIC
-with
+<p>The network is estimated by fitting a separate logistic regression
+for each node, using all remaining nodes as predictors. Each regression
+uses an
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ℓ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\ell_1</annotation></semantics></math>
+penalty, which shrinks coefficients and can set some of them to zero.
+The penalty is selected using the extended BIC with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0.25</mn></mrow><annotation encoding="application/x-tex">\gamma = 0.25</annotation></semantics></math>.
-Each pair thus receives two estimates. Under the AND rule a pair is
-retained when both regressions select it, under the OR rule when either
-does, and the retained pair’s weight is the mean of the two
-estimates.</p>
+Because each pair of nodes appears in two regressions, the procedure
+produces two estimates for each possible interaction. The AND rule
+retains an edge only when both regressions select it, whereas the OR
+rule retains an edge when either regression selects it. For a retained
+edge, the two estimates are averaged to obtain its weight.</p>
+</div>
+<div class="section level2">
+<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
+</h2>
+<p><code>SRL_GPT</code> contains 300 sets of responses to the Motivated
+Strategies for Learning Questionnaire. The responses were generated by a
+large language model (GPT) in a study examining how such models answer
+psychological surveys (Vogelsmeier et al., 2025). They provide a
+structured example for demonstrating the analysis, but they do not
+represent observations from students. The construct scores are
+continuous. In this example, <code><a href="../reference/dichotomize.html">dichotomize()</a></code> with
+<code>method = "rank"</code> converts each score into a binary
+indicator, coding a score as 1 when it falls in the upper half of its
+distribution and as 0 otherwise.</p>
+<ul>
+<li>
+<strong>Nodes:</strong> five binary indicators, 1 for the upper half
+of <code>CSU</code> (cognitive strategy use), <code>IV</code> (intrinsic
+value), <code>SE</code> (self-efficacy), <code>SR</code>
+(self-regulation) and <code>TA</code> (test anxiety).</li>
+<li>
+<strong>Observations:</strong> one row per respondent; the data are
+complete.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">binary_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dichotomize.html">dichotomize</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"rank"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">binary_data</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      CSU IV SE SR TA</span></span>
+<span><span class="co">#&gt; [1,]   0  0  0  0  1</span></span>
+<span><span class="co">#&gt; [2,]   1  1  1  1  1</span></span>
+<span><span class="co">#&gt; [3,]   1  1  1  1  0</span></span>
+<span><span class="co">#&gt; [4,]   0  1  1  0  1</span></span>
+<span><span class="co">#&gt; [5,]   0  0  0  0  1</span></span>
+<span><span class="co">#&gt; [6,]   0  0  0  0  0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">binary_data</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       CSU        IV        SE        SR        TA </span></span>
+<span><span class="co">#&gt; 0.4966667 0.5366667 0.4766667 0.4600000 0.5000000</span></span></code></pre></div>
+<p>The proportion coded as 1 ranges from 46% to 54% across the five
+indicators. The proportions do not equal exactly 50% because tied scores
+remain on the same side of the split. Dichotomization reduces the
+information available in the original scores and should therefore be
+used only when the research question concerns the distinction between
+the two states. Variables that are naturally binary can be analysed
+without this additional step.</p>
 </div>
 <div class="section level2">
 <h2 id="which-indicators-are-directly-associated">Which indicators are directly associated?<a class="anchor" aria-label="anchor" href="#which-indicators-are-directly-associated"></a>
 </h2>
-<p><code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>method = "ising"</code> estimates
-the network; <code>rule = "AND"</code> is the default and is stated here
-for clarity.</p>
+<p>The function <code><a href="../reference/psychnet.html">psychnet()</a></code> estimates the network when
+<code>method = "ising"</code> is specified. The AND rule
+(<code>rule = "AND"</code>) is the default and is stated explicitly here
+to make the estimation procedure clear.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ising_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">binary_data</span>, method <span class="op">=</span> <span class="st">"ising"</span>, rule <span class="op">=</span> <span class="st">"AND"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
@@ -204,44 +252,53 @@ for clarity.</p>
 <span><span class="co">#&gt; 4  CSU SR 0.8683591</span></span>
 <span><span class="co">#&gt; 5   IV SR 2.1232839</span></span>
 <span><span class="co">#&gt; 6   SE SR 1.2884921</span></span></code></pre></div>
-<p>The network has 6 edges, all positive and all among the four learning
-constructs, with weights from 0.853 to 2.192. The strongest is
-<code>CSU</code>–<code>SE</code> (2.192): with the other indicators held
-constant, being in the upper half of cognitive strategy use multiplies
-the odds of being in the upper half of self-efficacy by about 9
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>e</mi><mn>2.192</mn></msup><annotation encoding="application/x-tex">e^{2.192}</annotation></semantics></math>).
-The weakest, <code>CSU</code>–<code>SR</code> (0.853), still corresponds
-to an odds ratio of about 2.3.</p>
-<p>Test anxiety has no edge. Once the learning constructs are known,
-being in its upper half is unrelated to any of them. The Gaussian
-network of the continuous scores has a clear negative edge between
+<p>The estimated network contains 6 edges, all positive and connecting
+the four learning constructs. Their weights range from 0.868 to 2.201.
+The strongest interaction is between <code>CSU</code> and
+<code>SE</code> (2.201). Conditional on the other indicators, being in
+the upper half of cognitive strategy use is associated with
+approximately nine times the odds of being in the upper half of
+self-efficacy
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>e</mi><mn>2.201</mn></msup><annotation encoding="application/x-tex">e^{2.201}</annotation></semantics></math>).
+The weakest interaction is between <code>CSU</code> and <code>SR</code>
+(0.868), corresponding to an odds ratio of approximately 2.4.</p>
+<p>Test anxiety has no estimated edge in this network. After accounting
+for the learning constructs, the model does not estimate a direct
+association between test anxiety and any of them. The Gaussian network
+estimated from the continuous scores contains a negative edge between
 self-regulation and test anxiety (-0.350; see the Gaussian graphical
-models article), so its absence here shows how much information the
-median split removes.</p>
+models article). The absence of this edge in the binary network
+illustrates how dichotomization can change the associations represented
+in a network by discarding information from the original scores.</p>
 </div>
 <div class="section level2">
 <h2 id="is-the-fitted-network-the-optimum-of-its-objective">Is the fitted network the optimum of its objective?<a class="anchor" aria-label="anchor" href="#is-the-fitted-network-the-optimum-of-its-objective"></a>
 </h2>
-<p>Each penalized logistic regression is solved iteratively. Any
-solution must satisfy the problem’s optimality (Karush–Kuhn–Tucker)
-conditions; the amount by which a fitted network violates them, the
-largest over the five regressions, is its certificate, and a value near
-zero shows that the network is the optimum of its objective.</p>
+<p>The penalized logistic regressions are solved iteratively. A solution
+to each regression must satisfy the Karush–Kuhn–Tucker (KKT) optimality
+conditions. The certificate returned for the network is the largest
+violation of these conditions across the five regressions. A value close
+to zero indicates that the fitted solution satisfies the numerical
+optimality conditions of the objective.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
 <span><span class="co">#&gt; 1  ising 2.531323e-09  kkt      TRUE</span></span></code></pre></div>
-<p>The violation is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4.90</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">4.90 \times 10^{-10}</annotation></semantics></math>,
-so the interactions are the solutions of the penalized regressions. The
-certificate concerns the computation, not the sampling stability of the
-edges or the validity of the binary coding.</p>
+<p>The largest violation is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2.53</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>9</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2.53 \times 10^{-9}</annotation></semantics></math>,
+indicating that the fitted interactions satisfy the optimality
+conditions of the penalized regressions. This certificate assesses the
+numerical solution of the estimation procedure. It does not establish
+the sampling stability of the edges or the validity of the binary
+coding.</p>
 </div>
 <div class="section level2">
 <h2 id="which-indicators-are-most-connected">Which indicators are most connected?<a class="anchor" aria-label="anchor" href="#which-indicators-are-most-connected"></a>
 </h2>
-<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns strength, the sum of absolute
-interactions, and expected influence, the signed sum.</p>
+<p>The function <code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns two measures of
+node connectedness. Strength is the sum of the absolute interaction
+weights connected to a node, whereas expected influence is the sum of
+its signed interaction weights.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">ising_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node strength expected_influence</span></span>
@@ -250,28 +307,33 @@ interactions, and expected influence, the signed sum.</p>
 <span><span class="co">#&gt; 3   SE 4.418744           4.418744</span></span>
 <span><span class="co">#&gt; 4   SR 4.280135           4.280135</span></span>
 <span><span class="co">#&gt; 5   TA 0.000000           0.000000</span></span></code></pre></div>
-<p>Cognitive strategy use and intrinsic value have the highest strength
-(5.114), followed by self-efficacy (4.406) and self-regulation (4.245).
-All edges are positive, so expected influence equals strength, and test
-anxiety, without edges, has 0 on both. The four learning indicators are
-about equally central, and test anxiety stands apart from them.</p>
+<p>Cognitive strategy use (5.151) and intrinsic value (5.135) have the
+highest strength, followed by self-efficacy (4.419) and self-regulation
+(4.280). Because all estimated edges are positive, expected influence
+has the same values as strength. Test anxiety has no edges and therefore
+has a value of 0 for both measures. The four learning indicators have
+similar levels of connectedness, while test anxiety is separated from
+them in the estimated network.</p>
 </div>
 <div class="section level2">
 <h2 id="how-well-is-each-indicator-classified-from-the-others">How well is each indicator classified from the others?<a class="anchor" aria-label="anchor" href="#how-well-is-each-indicator-classified-from-the-others"></a>
 </h2>
-<p>For a binary node, predictability is the classification accuracy of
-its nodewise model, normalized against the accuracy of always predicting
-the more frequent category (Haslbeck &amp; Waldorp, 2018):</p>
+<p>For a binary node, predictability describes how accurately its value
+can be classified using the other nodes in the network. The normalized
+classification coefficient (nCC) expresses this accuracy relative to the
+accuracy obtained by always predicting the more frequent category
+(Haslbeck &amp; Waldorp, 2018):</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">nCC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>=</mo><mfrac><mrow><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub></mrow><mrow><mn>1</mn><mo>−</mo><msub><mi>m</mi><mi>j</mi></msub></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
 \operatorname{nCC}_j = \frac{\operatorname{CC}_j - m_j}{1 - m_j},
 </annotation></semantics></math></p>
 <p>where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mrow><mi mathvariant="normal">CC</mi><mo>⁡</mo></mrow><mi>j</mi></msub><annotation encoding="application/x-tex">\operatorname{CC}_j</annotation></semantics></math>
-is the proportion classified correctly and
+is the proportion of correctly classified observations and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>m</mi><mi>j</mi></msub><annotation encoding="application/x-tex">m_j</annotation></semantics></math>
-the proportion in the larger category. An nCC of 0 means no gain over
-the base rate and 1 means perfect classification.
-<code><a href="../reference/net_predict.html">net_predict()</a></code> needs the data to compute it.</p>
+is the proportion belonging to the more frequent category. An nCC of 0
+indicates no improvement over this base-rate prediction, while an nCC of
+1 indicates perfect classification. <code><a href="../reference/net_predict.html">net_predict()</a></code> requires
+the original data to calculate predictability.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">ising_net</span>, data <span class="op">=</span> <span class="va">binary_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node   type metric predictability  accuracy</span></span>
@@ -280,21 +342,25 @@ the base rate and 1 means perfect classification.
 <span><span class="co">#&gt; 3   SE binary    nCC      0.6993007 0.8566667</span></span>
 <span><span class="co">#&gt; 4   SR binary    nCC      0.6376812 0.8333333</span></span>
 <span><span class="co">#&gt; 5   TA binary    nCC      0.0000000 0.5000000</span></span></code></pre></div>
-<p>Intrinsic value is classified best, with 87.7% correct and nCC =
-0.734. Cognitive strategy use (nCC = 0.711) and self-efficacy (0.699),
-both 85.7% correct, and self-regulation (0.638, 83.3% correct) follow.
-Test anxiety has nCC = 0 and 50% correct: without neighbours it is
-predicted no better than by its base rate. These are in-sample
-values.</p>
+<p>Intrinsic value has the highest predictability, with 87.7% of
+observations classified correctly and nCC = 0.734. Cognitive strategy
+use (nCC = 0.711) and self-efficacy (nCC = 0.699) follow, with 85.7%
+correct classification for each. Self-regulation has nCC = 0.638 and
+83.3% correct classification. Test anxiety has nCC = 0 and 50% correct
+classification. Because it has no neighbours in the network, its
+classification is no better than the base-rate prediction. These values
+are calculated from the same data used to estimate the network and
+should be interpreted as in-sample results.</p>
 </div>
 <div class="section level2">
 <h2 id="does-an-unregularized-estimator-find-the-same-network">Does an unregularized estimator find the same network?<a class="anchor" aria-label="anchor" href="#does-an-unregularized-estimator-find-the-same-network"></a>
 </h2>
-<p><code>method = "ising_sampler"</code> fits the nodewise logistic
-regressions without a penalty and removes the interactions whose Wald
-test is not significant at <code>alpha</code>. Agreement with the
-penalized network shows that the structure does not depend on the
-penalty.</p>
+<p>The estimator specified by <code>method = "ising_sampler"</code> fits
+the nodewise logistic regressions without a penalty. It then removes
+interactions whose Wald tests are not significant at the specified
+<code>alpha</code> level. Comparing this network with the regularized
+estimate allows us to examine whether the selected edge structure
+differs between the two estimation approaches.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">unregularized_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">binary_data</span>, method <span class="op">=</span> <span class="st">"ising_sampler"</span>,</span>
 <span>                              alpha <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
@@ -310,52 +376,56 @@ penalty.</p>
 <span><span class="co">#&gt; 4  CSU SR 0.8818853</span></span>
 <span><span class="co">#&gt; 5   IV SR 2.2882117</span></span>
 <span><span class="co">#&gt; 6   SE SR 1.4609560</span></span></code></pre></div>
-<p>The unregularized network has the same 6 edges, and test anxiety is
-again isolated. Its interactions are larger,
-<code>CSU</code>–<code>SE</code> 2.345 instead of 2.192 and
-<code>IV</code>–<code>SR</code> 2.288 instead of 2.111, because no
-penalty shrinks them. The structure is therefore not a product of
-regularization.</p>
+<p>The unregularized network contains the same 6 edges, and test anxiety
+remains isolated. The estimated interactions are larger than those in
+the regularized network. For example, the
+<code>CSU</code>–<code>SE</code> interaction is 2.345 rather than 2.201,
+and the <code>IV</code>–<code>SR</code> interaction is 2.288 rather than
+2.123. This difference is consistent with the regularization procedure
+shrinking the estimated interactions. In this example, both estimators
+identify the same edge structure.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">unregularized_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          method certificate kind certified</span></span>
 <span><span class="co">#&gt; 1 ising_sampler          NA  kkt        NA</span></span></code></pre></div>
-<p>The certificate is <code>NA</code>. After the Wald pruning sets
-non-significant interactions to zero, the network is no longer the
-maximum-likelihood solution whose optimality conditions the certificate
-checks. The penalized network above is the one with a certified
-optimum.</p>
+<p>The certificate for the unregularized network is <code>NA</code>. The
+Wald pruning procedure sets non-significant interactions to zero, so the
+resulting network is no longer the maximum-likelihood solution for which
+the certificate evaluates the optimality conditions. The regularized
+network, in contrast, has a certified optimum.</p>
 </div>
 <div class="section level2">
 <h2 id="what-does-the-network-look-like">What does the network look like?<a class="anchor" aria-label="anchor" href="#what-does-the-network-look-like"></a>
 </h2>
-<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the network, with green positive
-and red negative edges and a ring showing each node’s
-predictability.</p>
+<p>The function <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> visualizes the network.
+Positive edges are shown in green and negative edges in red, while the
+ring around each node represents its predictability.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">ising_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ising-networks_files/figure-html/plot-1.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
-<p>The figure shows four densely connected learning indicators and an
-isolated test anxiety node with an empty predictability ring. Node
-positions come from a layout algorithm and carry no statistical
-meaning.</p>
+<p>The figure displays four learning indicators connected to one another
+and an isolated test anxiety node. The predictability ring for test
+anxiety is empty, reflecting its nCC of 0. Node positions are determined
+by the layout algorithm and do not have a statistical
+interpretation.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
 </h2>
-<p>A report defines what 1 and 0 mean for each node and how any
-dichotomization was made, and states the sample size, the estimator,
+<p>A report of an Ising network should define what 1 and 0 represent for
+each node and explain how any dichotomization was performed. It should
+also state the sample size, estimator, value of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>,
-the AND or OR rule and the treatment of missing data. Interactions are
-reported on the log-odds scale, and predictability as nCC together with
-raw accuracy.</p>
-<p>In this analysis, a regularized Ising network
+selection rule (AND or OR), and treatment of missing data. Interaction
+weights should be reported on the log-odds scale. Predictability should
+be reported using nCC alongside raw classification accuracy.</p>
+<p>In this example, a regularized Ising network
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0.25</mn></mrow><annotation encoding="application/x-tex">\gamma = 0.25</annotation></semantics></math>,
-AND rule) of rank-dichotomized scores from 300 complete responses kept 6
-positive edges among the learning constructs, the largest
-<code>CSU</code>–<code>SE</code> (2.192), and left test anxiety
-isolated. An unregularized estimator with Wald pruning at 0.05 kept the
-same edges.</p>
+AND rule) was estimated from rank-dichotomized scores for 300 complete
+responses. The network retained 6 positive edges among the learning
+constructs, with the largest interaction between <code>CSU</code> and
+<code>SE</code> (2.201), and test anxiety was isolated. An unregularized
+estimator with Wald pruning at 0.05 retained the same edges.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-and-when-to-use-the-ising-model">Assumptions and when to use the Ising model<a class="anchor" aria-label="anchor" href="#assumptions-and-when-to-use-the-ising-model"></a>
@@ -374,18 +444,59 @@ mixed graphical model.</li>
 </ul>
 </div>
 <div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Ising networks for
+binary data</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567516" class="external-link uri">https://doi.org/10.5281/zenodo.24567516</a> · <a href="https://pak.dynasite.org/psychnets/articles/ising-networks.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/ising-networks.pdf">PDF</a></p>
+</div>
+<div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E.
+I., McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J.,
+Costantini, G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van
+Bork, R., &amp; Waldorp, L. J. (2021). Network analysis of multivariate
+data in psychological science. <em>Nature Reviews Methods Primers</em>,
+1, 58. <a href="https://doi.org/10.1038/s43586-021-00055-w" class="external-link">doi:10.1038/s43586-021-00055-w</a></p>
+<p>Epskamp, S., Borsboom, D., &amp; Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper.
+<em>Behavior Research Methods</em>, 50(1), 195-212. <a href="https://doi.org/10.3758/s13428-017-0862-1" class="external-link">doi:10.3758/s13428-017-0862-1</a></p>
 <p>Haslbeck, J. M. B., &amp; Waldorp, L. J. (2018). How well do network
 models predict observations? On the importance of predictability in
 network models. <em>Behavior Research Methods</em>, 50(2), 853-861. <a href="https://doi.org/10.3758/s13428-017-0910-x" class="external-link">doi:10.3758/s13428-017-0910-x</a></p>
-<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
-the structure of self-regulated learning via LLM-generated survey
-responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., &amp; Järvelä, S. (2022). How
+the monitoring events of individual students are associated with phases
+of regulation: A network analysis approach. <em>Journal of Learning
+Analytics</em>, 9(1), 77-92. <a href="https://doi.org/10.18608/jla.2022.7429" class="external-link">doi:10.18608/jla.2022.7429</a></p>
+<p>Marsman, M., Borsboom, D., Kruis, J., Epskamp, S., van Bork, R.,
+Waldorp, L. J., van der Maas, H. L. J., &amp; Maris, G. (2018). An
+introduction to network psychometrics: Relating Ising network models to
+item response theory models. <em>Multivariate Behavioral Research</em>,
+53(1), 15-35. <a href="https://doi.org/10.1080/00273171.2017.1379379" class="external-link">doi:10.1080/00273171.2017.1379379</a></p>
+<p>Marsman, M., Huth, K., Waldorp, L. J., &amp; Ntzoufras, I. (2022).
+Objective Bayesian edge screening and structure selection for Ising
+networks. <em>Psychometrika</em>, 87(1), 47-82. <a href="https://doi.org/10.1007/s11336-022-09848-8" class="external-link">doi:10.1007/s11336-022-09848-8</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., &amp; López-Pernas, S. (2024). Mapping the self in
+self-regulation using complex dynamic systems approach. <em>British
+Journal of Educational Technology</em>, 55(4), 1376-1397. <a href="https://doi.org/10.1111/bjet.13452" class="external-link">doi:10.1111/bjet.13452</a></p>
+<p>Saqr, M., Peeters, W., &amp; Viberg, O. (2021). The relational,
+co-temporal, contemporaneous, and longitudinal dynamics of
+self-regulation for academic writing. <em>Research and Practice in
+Technology Enhanced Learning</em>, 16, 29. <a href="https://doi.org/10.1186/s41039-021-00175-7" class="external-link">doi:10.1186/s41039-021-00175-7</a></p>
 <p>van Borkulo, C. D., Borsboom, D., Epskamp, S., Blanken, T. F.,
 Boschloo, L., Schoevers, R. A., &amp; Waldorp, L. J. (2014). A new
 method for constructing networks from binary data. <em>Scientific
 Reports</em>, 4, 5918. <a href="https://doi.org/10.1038/srep05918" class="external-link">doi:10.1038/srep05918</a></p>
+<p>Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas,
+S., &amp; Saqr, M. (2025). Delving into the psychology of machines:
+Exploring the structure of self-regulated learning via LLM-generated
+survey responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

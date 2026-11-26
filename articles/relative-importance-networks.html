@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Relative-importance networks">
+<meta name="citation_title" content="Relative-importance networks">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/relative-importance-networks.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567522">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,51 +81,142 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Relative-importance networks</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/relative-importance-networks.Rmd" class="external-link"><code>vignettes/relative-importance-networks.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/relative-importance-networks.Rmd" class="external-link"><code>vignettes/relative-importance-networks.Rmd</code></a></small>
       <div class="d-none name"><code>relative-importance-networks.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>When the variables of a questionnaire are strongly correlated, a
-regression coefficient or a partial correlation credits each predictor
-only with its unique contribution, and the variance that two predictors
-explain together is credited to neither. For a researcher who asks how
-much self-efficacy contributes to explaining strategy use, that unique
-contribution understates the answer. Relative importance analysis
-divides the explained variance of an outcome, its
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
-among all predictors, giving each a share of both its unique and its
-jointly explained variance. The LMG decomposition (Lindeman et al.,
-1980; Groemping, 2006) does so by averaging the increase in
+<p>How much of a model’s explanatory power can be attributed to each
+predictor when the predictors overlap? In psychological and educational
+questionnaires, self-efficacy, motivation, learning strategies and
+self-regulation may explain some of the same variation in an outcome.
+Multiple regression coefficients describe each predictor’s adjusted
+association, but do not allocate the variance explained jointly by
+several predictors. Relative importance analysis instead partitions the
+model’s
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
-that a predictor brings over every order in which the predictors could
-be entered.</p>
-<p>A relative-importance network applies this decomposition to every
-variable in turn, with all the others as predictors. The shares become
-directed edges: an edge from A to B is the part of B’s explained
-variance attributed to A, and the edges arriving at a node sum to that
-node’s
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.
-This article builds the network for five self-regulated learning
-constructs, reads the directed shares, checks that they sum to each
-node’s explained variance, contrasts incoming and outgoing totals, and
-repeats the analysis on rank correlations.</p>
+among predictors, including their shared contributions. Approaches to
+this problem include dominance analysis (Budescu, 1993) and other
+relative importance indices (Johnson &amp; LeBreton, 2004). The LMG
+decomposition (Lindeman et al., 1980; Groemping, 2006) calculates each
+predictor’s average increase in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+over all possible orders in which predictors can enter the model.</p>
+<p>Psychological networks offer a complementary way to study
+relationships among measured constructs. Rather than designating a
+single outcome in advance, a network represents variables as nodes and
+their relationships as edges. In education, network approaches have been
+used to examine complex learning processes and the relations among
+psychological constructs (Saqr et al., 2024). Studies of self-regulated
+learning have investigated the dynamics of regulation during academic
+writing (Saqr et al., 2021) and the association between students’
+monitoring events and phases of regulation (Malmberg et al., 2022).
+These applications illustrate the value of examining a system of related
+learning processes rather than interpreting each construct in isolation.
+However, an edge in a conventional partial correlation network
+represents a conditional association, not a share of explained
+variance.</p>
+<p>A relative-importance network combines the network representation
+with an explained-variance decomposition. Each construct is treated in
+turn as the outcome of a regression on all the other constructs. The LMG
+shares become directed edges: an edge from A to B gives the proportion
+of B’s total variance attributed to A within that regression. The
+incoming edges sum to B’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
+whereas outgoing edges summarise how much A contributes across the other
+outcomes. This direction indicates which variable is the predictor and
+which is the outcome; it does not imply a causal effect.
+Relative-importance networks are therefore useful when the research aim
+is to compare explanatory contributions among correlated constructs,
+rather than to estimate direct conditional associations or causal
+pathways.</p>
+<p>This article demonstrates the approach with five self-regulated
+learning constructs using the <code>psychnets</code> package. It
+introduces the LMG decomposition, fits and interprets a directed
+network, verifies that the incoming shares sum to each construct’s
+explained variance, and distinguishes predictability from outgoing
+contribution. It then compares Pearson-based results with a network
+based on Spearman rank correlations and outlines reporting and
+interpretation considerations. The example uses language-model-generated
+questionnaire responses, so its numerical findings illustrate the method
+rather than provide evidence about students.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
+<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
+</h2>
+<p>For each outcome
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
+the other nodes form the predictor set
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>.
+The LMG share of predictor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
+is its average incremental contribution to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+over all possible orders of predictor entry. Equivalently, it averages
+the change in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+when
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
+is added to a subset
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>S</mi><annotation encoding="application/x-tex">S</annotation></semantics></math>
+of the remaining predictors, with weights that give each ordering equal
+importance:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mrow><mi>S</mi><mo>⊆</mo><mi>P</mi><mo>\</mo><mo stretchy="false" form="prefix">{</mo><mi>k</mi><mo stretchy="false" form="postfix">}</mo></mrow></munder><mfrac><mrow><mo stretchy="false" form="prefix">|</mo><mi>S</mi><mo stretchy="false" form="prefix">|</mo><mi>!</mi><mspace width="0.167em"></mspace><mo stretchy="false" form="prefix">(</mo><mo stretchy="false" form="prefix">|</mo><mi>P</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mo stretchy="false" form="prefix">|</mo><mi>S</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>!</mi></mrow><mrow><mo stretchy="false" form="prefix">|</mo><mi>P</mi><mo stretchy="false" form="prefix">|</mo><mi>!</mi></mrow></mfrac><mrow><mo stretchy="true" form="prefix">[</mo><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>S</mi><mo>∪</mo><mo stretchy="false" form="prefix">{</mo><mi>k</mi><mo stretchy="false" form="postfix">}</mo><mo stretchy="false" form="postfix">)</mo><mo>−</mo><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>S</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\varphi_{kj} = \sum_{S \subseteq P \setminus \{k\}}
+\frac{|S|!\,(|P| - |S| - 1)!}{|P|!}
+\left[R^2(S \cup \{k\}) - R^2(S)\right].
+</annotation></semantics></math></p>
+<p>Each
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>A</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">R^2(A)</annotation></semantics></math>
+follows from the correlation matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐒</mi><annotation encoding="application/x-tex">\mathbf{S}</annotation></semantics></math>
+as
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>A</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>𝐒</mi><mrow><mi>j</mi><mi>A</mi></mrow></msub><msubsup><mi>𝐒</mi><mrow><mi>A</mi><mi>A</mi></mrow><mrow><mi>−</mi><mn>1</mn></mrow></msubsup><msub><mi>𝐒</mi><mrow><mi>A</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">R^2(A) = \mathbf{S}_{jA}\mathbf{S}_{AA}^{-1}\mathbf{S}_{Aj}</annotation></semantics></math>.
+The shares are non-negative and add up to the outcome’s full-model
+explained variance,</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>∑</mo><mi>k</mi></munder><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><msubsup><mi>R</mi><mi>j</mi><mn>2</mn></msubsup><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\sum_{k} \varphi_{kj} = R_j^2 .
+</annotation></semantics></math></p>
+<p>The edge from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+has weight
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\varphi_{kj}</annotation></semantics></math>.
+Its value is a share of the outcome’s total variance, not a fraction of
+the explained variance alone. Incoming weights sum to the outcome’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
+while outgoing weights sum the predictor’s contributions across the
+other outcomes. These totals have different interpretations and should
+not be compared as though they measured the same property. For
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+nodes, each outcome involves
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>p</mi><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">2^{p-1}</annotation></semantics></math>
+predictor subsets. Computation therefore becomes increasingly demanding
+as the network grows, and the default limit is 21 nodes.</p>
+</div>
+<div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
-Strategies for Learning Questionnaire, each a construct score on a scale
-from 1 to 7. The responses were generated by a large language model
-(GPT) in a study of how such models answer psychological surveys (Saqr,
-2025); they serve as a well-structured example and are not evidence
-about students.</p>
+<p><code>SRL_GPT</code> contains 300 sets of responses to the Motivated
+Strategies for Learning Questionnaire, represented by five construct
+scores on scales from 1 to 7. These responses were generated by a large
+language model (GPT) for a study of how language models answer
+psychological surveys (Vogelsmeier et al., 2025). They provide an
+illustrative dataset with related constructs, not observations of
+students. Accordingly, the results below should not be interpreted as
+findings about student behaviour or learning.</p>
 <ul>
 <li>
 <strong>Nodes:</strong> five construct scores, treated as
@@ -138,60 +240,13 @@ complete.</li>
 <span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
-</h2>
-<p>For outcome
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
-with predictor set
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>,
-the LMG share of predictor
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-is the average increase in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
-when
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-joins a subset
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>S</mi><annotation encoding="application/x-tex">S</annotation></semantics></math>
-of the other predictors, weighted so that every entry order counts
-equally:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mrow><mi>S</mi><mo>⊆</mo><mi>P</mi><mo>\</mo><mo stretchy="false" form="prefix">{</mo><mi>k</mi><mo stretchy="false" form="postfix">}</mo></mrow></munder><mfrac><mrow><mo stretchy="false" form="prefix">|</mo><mi>S</mi><mo stretchy="false" form="prefix">|</mo><mi>!</mi><mspace width="0.167em"></mspace><mo stretchy="false" form="prefix">(</mo><mo stretchy="false" form="prefix">|</mo><mi>P</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mo stretchy="false" form="prefix">|</mo><mi>S</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>!</mi></mrow><mrow><mo stretchy="false" form="prefix">|</mo><mi>P</mi><mo stretchy="false" form="prefix">|</mo><mi>!</mi></mrow></mfrac><mrow><mo stretchy="true" form="prefix">[</mo><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>S</mi><mo>∪</mo><mo stretchy="false" form="prefix">{</mo><mi>k</mi><mo stretchy="false" form="postfix">}</mo><mo stretchy="false" form="postfix">)</mo><mo>−</mo><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>S</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="true" form="postfix">]</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\varphi_{kj} = \sum_{S \subseteq P \setminus \{k\}}
-\frac{|S|!\,(|P| - |S| - 1)!}{|P|!}
-\left[R^2(S \cup \{k\}) - R^2(S)\right].
-</annotation></semantics></math></p>
-<p>Each
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>A</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">R^2(A)</annotation></semantics></math>
-follows from the correlation matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐒</mi><annotation encoding="application/x-tex">\mathbf{S}</annotation></semantics></math>
-as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mi>A</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mi>𝐒</mi><mrow><mi>j</mi><mi>A</mi></mrow></msub><msubsup><mi>𝐒</mi><mrow><mi>A</mi><mi>A</mi></mrow><mrow><mi>−</mi><mn>1</mn></mrow></msubsup><msub><mi>𝐒</mi><mrow><mi>A</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">R^2(A) = \mathbf{S}_{jA}\mathbf{S}_{AA}^{-1}\mathbf{S}_{Aj}</annotation></semantics></math>.
-The shares are non-negative and add up to the outcome’s full-model
-explained variance,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>∑</mo><mi>k</mi></munder><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><mo>=</mo><msubsup><mi>R</mi><mi>j</mi><mn>2</mn></msubsup><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\sum_{k} \varphi_{kj} = R_j^2 .
-</annotation></semantics></math></p>
-<p>The directed network has edge weight
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>φ</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\varphi_{kj}</annotation></semantics></math>
-from
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>.
-The incoming edges of a node sum to its
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>;
-the outgoing edges of a node sum to its total contribution to the other
-regressions. With
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
-nodes, each outcome requires
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>p</mi><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">2^{p-1}</annotation></semantics></math>
-subset regressions, so the computation is limited to 21 nodes by
-default.</p>
-</div>
-<div class="section level2">
 <h2 id="how-is-each-constructs-explained-variance-divided">How is each construct’s explained variance divided?<a class="anchor" aria-label="anchor" href="#how-is-each-constructs-explained-variance-divided"></a>
 </h2>
-<p><code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>method = "relimp"</code> fits the
-five regressions and decomposes their
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.</p>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>method = "relimp"</code> estimates
+a relative-importance network by treating each of the five constructs in
+turn as an outcome and decomposing its regression
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+among the other four constructs.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">importance_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"relimp"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
@@ -199,10 +254,11 @@ five regressions and decomposes their
 <span><span class="co">#&gt;   nodes: 5   edges: 20   (directed)</span></span>
 <span><span class="co">#&gt;   structural certificate (decomposition residual): 2.22e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [0.006, 0.299], mean 0.165</span></span></code></pre></div>
-<p>The network has 20 directed edges, one for every ordered pair,
-because every predictor receives some share. The shares range from 0.006
-to 0.299. The edge table lists them with <code>from</code> as the
-predictor and <code>to</code> as the outcome:</p>
+<p>The fitted network contains 20 directed edges, one for each ordered
+pair of distinct constructs. All estimated shares are positive, ranging
+from 0.006 to 0.299 when rounded to three decimal places. In the edge
+table, <code>from</code> identifies the predictor and <code>to</code>
+identifies the outcome:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from  to      weight</span></span>
@@ -226,47 +282,56 @@ predictor and <code>to</code> as the outcome:</p>
 <span><span class="co">#&gt; 18   IV  TA 0.015416846</span></span>
 <span><span class="co">#&gt; 19   SE  TA 0.012055817</span></span>
 <span><span class="co">#&gt; 20   SR  TA 0.127772080</span></span></code></pre></div>
-<p>The largest share runs from cognitive strategy use to intrinsic value
-(0.299): of the variance in intrinsic value explained by the other four
-constructs, a share of 0.299 is attributed to strategy use. The reverse
-edge, from intrinsic value to strategy use, is 0.289. The two directions
-are close here but come from different regressions, and they need not
-agree. Among the learning constructs the shares lie between 0.213 and
-0.299, so each is explained by the other three in roughly equal
-parts.</p>
-<p>Test anxiety is the exception. Of its explained variance,
-self-regulation accounts for 0.128, while cognitive strategy use
-(0.014), intrinsic value (0.015) and self-efficacy (0.012) contribute
-little. In the other direction, test anxiety contributes almost nothing
-to the learning constructs (0.006 to 0.007), except to self-regulation
-(0.052). The association between test anxiety and the learning
-constructs passes through self-regulation, in both directions.</p>
+<p>The largest edge runs from cognitive strategy use to intrinsic value
+(0.299). This means that cognitive strategy use is allocated
+approximately 29.9% of the total variance in intrinsic value, within the
+regression containing all four other constructs. The reverse edge, from
+intrinsic value to cognitive strategy use, has weight 0.289. Although
+these values are similar, they refer to different outcomes and need not
+be equal. Among cognitive strategy use, intrinsic value, self-efficacy
+and self-regulation, the directed shares range from 0.213 to 0.299. All
+three other learning constructs therefore make appreciable contributions
+to each of these outcomes.</p>
+<p>The pattern differs for test anxiety. Self-regulation has an incoming
+share of 0.128 for test anxiety, compared with 0.014 for cognitive
+strategy use, 0.015 for intrinsic value and 0.012 for self-efficacy. In
+the reverse direction, test anxiety contributes between 0.006 and 0.007
+to the explained variance of cognitive strategy use, intrinsic value and
+self-efficacy, and 0.052 to that of self-regulation. Thus,
+self-regulation has the largest relative-importance link with test
+anxiety in both directions. These shares do not establish that
+self-regulation mediates the relations between test anxiety and the
+other learning constructs.</p>
 </div>
 <div class="section level2">
 <h2 id="do-the-shares-add-up-to-each-constructs-explained-variance">Do the shares add up to each construct’s explained variance?<a class="anchor" aria-label="anchor" href="#do-the-shares-add-up-to-each-constructs-explained-variance"></a>
 </h2>
-<p>By construction, the shares arriving at a node must sum to that
-node’s full-model
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.
-<code><a href="../reference/certificate.html">certificate()</a></code> reports the largest difference between the
-two across nodes; a value near zero shows that the decomposition is
-complete and exact.</p>
+<p>An important check is whether the incoming shares reproduce the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+of each full regression. <code><a href="../reference/certificate.html">certificate()</a></code> reports the largest
+absolute difference between these quantities across the five nodes. A
+value near zero indicates that the estimated weights satisfy the
+decomposition identity to numerical precision.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate       kind certified</span></span>
 <span><span class="co">#&gt; 1 relimp 2.220446e-16 structural      TRUE</span></span></code></pre></div>
-<p>The largest difference is at the level of machine precision (below
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup><annotation encoding="application/x-tex">10^{-15}</annotation></semantics></math>),
-so every edge in the table is part of an exact division of the explained
-variance. The check concerns the arithmetic of the decomposition, not
-the adequacy of the linear regressions.</p>
+<p>The reported discrepancy is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2.220446</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2.220446 \times 10^{-16}</annotation></semantics></math>,
+below
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup><annotation encoding="application/x-tex">10^{-15}</annotation></semantics></math>
+and consistent with numerical rounding. The edge weights thus reproduce
+each outcome’s explained variance to machine precision. This is a check
+of the decomposition, not evidence that the regressions meet their
+assumptions or fit the data adequately.</p>
 </div>
 <div class="section level2">
 <h2 id="how-much-of-each-construct-is-explained">How much of each construct is explained?<a class="anchor" aria-label="anchor" href="#how-much-of-each-construct-is-explained"></a>
 </h2>
-<p><code><a href="../reference/net_predict.html">net_predict()</a></code> reports the full-model
+<p><code><a href="../reference/net_predict.html">net_predict()</a></code> gives the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
-of each node, the total of its incoming shares.</p>
+for each construct when predicted by all four others. This is also the
+sum of that construct’s incoming raw relative-importance shares.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node     type metric predictability accuracy</span></span>
@@ -275,22 +340,29 @@ of each node, the total of its incoming shares.</p>
 <span><span class="co">#&gt; 3   SE gaussian     R2      0.7262171       NA</span></span>
 <span><span class="co">#&gt; 4   SR gaussian     R2      0.7956941       NA</span></span>
 <span><span class="co">#&gt; 5   TA gaussian     R2      0.1693997       NA</span></span></code></pre></div>
-<p>The other four constructs explain 83% of the variance in cognitive
-strategy use
+<p>The four predictors jointly account for approximately 83% of the
+variance in cognitive strategy use
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.833</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.833</annotation></semantics></math>),
-80% in self-regulation, 78% in intrinsic value and 73% in self-efficacy.
-They explain 17% of the variance in test anxiety
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.169</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.169</annotation></semantics></math>),
-and the incoming shares above show that three quarters of that (0.128)
-comes from self-regulation. Most of the variation in test anxiety lies
-outside this five-construct model.</p>
+80% in self-regulation
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.796</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.796</annotation></semantics></math>),
+78% in intrinsic value
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.781</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.781</annotation></semantics></math>)
+and 73% in self-efficacy
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.726</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.726</annotation></semantics></math>).
+Predictability is substantially lower for test anxiety
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.169</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.169</annotation></semantics></math>):
+the other constructs explain approximately 17% of its variance.
+Self-regulation’s share of 0.128 represents about three quarters of this
+explained variance, with most of test anxiety’s total variance remaining
+unexplained by the model.</p>
 </div>
 <div class="section level2">
 <h2 id="which-constructs-contribute-most-to-explaining-the-others">Which constructs contribute most to explaining the others?<a class="anchor" aria-label="anchor" href="#which-constructs-contribute-most-to-explaining-the-others"></a>
 </h2>
-<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> sums the outgoing edges of each node.
-Because all shares are non-negative, strength and expected influence are
-equal.</p>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> reports each node’s outgoing
+strength, the sum of its contributions to the regressions for the other
+constructs. Since every edge weight is non-negative, strength and
+expected influence are identical for this network.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">importance_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node  strength expected_influence</span></span>
@@ -299,34 +371,39 @@ equal.</p>
 <span><span class="co">#&gt; 3   SE 0.7047411          0.7047411</span></span>
 <span><span class="co">#&gt; 4   SR 0.8810358          0.8810358</span></span>
 <span><span class="co">#&gt; 5   TA 0.0728272          0.0728272</span></span></code></pre></div>
-<p>Self-regulation has the largest outgoing total (0.881), closely
-followed by cognitive strategy use (0.872); test anxiety has the
-smallest (0.073). Self-regulation is thus the construct that contributes
-most to explaining the others, partly because it is the only construct
-with a substantial share in test anxiety. Incoming totals
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>)
-describe how well a construct is explained; outgoing totals describe how
-much it explains. The two answer different questions and are reported
-separately.</p>
+<p>Self-regulation has the highest outgoing strength (0.881), followed
+closely by cognitive strategy use (0.872). Test anxiety has the lowest
+(0.073). Self-regulation’s leading total reflects its contributions to
+the other learning constructs as well as its comparatively large share
+in test anxiety. Outgoing strength summarises how much a construct
+contributes to explaining the other outcomes across separate
+regressions. It should be reported separately from incoming
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
+which describes how well the construct itself is explained.</p>
 </div>
 <div class="section level2">
 <h2 id="what-does-the-network-look-like">What does the network look like?<a class="anchor" aria-label="anchor" href="#what-does-the-network-look-like"></a>
 </h2>
-<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the directed network, with arrows
-from predictor to outcome and the share printed on each edge.</p>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> displays the network with arrows
+indicating the predictor-to-outcome direction and edge labels showing
+the raw LMG shares.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">importance_net</span>, directed <span class="op">=</span> <span class="cn">TRUE</span>, edge_labels <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="relative-importance-networks_files/figure-html/plot-1.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
-<p>The figure is dense because every ordered pair has an edge. The thick
-reciprocal arrows among the learning constructs and the thin arrows to
-and from test anxiety are visible, but exact values are read from the
-edge table.</p>
+<p>Because the network contains all 20 possible directed edges, the plot
+is relatively dense. The larger reciprocal shares among the four
+learning constructs contrast with the generally smaller links involving
+test anxiety. The edge table is preferable when precise numerical
+comparisons are needed.</p>
 </div>
 <div class="section level2">
 <h2 id="do-the-conclusions-depend-on-the-correlation-estimator">Do the conclusions depend on the correlation estimator?<a class="anchor" aria-label="anchor" href="#do-the-conclusions-depend-on-the-correlation-estimator"></a>
 </h2>
-<p>Refitting with <code>cor_method = "spearman"</code> bases the
-regressions on rank correlations.</p>
+<p>As a sensitivity analysis, the network can be re-estimated using
+Spearman correlations with <code>cor_method = "spearman"</code>. This
+substitutes rank-based associations for Pearson correlations in the
+decomposition; it does not change the variables or the number of
+nodes.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">importance_spearman</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"relimp"</span>,</span>
 <span>                                cor_method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span></span>
@@ -359,67 +436,112 @@ regressions on rank correlations.</p>
 <span><span class="co">#&gt; 3   SE gaussian     R2      0.7123679       NA</span></span>
 <span><span class="co">#&gt; 4   SR gaussian     R2      0.7723157       NA</span></span>
 <span><span class="co">#&gt; 5   TA gaussian     R2      0.1156386       NA</span></span></code></pre></div>
-<p>The largest share remains cognitive strategy use to intrinsic value
-(0.299), and the learning constructs keep
+<p>The largest directed share is again from cognitive strategy use to
+intrinsic value (0.299). For the four learning constructs, rank-based
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
-values from 0.712 to 0.828. The explained variance of test anxiety falls
-from 0.169 to 0.116, and the share of self-regulation in it from 0.128
-to 0.086. The structure among the learning constructs does not depend on
-the estimator; the explanation of test anxiety is weaker on ranks and
-should be reported with that caveat.</p>
+values range from 0.712 to 0.828, compared with 0.726 to 0.833 in the
+Pearson-based network. Test anxiety shows a more noticeable difference:
+its
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
+decreases from 0.169 to 0.116, while self-regulation’s share in that
+outcome decreases from 0.128 to 0.086. The broad pattern of larger
+shares among the learning constructs is similar under both estimators,
+but the strength of the explained-variance links involving test anxiety
+is sensitive to the correlation method.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
 </h2>
-<p>A report states the variables, the sample size, the correlation
-estimator, the treatment of missing data, and whether raw or normalized
-shares are used. Each edge is described with its direction, from
-predictor to outcome, and incoming
+<p>When reporting a relative-importance network, researchers should
+specify the constructs, sample size, correlation estimator, handling of
+missing values, and whether the displayed edge weights are raw or
+normalised. Edge directions should be defined as predictor to outcome,
+with weights interpreted on the appropriate variance scale. Incoming
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
-and outgoing contribution are reported as separate node summaries.</p>
-<p>In this analysis, raw LMG shares from Pearson correlations of 300
-complete responses formed 20 directed edges. The largest ran from
-cognitive strategy use to intrinsic value (0.299). The constructs’
+and outgoing strength answer distinct questions and should be presented
+separately. Sensitivity analyses can help readers assess how strongly
+conclusions depend on the chosen correlation estimator.</p>
+<p>For example, this analysis used raw LMG shares based on Pearson
+correlations from 300 complete sets of language-model-generated
+responses. The network contained 20 directed edges, of which the largest
+connected cognitive strategy use to intrinsic value (0.299). Node
+predictability ranged from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.169</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.169</annotation></semantics></math>
+for test anxiety to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.833</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.833</annotation></semantics></math>
+for cognitive strategy use. Self-regulation accounted for 0.128 of test
+anxiety’s total variance, the largest incoming share for that outcome.
+Under Spearman correlations, the learning constructs retained broadly
+similar patterns, whereas test anxiety’s
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>
-ranged from 0.169 (test anxiety) to 0.833 (cognitive strategy use), and
-self-regulation carried most of the explained variance of test anxiety
-(0.128). A rank-based analysis kept the structure among the learning
-constructs and reduced the explained variance of test anxiety.</p>
+fell to 0.116.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-and-when-to-use-relative-importance">Assumptions and when to use relative importance<a class="anchor" aria-label="anchor" href="#assumptions-and-when-to-use-relative-importance"></a>
 </h2>
 <ul>
-<li>Each node is modelled by a linear regression on all the others; the
-shares inherit its assumptions of linearity and of observations
-independent of one another.</li>
-<li>Relative importance answers how explained variance is divided among
-correlated predictors. For conditional associations between pairs, use a
-partial correlation network such as the graphical lasso.</li>
-<li>Raw shares keep the variance scale, so a share of 0.1 means one
-tenth of the outcome’s variance. <code>normalized = TRUE</code> rescales
-the incoming shares of each outcome to sum to one, which compares
-predictors within an outcome but hides how much of the outcome is
-explained at all.</li>
-<li>Direction refers to the regression, not to time or causation: an
-edge from A to B means that A is a predictor of B in the fitted
-model.</li>
-<li>The number of subset regressions doubles with every added node,
-which limits the method to small and moderate networks.</li>
+<li>Each outcome is modelled through a regression on the remaining
+nodes. Interpretation therefore depends on the suitability of the
+regression and correlation assumptions, including linear relationships
+and independence of observations.</li>
+<li>Relative importance partitions explained variance among correlated
+predictors. It does not estimate unique conditional associations. When
+those associations are the research focus, a partial correlation
+network, such as one estimated with the graphical lasso, is more
+suitable.</li>
+<li>Raw weights retain the outcome’s variance scale: a share of 0.1
+represents one tenth of its total variance.
+<code>normalized = TRUE</code> instead rescales each outcome’s incoming
+shares to sum to one. Such weights compare the relative allocation
+within an outcome but no longer show how much variance the predictors
+collectively explain.</li>
+<li>Edge direction identifies the predictor and outcome in a regression.
+It does not establish temporal order, causal influence or
+mediation.</li>
+<li>The number of predictor subsets doubles with each additional node.
+This makes the method most practical for small or moderate
+networks.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Relative-importance
+networks</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567522" class="external-link uri">https://doi.org/10.5281/zenodo.24567522</a> · <a href="https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/relative-importance-networks.pdf">PDF</a></p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Budescu, D. V. (1993). Dominance analysis: A new approach to the
+problem of relative importance of predictors in multiple regression.
+<em>Psychological Bulletin</em>, 114(3), 542-551. <a href="https://doi.org/10.1037/0033-2909.114.3.542" class="external-link">doi:10.1037/0033-2909.114.3.542</a></p>
 <p>Groemping, U. (2006). Relative importance for linear regression in R:
 The package relaimpo. <em>Journal of Statistical Software</em>, 17(1),
 1-27. <a href="https://doi.org/10.18637/jss.v017.i01" class="external-link">doi:10.18637/jss.v017.i01</a></p>
+<p>Johnson, J. W., &amp; LeBreton, J. M. (2004). History and use of
+relative importance indices in organizational research.
+<em>Organizational Research Methods</em>, 7(3), 238-257. <a href="https://doi.org/10.1177/1094428104266510" class="external-link">doi:10.1177/1094428104266510</a></p>
 <p>Lindeman, R. H., Merenda, P. F., &amp; Gold, R. Z. (1980).
 <em>Introduction to bivariate and multivariate analysis</em>. Scott,
 Foresman.</p>
-<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
-the structure of self-regulated learning via LLM-generated survey
-responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., &amp; Järvelä, S. (2022). How
+the monitoring events of individual students are associated with phases
+of regulation: A network analysis approach. <em>Journal of Learning
+Analytics</em>, 9(1), 77-92. <a href="https://doi.org/10.18608/jla.2022.7429" class="external-link">doi:10.18608/jla.2022.7429</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., Peeters, W., &amp; Viberg, O. (2021). The relational,
+co-temporal, contemporaneous, and longitudinal dynamics of
+self-regulation for academic writing. <em>Research and Practice in
+Technology Enhanced Learning</em>, 16, 29. <a href="https://doi.org/10.1186/s41039-021-00175-7" class="external-link">doi:10.1186/s41039-021-00175-7</a></p>
+<p>Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas,
+S., &amp; Saqr, M. (2025). Delving into the psychology of machines:
+Exploring the structure of self-regulated learning via LLM-generated
+survey responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

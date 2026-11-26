@@ -215,5 +215,5 @@ as.data.frame(fit)
 #> 6   SE SR 0.7660948
 certificate(fit)
 #>   method  certificate kind certified
-#> 1  ising 8.650804e-10  kkt      TRUE
+#> 1  ising 8.650803e-10  kkt      TRUE
 ```

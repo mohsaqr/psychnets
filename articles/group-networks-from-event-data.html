@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Networks of regulation actions from event logs">
+<meta name="citation_title" content="Networks of regulation actions from event logs">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/group-networks-from-event-data.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/group-networks-from-event-data.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567512">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,39 +81,97 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Networks of regulation actions from event logs</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/group-networks-from-event-data.Rmd" class="external-link"><code>vignettes/group-networks-from-event-data.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/group-networks-from-event-data.Rmd" class="external-link"><code>vignettes/group-networks-from-event-data.Rmd</code></a></small>
       <div class="d-none name"><code>group-networks-from-event-data.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>Digital learning environments record what learners do as event logs:
-who performed which action and when. In collaborative learning, the
-actions include planning, monitoring, discussing and regulating
-emotions, and a recurring question is which of these behaviours go
-together. Students who plan more may also build more consensus, while
-those who discuss more may plan less. Network models answer such
-questions for variables measured on the same observations, so an event
-log is first summarized into the number of times each actor performed
-each action. A partial correlation network of these frequencies shows
-which actions co-occur after the frequencies of all other actions are
-held constant.</p>
-<p>What an edge means depends on the unit of observation. When each
-actor’s whole history is one observation, the network describes
-differences between actors: those who do more of one action also do more
-of another. When the history is divided into sessions and each session
-is compared with the actor’s own average, the network describes
-variation within actors: in sessions where an actor does more of one
-action than usual, the actor also does more of another. This article
-estimates both kinds of network from a log of group regulation actions,
-compares the networks of high and low achievers, and separates the
-within- and between-actor parts of the same data.</p>
+<p>Digital learning environments produce event logs that identify the
+learner, the action performed and the time of the event. In
+collaborative tasks, these records may capture planning, monitoring,
+discussion, consensus building and emotional regulation. Researchers
+often want to know whether such actions tend to occur together, rather
+than merely how frequently each action occurs. Psychological network
+analysis offers a way to examine these patterns by representing actions
+as nodes and their conditional associations as edges. This approach
+treats relationships among observed variables as the object of analysis,
+while avoiding the assumption that an association represents a causal
+influence (Borsboom et al., 2021).</p>
+<p>To construct a psychological network from an event log, events must
+first be aggregated into comparable observations. For example, counting
+each student’s actions produces a table with one row per student and one
+column per action. A Gaussian graphical model then estimates partial
+correlations between action frequencies, accounting for the other
+actions in the model (Epskamp et al., 2018). This can reveal
+associations that are not apparent from separate frequency summaries.
+However, aggregation changes the question being answered. A network
+comparing students’ total counts describes differences between students,
+whereas a network based on deviations from each student’s usual session
+counts describes variation within students. These levels should not be
+interpreted interchangeably, a distinction also relevant to the
+interpretation of longitudinal models (Hamaker et al., 2015).</p>
+<p>Psychological and related network approaches have been used in
+education to investigate the interconnections among learning activities
+and regulatory processes (Saqr et al., 2024). For example, network
+analysis has been applied to individual monitoring events and phases of
+regulation in collaborative learning (Malmberg et al., 2022). Work on
+self-regulation has also framed learners’ behaviour as a complex,
+evolving system (Saqr &amp; López-Pernas, 2024). These applications make
+the level of analysis especially important: group-level patterns of
+engagement need not reflect the processes of individual learners (Saqr,
+2024). Networks based on event frequencies are therefore useful
+descriptive tools, but they do not by themselves establish the order of
+actions or the mechanisms that produce them.</p>
+<p>This article demonstrates how to use <code><a href="../reference/psychnet.html">psychnet()</a></code> in
+<code>psychnets</code> to estimate networks of regulation actions from
+an event log. We first construct a network from each student’s complete
+action history and examine its edges and numerical convergence. We then
+compare networks estimated separately for high and low achievers.
+Finally, we divide the histories into sessions, estimate a network of
+within-student deviations and separate within-student from
+between-student associations. The example uses synthetic data, so the
+results illustrate interpretation and reporting rather than provide
+evidence about actual learners.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
+</h2>
+<p>For actor
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>,
+occasion
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+and action
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
+the frequency is the number of matching events,</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mi>e</mi></munder><mi>I</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>A</mi><mi>e</mi></msub><mo>=</mo><mi>a</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>S</mi><mi>e</mi></msub><mo>=</mo><mi>s</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>J</mi><mi>e</mi></msub><mo>=</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
+V_{asj} = \sum_e I(A_e = a,\ S_e = s,\ J_e = j).
+</annotation></semantics></math></p>
+<p>Without sessions, each actor contributes one frequency vector based
+on the full observation period. Associations in this network therefore
+describe differences between actors. With sessions, each actor
+contributes several frequency vectors, allowing variation across
+occasions to be examined. Subtracting the actor’s mean,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow><mi>W</mi></msubsup><mo>=</mo><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>−</mo><msub><mover><mi>V</mi><mo accent="true">‾</mo></mover><mrow><mi>a</mi><mo>⋅</mo><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">V^{W}_{asj} = V_{asj} - \bar V_{a \cdot j}</annotation></semantics></math>,
+gives the within-actor deviations, and the actor means
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>V</mi><mo accent="true">‾</mo></mover><mrow><mi>a</mi><mo>⋅</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\bar V_{a \cdot j}</annotation></semantics></math>
+carry the between-actor part. Each network is a Gaussian graphical model
+estimated by the EBIC graphical lasso. An edge represents a partial
+correlation between two action frequencies conditional on the other
+seven actions. Its sign indicates the direction of the association, and
+its magnitude indicates its estimated strength. Neither a positive nor a
+negative edge establishes causation.</p>
+</div>
 <div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
@@ -141,35 +210,13 @@ group) and <code>Course</code>, not used here.</li>
 <span><span class="co">#&gt; 4     1     High     1      A 2025-01-01 08:50:00 synthesis</span></span>
 <span><span class="co">#&gt; 5     1     High     1      A 2025-01-01 08:52:25     adapt</span></span>
 <span><span class="co">#&gt; 6     1     High     1      A 2025-01-01 08:57:31 consensus</span></span></code></pre></div>
-<p>Each row is one event, and the rows of one actor form that actor’s
-history. <code><a href="../reference/psychnet.html">psychnet()</a></code> recognizes an event log when the
-<code>actor</code> argument names the actor column; the action column is
-<code>Action</code> by default.</p>
-</div>
-<div class="section level2">
-<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
-</h2>
-<p>For actor
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>,
-occasion
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
-and action
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>,
-the frequency is the number of matching events,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mi>e</mi></munder><mi>I</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>A</mi><mi>e</mi></msub><mo>=</mo><mi>a</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>S</mi><mi>e</mi></msub><mo>=</mo><mi>s</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>J</mi><mi>e</mi></msub><mo>=</mo><mi>j</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">
-V_{asj} = \sum_e I(A_e = a,\ S_e = s,\ J_e = j).
-</annotation></semantics></math></p>
-<p>Without sessions, each actor contributes one frequency vector, and
-the network is estimated from these between-actor frequencies. With
-sessions, each actor contributes several vectors. Subtracting the
-actor’s mean,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow><mi>W</mi></msubsup><mo>=</mo><msub><mi>V</mi><mrow><mi>a</mi><mi>s</mi><mi>j</mi></mrow></msub><mo>−</mo><msub><mover><mi>V</mi><mo accent="true">‾</mo></mover><mrow><mi>a</mi><mo>⋅</mo><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">V^{W}_{asj} = V_{asj} - \bar V_{a \cdot j}</annotation></semantics></math>,
-gives the within-actor deviations, and the actor means
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>V</mi><mo accent="true">‾</mo></mover><mrow><mi>a</mi><mo>⋅</mo><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\bar V_{a \cdot j}</annotation></semantics></math>
-carry the between-actor part. Each network is a Gaussian graphical model
-estimated by the EBIC graphical lasso, so an edge is a partial
-correlation between two action frequencies with the other seven held
-constant.</p>
+<p>Each row records one action by one student at a particular time.
+Multiple rows for the same student make up that student’s event history.
+<code><a href="../reference/psychnet.html">psychnet()</a></code> recognises the data as an event log when the
+<code>actor</code> argument identifies the student column; the action
+column is <code>Action</code> by default. As the example is synthetic,
+its frequencies and associations should not be generalised to a
+population of students.</p>
 </div>
 <div class="section level2">
 <h2 id="which-actions-co-occur-across-students">Which actions co-occur across students?<a class="anchor" aria-label="anchor" href="#which-actions-co-occur-across-students"></a>
@@ -215,35 +262,45 @@ counts.</p>
 <span><span class="co">#&gt; 26 coregulate  synthesis  0.007569019</span></span>
 <span><span class="co">#&gt; 27    discuss  synthesis  0.186580959</span></span>
 <span><span class="co">#&gt; 28    emotion  synthesis -0.020637713</span></span></code></pre></div>
-<p>The network has 28 of the 36 possible edges, with partial
-correlations from -0.154 to 0.434. The strongest joins
-<code>consensus</code> and <code>plan</code> (0.434): students who plan
-more also reach consensus more often, at equal frequencies of the other
-actions. Consensus is also strongly tied to <code>discuss</code> (0.329)
-and <code>coregulate</code> (0.226), and <code>cohesion</code> to
-<code>emotion</code> (0.348). The strongest negative edge joins
-<code>discuss</code> and <code>plan</code> (-0.154): students who
-discuss more plan less. Several edges are close to zero, for example
-<code>coregulate</code>–<code>plan</code> (-0.007) and
-<code>coregulate</code>–<code>synthesis</code> (0.008), and carry no
-substantive weight. Consensus building is thus the hub of the regulation
-network, linked to both planning and discussion.</p>
+<p>Of the 36 possible connections between nine actions, 28 have non-zero
+estimated weights. These range from -0.154 to 0.434. The largest
+positive edge connects <code>consensus</code> and <code>plan</code>
+(0.434). Students with higher planning counts also tend to have higher
+consensus counts after accounting for their frequencies of the other
+seven actions. Other relatively strong positive edges connect
+<code>cohesion</code> and <code>emotion</code> (0.348),
+<code>consensus</code> and <code>discuss</code> (0.329), and
+<code>consensus</code> and <code>coregulate</code> (0.226).</p>
+<p>The most negative edge connects <code>discuss</code> and
+<code>plan</code> (-0.154), indicating an inverse conditional
+association across students. This does not imply that discussion
+prevents planning. Some retained edges have negligible magnitudes,
+including <code>coregulate</code>–<code>plan</code> (-0.007) and
+<code>coregulate</code>–<code>synthesis</code> (0.008), and should not
+be given substantive interpretations simply because they are non-zero.
+Taken together, the comparatively strong connections involving
+<code>consensus</code> suggest that consensus building occupies a
+prominent position in this estimated network.</p>
 </div>
 <div class="section level2">
 <h2 id="is-the-fitted-network-the-optimum-of-its-objective">Is the fitted network the optimum of its objective?<a class="anchor" aria-label="anchor" href="#is-the-fitted-network-the-optimum-of-its-objective"></a>
 </h2>
-<p>Any solution of the graphical lasso must satisfy the problem’s
-optimality (Karush–Kuhn–Tucker) conditions; the amount by which a fitted
-network violates them is its certificate, and a value near zero shows
-that the network is the optimum of its objective.</p>
+<p>The graphical lasso solves a penalised optimisation problem. Its
+solution should satisfy the Karush–Kuhn–Tucker optimality conditions.
+The certificate measures the remaining violation of these conditions,
+with a value close to zero indicating that the numerical solution meets
+them to high precision. This is a check on optimisation, not on whether
+the model is substantively correct.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">actor_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1 glasso 3.188705e-11  kkt      TRUE</span></span></code></pre></div>
-<p>The violation is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.19</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.19 \times 10^{-11}</annotation></semantics></math>,
-so the network is the graphical-lasso solution at the selected
-penalty.</p>
+<span><span class="co">#&gt; 1 glasso 3.188688e-11  kkt      TRUE</span></span></code></pre></div>
+<p>The certificate is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.19</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3.19 \times 10^{-11}</annotation></semantics></math>
+and is marked as certified in the output. This indicates that the fitted
+network satisfies the graphical-lasso optimality conditions to high
+numerical precision at the selected penalty. It does not establish that
+the estimated edges would replicate in another sample.</p>
 </div>
 <div class="section level2">
 <h2 id="what-does-the-network-look-like">What does the network look like?<a class="anchor" aria-label="anchor" href="#what-does-the-network-look-like"></a>
@@ -277,10 +334,13 @@ together.</p>
 <span><span class="co">#&gt;   group nodes edges mean_abs_weight</span></span>
 <span><span class="co">#&gt; 1  High     9    25       0.1141111</span></span>
 <span><span class="co">#&gt; 2   Low     9    27       0.1139959</span></span></code></pre></div>
-<p>The network of high achievers has 25 edges and that of low achievers
-27, each from 1,000 students. The mean absolute edge weight is 0.114 in
-both, so the retained associations are of the same typical size.
-Centrality shows where the two networks differ:</p>
+<p>The network for high achievers contains 25 edges and the network for
+low achievers contains 27, each estimated from 1,000 students. Their
+mean absolute weights are almost identical (0.114 in both). Thus, the
+average magnitude of the retained edges is very similar, although the
+number and arrangement of edges differ. Node strength, the sum of the
+absolute weights of edges connected to a node, provides a further
+descriptive comparison:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">achievement_nets</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet_centrality_group&gt; 2 groups: High, Low</span></span>
@@ -308,15 +368,17 @@ Centrality shows where the two networks differ:</p>
 <span><span class="co">#&gt; 7    monitor 0.4027815          0.4027815</span></span>
 <span><span class="co">#&gt; 8       plan 0.6447291          0.4924798</span></span>
 <span><span class="co">#&gt; 9  synthesis 0.4415186          0.4415186</span></span></code></pre></div>
-<p><code>consensus</code> has the largest strength in both groups, 1.448
-among high and 1.200 among low achievers. Among low achievers,
-<code>discuss</code> follows closely (1.081), and <code>adapt</code>
-(0.504 against 0.256) and <code>coregulate</code> (0.638 against 0.483)
-are more connected than among high achievers. The networks of high
-achievers are thus more concentrated on consensus building. These are
-descriptive differences between two estimated networks; a formal test of
-a difference requires a network comparison test
-(<code><a href="../reference/net_compare.html">net_compare()</a></code>).</p>
+<p><code>consensus</code> has the highest strength in both groups, at
+1.448 for high achievers and 1.200 for low achievers. For low achievers,
+<code>discuss</code> has a strength of 1.081. Both <code>adapt</code>
+(0.504 versus 0.256) and <code>coregulate</code> (0.638 versus 0.483)
+have greater strength in the low-achiever network than in the
+high-achiever network. The high-achiever network appears more
+concentrated around <code>consensus</code>, whereas several other
+actions are relatively more connected in the low-achiever network. These
+observations describe estimated networks and do not establish
+statistically significant group differences. A formal assessment
+requires a network comparison test (<code><a href="../reference/net_compare.html">net_compare()</a></code>).</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">achievement_nets</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group-networks-from-event-data_files/figure-html/plot-groups-1.png" class="r-plt" alt="" width="864" style="display: block; margin: auto;"></p>
@@ -361,21 +423,28 @@ estimated from the pooled deviations.</p>
 <span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">within_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
 <span><span class="co">#&gt; 1 glasso 1.296872e-12  kkt      TRUE</span></span></code></pre></div>
-<p>The within-student network has 14 edges, half as many as the
-between-student network, and a larger penalty
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0.0288</mn></mrow><annotation encoding="application/x-tex">\lambda = 0.0288</annotation></semantics></math>).
-Its strongest edge joins <code>cohesion</code> and <code>emotion</code>
-(0.148): in sessions where a student expresses more cohesion than usual,
-the student also expresses more emotion than usual.
+<p>The within-student network contains 14 edges, compared with 28 in the
+network based on students’ complete histories. The selected penalty is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0.0288</mn></mrow><annotation encoding="application/x-tex">\lambda = 0.0288</annotation></semantics></math>,
+compared with 0.0080 for the full-history network. The largest
+within-student edge connects <code>cohesion</code> and
+<code>emotion</code> (0.148). In sessions where a student has more
+cohesion events than their own average, they also tend to have more
+emotion events than their own average, conditional on the other actions.
+Further positive edges connect
 <code>discuss</code>–<code>synthesis</code> (0.117) and
-<code>consensus</code>–<code>plan</code> (0.116) follow, and
-<code>discuss</code>–<code>plan</code> is again negative (-0.074). The
-certificate,
+<code>consensus</code>–<code>plan</code> (0.116), while
+<code>discuss</code>–<code>plan</code> is negative (-0.074).</p>
+<p>The certificate is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.30</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>12</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.30 \times 10^{-12}</annotation></semantics></math>,
-shows that the network is the optimum of its objective. The
-within-student associations are weaker than the between-student ones,
-and only part of the between-student structure is repeated from session
-to session.</p>
+indicating a numerically satisfactory graphical-lasso solution. The
+smaller number of edges and lower maximum weight describe a sparser,
+generally weaker set of conditional associations than in the
+full-history network. These differences must be interpreted cautiously
+because the networks use different observational units and have
+different selected penalties. In particular, an association between
+students need not also characterise how a given student varies across
+sessions.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">within_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group-networks-from-event-data_files/figure-html/plot-within-1.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
@@ -395,31 +464,47 @@ counts.</p>
 <span><span class="co">#&gt;   actors: 2000   occasions: 12305</span></span>
 <span><span class="co">#&gt;   within : 9 nodes, 14 edges</span></span>
 <span><span class="co">#&gt;   between: 9 nodes, 24 edges</span></span></code></pre></div>
-<p>The five-minute rule divides the 2,000 histories into 12,305
-sessions. The within-student network has 14 edges and the
-between-student network 24. More associations hold between students’
-average profiles than between their session-to-session fluctuations. A
-plot shows the two networks side by side.</p>
+<p>Applying the five-minute session rule to the histories of 2,000
+students produces 12,305 sessions. The decomposition yields 14 edges in
+the within-student network and 24 in the between-student network of
+average session counts. These are two distinct sources of association:
+deviations within students and differences between students’ average
+session profiles. The between-student component has more retained edges
+in this fitted model, but edge counts alone do not demonstrate stronger
+underlying processes. The plot presents the two networks side by
+side.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">multilevel_nets</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="group-networks-from-event-data_files/figure-html/plot-multilevel-1.png" class="r-plt" alt="" width="864" style="display: block; margin: auto;"></p>
-<p>The decomposition separates the two sources of covariance; it is not
-a random-effects model.</p>
+<p>This decomposition separates within-student from between-student
+covariance in the session-level counts. It is not a random-effects
+model, and neither component describes the temporal ordering of
+regulatory actions. Also, the between-student network here is based on
+mean session counts, so it is not the same estimand as the earlier
+network based on complete-history counts.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
 </h2>
-<p>A report names the actor, action and time columns, defines the
-occasion and the session rule, states whether the network describes
-differences between actors or variation within them, and gives the
-estimator and its settings. It also states that sessions defined by
-timestamps do not make the network temporal.</p>
-<p>In this analysis, 27,533 events from 2,000 students gave a
-between-student network of 28 edges, with consensus building as its hub.
-High and low achievers had networks of 25 and 27 edges with the same
-mean absolute weight. A five-minute session rule gave 12,305 sessions, a
-within-student network of 14 edges and a between-student network of 24
-edges.</p>
+<p>To make an event-log network analysis reproducible, a report should
+specify the actor and action columns and, when applicable, the time
+column. It should explain how events were counted, what constitutes an
+observation, and how sessions were defined. The report should
+distinguish whole-history, within-student and between-student estimands,
+identify the estimator and its settings, and present the main edge
+patterns with appropriate caution. Dividing a log by timestamps does not
+make a contemporaneous association network a temporal or causal
+model.</p>
+<p>For example, the synthetic log contains 27,533 events from 2,000
+students. The network of complete-history counts contains 28 edges, with
+<code>consensus</code> having several of the strongest connections. The
+networks of high and low achievers contain 25 and 27 edges,
+respectively, and both have a mean absolute edge weight of approximately
+0.114. A five-minute session rule identifies 12,305 sessions. The
+session-based analysis produces a within-student network with 14 edges
+and a between-student network of average session counts with 24 edges.
+These figures describe the fitted example, not population-level
+effects.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-and-when-to-use-which-network">Assumptions and when to use which network<a class="anchor" aria-label="anchor" href="#assumptions-and-when-to-use-which-network"></a>
@@ -445,6 +530,44 @@ individual events, and not causal effects. For the order in which
 actions follow one another, transition network analysis is the
 appropriate model.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Networks of regulation
+actions from event logs</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567512" class="external-link uri">https://doi.org/10.5281/zenodo.24567512</a> · <a href="https://pak.dynasite.org/psychnets/articles/group-networks-from-event-data.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/group-networks-from-event-data.pdf">PDF</a></p>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E.
+I., McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J.,
+Costantini, G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van
+Bork, R., &amp; Waldorp, L. J. (2021). Network analysis of multivariate
+data in psychological science. <em>Nature Reviews Methods Primers</em>,
+1, 58. <a href="https://doi.org/10.1038/s43586-021-00055-w" class="external-link">doi:10.1038/s43586-021-00055-w</a></p>
+<p>Epskamp, S., Waldorp, L. J., Mõttus, R., &amp; Borsboom, D. (2018).
+The Gaussian graphical model in cross-sectional and time-series data.
+<em>Multivariate Behavioral Research</em>, 53(4), 453-480. <a href="https://doi.org/10.1080/00273171.2018.1454823" class="external-link">doi:10.1080/00273171.2018.1454823</a></p>
+<p>Hamaker, E. L., Kuiper, R. M., &amp; Grasman, R. P. P. P. (2015). A
+critique of the cross-lagged panel model. <em>Psychological
+Methods</em>, 20(1), 102-116. <a href="https://doi.org/10.1037/a0038889" class="external-link">doi:10.1037/a0038889</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., &amp; Järvelä, S. (2022). How
+the monitoring events of individual students are associated with phases
+of regulation: A network analysis approach. <em>Journal of Learning
+Analytics</em>, 9(1), 77-92. <a href="https://doi.org/10.18608/jla.2022.7429" class="external-link">doi:10.18608/jla.2022.7429</a></p>
+<p>Saqr, M. (2024). Group-level analysis of engagement poorly reflects
+individual students’ processes: Why we need idiographic learning
+analytics. <em>Computers in Human Behavior</em>, 150, 107991. <a href="https://doi.org/10.1016/j.chb.2023.107991" class="external-link">doi:10.1016/j.chb.2023.107991</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., &amp; López-Pernas, S. (2024). Mapping the self in
+self-regulation using complex dynamic systems approach. <em>British
+Journal of Educational Technology</em>, 55(4), 1376-1397. <a href="https://doi.org/10.1111/bjet.13452" class="external-link">doi:10.1111/bjet.13452</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

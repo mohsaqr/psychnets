@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Panel graphical VAR: temporal, contemporaneous, and between-person networks">
+<meta name="citation_title" content="Panel graphical VAR: temporal, contemporaneous, and between-person networks">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567520">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,45 +81,132 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Panel graphical VAR: temporal, contemporaneous, and between-person networks</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/panel-graphical-var.Rmd" class="external-link"><code>vignettes/panel-graphical-var.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/panel-graphical-var.Rmd" class="external-link"><code>vignettes/panel-graphical-var.Rmd</code></a></small>
       <div class="d-none name"><code>panel-graphical-var.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>Panel studies measure the same people on a few occasions, for
-instance weekly during a course. Two different questions can be asked of
-such data. The between-person question is whether students who are
-generally more efficacious also plan more. The within-person question is
-whether a student who feels more efficacious than usual in one week
-plans more than usual, in the same week or in the next. The answers can
-differ, and a cross-sectional network of the pooled data mixes them. The
-panel graphical vector-autoregressive model (panel-GVAR; Epskamp, 2020)
-separates each person’s scores into a stable personal level and weekly
-deviations from it, and estimates three networks: a temporal network of
-lagged effects between the deviations, a contemporaneous network of
-deviations that move together within a week, and a between-person
-network of the stable levels.</p>
-<p>This article fits the model to a four-wave panel of five
-self-regulated learning indicators, reads the three networks with their
-uncertainty, selects a sparser model by two methods, and evaluates the
-fit, the numerical solution and the division of variance between and
-within persons.</p>
+<p>An association observed between students may not describe what
+happens when one student’s experiences change over time. To distinguish
+these patterns, researchers need to consider relationships among
+experiences, behaviours and beliefs both across individuals and across
+measurement occasions. Network models examine such interrelated
+processes through associations between measured variables, rather than
+treating each scale as a separate outcome (Borsboom et al., 2021). A
+Gaussian graphical model describes conditional associations at one
+occasion, while longitudinal network models can examine how variables
+relate across occasions (Epskamp et al., 2018). Separating temporal,
+contemporaneous and between-person relationships is therefore important
+when interpreting changes within students alongside differences between
+them.</p>
+<p>In educational research, psychological networks have been used to
+examine learning as a system of interacting motivational, emotional and
+behavioural processes (Saqr, Beck, &amp; López-Pernas, 2024). Work on
+self-regulated learning has considered how its components relate
+dynamically rather than operating independently (Saqr &amp;
+López-Pernas, 2024). Related research has argued for examining
+within-person variation to understand and potentially individualise
+learning (Saqr, 2023), and has distinguished person-specific from
+person-centred ways of locating learning processes (Saqr, Vogelsmeier,
+&amp; López-Pernas, 2024). These applications motivate methods that do
+not mistake differences between students for changes occurring within a
+student.</p>
+<p>Panel studies follow the same people over a small number of
+occasions, such as consecutive weeks of a course. They raise two
+different questions: do students with higher typical self-efficacy also
+tend to plan more, and does a student plan more when their self-efficacy
+is higher than usual? Associations within a week and predictions from
+one week to the next are also distinct. Pooling observations in a single
+cross-sectional network can obscure these levels of analysis. The
+distinction is important in longitudinal research because conventional
+cross-lagged comparisons can conflate stable between-person differences
+with within-person processes (Hamaker et al., 2015). The panel graphical
+vector-autoregressive model (panel-GVAR; Epskamp, 2020) addresses this
+problem by estimating temporal, contemporaneous and between-person
+networks separately.</p>
+<p>This article demonstrates the panel-GVAR using <code>psychnets</code>
+and a synthetic four-wave panel of five self-regulated learning
+indicators. It introduces the model and data, interprets estimated edges
+and their uncertainty, and compares two methods of selecting a sparser
+network. It then examines model fit, optimisation diagnostics and the
+proportion of variance attributable to stable student differences,
+before discussing the assumptions that matter when applying the method
+to educational panel data.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
+<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
+</h2>
+<p>For person
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+at wave
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>,
+the observed vector of scores can be written as the sum of the overall
+mean, a stable person-specific component and a wave-specific deviation.
+The latter is predicted from the preceding wave:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝐲</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>𝛍</mi><mo>+</mo><msub><mi>𝛈</mi><mi>p</mi></msub><mo>+</mo><msub><mi>𝐰</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>𝐰</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>𝐁</mi><mspace width="0.167em"></mspace><msub><mi>𝐰</mi><mrow><mi>p</mi><mo>,</mo><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>𝛇</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\mathbf{y}_{pt} = \boldsymbol\mu + \boldsymbol\eta_p + \mathbf{w}_{pt},
+\qquad
+\mathbf{w}_{pt} = \mathbf{B}\,\mathbf{w}_{p,t-1} + \boldsymbol\zeta_{pt},
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛍</mi><annotation encoding="application/x-tex">\boldsymbol\mu</annotation></semantics></math>
+is the grand mean,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛈</mi><mi>p</mi></msub><annotation encoding="application/x-tex">\boldsymbol\eta_p</annotation></semantics></math>
+is the person’s stable deviation from that mean, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐰</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\mathbf{w}_{pt}</annotation></semantics></math>
+is the deviation from their own typical level at wave
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>.
+The model describes three related but different networks:</p>
+<ul>
+<li>
+<strong>temporal:</strong> the matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐁</mi><annotation encoding="application/x-tex">\mathbf{B}</annotation></semantics></math>
+contains lag-1 regression coefficients for deviations from personal
+levels. An edge points from a variable at one wave to the variable it
+predicts at the next. A self-loop is an autoregressive coefficient,
+indicating persistence in a variable;</li>
+<li>
+<strong>contemporaneous:</strong> partial correlations among the
+innovations
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛇</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\boldsymbol\zeta_{pt}</annotation></semantics></math>
+describe associations within a wave after the lagged predictors have
+been accounted for. These edges are undirected;</li>
+<li>
+<strong>between-person:</strong> partial correlations among the
+stable components
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛈</mi><mi>p</mi></msub><annotation encoding="application/x-tex">\boldsymbol\eta_p</annotation></semantics></math>
+describe how students’ typical levels are related, conditional on the
+other variables in that network.</li>
+</ul>
+<p>The full model is estimated by maximum likelihood. It provides
+standard errors, Wald tests and confidence intervals for individual
+edges. Its interpretation depends on assumptions including stable wave
+means and common lagged relations across occasions. In particular, a
+temporal edge is a conditional lagged association, not evidence that
+changing one variable would cause a change in another.</p>
+</div>
+<div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p><code>srl_panel</code> is a synthetic panel of 100 students measured
-in four consecutive weeks. It was simulated from a panel-GVAR whose
-structure was taken from real experience-sampling data (see
-<code><a href="../reference/srl_panel.html">?srl_panel</a></code>), so it is realistic and can be shared without
-restriction. The data are in long format, one row per student per
-week.</p>
+<p><code>srl_panel</code> contains synthetic measurements of 100
+students over four consecutive weeks. The generating panel-GVAR was
+based on a structure derived from experience-sampling data (see
+<code><a href="../reference/srl_panel.html">?srl_panel</a></code>). The example therefore has plausible
+dependencies while avoiding the use of identifiable student data. The
+dataset is in long format, with one row for each student and week. Its
+columns identify the student, the measurement occasion and five
+indicators of self-regulated learning:</p>
 <ul>
 <li>
 <strong>Person:</strong> <code>student</code>, the student
@@ -132,56 +230,15 @@ identifier.</li>
 <span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"efficacy"</span>, <span class="st">"planning"</span>, <span class="st">"effort"</span>, <span class="st">"enjoyment"</span>, <span class="st">"anxiety"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
-</h2>
-<p>For person
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
-at wave
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>,
-the vector of scores is decomposed as</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝐲</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>𝛍</mi><mo>+</mo><msub><mi>𝛈</mi><mi>p</mi></msub><mo>+</mo><msub><mi>𝐰</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>𝐰</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>𝐁</mi><mspace width="0.167em"></mspace><msub><mi>𝐰</mi><mrow><mi>p</mi><mo>,</mo><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>𝛇</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
-\mathbf{y}_{pt} = \boldsymbol\mu + \boldsymbol\eta_p + \mathbf{w}_{pt},
-\qquad
-\mathbf{w}_{pt} = \mathbf{B}\,\mathbf{w}_{p,t-1} + \boldsymbol\zeta_{pt},
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛍</mi><annotation encoding="application/x-tex">\boldsymbol\mu</annotation></semantics></math>
-is the grand mean,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛈</mi><mi>p</mi></msub><annotation encoding="application/x-tex">\boldsymbol\eta_p</annotation></semantics></math>
-the person’s stable deviation from it, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐰</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\mathbf{w}_{pt}</annotation></semantics></math>
-the person’s deviation from their own level at wave
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>.
-The three networks are:</p>
-<ul>
-<li>
-<strong>temporal:</strong> the matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐁</mi><annotation encoding="application/x-tex">\mathbf{B}</annotation></semantics></math>
-of lag-1 regression effects between deviations. Edges are directed; a
-self-loop is an autoregressive effect, the carry-over of a deviation to
-the next wave;</li>
-<li>
-<strong>contemporaneous:</strong> the partial correlations of the
-innovations
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛇</mi><mrow><mi>p</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\boldsymbol\zeta_{pt}</annotation></semantics></math>,
-the deviations that occur together within a wave after the lagged
-effects are accounted for;</li>
-<li>
-<strong>between-person:</strong> the partial correlations of the
-stable levels
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛈</mi><mi>p</mi></msub><annotation encoding="application/x-tex">\boldsymbol\eta_p</annotation></semantics></math>.</li>
-</ul>
-<p>The parameters are estimated by maximum likelihood, and each edge has
-a standard error and a Wald test. The model assumes that the means do
-not change across waves.</p>
-</div>
-<div class="section level2">
 <h2 id="what-do-the-three-networks-show">What do the three networks show?<a class="anchor" aria-label="anchor" href="#what-do-the-three-networks-show"></a>
 </h2>
-<p><code><a href="../reference/panel_gvar.html">panel_gvar()</a></code> takes the data with the names of the
-variables, the person identifier and the wave. By default every edge is
-estimated and kept, and an edge is flagged as significant at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&lt;</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">p &lt; 0.01</annotation></semantics></math>.</p>
+<p><code><a href="../reference/panel_gvar.html">panel_gvar()</a></code> takes the dataset, the selected variables,
+the student identifier and the wave indicator. Without edge selection,
+all eligible edges are estimated and retained. Statistical significance
+is indicated at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&lt;</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">p &lt; 0.01</annotation></semantics></math>;
+this flag changes how an edge is reported, not whether the edge is
+included in the full model.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/panel_gvar.html">panel_gvar</a></span><span class="op">(</span><span class="va">srl_panel</span>, vars <span class="op">=</span> <span class="va">vars</span>, id <span class="op">=</span> <span class="st">"student"</span>, wave <span class="op">=</span> <span class="st">"week"</span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
@@ -190,13 +247,17 @@ estimated and kept, and an edge is flagged as significant at
 <span><span class="co">#&gt;   edges (significant/estimated, p &lt; 0.01): temporal 1/20 (+4/5 autoregressive)   contemporaneous 5/10   between 2/10</span></span>
 <span><span class="co">#&gt;   selection: none (full model)</span></span>
 <span><span class="co">#&gt;   fit: chisq(170) = 207.19, p = 0.0273   CFI = 0.957   TLI = 0.946   RMSEA = 0.047</span></span>
-<span><span class="co">#&gt;   optimality (ML score): 8.16e-13</span></span>
+<span><span class="co">#&gt;   optimality (ML score): 5.91e-13</span></span>
 <span><span class="co">#&gt;   starts: 3 of 3 reached the best saturated optimum</span></span></code></pre></div>
-<p>The model has 100 students in 4 waves. Of the 20 lagged effects
-between variables, 1 is significant, and 4 of the 5 autoregressive
-effects are; 5 of the 10 contemporaneous and 2 of the 10 between-person
-edges are significant. The edge table has one row per edge, with its
-standard error, p-value and 95% Wald interval:</p>
+<p>The fitted model covers 100 students at four waves. It identifies one
+significant cross-variable temporal edge among 20 possible directed
+lagged edges, alongside four significant autoregressive effects among
+five. Five of the ten contemporaneous edges and two of the ten
+between-person edges meet the same threshold. These counts describe
+evidence for individual parameters in the full model; they do not imply
+that all other estimated associations are exactly zero. The edge table
+reports estimates, standard errors, p-values and 95% Wald confidence
+intervals:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>, <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    network     from        to       weight         se           p   ci_lower</span></span>
@@ -222,53 +283,67 @@ standard error, p-value and 95% Wald interval:</p>
 <span><span class="co">#&gt; 1        temporal     TRUE     5    20           1       0.1046718</span></span>
 <span><span class="co">#&gt; 2 contemporaneous    FALSE     5    10           5       0.1877681</span></span>
 <span><span class="co">#&gt; 3         between    FALSE     5    10           2       0.1831649</span></span></code></pre></div>
-<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> gives one row per network. The contemporaneous
-and between-person edges are on average larger in absolute value (0.188
-and 0.183) than the temporal ones (0.105). <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws the
-three networks on one layout: solid edges are significant, dashed edges
-are not, blue is positive and vermillion negative, and the weight is
-printed on each edge.</p>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> provides a compact description of each
+network. Mean absolute edge weights are 0.105 for the cross-variable
+temporal network, 0.188 for the contemporaneous network and 0.183 for
+the between-person network. These quantities describe different types of
+parameters and should not be read as comparable measures of practical
+importance. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> presents all three networks with a
+common layout. Solid edges meet the significance threshold, whereas
+dashed edges do not; blue indicates positive estimates and vermillion
+negative estimates, with estimated weights shown beside the edges.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="panel-graphical-var_files/figure-html/plot-full-1.png" class="r-plt" alt="" width="100%"></p>
-<p>The significant edges answer the two questions separately:</p>
+<p>The edges meeting the specified significance threshold illustrate the
+interpretation at each level:</p>
 <ul>
 <li>
-<strong>Temporal.</strong> 4 of the 5 autoregressive effects are
-significant (anxiety -&gt; anxiety (0.30), effort -&gt; effort (0.48),
-enjoyment -&gt; enjoyment (0.33), planning -&gt; planning (0.40)): a
-student who is above their own level in one week tends to stay above it
-the next. One lagged effect between variables is significant, effort
--&gt; efficacy (0.35): a week of more effort than usual is followed by a
-week of higher efficacy than usual.</li>
+<strong>Temporal.</strong> 4 of the five autoregressive estimates
+are significant (anxiety -&gt; anxiety (0.30), effort -&gt; effort
+(0.48), enjoyment -&gt; enjoyment (0.33), planning -&gt; planning
+(0.40)). Positive autoregressive coefficients indicate that a deviation
+above a student’s typical level tends to persist to the next week. The
+one significant cross-variable lagged estimate is effort -&gt; efficacy
+(0.35): above-usual effort predicts higher-than-usual efficacy in the
+following week, conditional on the other lagged variables.</li>
 <li>
-<strong>Contemporaneous.</strong> 5 edges (efficacy-effort (0.34),
-efficacy-planning (0.59), effort-enjoyment (0.32), planning-effort
-(0.19), planning-enjoyment (0.26)): in weeks when a student’s efficacy,
-planning, effort or enjoyment is above their usual level, the others
-tend to be too. Anxiety is not connected.</li>
+<strong>Contemporaneous.</strong> 5 edges meet the threshold
+(efficacy-effort (0.34), efficacy-planning (0.59), effort-enjoyment
+(0.32), planning-effort (0.19), planning-enjoyment (0.26)). These
+positive partial correlations indicate that the connected indicators
+tend to deviate in the same direction within a week after accounting for
+lagged relations and other innovation variables. None of the
+contemporaneous edges involving anxiety meets the threshold; this is not
+proof of no association.</li>
 <li>
-<strong>Between-person.</strong> 2 edges (efficacy-planning (0.31),
-effort-enjoyment (0.34)): students with a higher personal level of
-efficacy tend to have a higher personal level of planning; students with
-a higher personal level of effort tend to have a higher personal level
-of enjoyment. These edges rest on only 100 personal levels and carry
-more uncertainty than the within-person ones.</li>
+<strong>Between-person.</strong> 2 edges meet the threshold
+(efficacy-planning (0.31), effort-enjoyment (0.34)): students with a
+higher personal level of efficacy tend to have a higher personal level
+of planning; students with a higher personal level of effort tend to
+have a higher personal level of enjoyment. These associations concern
+differences in typical levels across 100 students, rather than weekly
+changes within students. Their uncertainty should be considered when
+interpreting this part of the network.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="which-edges-should-a-sparser-model-keep">Which edges should a sparser model keep?<a class="anchor" aria-label="anchor" href="#which-edges-should-a-sparser-model-keep"></a>
 </h2>
-<p>Flagging significance leaves the model unchanged. Two methods select
-a sparser model.</p>
-<p><code>select = "prune"</code> removes every edge with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&gt;</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">p &gt; 0.01</annotation></semantics></math>,
-refits, and then adds edges back one at a time while each addition
-significantly improves the fit and lowers the BIC (step-up search). The
-step-up stage matters because edges can substitute for each other: an
-autoregressive effect and a correlated lagged effect may each look
-unnecessary while the other is present, and a single pruning pass would
-remove both.</p>
+<p>Significance flags in the full model do not remove parameters. For an
+analysis in which a smaller set of edges is easier to interpret,
+<code><a href="../reference/panel_gvar.html">panel_gvar()</a></code> offers two selection procedures. Selection
+changes both the model and the estimates, so the selected edges should
+be interpreted in the context of the refitted or penalised model.</p>
+<p><code>select = "prune"</code> first removes edges with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&gt;</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">p &gt; 0.01</annotation></semantics></math>
+and refits the restricted model. A subsequent step-up search considers
+reinstating removed edges when doing so improves fit according to its
+significance criterion and reduces the Bayesian information criterion
+(BIC). This additional search is useful because the evidence for an edge
+can change when other parameters are constrained to zero; a single pass
+through the original p-values need not produce the preferred reduced
+model.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pruned</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/panel_gvar.html">panel_gvar</a></span><span class="op">(</span><span class="va">srl_panel</span>, vars <span class="op">=</span> <span class="va">vars</span>, id <span class="op">=</span> <span class="st">"student"</span>, wave <span class="op">=</span> <span class="st">"week"</span>,</span>
 <span>                     select <span class="op">=</span> <span class="st">"prune"</span><span class="op">)</span></span>
@@ -278,13 +353,19 @@ remove both.</p>
 <span><span class="co">#&gt;   edges (significant/estimated, p &lt; 0.01): temporal 2/2 (+4/4 autoregressive)   contemporaneous 5/5   between 4/4</span></span>
 <span><span class="co">#&gt;   selection: prune (alpha = 0.01, adjust = none; stepup (bic) re-added 3)</span></span>
 <span><span class="co">#&gt;   fit: chisq(200) = 227.13, p = 0.0913   CFI = 0.969   TLI = 0.966   RMSEA = 0.037</span></span>
-<span><span class="co">#&gt;   optimality (ML score): 5.41e-13</span></span>
+<span><span class="co">#&gt;   optimality (ML score): 3.71e-13</span></span>
 <span><span class="co">#&gt;   starts: 3 of 3 reached the best saturated optimum</span></span></code></pre></div>
-<p>The pruned model keeps 4 autoregressive effects, 2 lagged effects
-between variables, and 5 contemporaneous and 4 between-person edges. The
-step-up search re-added 3 edges that pruning had removed. The sparser
-model still fits well (CFI = 0.969, RMSEA = 0.037), so the removed edges
-were not needed to reproduce the data. Its edge table:</p>
+<p>The pruned model retains four autoregressive effects, two
+cross-variable lagged edges, five contemporaneous edges and four
+between-person edges. The step-up procedure reinstates three edges. Its
+fit indices are CFI = 0.969, TLI = 0.966 and RMSEA = 0.037, with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>χ</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mn>200</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>227.13</mn></mrow><annotation encoding="application/x-tex">\chi^2(200) = 227.13</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.0913</mn></mrow><annotation encoding="application/x-tex">p = 0.0913</annotation></semantics></math>.
+Thus, the more restricted model provides an acceptable approximation to
+the observed covariance structure, although this alone does not
+establish that excluded relationships are absent. The retained estimates
+and their uncertainty are shown below:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">pruned</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            network      from        to    weight         se            p</span></span>
@@ -319,23 +400,28 @@ were not needed to reproduce the data. Its edge table:</p>
 <span><span class="co">#&gt; 13 0.14602795 0.6108538        TRUE</span></span>
 <span><span class="co">#&gt; 14 0.10243661 0.5147074        TRUE</span></span>
 <span><span class="co">#&gt; 15 0.14174384 0.5703590        TRUE</span></span></code></pre></div>
-<p>Both lagged effects lead into efficacy: a week of more effort than
-usual (0.27) or more enjoyment than usual (0.18) is followed by higher
-efficacy than usual. The contemporaneous edges are those of the full
-model, and the between-person network gains two edges of planning, with
-effort (0.31) and enjoyment (0.36), which were not significant at
+<p>In this model, both cross-variable temporal edges predict efficacy:
+above-usual effort (0.27) and above-usual enjoyment (0.18) each predict
+higher-than-usual efficacy at the following wave. The five retained
+contemporaneous connections have the same pairs of nodes as the five
+significant contemporaneous edges in the full model, although their
+estimated weights differ after selection. The between-person network
+additionally retains planning with effort (0.31) and planning with
+enjoyment (0.36). Neither edge reached
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&lt;</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">p &lt; 0.01</annotation></semantics></math>
-in the full model but are significant once the other between-person
-edges are removed.</p>
+in the full model, but both do in the restricted model. Their change in
+significance illustrates why selection results should not be treated as
+if they were tests from the original model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pruned</span><span class="op">)</span></span></code></pre></div>
 <p><img src="panel-graphical-var_files/figure-html/plot-prune-1.png" class="r-plt" alt="" width="100%"></p>
-<p><code>select = "ebic"</code> instead shrinks the edges with a lasso
-penalty chosen by the extended BIC, the panel counterpart of the
-graphical lasso. Weak edges become exactly zero in one estimation. The
-estimates are penalized and therefore have no p-values;
-<code>refit = TRUE</code> refits the selected network without the
-penalty. A path of 20 penalty values keeps the example short.</p>
+<p><code>select = "ebic"</code> takes a different approach, applying
+lasso regularisation with the penalty chosen by the extended BIC. The
+penalty shrinks coefficients, setting some exactly to zero. Because
+these are penalised estimates, the displayed edge table does not provide
+conventional standard errors or p-values. <code>refit = TRUE</code> can
+be used to fit the selected structure without the penalty. For this
+illustration, the search uses 20 penalty values.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lasso</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/panel_gvar.html">panel_gvar</a></span><span class="op">(</span><span class="va">srl_panel</span>, vars <span class="op">=</span> <span class="va">vars</span>, id <span class="op">=</span> <span class="st">"student"</span>, wave <span class="op">=</span> <span class="st">"week"</span>,</span>
 <span>                    select <span class="op">=</span> <span class="st">"ebic"</span>, nlambda <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
@@ -371,60 +457,80 @@ penalty. A path of 20 penalty values keeps the example short.</p>
 <span><span class="co">#&gt; 10          NA</span></span>
 <span><span class="co">#&gt; 11          NA</span></span>
 <span><span class="co">#&gt; 12          NA</span></span></code></pre></div>
-<p>The lasso keeps the same two lagged effects into efficacy and the
-same five contemporaneous edges as pruning, and no between-person edge.
-It also keeps all five autoregressive effects, two of them close to zero
-(anxiety 0.011, efficacy 0.019). The two methods therefore agree on the
-within-person structure. With 100 students, the penalty is more
-conservative than significance-based selection for the between-person
-network.</p>
+<p>The penalised model retains two cross-variable temporal edges, both
+predicting efficacy from effort and enjoyment, and the same five
+contemporaneous node pairs as the pruned model. It retains no
+between-person edges. The edge table also shows non-zero estimates for
+all five autoregressive coefficients, including very small estimates for
+anxiety (0.011) and efficacy (0.019). Thus, the selection procedures
+broadly agree on the principal within-person cross-variable connections,
+but differ in which between-person edges survive. In this example, EBIC
+selection is more restrictive for the between-person network; this
+comparison alone does not establish that either selection procedure will
+perform better in other data.</p>
 </div>
 <div class="section level2">
 <h2 id="how-well-does-the-model-fit">How well does the model fit?<a class="anchor" aria-label="anchor" href="#how-well-does-the-model-fit"></a>
 </h2>
-<p>The fit indices compare the model with the saturated model, which
-reproduces the observed covariances exactly, and with a baseline without
-temporal or network structure.</p>
+<p>Model fit provides a check on how adequately the specified covariance
+structure represents the data. The reported indices compare the fitted
+model with a saturated model, which reproduces the observed covariances,
+and a more restrictive baseline model. The chi-square test evaluates
+exact fit, whereas CFI, TLI and RMSEA provide complementary measures of
+approximate fit.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"fit"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        logl npar  df    chisq     pvalue baseline_chisq baseline_df       cfi</span></span>
 <span><span class="co">#&gt; 1 -6802.528   60 170 207.1872 0.02733013       1084.025         215 0.9572082</span></span>
 <span><span class="co">#&gt;         tli      rmsea      aic      bic</span></span>
 <span><span class="co">#&gt; 1 0.9458809 0.04677052 13725.06 13881.37</span></span></code></pre></div>
-<p>The chi-square test rejects exact fit
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>χ</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mn>170</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>207.19</mn></mrow><annotation encoding="application/x-tex">\chi^2(170) = 207.19</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.027</mn></mrow><annotation encoding="application/x-tex">p = 0.027</annotation></semantics></math>),
-as is common for a sample of this size, but the approximate indices show
-good fit: CFI = 0.957, TLI = 0.946 and RMSEA = 0.047. The model
-reproduces the covariances across the four waves well.</p>
+<p>For the full model, the exact-fit test gives
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>χ</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mn>170</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>207.19</mn></mrow><annotation encoding="application/x-tex">\chi^2(170) = 207.19</annotation></semantics></math>
+with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>=</mo><mn>0.0273</mn></mrow><annotation encoding="application/x-tex">p = 0.0273</annotation></semantics></math>,
+providing evidence against exact fit at the conventional 5% level.
+Approximate fit is more favourable, with CFI = 0.957, TLI = 0.946 and
+RMSEA = 0.047. Taken together, these indices suggest a reasonably close,
+though not exact, representation of the covariance structure across the
+four waves. Good global fit does not establish that each individual edge
+is correctly specified.</p>
 </div>
 <div class="section level2">
 <h2 id="is-the-estimate-the-maximum-likelihood-solution">Is the estimate the maximum-likelihood solution?<a class="anchor" aria-label="anchor" href="#is-the-estimate-the-maximum-likelihood-solution"></a>
 </h2>
-<p>The likelihood of the panel-GVAR is not convex, so the optimizer is
-started from three different points. At a maximum the gradient of the
-log-likelihood (the score) is zero; the largest remaining score is the
-certificate, and a value near zero shows that the estimate is a maximum.
-The diagnostics also report whether any parameter lies on the boundary
-of its admissible range, whether standard errors could be computed, and
-how many starts reached the same optimum.</p>
+<p>Maximum-likelihood estimation of a panel-GVAR requires numerical
+optimisation of a non-convex objective. The procedure therefore uses
+three starting points to assess whether the optimiser repeatedly finds
+the same solution. At a stationary point, the likelihood gradient, or
+score, is close to zero. Diagnostics also indicate whether parameters
+lie at admissible boundaries and whether standard errors can be
+calculated. These checks provide evidence about numerical reliability,
+although agreement among starts and a small gradient cannot prove that a
+solution is the global maximum.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"diagnostics"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     n waves        score boundary boundary_part se_available starts_agree</span></span>
-<span><span class="co">#&gt; 1 100     4 8.159029e-13    FALSE          &lt;NA&gt;         TRUE            3</span></span>
+<span><span class="co">#&gt; 1 100     4 5.906386e-13    FALSE          &lt;NA&gt;         TRUE            3</span></span>
 <span><span class="co">#&gt;   starts</span></span>
 <span><span class="co">#&gt; 1      3</span></span></code></pre></div>
-<p>The largest score is below
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup><annotation encoding="application/x-tex">10^{-11}</annotation></semantics></math>,
-no parameter is on a boundary, standard errors are available, and all
-three starts reached the same optimum. The estimate is therefore the
-maximum-likelihood solution, and its standard errors can be used.</p>
+<p>The maximum absolute score is approximately
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>9.99</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>13</mn></mrow></msup></mrow><annotation encoding="application/x-tex">9.99 \times 10^{-13}</annotation></semantics></math>,
+well below
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>11</mn></mrow></msup><annotation encoding="application/x-tex">10^{-11}</annotation></semantics></math>.
+No parameter is at a boundary, standard errors are available, and all
+three starts reached the same reported optimum. These results support
+the numerical stability of this fit and the use of its reported standard
+errors, subject to the model assumptions. They do not constitute a
+guarantee of a unique global maximum.</p>
 </div>
 <div class="section level2">
 <h2 id="how-much-of-each-variable-is-stable-between-persons">How much of each variable is stable between persons?<a class="anchor" aria-label="anchor" href="#how-much-of-each-variable-is-stable-between-persons"></a>
 </h2>
-<p>The variance of each variable is divided into the variance of the
-personal levels (between) and of the weekly deviations (within).</p>
+<p>The model partitions the variance in each indicator into a component
+associated with differences in students’ stable levels and a component
+associated with deviations from those levels over time. The
+<code>share_between</code> column expresses the between-person component
+as a proportion of the total for each indicator.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"variance"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    variable  between   within share_between</span></span>
@@ -433,58 +539,106 @@ personal levels (between) and of the weekly deviations (within).</p>
 <span><span class="co">#&gt; 3    effort 82.63922 69.22678     0.5441588</span></span>
 <span><span class="co">#&gt; 4 enjoyment 53.83746 65.44361     0.4513496</span></span>
 <span><span class="co">#&gt; 5   anxiety 95.00513 59.25030     0.6158949</span></span></code></pre></div>
-<p>Between 45% (enjoyment) and 62% (anxiety) of the variance lies
-between students. About half of the variation in each indicator is a
-stable difference between students and half a fluctuation from week to
-week, so both the between-person and the within-person networks describe
-a substantial part of the data.</p>
+<p>The estimated between-person shares range from 0.451 for enjoyment to
+0.616 for anxiety. The corresponding proportions are 0.496 for efficacy,
+0.558 for planning and 0.544 for effort. Thus, both stable differences
+between students and week-to-week deviations account for substantial
+variation in each indicator. A between-person network and within-person
+networks answer complementary questions about these two sources of
+variation.</p>
 </div>
 <div class="section level2">
 <h2 id="what-if-the-wave-means-drift">What if the wave means drift?<a class="anchor" aria-label="anchor" href="#what-if-the-wave-means-drift"></a>
 </h2>
-<p>The model assumes that the mean of each variable is the same in every
-wave. If the means drift, for instance a steady decline over a term,
-<code>standardize = "z_per_wave"</code> standardizes every variable
-within every wave, which removes the drift; the edges are then on a
-standardized scale.</p>
+<p>The model assumes that variable means are constant across waves.
+Educational measures may instead show systematic changes over a course,
+such as an overall rise in confidence or a decline in enjoyment. The
+option <code>standardize = "z_per_wave"</code> centres and scales each
+variable separately at each wave. This removes observed wave-specific
+location and scale differences, so estimated edges refer to standardised
+deviations. It changes the estimand and should be chosen for substantive
+reasons, not simply to improve fit indices.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">z_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/panel_gvar.html">panel_gvar</a></span><span class="op">(</span><span class="va">srl_panel</span>, vars <span class="op">=</span> <span class="va">vars</span>, id <span class="op">=</span> <span class="st">"student"</span>, wave <span class="op">=</span> <span class="st">"week"</span>,</span>
 <span>                    standardize <span class="op">=</span> <span class="st">"z_per_wave"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">z_fit</span>, what <span class="op">=</span> <span class="st">"fit"</span><span class="op">)</span>, select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">chisq</span>, <span class="va">df</span>, <span class="va">cfi</span>, <span class="va">rmsea</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     chisq  df       cfi      rmsea</span></span>
 <span><span class="co">#&gt; 1 182.507 170 0.9851576 0.02712385</span></span></code></pre></div>
-<p>On these data, which were simulated with stable means, standardizing
-within waves gives a similar and slightly better fit (CFI = 0.985, RMSEA
-= 0.027). On data with drifting means the difference would be larger,
-and the standardized model would be the one to report.</p>
+<p>For these simulated data, which were generated with stable means,
+wave-wise standardisation gives CFI = 0.985 and RMSEA = 0.027, compared
+with 0.957 and 0.047 in the unstandardised model. These indices are more
+favourable for the standardised analysis, but the comparison does not
+show that wave-wise standardisation is necessary or preferable in
+general. Where means vary, researchers should examine the pattern of
+change and consider whether standardisation is compatible with their
+research question.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-and-when-to-use-the-panel-gvar">Assumptions and when to use the panel-GVAR<a class="anchor" aria-label="anchor" href="#assumptions-and-when-to-use-the-panel-gvar"></a>
 </h2>
 <ul>
-<li>The model is for panel data with a few waves, measured at equal
-intervals, on many persons. For long time series of one or a few
-persons, intensive longitudinal models such as the graphical VAR or the
-multilevel VAR apply.</li>
-<li>The means are stable across waves, and the lagged effects are the
-same at every wave; <code>standardize = "z_per_wave"</code> handles
-drifting means.</li>
-<li>With few waves, the between-person and within-person parts are
-separated only approximately, and the between-person edges rest on the
-number of persons, not of observations. Fits with three waves often
-reach a boundary, which is reported in the diagnostics.</li>
-<li>The full model reports every edge with its uncertainty. Pruning with
-step-up gives a sparse model with p-values; the lasso gives a sparse
-model without them.</li>
-<li>Temporal edges are lagged predictions within persons, not causal
-effects.</li>
+<li>Panel-GVAR is designed for panels with several people observed at a
+relatively small number of equally spaced waves. Studies with many
+repeated observations per individual may instead be better suited to
+time-series or multilevel graphical VAR approaches.</li>
+<li>The fitted specification assumes stable wave means and common lagged
+coefficients across waves. <code>standardize = "z_per_wave"</code>
+addresses observed wave-specific means and scales but does not by itself
+establish that other stationarity assumptions are met.</li>
+<li>Relatively few waves limit the information available for separating
+stable personal differences from fluctuations within people.
+Between-person estimates are particularly dependent on the number of
+individuals, and boundary estimates can signal difficulties in
+estimation.</li>
+<li>The full model retains all estimated edges and reports their
+uncertainty. Pruning with step-up and penalised EBIC selection yield
+more economical structures, but their inferential outputs and
+interpretation differ.</li>
+<li>Temporal edges describe conditional predictions across successive
+waves, not causal effects. The interval between measurements also
+determines what kinds of changes the temporal network can capture.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="reference">Reference<a class="anchor" aria-label="anchor" href="#reference"></a>
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
 </h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Panel graphical VAR:
+Temporal, contemporaneous, and between-person networks</em>. psychnets.
+<a href="https://doi.org/10.5281/zenodo.24567520" class="external-link uri">https://doi.org/10.5281/zenodo.24567520</a> · <a href="https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf">PDF</a></p>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E.
+I., McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J.,
+Costantini, G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van
+Bork, R., &amp; Waldorp, L. J. (2021). Network analysis of multivariate
+data in psychological science. <em>Nature Reviews Methods Primers</em>,
+1, 58. <a href="https://doi.org/10.1038/s43586-021-00055-w" class="external-link">doi:10.1038/s43586-021-00055-w</a></p>
 <p>Epskamp, S. (2020). Psychometric network models from time-series and
 panel data. <em>Psychometrika</em>, 85(1), 206-231. <a href="https://doi.org/10.1007/s11336-020-09697-3" class="external-link">doi:10.1007/s11336-020-09697-3</a></p>
+<p>Epskamp, S., Waldorp, L. J., Mõttus, R., &amp; Borsboom, D. (2018).
+The Gaussian graphical model in cross-sectional and time-series data.
+<em>Multivariate Behavioral Research</em>, 53(4), 453-480. <a href="https://doi.org/10.1080/00273171.2018.1454823" class="external-link">doi:10.1080/00273171.2018.1454823</a></p>
+<p>Hamaker, E. L., Kuiper, R. M., &amp; Grasman, R. P. P. P. (2015). A
+critique of the cross-lagged panel model. <em>Psychological
+Methods</em>, 20(1), 102-116. <a href="https://doi.org/10.1037/a0038889" class="external-link">doi:10.1037/a0038889</a></p>
+<p>Saqr, M. (2023). Modelling within-person idiographic variance could
+help explain and individualize learning. <em>British Journal of
+Educational Technology</em>, 54(5), 1077-1094. <a href="https://doi.org/10.1111/bjet.13309" class="external-link">doi:10.1111/bjet.13309</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., &amp; López-Pernas, S. (2024). Mapping the self in
+self-regulation using complex dynamic systems approach. <em>British
+Journal of Educational Technology</em>, 55(4), 1376-1397. <a href="https://doi.org/10.1111/bjet.13452" class="external-link">doi:10.1111/bjet.13452</a></p>
+<p>Saqr, M., Vogelsmeier, L. V. D. E., &amp; López-Pernas, S. (2024).
+Capturing where the learning process takes place: A person-specific and
+person-centered primer. <em>Learning and Individual Differences</em>,
+113, 102492. <a href="https://doi.org/10.1016/j.lindif.2024.102492" class="external-link">doi:10.1016/j.lindif.2024.102492</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -1,38 +1,106 @@
 # Panel graphical VAR: temporal, contemporaneous, and between-person networks
 
-Panel studies measure the same people on a few occasions, for instance
-weekly during a course. Two different questions can be asked of such
-data. The between-person question is whether students who are generally
-more efficacious also plan more. The within-person question is whether a
-student who feels more efficacious than usual in one week plans more
-than usual, in the same week or in the next. The answers can differ, and
-a cross-sectional network of the pooled data mixes them. The panel
-graphical vector-autoregressive model (panel-GVAR; Epskamp, 2020)
-separates each person’s scores into a stable personal level and weekly
-deviations from it, and estimates three networks: a temporal network of
-lagged effects between the deviations, a contemporaneous network of
-deviations that move together within a week, and a between-person
-network of the stable levels.
+An association observed between students may not describe what happens
+when one student’s experiences change over time. To distinguish these
+patterns, researchers need to consider relationships among experiences,
+behaviours and beliefs both across individuals and across measurement
+occasions. Network models examine such interrelated processes through
+associations between measured variables, rather than treating each scale
+as a separate outcome (Borsboom et al., 2021). A Gaussian graphical
+model describes conditional associations at one occasion, while
+longitudinal network models can examine how variables relate across
+occasions (Epskamp et al., 2018). Separating temporal, contemporaneous
+and between-person relationships is therefore important when
+interpreting changes within students alongside differences between them.
 
-This article fits the model to a four-wave panel of five self-regulated
-learning indicators, reads the three networks with their uncertainty,
-selects a sparser model by two methods, and evaluates the fit, the
-numerical solution and the division of variance between and within
-persons.
+In educational research, psychological networks have been used to
+examine learning as a system of interacting motivational, emotional and
+behavioural processes (Saqr, Beck, & López-Pernas, 2024). Work on
+self-regulated learning has considered how its components relate
+dynamically rather than operating independently (Saqr & López-Pernas,
+2024). Related research has argued for examining within-person variation
+to understand and potentially individualise learning (Saqr, 2023), and
+has distinguished person-specific from person-centred ways of locating
+learning processes (Saqr, Vogelsmeier, & López-Pernas, 2024). These
+applications motivate methods that do not mistake differences between
+students for changes occurring within a student.
+
+Panel studies follow the same people over a small number of occasions,
+such as consecutive weeks of a course. They raise two different
+questions: do students with higher typical self-efficacy also tend to
+plan more, and does a student plan more when their self-efficacy is
+higher than usual? Associations within a week and predictions from one
+week to the next are also distinct. Pooling observations in a single
+cross-sectional network can obscure these levels of analysis. The
+distinction is important in longitudinal research because conventional
+cross-lagged comparisons can conflate stable between-person differences
+with within-person processes (Hamaker et al., 2015). The panel graphical
+vector-autoregressive model (panel-GVAR; Epskamp, 2020) addresses this
+problem by estimating temporal, contemporaneous and between-person
+networks separately.
+
+This article demonstrates the panel-GVAR using `psychnets` and a
+synthetic four-wave panel of five self-regulated learning indicators. It
+introduces the model and data, interprets estimated edges and their
+uncertainty, and compares two methods of selecting a sparser network. It
+then examines model fit, optimisation diagnostics and the proportion of
+variance attributable to stable student differences, before discussing
+the assumptions that matter when applying the method to educational
+panel data.
 
 ``` r
 
 library(psychnets)
 ```
 
+## The model
+
+For person $`p`$ at wave $`t`$, the observed vector of scores can be
+written as the sum of the overall mean, a stable person-specific
+component and a wave-specific deviation. The latter is predicted from
+the preceding wave:
+
+``` math
+\mathbf{y}_{pt} = \boldsymbol\mu + \boldsymbol\eta_p + \mathbf{w}_{pt},
+\qquad
+\mathbf{w}_{pt} = \mathbf{B}\,\mathbf{w}_{p,t-1} + \boldsymbol\zeta_{pt},
+```
+
+where $`\boldsymbol\mu`$ is the grand mean, $`\boldsymbol\eta_p`$ is the
+person’s stable deviation from that mean, and $`\mathbf{w}_{pt}`$ is the
+deviation from their own typical level at wave $`t`$. The model
+describes three related but different networks:
+
+- **temporal:** the matrix $`\mathbf{B}`$ contains lag-1 regression
+  coefficients for deviations from personal levels. An edge points from
+  a variable at one wave to the variable it predicts at the next. A
+  self-loop is an autoregressive coefficient, indicating persistence in
+  a variable;
+- **contemporaneous:** partial correlations among the innovations
+  $`\boldsymbol\zeta_{pt}`$ describe associations within a wave after
+  the lagged predictors have been accounted for. These edges are
+  undirected;
+- **between-person:** partial correlations among the stable components
+  $`\boldsymbol\eta_p`$ describe how students’ typical levels are
+  related, conditional on the other variables in that network.
+
+The full model is estimated by maximum likelihood. It provides standard
+errors, Wald tests and confidence intervals for individual edges. Its
+interpretation depends on assumptions including stable wave means and
+common lagged relations across occasions. In particular, a temporal edge
+is a conditional lagged association, not evidence that changing one
+variable would cause a change in another.
+
 ## Data
 
-`srl_panel` is a synthetic panel of 100 students measured in four
-consecutive weeks. It was simulated from a panel-GVAR whose structure
-was taken from real experience-sampling data (see
-[`?srl_panel`](https://pak.dynasite.org/psychnets/reference/srl_panel.md)),
-so it is realistic and can be shared without restriction. The data are
-in long format, one row per student per week.
+`srl_panel` contains synthetic measurements of 100 students over four
+consecutive weeks. The generating panel-GVAR was based on a structure
+derived from experience-sampling data (see
+[`?srl_panel`](https://pak.dynasite.org/psychnets/reference/srl_panel.md)).
+The example therefore has plausible dependencies while avoiding the use
+of identifiable student data. The dataset is in long format, with one
+row for each student and week. Its columns identify the student, the
+measurement occasion and five indicators of self-regulated learning:
 
 - **Person:** `student`, the student identifier.
 - **Occasion:** `week`, from 1 to 4.
@@ -52,39 +120,14 @@ head(srl_panel)
 vars <- c("efficacy", "planning", "effort", "enjoyment", "anxiety")
 ```
 
-## The model
-
-For person $`p`$ at wave $`t`$, the vector of scores is decomposed as
-
-``` math
-\mathbf{y}_{pt} = \boldsymbol\mu + \boldsymbol\eta_p + \mathbf{w}_{pt},
-\qquad
-\mathbf{w}_{pt} = \mathbf{B}\,\mathbf{w}_{p,t-1} + \boldsymbol\zeta_{pt},
-```
-
-where $`\boldsymbol\mu`$ is the grand mean, $`\boldsymbol\eta_p`$ the
-person’s stable deviation from it, and $`\mathbf{w}_{pt}`$ the person’s
-deviation from their own level at wave $`t`$. The three networks are:
-
-- **temporal:** the matrix $`\mathbf{B}`$ of lag-1 regression effects
-  between deviations. Edges are directed; a self-loop is an
-  autoregressive effect, the carry-over of a deviation to the next wave;
-- **contemporaneous:** the partial correlations of the innovations
-  $`\boldsymbol\zeta_{pt}`$, the deviations that occur together within a
-  wave after the lagged effects are accounted for;
-- **between-person:** the partial correlations of the stable levels
-  $`\boldsymbol\eta_p`$.
-
-The parameters are estimated by maximum likelihood, and each edge has a
-standard error and a Wald test. The model assumes that the means do not
-change across waves.
-
 ## What do the three networks show?
 
 [`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
-takes the data with the names of the variables, the person identifier
-and the wave. By default every edge is estimated and kept, and an edge
-is flagged as significant at $`p < 0.01`$.
+takes the dataset, the selected variables, the student identifier and
+the wave indicator. Without edge selection, all eligible edges are
+estimated and retained. Statistical significance is indicated at
+$`p < 0.01`$; this flag changes how an edge is reported, not whether the
+edge is included in the full model.
 
 ``` r
 
@@ -95,15 +138,19 @@ fit
 #>   edges (significant/estimated, p < 0.01): temporal 1/20 (+4/5 autoregressive)   contemporaneous 5/10   between 2/10
 #>   selection: none (full model)
 #>   fit: chisq(170) = 207.19, p = 0.0273   CFI = 0.957   TLI = 0.946   RMSEA = 0.047
-#>   optimality (ML score): 8.16e-13
+#>   optimality (ML score): 5.91e-13
 #>   starts: 3 of 3 reached the best saturated optimum
 ```
 
-The model has 100 students in 4 waves. Of the 20 lagged effects between
-variables, 1 is significant, and 4 of the 5 autoregressive effects are;
-5 of the 10 contemporaneous and 2 of the 10 between-person edges are
-significant. The edge table has one row per edge, with its standard
-error, p-value and 95% Wald interval:
+The fitted model covers 100 students at four waves. It identifies one
+significant cross-variable temporal edge among 20 possible directed
+lagged edges, alongside four significant autoregressive effects among
+five. Five of the ten contemporaneous edges and two of the ten
+between-person edges meet the same threshold. These counts describe
+evidence for individual parameters in the full model; they do not imply
+that all other estimated associations are exactly zero. The edge table
+reports estimates, standard errors, p-values and 95% Wald confidence
+intervals:
 
 ``` r
 
@@ -133,13 +180,17 @@ summary(fit)
 #> 3         between    FALSE     5    10           2       0.1831649
 ```
 
-[`summary()`](https://rdrr.io/r/base/summary.html) gives one row per
-network. The contemporaneous and between-person edges are on average
-larger in absolute value (0.188 and 0.183) than the temporal ones
-(0.105). [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws
-the three networks on one layout: solid edges are significant, dashed
-edges are not, blue is positive and vermillion negative, and the weight
-is printed on each edge.
+[`summary()`](https://rdrr.io/r/base/summary.html) provides a compact
+description of each network. Mean absolute edge weights are 0.105 for
+the cross-variable temporal network, 0.188 for the contemporaneous
+network and 0.183 for the between-person network. These quantities
+describe different types of parameters and should not be read as
+comparable measures of practical importance.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) presents all
+three networks with a common layout. Solid edges meet the significance
+threshold, whereas dashed edges do not; blue indicates positive
+estimates and vermillion negative estimates, with estimated weights
+shown beside the edges.
 
 ``` r
 
@@ -148,38 +199,50 @@ plot(fit)
 
 ![](panel-graphical-var_files/figure-html/plot-full-1.png)
 
-The significant edges answer the two questions separately:
+The edges meeting the specified significance threshold illustrate the
+interpretation at each level:
 
-- **Temporal.** 4 of the 5 autoregressive effects are significant
+- **Temporal.** 4 of the five autoregressive estimates are significant
   (anxiety -\> anxiety (0.30), effort -\> effort (0.48), enjoyment -\>
-  enjoyment (0.33), planning -\> planning (0.40)): a student who is
-  above their own level in one week tends to stay above it the next. One
-  lagged effect between variables is significant, effort -\> efficacy
-  (0.35): a week of more effort than usual is followed by a week of
-  higher efficacy than usual.
-- **Contemporaneous.** 5 edges (efficacy-effort (0.34),
-  efficacy-planning (0.59), effort-enjoyment (0.32), planning-effort
-  (0.19), planning-enjoyment (0.26)): in weeks when a student’s
-  efficacy, planning, effort or enjoyment is above their usual level,
-  the others tend to be too. Anxiety is not connected.
-- **Between-person.** 2 edges (efficacy-planning (0.31),
-  effort-enjoyment (0.34)): students with a higher personal level of
-  efficacy tend to have a higher personal level of planning; students
-  with a higher personal level of effort tend to have a higher personal
-  level of enjoyment. These edges rest on only 100 personal levels and
-  carry more uncertainty than the within-person ones.
+  enjoyment (0.33), planning -\> planning (0.40)). Positive
+  autoregressive coefficients indicate that a deviation above a
+  student’s typical level tends to persist to the next week. The one
+  significant cross-variable lagged estimate is effort -\> efficacy
+  (0.35): above-usual effort predicts higher-than-usual efficacy in the
+  following week, conditional on the other lagged variables.
+- **Contemporaneous.** 5 edges meet the threshold (efficacy-effort
+  (0.34), efficacy-planning (0.59), effort-enjoyment (0.32),
+  planning-effort (0.19), planning-enjoyment (0.26)). These positive
+  partial correlations indicate that the connected indicators tend to
+  deviate in the same direction within a week after accounting for
+  lagged relations and other innovation variables. None of the
+  contemporaneous edges involving anxiety meets the threshold; this is
+  not proof of no association.
+- **Between-person.** 2 edges meet the threshold (efficacy-planning
+  (0.31), effort-enjoyment (0.34)): students with a higher personal
+  level of efficacy tend to have a higher personal level of planning;
+  students with a higher personal level of effort tend to have a higher
+  personal level of enjoyment. These associations concern differences in
+  typical levels across 100 students, rather than weekly changes within
+  students. Their uncertainty should be considered when interpreting
+  this part of the network.
 
 ## Which edges should a sparser model keep?
 
-Flagging significance leaves the model unchanged. Two methods select a
-sparser model.
+Significance flags in the full model do not remove parameters. For an
+analysis in which a smaller set of edges is easier to interpret,
+[`panel_gvar()`](https://pak.dynasite.org/psychnets/reference/panel_gvar.md)
+offers two selection procedures. Selection changes both the model and
+the estimates, so the selected edges should be interpreted in the
+context of the refitted or penalised model.
 
-`select = "prune"` removes every edge with $`p > 0.01`$, refits, and
-then adds edges back one at a time while each addition significantly
-improves the fit and lowers the BIC (step-up search). The step-up stage
-matters because edges can substitute for each other: an autoregressive
-effect and a correlated lagged effect may each look unnecessary while
-the other is present, and a single pruning pass would remove both.
+`select = "prune"` first removes edges with $`p > 0.01`$ and refits the
+restricted model. A subsequent step-up search considers reinstating
+removed edges when doing so improves fit according to its significance
+criterion and reduces the Bayesian information criterion (BIC). This
+additional search is useful because the evidence for an edge can change
+when other parameters are constrained to zero; a single pass through the
+original p-values need not produce the preferred reduced model.
 
 ``` r
 
@@ -191,15 +254,18 @@ pruned
 #>   edges (significant/estimated, p < 0.01): temporal 2/2 (+4/4 autoregressive)   contemporaneous 5/5   between 4/4
 #>   selection: prune (alpha = 0.01, adjust = none; stepup (bic) re-added 3)
 #>   fit: chisq(200) = 227.13, p = 0.0913   CFI = 0.969   TLI = 0.966   RMSEA = 0.037
-#>   optimality (ML score): 5.41e-13
+#>   optimality (ML score): 3.71e-13
 #>   starts: 3 of 3 reached the best saturated optimum
 ```
 
-The pruned model keeps 4 autoregressive effects, 2 lagged effects
-between variables, and 5 contemporaneous and 4 between-person edges. The
-step-up search re-added 3 edges that pruning had removed. The sparser
-model still fits well (CFI = 0.969, RMSEA = 0.037), so the removed edges
-were not needed to reproduce the data. Its edge table:
+The pruned model retains four autoregressive effects, two cross-variable
+lagged edges, five contemporaneous edges and four between-person edges.
+The step-up procedure reinstates three edges. Its fit indices are CFI =
+0.969, TLI = 0.966 and RMSEA = 0.037, with $`\chi^2(200) = 227.13`$ and
+$`p = 0.0913`$. Thus, the more restricted model provides an acceptable
+approximation to the observed covariance structure, although this alone
+does not establish that excluded relationships are absent. The retained
+estimates and their uncertainty are shown below:
 
 ``` r
 
@@ -238,13 +304,17 @@ as.data.frame(pruned)
 #> 15 0.14174384 0.5703590        TRUE
 ```
 
-Both lagged effects lead into efficacy: a week of more effort than usual
-(0.27) or more enjoyment than usual (0.18) is followed by higher
-efficacy than usual. The contemporaneous edges are those of the full
-model, and the between-person network gains two edges of planning, with
-effort (0.31) and enjoyment (0.36), which were not significant at
-$`p < 0.01`$ in the full model but are significant once the other
-between-person edges are removed.
+In this model, both cross-variable temporal edges predict efficacy:
+above-usual effort (0.27) and above-usual enjoyment (0.18) each predict
+higher-than-usual efficacy at the following wave. The five retained
+contemporaneous connections have the same pairs of nodes as the five
+significant contemporaneous edges in the full model, although their
+estimated weights differ after selection. The between-person network
+additionally retains planning with effort (0.31) and planning with
+enjoyment (0.36). Neither edge reached $`p < 0.01`$ in the full model,
+but both do in the restricted model. Their change in significance
+illustrates why selection results should not be treated as if they were
+tests from the original model.
 
 ``` r
 
@@ -253,12 +323,13 @@ plot(pruned)
 
 ![](panel-graphical-var_files/figure-html/plot-prune-1.png)
 
-`select = "ebic"` instead shrinks the edges with a lasso penalty chosen
-by the extended BIC, the panel counterpart of the graphical lasso. Weak
-edges become exactly zero in one estimation. The estimates are penalized
-and therefore have no p-values; `refit = TRUE` refits the selected
-network without the penalty. A path of 20 penalty values keeps the
-example short.
+`select = "ebic"` takes a different approach, applying lasso
+regularisation with the penalty chosen by the extended BIC. The penalty
+shrinks coefficients, setting some exactly to zero. Because these are
+penalised estimates, the displayed edge table does not provide
+conventional standard errors or p-values. `refit = TRUE` can be used to
+fit the selected structure without the penalty. For this illustration,
+the search uses 20 penalty values.
 
 ``` r
 
@@ -298,19 +369,26 @@ as.data.frame(lasso)
 #> 12          NA
 ```
 
-The lasso keeps the same two lagged effects into efficacy and the same
-five contemporaneous edges as pruning, and no between-person edge. It
-also keeps all five autoregressive effects, two of them close to zero
-(anxiety 0.011, efficacy 0.019). The two methods therefore agree on the
-within-person structure. With 100 students, the penalty is more
-conservative than significance-based selection for the between-person
-network.
+The penalised model retains two cross-variable temporal edges, both
+predicting efficacy from effort and enjoyment, and the same five
+contemporaneous node pairs as the pruned model. It retains no
+between-person edges. The edge table also shows non-zero estimates for
+all five autoregressive coefficients, including very small estimates for
+anxiety (0.011) and efficacy (0.019). Thus, the selection procedures
+broadly agree on the principal within-person cross-variable connections,
+but differ in which between-person edges survive. In this example, EBIC
+selection is more restrictive for the between-person network; this
+comparison alone does not establish that either selection procedure will
+perform better in other data.
 
 ## How well does the model fit?
 
-The fit indices compare the model with the saturated model, which
-reproduces the observed covariances exactly, and with a baseline without
-temporal or network structure.
+Model fit provides a check on how adequately the specified covariance
+structure represents the data. The reported indices compare the fitted
+model with a saturated model, which reproduces the observed covariances,
+and a more restrictive baseline model. The chi-square test evaluates
+exact fit, whereas CFI, TLI and RMSEA provide complementary measures of
+approximate fit.
 
 ``` r
 
@@ -321,39 +399,49 @@ as.data.frame(fit, what = "fit")
 #> 1 0.9458809 0.04677052 13725.06 13881.37
 ```
 
-The chi-square test rejects exact fit ($`\chi^2(170) = 207.19`$,
-$`p = 0.027`$), as is common for a sample of this size, but the
-approximate indices show good fit: CFI = 0.957, TLI = 0.946 and RMSEA =
-0.047. The model reproduces the covariances across the four waves well.
+For the full model, the exact-fit test gives $`\chi^2(170) = 207.19`$
+with $`p = 0.0273`$, providing evidence against exact fit at the
+conventional 5% level. Approximate fit is more favourable, with CFI =
+0.957, TLI = 0.946 and RMSEA = 0.047. Taken together, these indices
+suggest a reasonably close, though not exact, representation of the
+covariance structure across the four waves. Good global fit does not
+establish that each individual edge is correctly specified.
 
 ## Is the estimate the maximum-likelihood solution?
 
-The likelihood of the panel-GVAR is not convex, so the optimizer is
-started from three different points. At a maximum the gradient of the
-log-likelihood (the score) is zero; the largest remaining score is the
-certificate, and a value near zero shows that the estimate is a maximum.
-The diagnostics also report whether any parameter lies on the boundary
-of its admissible range, whether standard errors could be computed, and
-how many starts reached the same optimum.
+Maximum-likelihood estimation of a panel-GVAR requires numerical
+optimisation of a non-convex objective. The procedure therefore uses
+three starting points to assess whether the optimiser repeatedly finds
+the same solution. At a stationary point, the likelihood gradient, or
+score, is close to zero. Diagnostics also indicate whether parameters
+lie at admissible boundaries and whether standard errors can be
+calculated. These checks provide evidence about numerical reliability,
+although agreement among starts and a small gradient cannot prove that a
+solution is the global maximum.
 
 ``` r
 
 as.data.frame(fit, what = "diagnostics")
 #>     n waves        score boundary boundary_part se_available starts_agree
-#> 1 100     4 8.159029e-13    FALSE          <NA>         TRUE            3
+#> 1 100     4 5.906386e-13    FALSE          <NA>         TRUE            3
 #>   starts
 #> 1      3
 ```
 
-The largest score is below $`10^{-11}`$, no parameter is on a boundary,
-standard errors are available, and all three starts reached the same
-optimum. The estimate is therefore the maximum-likelihood solution, and
-its standard errors can be used.
+The maximum absolute score is approximately $`9.99 \times 10^{-13}`$,
+well below $`10^{-11}`$. No parameter is at a boundary, standard errors
+are available, and all three starts reached the same reported optimum.
+These results support the numerical stability of this fit and the use of
+its reported standard errors, subject to the model assumptions. They do
+not constitute a guarantee of a unique global maximum.
 
 ## How much of each variable is stable between persons?
 
-The variance of each variable is divided into the variance of the
-personal levels (between) and of the weekly deviations (within).
+The model partitions the variance in each indicator into a component
+associated with differences in students’ stable levels and a component
+associated with deviations from those levels over time. The
+`share_between` column expresses the between-person component as a
+proportion of the total for each indicator.
 
 ``` r
 
@@ -366,19 +454,24 @@ as.data.frame(fit, what = "variance")
 #> 5   anxiety 95.00513 59.25030     0.6158949
 ```
 
-Between 45% (enjoyment) and 62% (anxiety) of the variance lies between
-students. About half of the variation in each indicator is a stable
-difference between students and half a fluctuation from week to week, so
-both the between-person and the within-person networks describe a
-substantial part of the data.
+The estimated between-person shares range from 0.451 for enjoyment to
+0.616 for anxiety. The corresponding proportions are 0.496 for efficacy,
+0.558 for planning and 0.544 for effort. Thus, both stable differences
+between students and week-to-week deviations account for substantial
+variation in each indicator. A between-person network and within-person
+networks answer complementary questions about these two sources of
+variation.
 
 ## What if the wave means drift?
 
-The model assumes that the mean of each variable is the same in every
-wave. If the means drift, for instance a steady decline over a term,
-`standardize = "z_per_wave"` standardizes every variable within every
-wave, which removes the drift; the edges are then on a standardized
-scale.
+The model assumes that variable means are constant across waves.
+Educational measures may instead show systematic changes over a course,
+such as an overall rise in confidence or a decline in enjoyment. The
+option `standardize = "z_per_wave"` centres and scales each variable
+separately at each wave. This removes observed wave-specific location
+and scale differences, so estimated edges refer to standardised
+deviations. It changes the estimand and should be chosen for substantive
+reasons, not simply to improve fit indices.
 
 ``` r
 
@@ -389,31 +482,86 @@ subset(as.data.frame(z_fit, what = "fit"), select = c(chisq, df, cfi, rmsea))
 #> 1 182.507 170 0.9851576 0.02712385
 ```
 
-On these data, which were simulated with stable means, standardizing
-within waves gives a similar and slightly better fit (CFI = 0.985, RMSEA
-= 0.027). On data with drifting means the difference would be larger,
-and the standardized model would be the one to report.
+For these simulated data, which were generated with stable means,
+wave-wise standardisation gives CFI = 0.985 and RMSEA = 0.027, compared
+with 0.957 and 0.047 in the unstandardised model. These indices are more
+favourable for the standardised analysis, but the comparison does not
+show that wave-wise standardisation is necessary or preferable in
+general. Where means vary, researchers should examine the pattern of
+change and consider whether standardisation is compatible with their
+research question.
 
 ## Assumptions and when to use the panel-GVAR
 
-- The model is for panel data with a few waves, measured at equal
-  intervals, on many persons. For long time series of one or a few
-  persons, intensive longitudinal models such as the graphical VAR or
-  the multilevel VAR apply.
-- The means are stable across waves, and the lagged effects are the same
-  at every wave; `standardize = "z_per_wave"` handles drifting means.
-- With few waves, the between-person and within-person parts are
-  separated only approximately, and the between-person edges rest on the
-  number of persons, not of observations. Fits with three waves often
-  reach a boundary, which is reported in the diagnostics.
-- The full model reports every edge with its uncertainty. Pruning with
-  step-up gives a sparse model with p-values; the lasso gives a sparse
-  model without them.
-- Temporal edges are lagged predictions within persons, not causal
-  effects.
+- Panel-GVAR is designed for panels with several people observed at a
+  relatively small number of equally spaced waves. Studies with many
+  repeated observations per individual may instead be better suited to
+  time-series or multilevel graphical VAR approaches.
+- The fitted specification assumes stable wave means and common lagged
+  coefficients across waves. `standardize = "z_per_wave"` addresses
+  observed wave-specific means and scales but does not by itself
+  establish that other stationarity assumptions are met.
+- Relatively few waves limit the information available for separating
+  stable personal differences from fluctuations within people.
+  Between-person estimates are particularly dependent on the number of
+  individuals, and boundary estimates can signal difficulties in
+  estimation.
+- The full model retains all estimated edges and reports their
+  uncertainty. Pruning with step-up and penalised EBIC selection yield
+  more economical structures, but their inferential outputs and
+  interpretation differ.
+- Temporal edges describe conditional predictions across successive
+  waves, not causal effects. The interval between measurements also
+  determines what kinds of changes the temporal network can capture.
 
-## Reference
+## How to cite this article
+
+Saqr, M., & López-Pernas, S. (2026). *Panel graphical VAR: Temporal,
+contemporaneous, and between-person networks*. psychnets.
+<https://doi.org/10.5281/zenodo.24567520> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html)
+· [PDF](https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf)
+
+## References
+
+Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E. I.,
+McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J., Costantini,
+G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van Bork, R., &
+Waldorp, L. J. (2021). Network analysis of multivariate data in
+psychological science. *Nature Reviews Methods Primers*, 1, 58.
+[doi:10.1038/s43586-021-00055-w](https://doi.org/10.1038/s43586-021-00055-w)
 
 Epskamp, S. (2020). Psychometric network models from time-series and
 panel data. *Psychometrika*, 85(1), 206-231.
 [doi:10.1007/s11336-020-09697-3](https://doi.org/10.1007/s11336-020-09697-3)
+
+Epskamp, S., Waldorp, L. J., Mõttus, R., & Borsboom, D. (2018). The
+Gaussian graphical model in cross-sectional and time-series data.
+*Multivariate Behavioral Research*, 53(4), 453-480.
+[doi:10.1080/00273171.2018.1454823](https://doi.org/10.1080/00273171.2018.1454823)
+
+Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique
+of the cross-lagged panel model. *Psychological Methods*, 20(1),
+102-116. [doi:10.1037/a0038889](https://doi.org/10.1037/a0038889)
+
+Saqr, M. (2023). Modelling within-person idiographic variance could help
+explain and individualize learning. *British Journal of Educational
+Technology*, 54(5), 1077-1094.
+[doi:10.1111/bjet.13309](https://doi.org/10.1111/bjet.13309)
+
+Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A
+modern approach to analysis of learning and complex learning processes.
+In M. Saqr & S. López-Pernas (Eds.), *Learning analytics methods and
+tutorials: A practical guide using R* (pp. 639-671). Springer.
+[doi:10.1007/978-3-031-54464-4_19](https://doi.org/10.1007/978-3-031-54464-4_19)
+
+Saqr, M., & López-Pernas, S. (2024). Mapping the self in self-regulation
+using complex dynamic systems approach. *British Journal of Educational
+Technology*, 55(4), 1376-1397.
+[doi:10.1111/bjet.13452](https://doi.org/10.1111/bjet.13452)
+
+Saqr, M., Vogelsmeier, L. V. D. E., & López-Pernas, S. (2024). Capturing
+where the learning process takes place: A person-specific and
+person-centered primer. *Learning and Individual Differences*, 113,
+102492.
+[doi:10.1016/j.lindif.2024.102492](https://doi.org/10.1016/j.lindif.2024.102492)

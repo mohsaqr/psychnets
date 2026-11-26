@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Information-filtering networks with TMFG and LoGo">
+<meta name="citation_title" content="Information-filtering networks with TMFG and LoGo">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/information-filtering-networks.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/information-filtering-networks.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567514">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,83 +81,83 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Information-filtering networks with TMFG and LoGo</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/information-filtering-networks.Rmd" class="external-link"><code>vignettes/information-filtering-networks.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/information-filtering-networks.Rmd" class="external-link"><code>vignettes/information-filtering-networks.Rmd</code></a></small>
       <div class="d-none name"><code>information-filtering-networks.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>A questionnaire with many items yields a correlation matrix with
-hundreds of entries, most of them small, and a network that draws every
-correlation cannot be read. Information-filtering networks reduce such a
-matrix to a sparse backbone by a structural rule instead of a
-significance test or a penalty. The Triangulated Maximally Filtered
-Graph (TMFG; Massara et al., 2016) keeps the strongest correlations that
-can be arranged into a connected, planar network of triangles, so a
-network of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
-variables always retains
+<p>A questionnaire with many items can yield so many correlations that
+the most informative relationships are difficult to see. Researchers
+studying motivation, self-efficacy and self-regulation may want to
+examine these constructs together, yet plotting every association
+creates a crowded network of variables connected by edges. Selecting
+edges solely through a significance threshold can likewise produce a
+dense graph that is difficult to interpret. Information-filtering
+networks offer a structured means of retaining a manageable set of
+associations while preserving a view of their interdependence. Filtering
+methods have been studied in psychometric network research (Christensen
+et al., 2018). Exploratory graph analysis also uses network structure,
+but for the distinct purpose of investigating dimensionality (Golino
+&amp; Epskamp, 2017; Golino et al., 2020).</p>
+<p>Information-filtering networks extract a sparse, connected backbone
+from an association matrix according to structural constraints rather
+than a significance test or a regularisation penalty. The Triangulated
+Maximally Filtered Graph (TMFG; Massara et al., 2016) constructs a
+planar graph from strong correlations and retains exactly
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>−</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">3(p - 2)</annotation></semantics></math>
-edges. The Local-Global method (LoGo; Barfuss et al., 2016) then
-estimates partial correlations on that backbone, turning the filtered
-correlation structure into a conditional-dependence network without a
-tuning parameter.</p>
-<p>The two stages answer different questions. A TMFG edge is an ordinary
-correlation: how strongly two variables go together. A LoGo edge is a
-partial correlation: how strongly they go together once the other
-variables are held constant. This article builds both networks for five
-self-regulated learning constructs, compares their edges, checks that
-each network has the properties its definition requires, describes the
-nodes of the LoGo network, and repeats the analysis on rank
-correlations.</p>
+edges for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+variables. The Local-Global method (LoGo; Barfuss et al., 2016) uses the
+cliques and separators of this graph to estimate a sparse precision
+matrix and its partial correlations, without selecting a penalty
+parameter. These methods therefore provide two related descriptions of
+the data: TMFG edges express ordinary pairwise correlations, whereas
+LoGo edges express conditional associations within the fitted model
+after accounting for the other variables. Neither kind of edge
+establishes a causal relationship.</p>
+<p>Psychological networks have been used in educational research to
+investigate relationships among learning processes and their development
+over time. For example, Saqr et al. (2021) examined relational and
+temporal patterns of self-regulation in academic writing, and Malmberg
+et al. (2022) used network analysis to study associations between
+students’ monitoring events and phases of regulation. Saqr et al. (2024)
+discuss psychological network methods for analysing learning and complex
+learning processes more broadly. These applications illustrate why the
+pattern of connections among learning-related variables can be of
+substantive interest. They also make it important to distinguish a
+readable representation of associations from evidence about causal
+mechanisms, stable network structure or individual learners.</p>
+<p>This article demonstrates TMFG and LoGo using five self-regulated
+learning construct scores supplied with the psychnets package. It first
+constructs a correlation-based TMFG backbone and checks its structural
+properties, then estimates LoGo partial correlations and examines their
+optimality, node centralities and predictability. Finally, it visualises
+the network, repeats the analysis using Spearman correlations and
+outlines reporting and interpretation considerations. The responses were
+generated by a language model rather than collected from students, so
+the example illustrates the methods and their interpretation rather than
+empirical conclusions about learners.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
-</h2>
-<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
-Strategies for Learning Questionnaire, each a construct score on a scale
-from 1 to 7. The responses were generated by a large language model
-(GPT) in a study of how such models answer psychological surveys (Saqr,
-2025); they serve as a well-structured example and are not evidence
-about students.</p>
-<ul>
-<li>
-<strong>Nodes:</strong> five construct scores, treated as
-continuous: <code>CSU</code> (cognitive strategy use), <code>IV</code>
-(intrinsic value), <code>SE</code> (self-efficacy), <code>SR</code>
-(self-regulation) and <code>TA</code> (test anxiety).</li>
-<li>
-<strong>Observations:</strong> one row per respondent; the data are
-complete.</li>
-</ul>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        CSU       IV       SE       SR   TA</span></span>
-<span><span class="co">#&gt; 1 5.307692 5.666667 5.777778 5.333333 4.00</span></span>
-<span><span class="co">#&gt; 2 5.846154 6.444444 6.000000 5.777778 4.00</span></span>
-<span><span class="co">#&gt; 3 6.615385 6.666667 6.222222 6.333333 3.25</span></span>
-<span><span class="co">#&gt; 4 5.692308 6.555556 6.333333 5.555556 4.50</span></span>
-<span><span class="co">#&gt; 5 4.384615 5.555556 4.888889 4.777778 4.00</span></span>
-<span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
-<p>With five nodes, a TMFG keeps
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mn>5</mn><mo>−</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>9</mn></mrow><annotation encoding="application/x-tex">3(5 - 2) = 9</annotation></semantics></math>
-of the 10 possible pairs, so the example shows how the method works
-rather than how much it filters. Filtering grows with the number of
-variables: with 30 items a TMFG keeps 84 of 435 pairs.</p>
-</div>
-<div class="section level2">
 <h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
 </h2>
-<p>TMFG starts from the four variables with the strongest correlations,
-which form a tetrahedron of six edges. Each remaining variable is
-inserted into the triangular face to which it is most strongly
-correlated and joined to the face’s three corners, adding three edges.
-The construction therefore has</p>
+<p>TMFG begins with a set of four variables selected for their strong
+combined correlations, forming a tetrahedron with six edges. Each
+remaining variable is placed in the triangular face for which its
+connections to the three vertices have the greatest combined weight. The
+new variable is connected to those vertices, adding three edges. The
+construction therefore has</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>6</mn><mo>+</mo><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>−</mo><mn>4</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>−</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">
 6 + 3(p - 4) = 3(p - 2)
 </annotation></semantics></math></p>
@@ -171,6 +182,41 @@ matrix with zeros elsewhere. The result is the maximum-likelihood
 precision matrix of a Gaussian model whose missing edges are exactly
 those absent from the TMFG, and the partial correlations are
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ρ</mi><mrow><mi>i</mi><mi>j</mi><mo>⋅</mo><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></mrow></msub><mo>=</mo><mi>−</mi><msub><mi>K</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mi>/</mi><msqrt><mrow><msub><mi>K</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><msub><mi>K</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub></mrow></msqrt></mrow><annotation encoding="application/x-tex">\rho_{ij \cdot \mathrm{rest}} = -K_{ij}/\sqrt{K_{ii}K_{jj}}</annotation></semantics></math>.</p>
+</div>
+<div class="section level2">
+<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
+</h2>
+<p><code>SRL_GPT</code> contains 300 sets of responses to items from the
+Motivated Strategies for Learning Questionnaire, summarised as construct
+scores on a scale from 1 to 7. The responses were generated by a large
+language model (GPT) in a study of how such models answer psychological
+surveys (Vogelsmeier et al., 2025). They provide a convenient worked
+example, but should not be interpreted as observations of students or
+their learning.</p>
+<ul>
+<li>
+<strong>Nodes:</strong> five construct scores, treated as
+continuous: <code>CSU</code> (cognitive strategy use), <code>IV</code>
+(intrinsic value), <code>SE</code> (self-efficacy), <code>SR</code>
+(self-regulation) and <code>TA</code> (test anxiety).</li>
+<li>
+<strong>Observations:</strong> one row per respondent; the data are
+complete.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        CSU       IV       SE       SR   TA</span></span>
+<span><span class="co">#&gt; 1 5.307692 5.666667 5.777778 5.333333 4.00</span></span>
+<span><span class="co">#&gt; 2 5.846154 6.444444 6.000000 5.777778 4.00</span></span>
+<span><span class="co">#&gt; 3 6.615385 6.666667 6.222222 6.333333 3.25</span></span>
+<span><span class="co">#&gt; 4 5.692308 6.555556 6.333333 5.555556 4.50</span></span>
+<span><span class="co">#&gt; 5 4.384615 5.555556 4.888889 4.777778 4.00</span></span>
+<span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
+<p>With five nodes, a TMFG keeps
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo stretchy="false" form="prefix">(</mo><mn>5</mn><mo>−</mo><mn>2</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>9</mn></mrow><annotation encoding="application/x-tex">3(5 - 2) = 9</annotation></semantics></math>
+of the 10 possible pairs, so the example shows how the method works
+rather than how much it filters. Filtering grows with the number of
+variables: with 30 items a TMFG keeps 84 of 435 pairs.</p>
 </div>
 <div class="section level2">
 <h2 id="which-correlations-form-the-backbone">Which correlations form the backbone?<a class="anchor" aria-label="anchor" href="#which-correlations-form-the-backbone"></a>
@@ -200,11 +246,9 @@ four learning constructs are fully connected by strong positive
 correlations, from 0.779 (<code>SE</code>–<code>SR</code>) to 0.861
 (<code>CSU</code>–<code>IV</code>). Test anxiety is attached through
 three negative correlations, the strongest with self-regulation
-(-0.302). The excluded pair is <code>SE</code>–<code>TA</code>, the
-weakest correlation of test anxiety. TMFG chooses edges as part of a
-connected structure rather than by a cut-off, so the missing pair says
-that it was not needed for the backbone, not that the correlation is
-zero.</p>
+(-0.302). The excluded pair is <code>SE</code>–<code>TA</code>. TMFG
+chooses edges as part of a connected structure rather than by a cut-off,
+so an excluded pair is not necessarily uncorrelated.</p>
 </div>
 <div class="section level2">
 <h2 id="does-the-backbone-have-the-required-structure">Does the backbone have the required structure?<a class="anchor" aria-label="anchor" href="#does-the-backbone-have-the-required-structure"></a>
@@ -251,15 +295,15 @@ with intrinsic value (0.404), self-efficacy (0.393) and self-regulation
 (-0.372), slightly stronger than their correlation of -0.302.</p>
 <p>Comparing the two tables shows what adjustment does. The
 <code>IV</code>–<code>SE</code> correlation is 0.785 but its partial
-correlation is 0.165: most of the association between intrinsic value
-and self-efficacy is shared with cognitive strategy use and
-self-regulation. Test anxiety correlates negatively with cognitive
-strategy use (-0.139) and intrinsic value (-0.114), yet its partial
-correlations with them are positive (0.110 and 0.146); once
-self-regulation is held constant, the negative association of test
-anxiety with the learning constructs runs through self-regulation alone.
-TMFG and LoGo weights must therefore never be reported
-interchangeably.</p>
+correlation is 0.165. The association between intrinsic value and
+self-efficacy is therefore considerably smaller after adjustment for the
+other constructs. Test anxiety correlates negatively with cognitive
+strategy use (-0.139) and intrinsic value (-0.114), whereas its partial
+correlations with these constructs are positive (0.110 and 0.146). These
+changes of sign reflect conditional associations in the fitted network;
+they do not establish that self-regulation mediates the relationships.
+TMFG and LoGo weights should therefore be reported and interpreted
+separately.</p>
 </div>
 <div class="section level2">
 <h2 id="is-the-logo-network-the-maximum-likelihood-solution">Is the LoGo network the maximum-likelihood solution?<a class="anchor" aria-label="anchor" href="#is-the-logo-network-the-maximum-likelihood-solution"></a>
@@ -320,8 +364,8 @@ computed from the LoGo precision matrix as
 <span><span class="co">#&gt; 3   SE gaussian     R2      0.7227872       NA</span></span>
 <span><span class="co">#&gt; 4   SR gaussian     R2      0.7923888       NA</span></span>
 <span><span class="co">#&gt; 5   TA gaussian     R2      0.1589941       NA</span></span></code></pre></div>
-<p>The other constructs explain 83% of the variance in cognitive
-strategy use
+<p>In the fitted Gaussian network, the other constructs account for
+approximately 83% of the variance in cognitive strategy use
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.835</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.835</annotation></semantics></math>),
 79% in self-regulation, 78% in intrinsic value and 72% in self-efficacy,
 but only 16% in test anxiety
@@ -354,7 +398,7 @@ the backbone and the partial correlations on rank correlations.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; logo network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.44e-15</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 1.67e-15</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.301, 0.440], mean 0.191</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to      weight</span></span>
@@ -368,16 +412,17 @@ the backbone and the partial correlations on rank correlations.</p>
 <span><span class="co">#&gt; 8   IV TA  0.12358306</span></span>
 <span><span class="co">#&gt; 9   SR TA -0.30091058</span></span>
 <span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">logo_spearman</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   method certificate kind certified</span></span>
-<span><span class="co">#&gt; 1   logo 1.44329e-15  kkt      TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt;   method  certificate kind certified</span></span>
+<span><span class="co">#&gt; 1   logo 1.665335e-15  kkt      TRUE</span></span></code></pre></div>
 <p>The rank-based backbone contains the same nine pairs. The positive
 edges of cognitive strategy use remain the strongest, with
 <code>CSU</code>–<code>SE</code> (0.440) now slightly above
 <code>CSU</code>–<code>IV</code> (0.412), and the
 <code>SR</code>–<code>TA</code> edge remains negative (-0.301). The weak
 <code>CSU</code>–<code>TA</code> edge falls from 0.110 to 0.071. The
-certificate is again at machine precision. The backbone and its main
-edges do not depend on the correlation estimator.</p>
+certificate is again at machine precision. For these data, the selected
+backbone and the principal associations are similar under the two
+correlation estimators.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
@@ -408,11 +453,20 @@ zero.</li>
 no tuning parameter, but every four-node block of the correlation matrix
 must be invertible, so duplicated or perfectly collinear variables must
 be removed first.</li>
-<li>For a network whose edges are selected from the data by a criterion,
-use the graphical lasso or stepwise selection; for a network of marginal
-associations, the TMFG backbone alone is sufficient.</li>
+<li>When the aim is to select conditional associations using a
+statistical selection criterion, graphical lasso or stepwise selection
+may be more appropriate. When the aim is to display a sparse set of
+marginal associations, the TMFG backbone can be examined on its
+own.</li>
 <li>Neither network identifies causal direction.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Information-filtering
+networks with TMFG and LoGo</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567514" class="external-link uri">https://doi.org/10.5281/zenodo.24567514</a> · <a href="https://pak.dynasite.org/psychnets/articles/information-filtering-networks.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/information-filtering-networks.pdf">PDF</a></p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -420,12 +474,39 @@ associations, the TMFG backbone alone is sufficient.</li>
 <p>Barfuss, W., Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016).
 Parsimonious modeling with information filtering networks. <em>Physical
 Review E</em>, 94(6), 062306. <a href="https://doi.org/10.1103/PhysRevE.94.062306" class="external-link">doi:10.1103/PhysRevE.94.062306</a></p>
+<p>Christensen, A. P., Kenett, Y. N., Aste, T., Silvia, P. J., &amp;
+Kwapil, T. R. (2018). Network structure of the Wisconsin Schizotypy
+Scales-Short Forms: Examining psychometric network filtering approaches.
+<em>Behavior Research Methods</em>, 50(6), 2531-2550. <a href="https://doi.org/10.3758/s13428-018-1032-9" class="external-link">doi:10.3758/s13428-018-1032-9</a></p>
+<p>Golino, H. F., &amp; Epskamp, S. (2017). Exploratory graph analysis:
+A new approach for estimating the number of dimensions in psychological
+research. <em>PLOS ONE</em>, 12(6), e0174035. <a href="https://doi.org/10.1371/journal.pone.0174035" class="external-link">doi:10.1371/journal.pone.0174035</a></p>
+<p>Golino, H., Shi, D., Christensen, A. P., Garrido, L. E., Nieto, M.
+D., Sadana, R., Thiyagarajan, J. A., &amp; Martinez-Molina, A. (2020).
+Investigating the performance of exploratory graph analysis and
+traditional techniques to identify the number of latent factors: A
+simulation and tutorial. <em>Psychological Methods</em>, 25(3), 292-320.
+<a href="https://doi.org/10.1037/met0000255" class="external-link">doi:10.1037/met0000255</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., &amp; Järvelä, S. (2022). How
+the monitoring events of individual students are associated with phases
+of regulation: A network analysis approach. <em>Journal of Learning
+Analytics</em>, 9(1), 77-92. <a href="https://doi.org/10.18608/jla.2022.7429" class="external-link">doi:10.18608/jla.2022.7429</a></p>
 <p>Massara, G. P., Di Matteo, T., &amp; Aste, T. (2016). Network
 filtering for big data: Triangulated maximally filtered graph.
 <em>Journal of Complex Networks</em>, 5(2), 161-178. <a href="https://doi.org/10.1093/comnet/cnw015" class="external-link">doi:10.1093/comnet/cnw015</a></p>
-<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
-the structure of self-regulated learning via LLM-generated survey
-responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., Peeters, W., &amp; Viberg, O. (2021). The relational,
+co-temporal, contemporaneous, and longitudinal dynamics of
+self-regulation for academic writing. <em>Research and Practice in
+Technology Enhanced Learning</em>, 16, 29. <a href="https://doi.org/10.1186/s41039-021-00175-7" class="external-link">doi:10.1186/s41039-021-00175-7</a></p>
+<p>Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas,
+S., &amp; Saqr, M. (2025). Delving into the psychology of machines:
+Exploring the structure of self-regulated learning via LLM-generated
+survey responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

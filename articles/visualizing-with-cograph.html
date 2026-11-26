@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Visualizing networks with cograph">
+<meta name="citation_title" content="Visualizing networks with cograph">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/visualizing-with-cograph.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567526">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,44 +81,76 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Visualizing networks with cograph</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/visualizing-with-cograph.Rmd" class="external-link"><code>vignettes/visualizing-with-cograph.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/visualizing-with-cograph.Rmd" class="external-link"><code>vignettes/visualizing-with-cograph.Rmd</code></a></small>
       <div class="d-none name"><code>visualizing-with-cograph.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>A psychological network is reported as a table of edge weights, but
-it is read as a figure. The figure shows at a glance which variables
-form a cluster, which variable connects two clusters, and where the
-negative associations lie. It can also mislead: the position of the
-nodes is chosen by a layout algorithm, edges of very different size can
-look alike, and colour alone does not reach every reader. Drawing a
-network well means encoding the sign and size of each edge so that they
-can be read, placing the nodes so that comparable figures share a
-layout, and keeping exact values available in the table that the figure
-summarizes.</p>
-<p>This article draws a Gaussian graphical model of five self-regulated
-learning constructs with the <code>cograph</code> package, from the
-default figure to one ready for publication: layouts, node size and
-colour, edge encoding and thresholds, the distribution of edge weights,
-bootstrap diagnostics, themes, networks of several groups on a shared
-layout, and export to a file. The chunks that draw with
-<code>cograph</code> run only when it is installed.</p>
+<p>How should a network figure be drawn so that its visual structure
+supports, rather than distorts, interpretation? In a Gaussian graphical
+model, variables are displayed as nodes and edges depict associations
+between pairs of variables conditional on the others. This
+representation helps researchers examine interdependence among
+psychological constructs instead of considering each construct
+separately (Saqr et al., 2024). Choices about network visualisation are
+therefore part of analysis and interpretation, not merely presentation.
+R tools such as <code>qgraph</code> have made network figures accessible
+(Epskamp et al., 2012), while practical guidance highlights the ways in
+which visual decisions can affect the conclusions readers draw (Jones et
+al., 2018).</p>
+<p>A network diagram can help researchers identify groups of closely
+related constructs, connections between groups and negative
+associations. However, node positions depend on the layout algorithm,
+edge widths can obscure important differences in magnitude, and colours
+may be difficult to distinguish. Moreover, a visually prominent
+connection is not necessarily precisely estimated or evidence of a
+causal relationship. Good reporting therefore requires figures that
+communicate edge signs and magnitudes clearly, alongside numerical
+estimates, uncertainty assessments and an account of the choices used to
+construct the display (Burger et al., 2023).</p>
+<p>In education, psychological networks have been used to investigate
+how learning-related processes operate together. Malmberg et al. (2022)
+used network approaches to examine the interplay between monitoring
+events in regulated learning, while Saqr et al. (2021) studied the
+relational and temporal dynamics of self-regulation in academic writing.
+Such applications illustrate why a network view can be useful when
+motivation, cognition and regulation are intertwined. They also make
+comparability important: a change in the apparent arrangement of nodes
+across figures should not be mistaken for a substantive difference
+between learners, groups or occasions.</p>
+<p>This article uses <code>cograph</code> to visualise a Gaussian
+graphical model of five self-regulated learning constructs derived from
+model-generated survey responses (Vogelsmeier et al., 2025). It moves
+from the default display to choices relevant to publication: node
+layouts and appearance, the encoding and filtering of edges, edge-weight
+distributions, bootstrap diagnostics, themes, comparisons between groups
+and figure export. Throughout, the aim is to make the relationship
+between the figure and the estimated network clear. The plotting chunks
+run only when <code>cograph</code> is installed.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
-Strategies for Learning Questionnaire, each a construct score on a scale
-from 1 to 7. The responses were generated by a large language model
-(GPT) in a study of how such models answer psychological surveys (Saqr,
-2025). A second set, <code>SRL_Claude</code>, holds 300 responses
-generated by another model and is used for the group comparison.</p>
+<p><code>SRL_GPT</code> contains 300 sets of responses to the Motivated
+Strategies for Learning Questionnaire, expressed as construct scores on
+a scale from 1 to 7. These are responses generated by a large language
+model (GPT), rather than observations from students, in a study of how
+language models respond to psychological questionnaires (Vogelsmeier et
+al., 2025). <code>SRL_Claude</code> contains a further 300
+model-generated responses and is used for the group comparison. The
+example demonstrates visualisation methods, not findings about a
+population of learners.</p>
 <ul>
 <li>
 <strong>Nodes:</strong> <code>CSU</code> (cognitive strategy use),
@@ -118,9 +161,9 @@ anxiety).</li>
 <strong>Observations:</strong> one row per respondent; the data are
 complete.</li>
 </ul>
-<p><code><a href="../reference/ebic_glasso.html">ebic_glasso()</a></code> estimates the network: edges are partial
-correlations selected by the extended Bayesian information
-criterion.</p>
+<p><code><a href="../reference/ebic_glasso.html">ebic_glasso()</a></code> estimates a regularised Gaussian graphical
+model. Its edges represent partial correlations, with the extended
+Bayesian information criterion used to select the network.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ebic_glasso.html">ebic_glasso</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
@@ -128,24 +171,31 @@ criterion.</p>
 <span><span class="co">#&gt;   nodes: 5   edges: 10   (undirected)</span></span>
 <span><span class="co">#&gt;   lambda: 0.00861   gamma: 0.5</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 2.21e-10</span></span></code></pre></div>
-<p>The network has 10 edges. Nine are positive, from 0.049 to 0.412, and
-one, between self-regulation and test anxiety, is negative (-0.350); the
-Gaussian graphical models article interprets them.</p>
+<p>The fitted network contains 10 edges. Nine are positive, with weights
+from 0.049 to 0.412, and the association between self-regulation and
+test anxiety is negative (-0.350). These values describe conditional
+associations, not directional effects. Their substantive interpretation
+is covered in the Gaussian graphical models article.</p>
 </div>
 <div class="section level2">
 <h2 id="what-does-the-default-figure-show">What does the default figure show?<a class="anchor" aria-label="anchor" href="#what-does-the-default-figure-show"></a>
 </h2>
-<p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on a fitted network draws it with
-<code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code>. Each node is a construct and each edge a
-partial correlation: the colour of an edge encodes its sign and the
-width its absolute size.</p>
+<p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> displays the fitted network using
+<code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code>. Each node represents a construct and each
+edge an estimated partial correlation. Edge colour distinguishes
+positive from negative associations, while width indicates their
+absolute magnitude. Thus, a thicker line signals a larger estimated
+association, irrespective of its sign.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/default-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
-<p>The four learning constructs appear as a cluster of wide edges of one
-colour, and the edge between self-regulation and test anxiety stands out
-in the other colour. Calling <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> directly
-draws the same figure and accepts all the arguments used below.</p>
+<p>The learning-related constructs are connected by several
+comparatively wide, positive edges. By contrast, the negative edge
+linking self-regulation and test anxiety is readily distinguishable. The
+figure provides an overview, but individual edge values should be
+checked against the estimates. Calling <code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code>
+directly produces the same display and permits the adjustments
+introduced below.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/splot-default-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
@@ -153,11 +203,13 @@ draws the same figure and accepts all the arguments used below.</p>
 <div class="section level2">
 <h2 id="where-should-the-nodes-be-placed">Where should the nodes be placed?<a class="anchor" aria-label="anchor" href="#where-should-the-nodes-be-placed"></a>
 </h2>
-<p>The <code>layout</code> argument chooses how nodes are placed. A
-circular layout puts the nodes on a ring, so their positions are the
-same in every figure with the same nodes. A spring layout pulls
-connected nodes together, so clusters become visible; <code>seed</code>
-fixes its random start so the figure can be reproduced.</p>
+<p>The <code>layout</code> argument controls node placement. A circular
+layout arranges nodes around a ring, making their positions consistent
+when the same nodes are supplied in the same order. A spring layout
+positions more strongly connected nodes nearer to one another, which can
+make patterns of association easier to see. The <code>seed</code>
+argument fixes the random starting conditions so that a spring-layout
+figure can be reproduced.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">fit</span>, layout <span class="op">=</span> <span class="st">"circle"</span>, title <span class="op">=</span> <span class="st">"circle"</span><span class="op">)</span></span>
@@ -166,20 +218,24 @@ fixes its random start so the figure can be reproduced.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></code></pre></div>
 <p>In the spring layout, cognitive strategy use, self-regulation and
-intrinsic value, joined by the widest edges, are drawn close together,
-and test anxiety is placed at the margin with its single strong,
-negative edge. The circle is the better choice when several networks are
-compared; the spring layout when the structure of one network is the
-point.</p>
+intrinsic value appear close together because of their relatively strong
+connections. Test anxiety lies towards the edge of the diagram, with its
+negative link to self-regulation particularly evident. This spatial
+arrangement is generated by the plotting algorithm and is not an
+additional statistical result. The circular layout is useful for
+consistent comparisons; the spring layout is useful when exploring the
+structure of a single network.</p>
 </div>
 <div class="section level2">
 <h2 id="how-can-nodes-carry-information">How can nodes carry information?<a class="anchor" aria-label="anchor" href="#how-can-nodes-carry-information"></a>
 </h2>
-<p>Node size can show a node property.
-<code>scale_nodes_by = "strength"</code> sizes each node by its
-strength, and <code>node_size_range</code> sets the smallest and largest
-size. The fill, border and label arguments set the remaining
-appearance.</p>
+<p>Node size can encode a summary of a construct’s connections.
+<code>scale_nodes_by = "strength"</code> requests scaling by the
+network’s strength measure, while <code>node_size_range</code> specifies
+the range of displayed sizes. The fill, border and label arguments can
+be adjusted to distinguish nodes and improve legibility. Readers should
+be told what the size represents, since different centrality measures
+answer different questions.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit</span>,</span>
@@ -193,25 +249,28 @@ appearance.</p>
 <span>  title <span class="op">=</span> <span class="st">"Node size scaled by strength"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/nodes-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
-<p>For a signed network, <code>cograph</code> computes this strength
-from the signed edge weights, so the node sizes follow the expected
-influence of <code><a href="../reference/net_centralities.html">net_centralities()</a></code> rather than its absolute
-strength. Cognitive strategy use (1.198) and intrinsic value (1.001) are
-drawn largest and test anxiety (-0.091) smallest. Self-regulation, which
-has the largest absolute strength (1.231), is drawn mid-sized because
-its negative edge with test anxiety offsets its positive edges (expected
-influence 0.532). A figure caption that says “size by strength” should
-state which of the two is shown.</p>
+<p>For this signed network, <code>cograph</code> bases the plotted sizes
+on signed edge weights. The resulting ordering corresponds to expected
+influence from <code><a href="../reference/net_centralities.html">net_centralities()</a></code>, rather than to absolute
+strength. Cognitive strategy use (1.198) and intrinsic value (1.001)
+have the largest signed values, whereas test anxiety (-0.091) has the
+smallest. Self-regulation has the highest absolute strength (1.231), but
+its negative association with test anxiety offsets some of its positive
+associations, giving an expected influence of 0.532 and a less prominent
+node. A caption describing nodes as “size by strength” should specify
+whether signed or absolute weights were used.</p>
 </div>
 <div class="section level2">
 <h2 id="how-should-edges-be-encoded">How should edges be encoded?<a class="anchor" aria-label="anchor" href="#how-should-edges-be-encoded"></a>
 </h2>
-<p>For a signed network, the edge encoding carries the result.
-<code>edge_positive_color</code> and <code>edge_negative_color</code>
-set the two sign colours, and <code>edge_width_range</code> maps
-absolute size to width. <code>threshold</code> hides edges below an
-absolute weight, and <code>edge_labels</code> prints each weight, so the
-sign is readable from the number as well as from the colour.</p>
+<p>For a signed network, both the direction and magnitude of
+associations need to be apparent. <code>edge_positive_color</code> and
+<code>edge_negative_color</code> select colours for the two signs, and
+<code>edge_width_range</code> maps absolute edge weights to line widths.
+The <code>threshold</code> argument suppresses edges whose absolute
+weights fall below a specified value, while <code>edge_labels</code>
+adds the numerical estimates. Labels are particularly helpful when
+figures are viewed without colour.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit</span>,</span>
@@ -226,32 +285,39 @@ sign is readable from the number as well as from the colour.</p>
 <span>  title <span class="op">=</span> <span class="st">"Thresholded edge weights"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/edges-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
-<p>The threshold of 0.05 hides one edge, cognitive strategy use with
-test anxiety (0.049), and leaves nine, each labelled with its partial
-correlation. A display threshold changes the figure, not the model, and
-is reported in the figure caption.</p>
-<p><code><a href="https://sonsoles.me/cograph/reference/plot_edge_weights.html" class="external-link">cograph::plot_edge_weights()</a></code> draws the distribution of
-the edge weights without a layout.</p>
+<p>Here, a threshold of 0.05 conceals the smallest edge, between
+cognitive strategy use and test anxiety (0.049), leaving nine visible
+edges with their partial correlations labelled. This is a display
+decision: the estimated network still contains all 10 edges. Researchers
+should report the threshold in the caption so that readers do not
+mistake an omitted line for an estimated zero.</p>
+<p><code><a href="https://sonsoles.me/cograph/reference/plot_edge_weights.html" class="external-link">cograph::plot_edge_weights()</a></code> presents the distribution
+of estimated edge weights independently of node placement. This view
+helps distinguish the numerical distribution from the visual prominence
+of edges in a diagram.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/plot_edge_weights.html" class="external-link">plot_edge_weights</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/edge-weights-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
-<p>The histogram shows one negative edge (-0.350), four positive edges
-below 0.2, three of them the edges of test anxiety, and five edges
-between 0.2 and 0.41 among the learning constructs; the mean edge weight
-is 0.17. It is a useful check on whether a display threshold separates
-groups of edges or cuts through one.</p>
+<p>The histogram includes one negative edge (-0.350), four positive
+edges below 0.2 and five stronger positive edges among the learning
+constructs, with weights reaching 0.412. Three of the four smaller
+positive edges involve test anxiety. The mean signed edge weight is
+approximately 0.17. Inspecting this distribution helps assess how a
+proposed display threshold would affect the information retained in the
+figure.</p>
 </div>
 <div class="section level2">
 <h2 id="how-precise-are-the-edges">How precise are the edges?<a class="anchor" aria-label="anchor" href="#how-precise-are-the-edges"></a>
 </h2>
-<p>A network figure shows point estimates. Their precision comes from
-resampling. <code><a href="../reference/net_boot.html">net_boot()</a></code> refits the network to bootstrap
-samples of the respondents and records the distribution of every edge;
-<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on the result draws each edge with its confidence
-interval. The partial-correlation estimator keeps this example fast; an
-applied analysis would use the graphical lasso with at least 1,000
-resamples. The network reliability article covers these diagnostics in
-full.</p>
+<p>A network diagram displays estimated associations, but does not by
+itself show their precision. <code><a href="../reference/net_boot.html">net_boot()</a></code> calculates edge
+estimates across bootstrap resamples, and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> displays
+their intervals. For speed, this illustration uses 250 resamples and the
+partial-correlation estimator, which is not identical to the regularised
+estimator used for the original network. For an applied analysis, it is
+preferable to bootstrap the chosen estimation method and use at least
+1,000 resamples. Further guidance appears in the network reliability
+article.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_boot.html">net_boot</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"pcor"</span>, n_boot <span class="op">=</span> <span class="fl">250</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -260,28 +326,35 @@ full.</p>
 <span><span class="co">#&gt;   10 edges (9 significant), 5 nodes, measures: strength, expected_influence</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/bootstrap-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
-<p>Nine of the ten edges have 95% intervals that exclude zero. The
-exception is cognitive strategy use with test anxiety, the same small
-edge that the threshold above removed. With
-<code>type = "edge_diff"</code>, the plot shows which pairs of edges
-differ in size across the bootstrap samples:</p>
+<p>In this bootstrap output, nine of the 10 edges have 95% intervals
+that exclude zero. The remaining edge joins cognitive strategy use and
+test anxiety, consistent with its small point estimate and its omission
+from the thresholded display. These intervals concern the bootstrap
+estimator used here. With <code>type = "edge_diff"</code>, the plot
+summarises pairwise comparisons between estimated edge weights:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"edge_diff"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/edge-diff-box-1.png" class="r-plt" alt="" width="650" style="display: block; margin: auto;"></p>
-<p><code><a href="../reference/difference_test.html">difference_test()</a></code> gives the same pairwise comparisons as
-a table with confidence intervals, and <code>style = "forest"</code>
-draws each difference with its interval.</p>
+<p><code><a href="../reference/difference_test.html">difference_test()</a></code> also provides pairwise edge
+comparisons and their confidence intervals in tabular form. With
+<code>style = "forest"</code>, the estimated differences and intervals
+are shown as a forest plot, making their magnitude and uncertainty
+easier to inspect.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/difference_test.html">difference_test</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"edge"</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"forest"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/edge-diff-forest-1.png" class="r-plt" alt="" width="600" style="display: block; margin: auto;"></p>
-<p>Of the 45 pairs of edges, 26 differ in size. The forest plot shows
-how large each difference is, which the box matrix does not.</p>
+<p>The output identifies 26 of the 45 edge pairs as differing in size.
+The forest plot complements the comparison matrix by showing the
+estimated magnitude and interval of each pairwise difference.</p>
 </div>
 <div class="section level2">
 <h2 id="how-can-a-figure-follow-a-house-style">How can a figure follow a house style?<a class="anchor" aria-label="anchor" href="#how-can-a-figure-follow-a-house-style"></a>
 </h2>
-<p>The <code>theme</code> argument applies a set of colour and style
-defaults without changing the model.</p>
+<p>The <code>theme</code> argument provides predefined colour and
+graphical settings, allowing figures to follow a consistent presentation
+style without changing the estimated network. The examples below
+contrast a restrained appearance with a palette designed for colour
+accessibility.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">fit</span>, theme <span class="op">=</span> <span class="st">"minimal"</span>, title <span class="op">=</span> <span class="st">"minimal"</span><span class="op">)</span></span>
@@ -289,16 +362,20 @@ defaults without changing the model.</p>
 <p><img src="visualizing-with-cograph_files/figure-html/themes-1.png" class="r-plt" alt="" width="900" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></code></pre></div>
-<p>The colourblind theme uses colours that remain distinct for readers
-with the common forms of colour-vision deficiency; combined with edge
-labels, the sign of an edge can be read without colour.</p>
+<p>The colourblind theme is designed to make edge colours easier to
+distinguish for readers with common forms of colour-vision deficiency.
+Because colour alone should not carry the interpretation, adding
+numerical edge labels provides a second way of identifying the sign of
+an association.</p>
 </div>
 <div class="section level2">
 <h2 id="how-can-networks-of-several-groups-be-compared">How can networks of several groups be compared?<a class="anchor" aria-label="anchor" href="#how-can-networks-of-several-groups-be-compared"></a>
 </h2>
-<p><code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>group</code> estimates one network
-per level of a grouping column. The example stacks the two response sets
-and labels each row with its source.</p>
+<p><code><a href="../reference/psychnet.html">psychnet()</a></code> can estimate separate networks for categories
+identified by <code>group</code>. Here the two model-generated response
+datasets are combined, and a source indicator identifies the responses
+from each model. This permits a side-by-side illustration of networks
+with the same five constructs.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grouped_srl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, source <span class="op">=</span> <span class="st">"GPT"</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
@@ -312,22 +389,28 @@ and labels each row with its source.</p>
 <span><span class="co">#&gt; 2 Claude     5    10       0.3536997</span></span>
 <span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">group_fit</span>, layout <span class="op">=</span> <span class="st">"circle"</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-with-cograph_files/figure-html/groups-1.png" class="r-plt" alt="" width="900" style="display: block; margin: auto;"></p>
-<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the networks as a grid on one
-layout, so a node has the same position in every panel and the panels
-can be compared edge by edge. Both networks have 10 edges, but the mean
-absolute edge weight is 0.354 for the Claude responses against 0.244 for
-the GPT responses, and the shared layout makes the differences visible:
-in the Claude network intrinsic value and self-efficacy are negatively
-related, and test anxiety is positively related to cognitive strategy
-use and negatively to self-efficacy. A formal test of the difference
-requires <code><a href="../reference/net_compare.html">net_compare()</a></code>.</p>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> presents the two networks in a grid
+with a common circular layout. Nodes therefore occupy corresponding
+positions, making individual connections easier to compare without
+confounding changes in position with changes in estimated weights. Both
+networks have 10 edges. The mean absolute edge weight is 0.354 for
+Claude and 0.244 for GPT, as shown by the group summaries. In the Claude
+network, intrinsic value and self-efficacy have a negative association;
+test anxiety is positively associated with cognitive strategy use and
+negatively associated with self-efficacy. These are descriptive
+comparisons. Establishing whether between-group differences exceed
+sampling variation requires a formal comparison using
+<code><a href="../reference/net_compare.html">net_compare()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="how-is-the-figure-saved">How is the figure saved?<a class="anchor" aria-label="anchor" href="#how-is-the-figure-saved"></a>
 </h2>
 <p>The <code>filename</code>, <code>width</code>, <code>height</code>
-and <code>res</code> arguments write the figure to a file at a chosen
-size and resolution.</p>
+and <code>res</code> arguments specify the output file and its
+dimensions and resolution. Export settings should be selected with the
+intended publication format in mind, with particular attention to
+whether node labels and edge information remain legible at the final
+size.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">fit</span>, layout <span class="op">=</span> <span class="st">"circle"</span>, filename <span class="op">=</span> <span class="st">"network.png"</span>,</span>
 <span>               width <span class="op">=</span> <span class="fl">8</span>, height <span class="op">=</span> <span class="fl">8</span>, res <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></code></pre></div>
@@ -403,16 +486,53 @@ size and resolution.</p>
 </tr>
 </tbody>
 </table>
-<p>A network figure is read alongside its edge table: the figure shows
-the structure, the table gives the values, and a fixed layout makes
-figures of different groups comparable.</p>
+<p>A clear network figure complements, rather than replaces, the
+estimated edge table and measures of uncertainty. Consistent layouts
+support comparisons between groups, while explicit node and edge
+encodings help readers distinguish the results of the analysis from
+decisions made for visual presentation.</p>
+</div>
+<div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Visualizing networks
+with cograph</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567526" class="external-link uri">https://doi.org/10.5281/zenodo.24567526</a> · <a href="https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/visualizing-with-cograph.pdf">PDF</a></p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
-the structure of self-regulated learning via LLM-generated survey
-responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Burger, J., Isvoranu, A.-M., Lunansky, G., Haslbeck, J. M. B.,
+Epskamp, S., Hoekstra, R. H. A., Fried, E. I., Borsboom, D., &amp;
+Blanken, T. F. (2023). Reporting standards for psychological network
+analyses in cross-sectional data. <em>Psychological Methods</em>, 28(4),
+806-824. <a href="https://doi.org/10.1037/met0000471" class="external-link">doi:10.1037/met0000471</a></p>
+<p>Epskamp, S., Cramer, A. O. J., Waldorp, L. J., Schmittmann, V. D.,
+&amp; Borsboom, D. (2012). qgraph: Network visualizations of
+relationships in psychometric data. <em>Journal of Statistical
+Software</em>, 48(4). <a href="https://doi.org/10.18637/jss.v048.i04" class="external-link">doi:10.18637/jss.v048.i04</a></p>
+<p>Jones, P. J., Mair, P., &amp; McNally, R. J. (2018). Visualizing
+psychological networks: A tutorial in R. <em>Frontiers in
+Psychology</em>, 9, 1742. <a href="https://doi.org/10.3389/fpsyg.2018.01742" class="external-link">doi:10.3389/fpsyg.2018.01742</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., Haataja, E., Pijeira-Díaz, H.
+J., &amp; Järvelä, S. (2022). Modeling the complex interplay between
+monitoring events for regulated learning with psychological networks. In
+M. Giannakos, D. Spikol, D. Di Mitri, K. Sharma, X. Ochoa, &amp; R.
+Hammad (Eds.), <em>The multimodal learning analytics handbook</em>
+(pp. 79-104). Springer. <a href="https://doi.org/10.1007/978-3-031-08076-0_4" class="external-link">doi:10.1007/978-3-031-08076-0_4</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., Peeters, W., &amp; Viberg, O. (2021). The relational,
+co-temporal, contemporaneous, and longitudinal dynamics of
+self-regulation for academic writing. <em>Research and Practice in
+Technology Enhanced Learning</em>, 16, 29. <a href="https://doi.org/10.1186/s41039-021-00175-7" class="external-link">doi:10.1186/s41039-021-00175-7</a></p>
+<p>Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas,
+S., &amp; Saqr, M. (2025). Delving into the psychology of machines:
+Exploring the structure of self-regulated learning via LLM-generated
+survey responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

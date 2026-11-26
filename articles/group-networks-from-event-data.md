@@ -1,31 +1,83 @@
 # Networks of regulation actions from event logs
 
-Digital learning environments record what learners do as event logs: who
-performed which action and when. In collaborative learning, the actions
-include planning, monitoring, discussing and regulating emotions, and a
-recurring question is which of these behaviours go together. Students
-who plan more may also build more consensus, while those who discuss
-more may plan less. Network models answer such questions for variables
-measured on the same observations, so an event log is first summarized
-into the number of times each actor performed each action. A partial
-correlation network of these frequencies shows which actions co-occur
-after the frequencies of all other actions are held constant.
+Digital learning environments produce event logs that identify the
+learner, the action performed and the time of the event. In
+collaborative tasks, these records may capture planning, monitoring,
+discussion, consensus building and emotional regulation. Researchers
+often want to know whether such actions tend to occur together, rather
+than merely how frequently each action occurs. Psychological network
+analysis offers a way to examine these patterns by representing actions
+as nodes and their conditional associations as edges. This approach
+treats relationships among observed variables as the object of analysis,
+while avoiding the assumption that an association represents a causal
+influence (Borsboom et al., 2021).
 
-What an edge means depends on the unit of observation. When each actor’s
-whole history is one observation, the network describes differences
-between actors: those who do more of one action also do more of another.
-When the history is divided into sessions and each session is compared
-with the actor’s own average, the network describes variation within
-actors: in sessions where an actor does more of one action than usual,
-the actor also does more of another. This article estimates both kinds
-of network from a log of group regulation actions, compares the networks
-of high and low achievers, and separates the within- and between-actor
-parts of the same data.
+To construct a psychological network from an event log, events must
+first be aggregated into comparable observations. For example, counting
+each student’s actions produces a table with one row per student and one
+column per action. A Gaussian graphical model then estimates partial
+correlations between action frequencies, accounting for the other
+actions in the model (Epskamp et al., 2018). This can reveal
+associations that are not apparent from separate frequency summaries.
+However, aggregation changes the question being answered. A network
+comparing students’ total counts describes differences between students,
+whereas a network based on deviations from each student’s usual session
+counts describes variation within students. These levels should not be
+interpreted interchangeably, a distinction also relevant to the
+interpretation of longitudinal models (Hamaker et al., 2015).
+
+Psychological and related network approaches have been used in education
+to investigate the interconnections among learning activities and
+regulatory processes (Saqr et al., 2024). For example, network analysis
+has been applied to individual monitoring events and phases of
+regulation in collaborative learning (Malmberg et al., 2022). Work on
+self-regulation has also framed learners’ behaviour as a complex,
+evolving system (Saqr & López-Pernas, 2024). These applications make the
+level of analysis especially important: group-level patterns of
+engagement need not reflect the processes of individual learners (Saqr,
+2024). Networks based on event frequencies are therefore useful
+descriptive tools, but they do not by themselves establish the order of
+actions or the mechanisms that produce them.
+
+This article demonstrates how to use
+[`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
+in `psychnets` to estimate networks of regulation actions from an event
+log. We first construct a network from each student’s complete action
+history and examine its edges and numerical convergence. We then compare
+networks estimated separately for high and low achievers. Finally, we
+divide the histories into sessions, estimate a network of within-student
+deviations and separate within-student from between-student
+associations. The example uses synthetic data, so the results illustrate
+interpretation and reporting rather than provide evidence about actual
+learners.
 
 ``` r
 
 library(psychnets)
 ```
+
+## The model
+
+For actor $`a`$, occasion $`s`$ and action $`j`$, the frequency is the
+number of matching events,
+
+``` math
+V_{asj} = \sum_e I(A_e = a,\ S_e = s,\ J_e = j).
+```
+
+Without sessions, each actor contributes one frequency vector based on
+the full observation period. Associations in this network therefore
+describe differences between actors. With sessions, each actor
+contributes several frequency vectors, allowing variation across
+occasions to be examined. Subtracting the actor’s mean,
+$`V^{W}_{asj} = V_{asj} - \bar V_{a \cdot j}`$, gives the within-actor
+deviations, and the actor means $`\bar V_{a \cdot j}`$ carry the
+between-actor part. Each network is a Gaussian graphical model estimated
+by the EBIC graphical lasso. An edge represents a partial correlation
+between two action frequencies conditional on the other seven actions.
+Its sign indicates the direction of the association, and its magnitude
+indicates its estimated strength. Neither a positive nor a negative edge
+establishes causation.
 
 ## Data
 
@@ -58,30 +110,13 @@ head(event_log)
 #> 6     1     High     1      A 2025-01-01 08:57:31 consensus
 ```
 
-Each row is one event, and the rows of one actor form that actor’s
-history.
+Each row records one action by one student at a particular time.
+Multiple rows for the same student make up that student’s event history.
 [`psychnet()`](https://pak.dynasite.org/psychnets/reference/psychnet.md)
-recognizes an event log when the `actor` argument names the actor
-column; the action column is `Action` by default.
-
-## The model
-
-For actor $`a`$, occasion $`s`$ and action $`j`$, the frequency is the
-number of matching events,
-
-``` math
-V_{asj} = \sum_e I(A_e = a,\ S_e = s,\ J_e = j).
-```
-
-Without sessions, each actor contributes one frequency vector, and the
-network is estimated from these between-actor frequencies. With
-sessions, each actor contributes several vectors. Subtracting the
-actor’s mean, $`V^{W}_{asj} = V_{asj} - \bar V_{a \cdot j}`$, gives the
-within-actor deviations, and the actor means $`\bar V_{a \cdot j}`$
-carry the between-actor part. Each network is a Gaussian graphical model
-estimated by the EBIC graphical lasso, so an edge is a partial
-correlation between two action frequencies with the other seven held
-constant.
+recognises the data as an event log when the `actor` argument identifies
+the student column; the action column is `Action` by default. As the
+example is synthetic, its frequencies and associations should not be
+generalised to a population of students.
 
 ## Which actions co-occur across students?
 
@@ -131,34 +166,46 @@ as.data.frame(actor_net)
 #> 28    emotion  synthesis -0.020637713
 ```
 
-The network has 28 of the 36 possible edges, with partial correlations
-from -0.154 to 0.434. The strongest joins `consensus` and `plan`
-(0.434): students who plan more also reach consensus more often, at
-equal frequencies of the other actions. Consensus is also strongly tied
-to `discuss` (0.329) and `coregulate` (0.226), and `cohesion` to
-`emotion` (0.348). The strongest negative edge joins `discuss` and
-`plan` (-0.154): students who discuss more plan less. Several edges are
-close to zero, for example `coregulate`–`plan` (-0.007) and
-`coregulate`–`synthesis` (0.008), and carry no substantive weight.
-Consensus building is thus the hub of the regulation network, linked to
-both planning and discussion.
+Of the 36 possible connections between nine actions, 28 have non-zero
+estimated weights. These range from -0.154 to 0.434. The largest
+positive edge connects `consensus` and `plan` (0.434). Students with
+higher planning counts also tend to have higher consensus counts after
+accounting for their frequencies of the other seven actions. Other
+relatively strong positive edges connect `cohesion` and `emotion`
+(0.348), `consensus` and `discuss` (0.329), and `consensus` and
+`coregulate` (0.226).
+
+The most negative edge connects `discuss` and `plan` (-0.154),
+indicating an inverse conditional association across students. This does
+not imply that discussion prevents planning. Some retained edges have
+negligible magnitudes, including `coregulate`–`plan` (-0.007) and
+`coregulate`–`synthesis` (0.008), and should not be given substantive
+interpretations simply because they are non-zero. Taken together, the
+comparatively strong connections involving `consensus` suggest that
+consensus building occupies a prominent position in this estimated
+network.
 
 ## Is the fitted network the optimum of its objective?
 
-Any solution of the graphical lasso must satisfy the problem’s
-optimality (Karush–Kuhn–Tucker) conditions; the amount by which a fitted
-network violates them is its certificate, and a value near zero shows
-that the network is the optimum of its objective.
+The graphical lasso solves a penalised optimisation problem. Its
+solution should satisfy the Karush–Kuhn–Tucker optimality conditions.
+The certificate measures the remaining violation of these conditions,
+with a value close to zero indicating that the numerical solution meets
+them to high precision. This is a check on optimisation, not on whether
+the model is substantively correct.
 
 ``` r
 
 certificate(actor_net)
 #>   method  certificate kind certified
-#> 1 glasso 3.188705e-11  kkt      TRUE
+#> 1 glasso 3.188688e-11  kkt      TRUE
 ```
 
-The violation is $`3.19 \times 10^{-11}`$, so the network is the
-graphical-lasso solution at the selected penalty.
+The certificate is $`3.19 \times 10^{-11}`$ and is marked as certified
+in the output. This indicates that the fitted network satisfies the
+graphical-lasso optimality conditions to high numerical precision at the
+selected penalty. It does not establish that the estimated edges would
+replicate in another sample.
 
 ## What does the network look like?
 
@@ -198,10 +245,13 @@ summary(achievement_nets)
 #> 2   Low     9    27       0.1139959
 ```
 
-The network of high achievers has 25 edges and that of low achievers 27,
-each from 1,000 students. The mean absolute edge weight is 0.114 in
-both, so the retained associations are of the same typical size.
-Centrality shows where the two networks differ:
+The network for high achievers contains 25 edges and the network for low
+achievers contains 27, each estimated from 1,000 students. Their mean
+absolute weights are almost identical (0.114 in both). Thus, the average
+magnitude of the retained edges is very similar, although the number and
+arrangement of edges differ. Node strength, the sum of the absolute
+weights of edges connected to a node, provides a further descriptive
+comparison:
 
 ``` r
 
@@ -233,14 +283,16 @@ net_centralities(achievement_nets)
 #> 9  synthesis 0.4415186          0.4415186
 ```
 
-`consensus` has the largest strength in both groups, 1.448 among high
-and 1.200 among low achievers. Among low achievers, `discuss` follows
-closely (1.081), and `adapt` (0.504 against 0.256) and `coregulate`
-(0.638 against 0.483) are more connected than among high achievers. The
-networks of high achievers are thus more concentrated on consensus
-building. These are descriptive differences between two estimated
-networks; a formal test of a difference requires a network comparison
-test
+`consensus` has the highest strength in both groups, at 1.448 for high
+achievers and 1.200 for low achievers. For low achievers, `discuss` has
+a strength of 1.081. Both `adapt` (0.504 versus 0.256) and `coregulate`
+(0.638 versus 0.483) have greater strength in the low-achiever network
+than in the high-achiever network. The high-achiever network appears
+more concentrated around `consensus`, whereas several other actions are
+relatively more connected in the low-achiever network. These
+observations describe estimated networks and do not establish
+statistically significant group differences. A formal assessment
+requires a network comparison test
 ([`net_compare()`](https://pak.dynasite.org/psychnets/reference/net_compare.md)).
 
 ``` r
@@ -295,16 +347,24 @@ certificate(within_net)
 #> 1 glasso 1.296872e-12  kkt      TRUE
 ```
 
-The within-student network has 14 edges, half as many as the
-between-student network, and a larger penalty ($`\lambda = 0.0288`$).
-Its strongest edge joins `cohesion` and `emotion` (0.148): in sessions
-where a student expresses more cohesion than usual, the student also
-expresses more emotion than usual. `discuss`–`synthesis` (0.117) and
-`consensus`–`plan` (0.116) follow, and `discuss`–`plan` is again
-negative (-0.074). The certificate, $`1.30 \times 10^{-12}`$, shows that
-the network is the optimum of its objective. The within-student
-associations are weaker than the between-student ones, and only part of
-the between-student structure is repeated from session to session.
+The within-student network contains 14 edges, compared with 28 in the
+network based on students’ complete histories. The selected penalty is
+$`\lambda = 0.0288`$, compared with 0.0080 for the full-history network.
+The largest within-student edge connects `cohesion` and `emotion`
+(0.148). In sessions where a student has more cohesion events than their
+own average, they also tend to have more emotion events than their own
+average, conditional on the other actions. Further positive edges
+connect `discuss`–`synthesis` (0.117) and `consensus`–`plan` (0.116),
+while `discuss`–`plan` is negative (-0.074).
+
+The certificate is $`1.30 \times 10^{-12}`$, indicating a numerically
+satisfactory graphical-lasso solution. The smaller number of edges and
+lower maximum weight describe a sparser, generally weaker set of
+conditional associations than in the full-history network. These
+differences must be interpreted cautiously because the networks use
+different observational units and have different selected penalties. In
+particular, an association between students need not also characterise
+how a given student varies across sessions.
 
 ``` r
 
@@ -332,11 +392,14 @@ multilevel_nets
 #>   between: 9 nodes, 24 edges
 ```
 
-The five-minute rule divides the 2,000 histories into 12,305 sessions.
-The within-student network has 14 edges and the between-student network
-24. More associations hold between students’ average profiles than
-between their session-to-session fluctuations. A plot shows the two
-networks side by side.
+Applying the five-minute session rule to the histories of 2,000 students
+produces 12,305 sessions. The decomposition yields 14 edges in the
+within-student network and 24 in the between-student network of average
+session counts. These are two distinct sources of association:
+deviations within students and differences between students’ average
+session profiles. The between-student component has more retained edges
+in this fitted model, but edge counts alone do not demonstrate stronger
+underlying processes. The plot presents the two networks side by side.
 
 ``` r
 
@@ -345,23 +408,33 @@ cograph::splot(multilevel_nets, psych_styling = TRUE)
 
 ![](group-networks-from-event-data_files/figure-html/plot-multilevel-1.png)
 
-The decomposition separates the two sources of covariance; it is not a
-random-effects model.
+This decomposition separates within-student from between-student
+covariance in the session-level counts. It is not a random-effects
+model, and neither component describes the temporal ordering of
+regulatory actions. Also, the between-student network here is based on
+mean session counts, so it is not the same estimand as the earlier
+network based on complete-history counts.
 
 ## Reporting the analysis
 
-A report names the actor, action and time columns, defines the occasion
-and the session rule, states whether the network describes differences
-between actors or variation within them, and gives the estimator and its
-settings. It also states that sessions defined by timestamps do not make
-the network temporal.
+To make an event-log network analysis reproducible, a report should
+specify the actor and action columns and, when applicable, the time
+column. It should explain how events were counted, what constitutes an
+observation, and how sessions were defined. The report should
+distinguish whole-history, within-student and between-student estimands,
+identify the estimator and its settings, and present the main edge
+patterns with appropriate caution. Dividing a log by timestamps does not
+make a contemporaneous association network a temporal or causal model.
 
-In this analysis, 27,533 events from 2,000 students gave a
-between-student network of 28 edges, with consensus building as its hub.
-High and low achievers had networks of 25 and 27 edges with the same
-mean absolute weight. A five-minute session rule gave 12,305 sessions, a
-within-student network of 14 edges and a between-student network of 24
-edges.
+For example, the synthetic log contains 27,533 events from 2,000
+students. The network of complete-history counts contains 28 edges, with
+`consensus` having several of the strongest connections. The networks of
+high and low achievers contain 25 and 27 edges, respectively, and both
+have a mean absolute edge weight of approximately 0.114. A five-minute
+session rule identifies 12,305 sessions. The session-based analysis
+produces a within-student network with 14 edges and a between-student
+network of average session counts with 24 edges. These figures describe
+the fitted example, not population-level effects.
 
 ## Assumptions and when to use which network
 
@@ -381,3 +454,51 @@ edges.
   individual events, and not causal effects. For the order in which
   actions follow one another, transition network analysis is the
   appropriate model.
+
+## How to cite this article
+
+Saqr, M., & López-Pernas, S. (2026). *Networks of regulation actions
+from event logs*. psychnets. <https://doi.org/10.5281/zenodo.24567512> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/group-networks-from-event-data.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/group-networks-from-event-data.pdf)
+
+## References
+
+Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E. I.,
+McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J., Costantini,
+G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van Bork, R., &
+Waldorp, L. J. (2021). Network analysis of multivariate data in
+psychological science. *Nature Reviews Methods Primers*, 1, 58.
+[doi:10.1038/s43586-021-00055-w](https://doi.org/10.1038/s43586-021-00055-w)
+
+Epskamp, S., Waldorp, L. J., Mõttus, R., & Borsboom, D. (2018). The
+Gaussian graphical model in cross-sectional and time-series data.
+*Multivariate Behavioral Research*, 53(4), 453-480.
+[doi:10.1080/00273171.2018.1454823](https://doi.org/10.1080/00273171.2018.1454823)
+
+Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique
+of the cross-lagged panel model. *Psychological Methods*, 20(1),
+102-116. [doi:10.1037/a0038889](https://doi.org/10.1037/a0038889)
+
+Malmberg, J., Saqr, M., Järvenoja, H., & Järvelä, S. (2022). How the
+monitoring events of individual students are associated with phases of
+regulation: A network analysis approach. *Journal of Learning
+Analytics*, 9(1), 77-92.
+[doi:10.18608/jla.2022.7429](https://doi.org/10.18608/jla.2022.7429)
+
+Saqr, M. (2024). Group-level analysis of engagement poorly reflects
+individual students’ processes: Why we need idiographic learning
+analytics. *Computers in Human Behavior*, 150, 107991.
+[doi:10.1016/j.chb.2023.107991](https://doi.org/10.1016/j.chb.2023.107991)
+
+Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A
+modern approach to analysis of learning and complex learning processes.
+In M. Saqr & S. López-Pernas (Eds.), *Learning analytics methods and
+tutorials: A practical guide using R* (pp. 639-671). Springer.
+[doi:10.1007/978-3-031-54464-4_19](https://doi.org/10.1007/978-3-031-54464-4_19)
+
+Saqr, M., & López-Pernas, S. (2024). Mapping the self in self-regulation
+using complex dynamic systems approach. *British Journal of Educational
+Technology*, 55(4), 1376-1397.
+[doi:10.1111/bjet.13452](https://doi.org/10.1111/bjet.13452)

@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Stepwise Gaussian graphical model selection">
+<meta name="citation_title" content="Stepwise Gaussian graphical model selection">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/ggm-model-selection.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/ggm-model-selection.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567508">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,44 +81,120 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Stepwise Gaussian graphical model selection</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/ggm-model-selection.Rmd" class="external-link"><code>vignettes/ggm-model-selection.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/ggm-model-selection.Rmd" class="external-link"><code>vignettes/ggm-model-selection.Rmd</code></a></small>
       <div class="d-none name"><code>ggm-model-selection.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>A partial correlation network describes which variables remain
-associated after all other variables are held constant. The regularized
-estimator most often used in psychology, the graphical lasso, selects
-the network and estimates its edges in one step, and its penalty shrinks
-every retained edge toward zero. When the aim is to interpret the size
-of the partial correlations, this shrinkage is a bias. Stepwise model
-selection separates the two tasks: it first chooses which edges belong
-in the network by comparing candidate graphs with an information
-criterion, and then estimates the partial correlations of the chosen
-graph by unpenalized maximum likelihood (Williams et al., 2019). The
-edges are therefore not shrunk, and sparsity comes from the choice of
-the graph rather than from a penalty.</p>
-<p>This article selects a network for five self-regulated learning
-constructs by stepwise search, reads the unshrunk edges, compares them
-with the graphical lasso on the same data, describes the nodes through
-centrality and predictability, and checks the selection against
-rank-based correlations.</p>
+<p>Which links between psychological constructs should remain in a model
+after the other measured variables have been considered? Stepwise
+Gaussian graphical model selection addresses the task of identifying a
+set of conditional associations rather than displaying every pairwise
+correlation. In a Gaussian graphical model (GGM), constructs appear as
+nodes and edges indicate partial correlations between two variables
+after adjustment for the rest of the network. The resulting pattern can
+describe how related psychological characteristics are organised,
+although selecting an edge does not establish a causal relationship
+(Epskamp et al., 2018; Saqr et al., 2024).</p>
+<p>Selecting the edges is an important part of estimating a GGM. A
+widely used approach, the graphical lasso, applies a penalty to estimate
+a sparse network, but it also shrinks retained partial correlations
+towards zero (Epskamp &amp; Fried, 2018). This can complicate the
+interpretation of edge magnitudes. Stepwise model selection offers an
+alternative: it compares candidate graphs using an information criterion
+and then estimates the edges of the selected graph by unpenalised
+maximum likelihood (Williams et al., 2019). The extended Bayesian
+information criterion provides a way to balance model fit and complexity
+(Foygel &amp; Drton, 2010). Neither approach is preferable in every
+setting; sample size, network dimension and the purpose of the analysis
+should inform the choice of estimator (Isvoranu &amp; Epskamp, 2023;
+Williams &amp; Rast, 2020).</p>
+<p>In education, psychological networks have been used to investigate
+relationships among learning strategies, motivation and the regulation
+of learning. Network approaches can represent the interdependence of
+learning-related processes without treating every association as a
+direct effect. For example, Saqr et al. (2021) examined the relational
+and temporal dynamics of self-regulation in academic writing, while
+Malmberg et al. (2022) analysed how students’ monitoring events were
+associated with phases of regulation. These applications illustrate the
+value of considering several interconnected processes, alongside the
+need to distinguish descriptive associations from explanations of how
+learning occurs.</p>
+<p>This article demonstrates stepwise GGM selection with
+<code>psychnets</code> using five self-regulated learning constructs
+from a dataset of language-model-generated questionnaire responses
+(Vogelsmeier et al., 2025). It explains the selection criterion, fits
+and interprets the resulting network, verifies the numerical solution,
+and compares the selected edges with those from the graphical lasso. It
+also examines node centrality and predictability and repeats the
+analysis using rank-based correlations. The example is intended to guide
+applied researchers through estimation and interpretation, not to draw
+conclusions about actual students.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
+<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
+</h2>
+<p>A GGM describes conditional associations among continuous variables.
+Under multivariate normality, the precision matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐊</mi><mo>=</mo><msup><mi>𝚺</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathbf{K} = \boldsymbol\Sigma^{-1}</annotation></semantics></math>
+is the inverse of the covariance matrix. An edge between
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>i</mi></msub><annotation encoding="application/x-tex">X_i</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>j</mi></msub><annotation encoding="application/x-tex">X_j</annotation></semantics></math>
+corresponds to a non-zero partial correlation</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ρ</mi><mrow><mi>i</mi><mi>j</mi><mo>⋅</mo><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></mrow></msub><mo>=</mo><mi>−</mi><mfrac><msub><mi>K</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msqrt><mrow><msub><mi>K</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><msub><mi>K</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub></mrow></msqrt></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\rho_{ij \cdot \mathrm{rest}} = -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}}.
+</annotation></semantics></math></p>
+<p>The procedure compares candidate graphs using the extended Bayesian
+information criterion (EBIC),</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">EBIC</mi><mo>⁡</mo></mrow><mi>γ</mi></msub><mo>=</mo><mi>−</mi><mn>2</mn><mi>ℓ</mi><mo stretchy="false" form="prefix">(</mo><mover><mi>𝐊</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>E</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo>+</mo><mn>4</mn><mi>E</mi><mi>γ</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>p</mi><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\operatorname{EBIC}_{\gamma} = -2\ell(\widehat{\mathbf{K}}) + E\log n
++ 4E\gamma\log p,
+</annotation></semantics></math></p>
+<p>Here,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℓ</mi><annotation encoding="application/x-tex">\ell</annotation></semantics></math>
+is the log-likelihood after refitting the graph without a penalty,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>E</mi><annotation encoding="application/x-tex">E</annotation></semantics></math>
+is its number of edges,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
+is the sample size and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+is the number of nodes. The parameter
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>
+controls the additional penalty for model complexity; the default
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\gamma = 0</annotation></semantics></math>
+gives the ordinary Bayesian information criterion (BIC). Lower scores
+indicate a better balance of fit and complexity.</p>
+<p>The search has two stages. First, a graphical-lasso path provides
+candidate graphs, from which the lowest-scoring graph is selected after
+each candidate has been refitted by maximum likelihood. Next, the
+algorithm considers adding or removing a single edge and accepts changes
+that reduce the criterion. It stops when neither type of single-edge
+change improves the score. The selected network is therefore a local
+optimum, not necessarily the best graph among all possible graphs.</p>
+</div>
+<div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
-Strategies for Learning Questionnaire, each a construct score on a scale
-from 1 to 7. The responses were generated by a large language model
-(GPT) in a study of how such models answer psychological surveys (Saqr,
-2025); they serve as a well-structured example and are not evidence
-about students.</p>
+<p><code>SRL_GPT</code> contains 300 sets of questionnaire responses
+summarised as construct scores on a scale from 1 to 7. The scores relate
+to the Motivated Strategies for Learning Questionnaire. They were
+generated by a large language model (GPT) as part of a study of how
+these models respond to psychological surveys (Vogelsmeier et al.,
+2025). They provide an example for demonstrating the method, but they
+are not observations of students and should not be interpreted as
+evidence about student learning.</p>
 <ul>
 <li>
 <strong>Nodes:</strong> five construct scores, treated as
@@ -115,8 +202,8 @@ continuous: <code>CSU</code> (cognitive strategy use), <code>IV</code>
 (intrinsic value), <code>SE</code> (self-efficacy), <code>SR</code>
 (self-regulation) and <code>TA</code> (test anxiety).</li>
 <li>
-<strong>Observations:</strong> one row per respondent; the data are
-complete.</li>
+<strong>Observations:</strong> one row per generated response set;
+the data are complete.</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
@@ -127,64 +214,28 @@ complete.</li>
 <span><span class="co">#&gt; 4 5.692308 6.555556 6.333333 5.555556 4.50</span></span>
 <span><span class="co">#&gt; 5 4.384615 5.555556 4.888889 4.777778 4.00</span></span>
 <span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
-<p>With 300 observations and five variables, the sample is large
-relative to the number of parameters, which is the setting in which
-unregularized estimation is stable.</p>
-</div>
-<div class="section level2">
-<h2 id="the-model">The model<a class="anchor" aria-label="anchor" href="#the-model"></a>
-</h2>
-<p>The model is the Gaussian graphical model: under multivariate
-normality with precision matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐊</mi><mo>=</mo><msup><mi>𝚺</mi><mrow><mi>−</mi><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\mathbf{K} = \boldsymbol\Sigma^{-1}</annotation></semantics></math>,
-an edge between
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>i</mi></msub><annotation encoding="application/x-tex">X_i</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>j</mi></msub><annotation encoding="application/x-tex">X_j</annotation></semantics></math>
-is a non-zero partial correlation</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ρ</mi><mrow><mi>i</mi><mi>j</mi><mo>⋅</mo><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></mrow></msub><mo>=</mo><mi>−</mi><mfrac><msub><mi>K</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><msqrt><mrow><msub><mi>K</mi><mrow><mi>i</mi><mi>i</mi></mrow></msub><msub><mi>K</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub></mrow></msqrt></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
-\rho_{ij \cdot \mathrm{rest}} = -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}}.
-</annotation></semantics></math></p>
-<p>Candidate graphs are scored by the extended Bayesian information
-criterion,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">EBIC</mi><mo>⁡</mo></mrow><mi>γ</mi></msub><mo>=</mo><mi>−</mi><mn>2</mn><mi>ℓ</mi><mo stretchy="false" form="prefix">(</mo><mover><mi>𝐊</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mi>E</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo>+</mo><mn>4</mn><mi>E</mi><mi>γ</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>p</mi><mo>,</mo></mrow><annotation encoding="application/x-tex">
-\operatorname{EBIC}_{\gamma} = -2\ell(\widehat{\mathbf{K}}) + E\log n
-+ 4E\gamma\log p,
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℓ</mi><annotation encoding="application/x-tex">\ell</annotation></semantics></math>
-is the log-likelihood of the graph refitted without a penalty,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>E</mi><annotation encoding="application/x-tex">E</annotation></semantics></math>
-its number of edges,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
-the sample size and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
-the number of nodes. The default
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\gamma = 0</annotation></semantics></math>
-reduces the criterion to the ordinary BIC.</p>
-<p>The search proceeds in two stages. A graphical-lasso path supplies
-candidate graphs ranging from empty to complete; each is refitted by
-maximum likelihood and scored, and the best becomes the starting graph.
-A stepwise search then adds or removes one edge at a time whenever the
-change lowers the criterion, and stops when no single change improves
-it. The result is a local optimum among graphs that differ by one
-edge.</p>
+<p>There are 300 observations for five variables. This relatively
+favourable ratio of observations to variables makes the example suitable
+for illustrating unpenalised estimation, although adequate sample size
+alone does not establish that a selected network is stable.</p>
 </div>
 <div class="section level2">
 <h2 id="which-constructs-are-directly-associated">Which constructs are directly associated?<a class="anchor" aria-label="anchor" href="#which-constructs-are-directly-associated"></a>
 </h2>
-<p><code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>method = "ggm"</code> runs the
-stepwise selection.</p>
+<p>The call to <code><a href="../reference/psychnet.html">psychnet()</a></code> with <code>method = "ggm"</code>
+selects a GGM by the stepwise procedure. The summary reports the number
+of nodes and retained edges, together with a numerical optimality check
+and the range of estimated edge weights.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">stepwise_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"ggm"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 9   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 1.22e-15</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 7.77e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.370, 0.422], mean 0.196</span></span></code></pre></div>
-<p>The selected graph has 9 of the 10 possible edges, with weights from
--0.370 to 0.422. The edge table gives each unshrunk partial
-correlation:</p>
+<p>The selected graph retains 9 of the 10 possible edges. Its estimated
+partial correlations range from -0.370 to 0.422. The following table
+identifies the connected pairs and their unpenalised edge weights:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to     weight</span></span>
@@ -197,44 +248,51 @@ correlation:</p>
 <span><span class="co">#&gt; 7   IV TA  0.1565223</span></span>
 <span><span class="co">#&gt; 8   SE TA  0.1368928</span></span>
 <span><span class="co">#&gt; 9   SR TA -0.3699703</span></span></code></pre></div>
-<p>The learning constructs form a positive cluster. The strongest edge
-joins cognitive strategy use and intrinsic value (0.422), followed by
-cognitive strategy use with self-efficacy (0.392): respondents with
-higher strategy use report more intrinsic value and self-efficacy even
-when the other constructs are equal. Self-regulation and test anxiety
-share the only negative edge (-0.370). Test anxiety also has two modest
-positive edges, with intrinsic value (0.157) and self-efficacy (0.137).
-The <code>CSU</code>–<code>TA</code> pair is removed: the selected graph
-contains no association between strategy use and test anxiety beyond
-what the other constructs account for, although their ordinary
-correlation is not zero.</p>
+<p>The four learning-related constructs are connected by positive edges.
+The largest positive partial correlation is between cognitive strategy
+use and intrinsic value (0.422), followed by cognitive strategy use and
+self-efficacy (0.392). These are conditional associations after
+accounting for the other constructs, rather than estimates of the
+effects of one construct on another. The only negative edge connects
+self-regulation and test anxiety (-0.370). Test anxiety also has smaller
+positive edges with intrinsic value (0.157) and self-efficacy (0.137).
+The <code>CSU</code>–<code>TA</code> edge is absent. Under the selected
+graph, its partial correlation is constrained to zero, although this
+does not establish that the constructs are unrelated in the
+population.</p>
 </div>
 <div class="section level2">
 <h2 id="is-the-refitted-network-the-maximum-likelihood-solution">Is the refitted network the maximum-likelihood solution?<a class="anchor" aria-label="anchor" href="#is-the-refitted-network-the-maximum-likelihood-solution"></a>
 </h2>
-<p>The final network is the maximum-likelihood estimate of a GGM whose
-missing edges are fixed at zero. Any solution must satisfy the problem’s
-optimality (Karush–Kuhn–Tucker) conditions: the implied covariance
-reproduces the observed correlation on every retained edge and on the
-diagonal, and the precision is zero on every removed edge. The amount by
-which a fitted network violates them is its certificate; a value near
-zero shows that the network is the optimum of its objective.</p>
+<p>Once the graph has been selected, its retained edges are estimated by
+maximum likelihood, with the absent edges constrained to zero. The
+Karush–Kuhn–Tucker optimality conditions provide a numerical check of
+this fit. In particular, the fitted covariance must match the observed
+covariance in the positions corresponding to the diagonal and retained
+edges, while the precision matrix must have zeros for absent edges. The
+certificate summarises the extent to which these conditions are
+violated; a value close to zero indicates that the fitted parameters
+satisfy the optimisation conditions for the selected graph.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    ggm 1.221245e-15  kkt      TRUE</span></span></code></pre></div>
-<p>The violation is at the level of machine precision (below
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>14</mn></mrow></msup><annotation encoding="application/x-tex">10^{-14}</annotation></semantics></math>),
-so the reported edges are the exact maximum-likelihood estimates for the
-selected graph. The certificate checks the computation, not the choice
-of the graph or the sampling uncertainty of its edges.</p>
+<span><span class="co">#&gt; 1    ggm 7.771561e-16  kkt      TRUE</span></span></code></pre></div>
+<p>The certificate is approximately
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4.44</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup></mrow><annotation encoding="application/x-tex">4.44 \times 10^{-16}</annotation></semantics></math>,
+below
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mi>−</mi><mn>14</mn></mrow></msup><annotation encoding="application/x-tex">10^{-14}</annotation></semantics></math>,
+and the fit is marked as certified. This provides strong numerical
+evidence that the reported parameters solve the maximum-likelihood
+problem for the selected graph. It does not show that the graph itself
+is the correct model or that its estimated edges would be stable in
+another sample.</p>
 </div>
 <div class="section level2">
 <h2 id="how-does-the-selection-differ-from-the-graphical-lasso">How does the selection differ from the graphical lasso?<a class="anchor" aria-label="anchor" href="#how-does-the-selection-differ-from-the-graphical-lasso"></a>
 </h2>
-<p>The graphical lasso, <code>method = "glasso"</code>, estimates the
-same kind of network with a penalty. Fitting it to the same data shows
-what the penalty changes.</p>
+<p>For comparison, <code>method = "glasso"</code> fits a penalised GGM
+to the same data. This makes it possible to inspect differences in the
+selected edges and their estimated magnitudes.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">glasso_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"glasso"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">glasso_net</span><span class="op">)</span></span>
@@ -255,22 +313,28 @@ what the penalty changes.</p>
 <span><span class="co">#&gt; 8    IV TA  0.11058735</span></span>
 <span><span class="co">#&gt; 9    SE TA  0.09871818</span></span>
 <span><span class="co">#&gt; 10   SR TA -0.34985157</span></span></code></pre></div>
-<p>The graphical lasso keeps all 10 edges, including a weak
-<code>CSU</code>–<code>TA</code> edge (0.049) that the stepwise
-selection removes. Seven of the nine shared edges are larger in absolute
-value in the stepwise model because they are not shrunk:
-<code>CSU</code>–<code>IV</code> is 0.422 against 0.412, and
-<code>SR</code>–<code>TA</code> is -0.370 against -0.350. The two
-methods agree on the structure and differ in the smallest edge and in
-the size of the others. The stepwise estimates suit an interpretation of
-edge magnitudes; the graphical lasso is the safer choice when the sample
-is small relative to the number of variables.</p>
+<p>The graphical lasso retains all 10 possible edges, including a small
+<code>CSU</code>–<code>TA</code> partial correlation (0.049) that is
+absent from the stepwise graph. Of the nine edges shared by the methods,
+seven have larger absolute weights under stepwise selection. For
+example, <code>CSU</code>–<code>IV</code> is 0.422 in the stepwise
+network and 0.412 in the graphical-lasso network, while
+<code>SR</code>–<code>TA</code> is -0.370 and -0.350, respectively. Two
+shared edges are instead larger in absolute value under the graphical
+lasso, so the comparison should not be read as a uniform difference in
+every estimate. Both methods identify broadly similar patterns in these
+data, but they differ in edge inclusion and magnitude. Unpenalised
+refitting can be useful when edge sizes are of primary interest,
+provided the sample supports it; penalisation may be preferable when
+estimation would otherwise be unstable.</p>
 </div>
 <div class="section level2">
 <h2 id="which-constructs-are-most-connected">Which constructs are most connected?<a class="anchor" aria-label="anchor" href="#which-constructs-are-most-connected"></a>
 </h2>
-<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns strength, the sum of absolute
-edge weights, and expected influence, the signed sum.</p>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> summarises how each node is connected
+to the remaining network. Strength is the sum of the absolute weights of
+its incident edges, whereas expected influence retains the signs when
+summing those weights.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   node  strength expected_influence</span></span>
@@ -279,22 +343,24 @@ edge weights, and expected influence, the signed sum.</p>
 <span><span class="co">#&gt; 3   SE 0.8880693         0.88806926</span></span>
 <span><span class="co">#&gt; 4   SR 1.2592340         0.51929333</span></span>
 <span><span class="co">#&gt; 5   TA 0.6633854        -0.07655525</span></span></code></pre></div>
-<p>Self-regulation has the largest strength (1.259), followed by
-cognitive strategy use (1.152). The negative edge with test anxiety
-reduces the expected influence of self-regulation to 0.519, whereas
-cognitive strategy use, with only positive edges, has equal strength and
-expected influence. Test anxiety has the smallest strength (0.663) and a
-slightly negative expected influence (-0.077). The ordering is the same
-as in the graphical lasso. Centrality describes the estimated graph and
-does not identify causes or intervention targets.</p>
+<p>Self-regulation has the greatest strength (1.259), followed by
+cognitive strategy use (1.152). Because self-regulation has a negative
+edge with test anxiety, its expected influence is lower (0.519). By
+contrast, all edges incident to cognitive strategy use are positive, so
+its strength and expected influence are both 1.152. Test anxiety has the
+lowest strength (0.663) and a slightly negative expected influence
+(-0.077). These measures describe connections in the fitted network.
+They should not be interpreted as evidence that a highly connected
+construct causes changes elsewhere or is necessarily the best target for
+intervention.</p>
 </div>
 <div class="section level2">
 <h2 id="how-well-is-each-construct-predicted-by-the-others">How well is each construct predicted by the others?<a class="anchor" aria-label="anchor" href="#how-well-is-each-construct-predicted-by-the-others"></a>
 </h2>
-<p><code><a href="../reference/net_predict.html">net_predict()</a></code> reports each node’s
+<p><code><a href="../reference/net_predict.html">net_predict()</a></code> reports the predictability of each node as
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
-the share of its variance explained by the other nodes, computed from
-the precision matrix as
+the proportion of its variance accounted for by the other nodes in the
+fitted model. For a GGM, it is calculated from the precision matrix as
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>R</mi><mi>j</mi><mn>2</mn></msubsup><mo>=</mo><mn>1</mn><mo>−</mo><mn>1</mn><mi>/</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>K</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub><msub><mi>S</mi><mrow><mi>j</mi><mi>j</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">R_j^2 = 1 - 1/(K_{jj}S_{jj})</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/net_predict.html">net_predict</a></span><span class="op">(</span><span class="va">stepwise_net</span><span class="op">)</span></span>
@@ -304,42 +370,55 @@ the precision matrix as
 <span><span class="co">#&gt; 3   SE gaussian     R2      0.7279821       NA</span></span>
 <span><span class="co">#&gt; 4   SR gaussian     R2      0.7920188       NA</span></span>
 <span><span class="co">#&gt; 5   TA gaussian     R2      0.1656566       NA</span></span></code></pre></div>
-<p>The other constructs explain 83% of the variance in cognitive
-strategy use
+<p>Predictability is highest for cognitive strategy use
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.833</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.833</annotation></semantics></math>),
-79% in self-regulation, 78% in intrinsic value and 73% in self-efficacy,
-but only 17% in test anxiety
+followed by self-regulation
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.792</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.792</annotation></semantics></math>),
+intrinsic value
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.783</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.783</annotation></semantics></math>)
+and self-efficacy
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.728</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.728</annotation></semantics></math>).
+Test anxiety is much less predictable from the other four constructs
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>0.166</mn></mrow><annotation encoding="application/x-tex">R^2 = 0.166</annotation></semantics></math>).
-These values are slightly higher than under the graphical lasso because
-the unshrunk edges fit the sample more closely. They are in-sample
-values; prediction of new respondents requires a validation sample.</p>
+Expressed as percentages, these values correspond to approximately 83%,
+79%, 78%, 73% and 17% of the variance, respectively. They describe fit
+within the analysed dataset, not predictive accuracy for new
+observations. External or cross-validated assessment would be needed to
+evaluate out-of-sample prediction.</p>
 </div>
 <div class="section level2">
 <h2 id="what-does-the-network-look-like">What does the network look like?<a class="anchor" aria-label="anchor" href="#what-does-the-network-look-like"></a>
 </h2>
-<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> draws the network, here with green
-positive and red negative edges and a ring showing each node’s
-predictability.</p>
+<p><code><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">cograph::splot()</a></code> provides a visual summary of the fitted
+network. With these plotting options, positive and negative edges are
+distinguished by green and red, and a ring around each node represents
+its estimated predictability.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">cograph</span><span class="fu">::</span><span class="fu"><a href="https://sonsoles.me/cograph/reference/splot.html" class="external-link">splot</a></span><span class="op">(</span><span class="va">stepwise_net</span>, psych_styling <span class="op">=</span> <span class="cn">TRUE</span>, predictability <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggm-model-selection_files/figure-html/plot-1.png" class="r-plt" alt="" width="576" style="display: block; margin: auto;"></p>
-<p>The figure shows the positive cluster, the single negative edge, and
-the small ring of test anxiety. Node positions come from a layout
-algorithm and carry no statistical meaning.</p>
+<p>The plot highlights the positive connections among the learning
+constructs and the negative connection between self-regulation and test
+anxiety. The comparatively small predictability ring around test anxiety
+is consistent with its lower
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>.
+Node positions are determined by the plotting layout and should not be
+interpreted as measured distances between constructs.</p>
 </div>
 <div class="section level2">
 <h2 id="does-the-selection-depend-on-the-correlation-estimator">Does the selection depend on the correlation estimator?<a class="anchor" aria-label="anchor" href="#does-the-selection-depend-on-the-correlation-estimator"></a>
 </h2>
-<p>Refitting with <code>cor_method = "spearman"</code> bases the
-selection on rank correlations, which are less affected by skew and
-extreme values.</p>
+<p>As a sensitivity check, <code>cor_method = "spearman"</code> repeats
+the selection using rank correlations rather than Pearson correlations.
+Rank correlations are generally less sensitive to extreme values and
+non-normal marginal distributions, although they do not remove all
+modelling assumptions.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spearman_net</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psychnet.html">psychnet</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"ggm"</span>,</span>
 <span>                         cor_method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;psychnet&gt; ggm network</span></span>
 <span><span class="co">#&gt;   nodes: 5   edges: 7   (undirected)</span></span>
-<span><span class="co">#&gt;   optimality (KKT residual): 6.66e-16</span></span>
+<span><span class="co">#&gt;   optimality (KKT residual): 8.88e-16</span></span>
 <span><span class="co">#&gt;   edge weight: range [-0.266, 0.483], mean 0.245</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   from to     weight</span></span>
@@ -352,67 +431,109 @@ extreme values.</p>
 <span><span class="co">#&gt; 7   SR TA -0.2664620</span></span>
 <span><span class="fu"><a href="../reference/certificate.html">certificate</a></span><span class="op">(</span><span class="va">spearman_net</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   method  certificate kind certified</span></span>
-<span><span class="co">#&gt; 1    ggm 6.661338e-16  kkt      TRUE</span></span></code></pre></div>
-<p>The rank-based selection keeps 7 edges instead of 9. The edges among
-the learning constructs, <code>IV</code>–<code>TA</code> and the
-negative <code>SR</code>–<code>TA</code> edge (-0.266) remain, and the
+<span><span class="co">#&gt; 1    ggm 8.881784e-16  kkt      TRUE</span></span></code></pre></div>
+<p>The rank-based model retains 7 edges, compared with 9 in the
+Pearson-based model. It keeps five positive edges among the learning
+constructs, the positive <code>IV</code>–<code>TA</code> edge and the
+negative <code>SR</code>–<code>TA</code> edge (-0.266). The
 <code>IV</code>–<code>SE</code> and <code>SE</code>–<code>TA</code>
-edges are removed. Its certificate is again at machine precision. The
-core structure, a positive learning cluster and a negative link from
-self-regulation to test anxiety, does not depend on the estimator; the
-weaker edges do, and they should be reported with that caveat.</p>
+edges selected using Pearson correlations are no longer retained. Its
+certificate is approximately
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.11</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.11 \times 10^{-15}</annotation></semantics></math>,
+again indicating a numerically satisfactory fit. The main pattern of
+positive connections among learning constructs and a negative
+association between self-regulation and test anxiety is present in both
+networks, but inclusion of the weaker edges depends on the correlation
+estimator.</p>
 </div>
 <div class="section level2">
 <h2 id="reporting-the-analysis">Reporting the analysis<a class="anchor" aria-label="anchor" href="#reporting-the-analysis"></a>
 </h2>
-<p>A report states the variables, the sample size, the correlation
-estimator, the treatment of missing data, the selection criterion with
-its
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>,
-and that the edges are unpenalized maximum-likelihood partial
-correlations of the selected graph.</p>
-<p>In this analysis, stepwise selection with the BIC
+<p>A report of stepwise GGM selection should identify the variables and
+sample size, explain how missing data were handled, and specify the
+correlation estimator and selection criterion, including
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>.
+It should also make clear that retained edges are unpenalised
+maximum-likelihood partial correlations conditional on the selected
+graph. Information about sensitivity and uncertainty is important when
+interpreting the model.</p>
+<p>In this example, stepwise GGM selection using Pearson correlations
+and BIC
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\gamma = 0</annotation></semantics></math>)
-on Pearson correlations of 300 complete responses selected 9 edges. The
-largest positive partial correlation joined cognitive strategy use and
-intrinsic value (0.422), and the only negative one joined
-self-regulation and test anxiety (-0.370). A rank-based selection kept 7
-edges with the same core structure.</p>
+retained 9 of 10 possible edges from 300 complete, model-generated
+response sets. The largest positive partial correlation was between
+cognitive strategy use and intrinsic value (0.422), and the sole
+negative edge was between self-regulation and test anxiety (-0.370).
+Repeating the selection with Spearman correlations retained 7 edges,
+preserving these broad patterns but excluding two weaker
+connections.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-and-when-to-use-stepwise-selection">Assumptions and when to use stepwise selection<a class="anchor" aria-label="anchor" href="#assumptions-and-when-to-use-stepwise-selection"></a>
 </h2>
 <ul>
-<li>The data are continuous and approximately multivariate normal, and
-the observations are independent, as for any Gaussian graphical
-model.</li>
-<li>The sample is large relative to the number of variables. With few
-observations per parameter, unpenalized estimates are unstable and the
-graphical lasso is preferable.</li>
-<li>Stepwise selection is suited to interpreting edge magnitudes,
-because the retained edges are not shrunk. The graphical lasso is suited
-to small samples and to analyses where a sparse summary matters more
-than unbiased edge sizes.</li>
-<li>The search returns a local optimum. Different correlation estimators
-or values of
+<li>A standard GGM assumes continuous variables, approximate
+multivariate normality and independent observations. Researchers should
+consider whether these assumptions are reasonable for their measures and
+sampling design.</li>
+<li>Unpenalised estimates require sufficient information relative to the
+number of variables and possible edges. When observations are scarce
+relative to model complexity, penalised methods may provide more stable
+estimates.</li>
+<li>Stepwise selection separates graph selection from estimation of edge
+magnitudes. The retained edges are not penalised, but they remain
+subject to sampling uncertainty and possible selection error. This is
+not a guarantee of unbiased estimates after model selection.</li>
+<li>The stepwise search reaches a local optimum. Different correlation
+estimators, values of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>
-can select different graphs, so the stability of the selected edges
-should be assessed by resampling (see the network reliability
+or samples may lead to different graphs. Resampling and sensitivity
+analyses can help assess robustness (see the network reliability
 article).</li>
 </ul>
 </div>
 <div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Stepwise Gaussian
+graphical model selection</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567508" class="external-link uri">https://doi.org/10.5281/zenodo.24567508</a> · <a href="https://pak.dynasite.org/psychnets/articles/ggm-model-selection.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/ggm-model-selection.pdf">PDF</a></p>
+</div>
+<div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Epskamp, S., Borsboom, D., &amp; Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper.
+<em>Behavior Research Methods</em>, 50(1), 195-212. <a href="https://doi.org/10.3758/s13428-017-0862-1" class="external-link">doi:10.3758/s13428-017-0862-1</a></p>
 <p>Epskamp, S., &amp; Fried, E. I. (2018). A tutorial on regularized
 partial correlation networks. <em>Psychological Methods</em>, 23(4),
 617-634. <a href="https://doi.org/10.1037/met0000167" class="external-link">doi:10.1037/met0000167</a></p>
 <p>Foygel, R., &amp; Drton, M. (2010). Extended Bayesian information
 criteria for Gaussian graphical models. <em>Advances in Neural
 Information Processing Systems</em>, 23, 604-612.</p>
-<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
-the structure of self-regulated learning via LLM-generated survey
-responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Isvoranu, A.-M., &amp; Epskamp, S. (2023). Which estimation method to
+choose in network psychometrics? Deriving guidelines for applied
+researchers. <em>Psychological Methods</em>, 28(4), 925-946. <a href="https://doi.org/10.1037/met0000439" class="external-link">doi:10.1037/met0000439</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., &amp; Järvelä, S. (2022). How
+the monitoring events of individual students are associated with phases
+of regulation: A network analysis approach. <em>Journal of Learning
+Analytics</em>, 9(1), 77-92. <a href="https://doi.org/10.18608/jla.2022.7429" class="external-link">doi:10.18608/jla.2022.7429</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., Peeters, W., &amp; Viberg, O. (2021). The relational,
+co-temporal, contemporaneous, and longitudinal dynamics of
+self-regulation for academic writing. <em>Research and Practice in
+Technology Enhanced Learning</em>, 16, 29. <a href="https://doi.org/10.1186/s41039-021-00175-7" class="external-link">doi:10.1186/s41039-021-00175-7</a></p>
+<p>Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas,
+S., &amp; Saqr, M. (2025). Delving into the psychology of machines:
+Exploring the structure of self-regulated learning via LLM-generated
+survey responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Williams, D. R., &amp; Rast, P. (2020). Back to the basics:
+Rethinking partial correlation network methodology. <em>British Journal
+of Mathematical and Statistical Psychology</em>, 73(2), 187-212. <a href="https://doi.org/10.1111/bmsp.12173" class="external-link">doi:10.1111/bmsp.12173</a></p>
 <p>Williams, D. R., Rhemtulla, M., Wysocki, A. C., &amp; Rast, P.
 (2019). On nonregularized estimation of psychological networks.
 <em>Multivariate Behavioral Research</em>, 54(5), 719-750. <a href="https://doi.org/10.1080/00273171.2019.1575716" class="external-link">doi:10.1080/00273171.2019.1575716</a></p>

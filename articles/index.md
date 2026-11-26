@@ -27,3 +27,9 @@
   cograph](https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.md):
 - [Visualizing centrality, bootstrap and comparison
   results](https://pak.dynasite.org/psychnets/articles/visualizing-networks.md):
+
+### Resources
+
+Every article with its reference and PDF
+
+- [Resources](https://pak.dynasite.org/psychnets/articles/cite-articles.md):

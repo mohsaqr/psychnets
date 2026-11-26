@@ -2,6 +2,7 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  articles/cite-articles: cite-articles.html
   gaussian-graphical-models: gaussian-graphical-models.html
   ggm-model-selection: ggm-model-selection.html
   group-networks-from-event-data: group-networks-from-event-data.html
@@ -13,7 +14,7 @@ articles:
   relative-importance-networks: relative-importance-networks.html
   articles/visualizing-networks: visualizing-networks.html
   visualizing-with-cograph: visualizing-with-cograph.html
-last_built: 2026-11-23T18:30Z
+last_built: 2026-11-26T18:14Z
 urls:
   reference: https://pak.dynasite.org/psychnets/reference
   article: https://pak.dynasite.org/psychnets/articles

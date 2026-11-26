@@ -10,6 +10,14 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Visualizing centrality, bootstrap and comparison results">
+<meta name="citation_title" content="Visualizing centrality, bootstrap and comparison results">
+<meta name="citation_author" content="Saqr, Mohammed">
+<meta name="citation_author" content="López-Pernas, Sonsoles">
+<meta name="citation_publication_date" content="2026">
+<meta name="citation_publisher" content="psychnets">
+<meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/visualizing-networks.pdf">
+<meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/visualizing-networks.html">
+<meta name="citation_doi" content="10.5281/zenodo.24567530">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -19,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +55,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -70,45 +81,78 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Visualizing centrality, bootstrap and comparison results</h1>
-                        <h4 data-toc-skip class="author">Written by <a href="https://saqr.me" class="external-link">Mohammed Saqr</a> and <a href="https://sonsoles.me" class="external-link">Sonsoles López-Pernas</a>
-</h4>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/articles/visualizing-networks.Rmd" class="external-link"><code>vignettes/articles/visualizing-networks.Rmd</code></a></small>
+                        <h4 data-toc-skip class="author">Mohammed
+Saqr</h4>
+            <address class="author_afil">
+      University of Eastern
+Finland<br><h4 data-toc-skip class="author">Sonsoles
+López-Pernas</h4>
+            <address class="author_afil">
+      University of Eastern Finland<br><small class="dont-index">Source: <a href="https://github.com/mohsaqr/psychnets/blob/main/vignettes/articles/visualizing-networks.Rmd" class="external-link"><code>vignettes/articles/visualizing-networks.Rmd</code></a></small>
       <div class="d-none name"><code>visualizing-networks.Rmd</code></div>
-    </div>
+    </address>
+</address>
+</div>
 
     
     
-<p>The results of a network analysis are rarely limited to the network
-itself. A report also ranks the nodes by centrality, shows how precisely
-each edge is estimated, states which edges or nodes differ from one
-another, documents whether the centrality order survives the loss of
-part of the sample, and, when two groups are studied, tests whether
-their networks differ. Each of these results is a distribution or a set
-of intervals, and each is read most directly from a figure. A figure
-helps only if the reader knows what is plotted against what, which marks
-denote significance, and what pattern would support or undermine the
-conclusion.</p>
-<p>This article draws the figure for each of these results from one
-network of five self-regulated learning constructs, and states for each
-what it shows and how to read it: centrality profiles, bootstrap
-intervals for edges and centralities, difference matrices and forest
-plots, case-dropping stability curves, and the permutation distributions
-of a network comparison test. All figures are drawn by the
-<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method of the corresponding result.</p>
+<p>A network diagram may show a striking pattern, but how can
+researchers tell which edges are precise and which nodes are
+comparatively important? For questionnaire constructs such as motivation
+and self-regulated learning, nodes denote measured characteristics and
+edges can represent associations adjusted for the other variables. This
+focuses attention on relations among constructs rather than on separate
+predictors or outcomes (Borsboom et al., 2021). A diagram provides a
+useful overview, yet node placement and edge thickness alone cannot
+establish estimation precision or comparative prominence. Visualising
+centrality, bootstrap and comparison results adds information needed to
+interpret those features with appropriate care (Jones et al., 2018).</p>
+<p>In education, network methods have been used to examine how learning
+processes are connected. Studies have considered the relations among
+monitoring events and phases of regulation during collaborative learning
+(Malmberg et al., 2022), as well as the temporal and relational dynamics
+of self-regulation in academic writing (Saqr et al., 2021). Network
+approaches can therefore help researchers investigate how cognitive,
+motivational and regulatory processes co-occur or develop together,
+without assuming that an observed association demonstrates a causal
+effect. Saqr et al. (2024) discuss their use for analysing complex
+learning processes and the methodological choices involved.</p>
+<p>Interpreting a fitted network requires more than identifying its
+visually prominent edges. Centrality measures summarise different
+aspects of a node’s position, but their rankings may depend on the
+measure used. Bootstrap intervals provide information about estimation
+uncertainty, difference tests assess contrasts between edges or nodes,
+and case-dropping procedures examine how centrality estimates respond to
+changes in the sample (Epskamp et al., 2018). When networks are
+estimated for two groups, permutation tests can assess differences in
+overall structure, global strength and individual edges (van Borkulo et
+al., 2023). Clear figures, paired with numerical results and careful
+reporting, help distinguish descriptive patterns from findings supported
+by uncertainty assessments (Burger et al., 2023).</p>
+<p>This article demonstrates how to visualise and interpret these
+results using <code>psychnets</code>. It uses five self-regulated
+learning constructs from model-generated questionnaire responses to
+illustrate centrality bar and line plots, bootstrap intervals,
+difference matrices and forest plots, case-dropping stability curves,
+and network comparison plots. For each display, the emphasis is on what
+is plotted, how to read it, and what the observed results justify. The
+examples use the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method associated with each result
+object; the printed tables provide the values needed for reporting.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pak.dynasite.org/psychnets">psychnets</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p><code>SRL_GPT</code> holds 300 sets of responses to the Motivated
-Strategies for Learning Questionnaire, each a construct score on a scale
-from 1 to 7. The responses were generated by a large language model
-(GPT) in a study of how such models answer psychological surveys (Saqr,
-2025). A second set, <code>SRL_Claude</code>, with 300 responses
-generated by another model, is the comparison group in the last
-section.</p>
+<p><code>SRL_GPT</code> contains 300 sets of model-generated responses
+to the Motivated Strategies for Learning Questionnaire. Each row
+contains construct scores on a scale from 1 to 7, rather than responses
+from an individual student. The GPT responses were produced for a study
+of how large language models answer psychological questionnaires
+(Vogelsmeier et al., 2025). The accompanying <code>SRL_Claude</code>
+data contain 300 responses generated by another model and are used for
+the two-group comparison. These data illustrate the methods; their
+associations should not be interpreted as evidence about a population of
+learners.</p>
 <ul>
 <li>
 <strong>Nodes:</strong> <code>CSU</code> (cognitive strategy use),
@@ -116,8 +160,8 @@ section.</p>
 <code>SR</code> (self-regulation) and <code>TA</code> (test
 anxiety).</li>
 <li>
-<strong>Observations:</strong> one row per respondent; the data are
-complete.</li>
+<strong>Observations:</strong> one row per generated response set;
+the data are complete.</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
@@ -128,10 +172,11 @@ complete.</li>
 <span><span class="co">#&gt; 4 5.692308 6.555556 6.333333 5.555556 4.50</span></span>
 <span><span class="co">#&gt; 5 4.384615 5.555556 4.888889 4.777778 4.00</span></span>
 <span><span class="co">#&gt; 6 4.846154 5.444444 5.666667 5.111111 3.50</span></span></code></pre></div>
-<p><code><a href="../reference/ebic_glasso.html">ebic_glasso()</a></code> estimates the network whose results are
-drawn below: a Gaussian graphical model whose edges are partial
-correlations selected by the extended Bayesian information
-criterion.</p>
+<p><code><a href="../reference/ebic_glasso.html">ebic_glasso()</a></code> fits the network used throughout the
+single-group examples. It estimates a Gaussian graphical model in which
+edges represent partial correlations, with regularisation selected using
+the extended Bayesian information criterion. An edge therefore describes
+a conditional association, not a causal relation.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ebic_glasso.html">ebic_glasso</a></span><span class="op">(</span><span class="va">SRL_GPT</span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
@@ -139,16 +184,22 @@ criterion.</p>
 <span><span class="co">#&gt;   nodes: 5   edges: 10   (undirected)</span></span>
 <span><span class="co">#&gt;   lambda: 0.00861   gamma: 0.5</span></span>
 <span><span class="co">#&gt;   optimality (KKT residual): 2.21e-10</span></span></code></pre></div>
-<p>The network has 10 edges; the Gaussian graphical models article
-interprets them.</p>
+<p>The fitted network contains all 10 possible edges among the five
+constructs. The companion article on Gaussian graphical models discusses
+their interpretation; here the focus is on visualising the associated
+summaries and uncertainty estimates.</p>
 </div>
 <div class="section level2">
 <h2 id="which-nodes-are-most-central">Which nodes are most central?<a class="anchor" aria-label="anchor" href="#which-nodes-are-most-central"></a>
 </h2>
-<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> computes centrality measures, one row
-per node. Strength is the sum of absolute edge weights, expected
-influence the signed sum, and betweenness the proportion of shortest
-paths between other nodes that pass through a node.</p>
+<p><code><a href="../reference/net_centralities.html">net_centralities()</a></code> returns one row per node and a column
+for each requested measure. Strength adds the absolute values of a
+node’s edge weights, regardless of sign. Expected influence adds the
+signed weights, so positive and negative associations can offset each
+other. Betweenness describes the proportion of shortest paths between
+other nodes that pass through the node. These measures answer related
+but distinct questions, and none alone identifies a construct as a cause
+or an intervention target.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ct</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_centralities.html">net_centralities</a></span><span class="op">(</span><span class="va">fit</span>,</span>
 <span>                       measures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strength"</span>, <span class="st">"expected_influence"</span>,</span>
@@ -170,67 +221,85 @@ sorted by value so that the most central node is at the top:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ct</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/cent-bar-1.png" class="r-plt" alt="" width="900" style="display: block; margin: auto;"></p>
-<p>The three panels give three different orders, with self-regulation
-first on strength and betweenness and fourth on expected influence.
-Which node is “most central” depends on the measure, and a report names
-the measure.</p>
+<p>The ordering changes across panels. Self-regulation ranks first for
+strength and betweenness, but fourth for expected influence. Thus, a
+claim that a node is the most central is incomplete unless the measure
+is specified. The bar plots describe the observed values; they do not by
+themselves show whether differences in rank are statistically
+distinguishable.</p>
 </div>
 <div class="section level2">
 <h2 id="do-the-nodes-keep-their-position-across-measures">Do the nodes keep their position across measures?<a class="anchor" aria-label="anchor" href="#do-the-nodes-keep-their-position-across-measures"></a>
 </h2>
-<p>With <code>type = "line"</code>, the nodes share one vertical order
-in all panels, set by their mean standardized centrality, and each panel
-keeps its own axis. A node whose line runs straight is equally central
-on every measure; a node whose line bends is central on some measures
-and peripheral on others.</p>
+<p>With <code>type = "line"</code>, each node is traced across the
+measures while the nodes retain a common vertical ordering based on
+their mean standardised centrality. Each panel initially uses the scale
+of its own measure. Changes in a node’s position across panels make it
+easier to identify measures on which that node is relatively prominent
+or peripheral; the visual slope should not be treated as a numerical
+difference between measures with different units.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ct</span>, type <span class="op">=</span> <span class="st">"line"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/cent-line-1.png" class="r-plt" alt="" width="800" style="display: block; margin: auto;"></p>
-<p>The <code>scale</code> argument sets the transformation of each
-panel: <code>"raw"</code> (the default) keeps the original values,
-<code>"z"</code> standardizes each measure to mean 0 and standard
-deviation 1, and <code>"relative"</code> rescales it to the range 0 to
-1. Standardized values put the three measures on one scale, so the bends
-become comparable.</p>
+<p>The <code>scale</code> argument determines how the values are
+displayed: <code>"raw"</code> (the default) retains the original values,
+<code>"z"</code> standardises each measure to a mean of 0 and a standard
+deviation of 1, and <code>"relative"</code> rescales each measure to the
+range 0 to 1. Standardisation makes differences in relative position
+easier to compare across the three measures, although it does not make
+the measures conceptually interchangeable.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ct</span>, type <span class="op">=</span> <span class="st">"line"</span>, scale <span class="op">=</span> <span class="st">"z"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/cent-line-z-1.png" class="r-plt" alt="" width="800" style="display: block; margin: auto;"></p>
-<p>Self-regulation bends most: high on strength and betweenness, low on
-expected influence. Test anxiety is lowest on strength and expected
-influence.</p>
+<p>Self-regulation changes position markedly: it is highest on strength
+and betweenness but much lower on expected influence. Test anxiety has
+the lowest strength and expected influence. These profiles help explain
+why the choice of centrality measure affects the substantive description
+of the same network.</p>
 </div>
 <div class="section level2">
 <h2 id="how-precise-are-the-edges">How precise are the edges?<a class="anchor" aria-label="anchor" href="#how-precise-are-the-edges"></a>
 </h2>
-<p><code><a href="../reference/net_boot.html">net_boot()</a></code> re-estimates the network on bootstrap samples
-of the respondents and records every edge and centrality value; the
-percentile interval of each is its measure of precision. An applied
-analysis uses at least 1,000 samples; 250 keep this example short.</p>
+<p><code><a href="../reference/net_boot.html">net_boot()</a></code> repeatedly resamples rows from the data and
+re-estimates the network, retaining the resulting edge weights and
+centrality values. Their percentile bootstrap intervals summarise
+sampling uncertainty under this resampling procedure. More resamples are
+preferable for a substantive analysis, often at least 1,000; the example
+uses 250 to limit computation. Because these are model-generated
+response sets, the resampling units here are rows of generated data
+rather than human respondents.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">bs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_boot.html">net_boot</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"glasso"</span>, n_boot <span class="op">=</span> <span class="fl">250</span>, cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">bs</span></span>
 <span><span class="co">#&gt; &lt;psychnet_bootstrap&gt; glasso, 250 resamples, 95% CI</span></span>
 <span><span class="co">#&gt;   10 edges (7 significant), 5 nodes, measures: strength, expected_influence</span></span></code></pre></div>
-<p>Seven of the ten edges have 95% intervals that exclude zero. The
-default plot shows each edge as its observed weight with its bootstrap
-interval, sorted by weight. Edges whose interval excludes zero are drawn
-as filled points with solid intervals, the others as open points with
-dashed intervals.</p>
+<p>Seven of the 10 estimated edges have 95% bootstrap intervals that
+exclude zero. The default display places the observed edge weight beside
+its interval and sorts the edges by weight. Filled points and solid
+intervals identify those that exclude zero; open points and dashed
+intervals identify the others. Interval width indicates the precision of
+the estimate, while its position relative to zero shows whether that
+interval includes values of both signs.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/boot-edges-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
-<p>The three edges whose intervals include zero are the small positive
-edges of test anxiety with intrinsic value, self-efficacy and cognitive
-strategy use. The negative self-regulation–test anxiety edge and the six
-edges among the learning constructs are estimated with intervals that
-stay clear of zero.</p>
+<p>The intervals for the small positive associations between test
+anxiety and intrinsic value, self-efficacy, and cognitive strategy use
+include zero. By contrast, the negative association between
+self-regulation and test anxiety and the six positive associations among
+the other four learning constructs have intervals that exclude zero.
+This distinguishes uncertainty about individual edge weights from the
+mere presence of an edge in the fitted network.</p>
 </div>
 <div class="section level2">
 <h2 id="how-precise-is-each-nodes-centrality">How precise is each node’s centrality?<a class="anchor" aria-label="anchor" href="#how-precise-is-each-nodes-centrality"></a>
 </h2>
-<p>With <code>type = "centrality"</code>, the plot shows the bootstrap
-interval of each node’s centrality, one panel per measure.</p>
+<p>With <code>type = "centrality"</code>, the plot displays the observed
+centrality estimates and their bootstrap intervals, in separate panels
+for strength and expected influence. It allows the reader to consider
+the uncertainty around each estimate rather than relying only on its
+position in the ranking.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"centrality"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/boot-cent-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
@@ -248,32 +317,39 @@ interval of each node’s centrality, one panel per measure.</p>
 <span><span class="co">#&gt; 3                0.7196350               1.00779507</span></span>
 <span><span class="co">#&gt; 4                0.4018903               0.65431683</span></span>
 <span><span class="co">#&gt; 5               -0.1648691              -0.02151559</span></span></code></pre></div>
-<p>The strength intervals of cognitive strategy use (1.08 to 1.35) and
-self-regulation (1.08 to 1.36) almost coincide, so these two nodes
-cannot be ordered on strength. Test anxiety (0.37 to 0.78) lies below
-every other node. Wide and overlapping intervals are the visual signal
-that a ranking is uncertain.</p>
+<p>The 95% strength intervals for cognitive strategy use (1.08 to 1.35)
+and self-regulation (1.08 to 1.36) overlap almost completely. Test
+anxiety has a lower observed strength, with an interval from 0.37 to
+0.78. These displays suggest that the ordering of some nodes is
+uncertain, but overlap between separate intervals is not itself a formal
+test of a difference. The pairwise results below provide that
+assessment.</p>
 </div>
 <div class="section level2">
 <h2 id="which-edges-and-nodes-differ-from-one-another">Which edges and nodes differ from one another?<a class="anchor" aria-label="anchor" href="#which-edges-and-nodes-differ-from-one-another"></a>
 </h2>
 <p>With <code>type = "edge_diff"</code> or
-<code>type = "centrality_diff"</code>, the plot shows a matrix with the
-items on both axes, ordered from the largest to the smallest observed
-value. The diagonal holds the observed values. An off-diagonal cell is
-filled when the two items differ across the bootstrap samples, red when
-the row item is larger and blue when it is smaller, and left faint
-otherwise; stars give the p-value of the difference.</p>
+<code>type = "centrality_diff"</code>, a matrix compares pairs of edges
+or centrality values. Items appear on both axes, ordered by their
+observed estimates, and the diagonal shows those estimates. The
+off-diagonal cells distinguish pairs with evidence of a difference from
+pairs without it: red indicates a larger estimate in the row, blue a
+smaller estimate, and faint cells indicate no detected difference. Stars
+indicate levels of statistical significance. Reading across a row helps
+identify which comparisons are supported, rather than treating the
+entire rank order as certain.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"edge_diff"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/boot-diff-1.png" class="r-plt" alt="" width="650" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"centrality_diff"</span>, measure <span class="op">=</span> <span class="st">"strength"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/boot-cent-diff-1.png" class="r-plt" alt="" width="550" style="display: block; margin: auto;"></p>
-<p>The strength matrix shows which pairs of nodes can be ordered. The
-same comparisons are available as a table from
-<code><a href="../reference/difference_test.html">difference_test()</a></code>, with the observed difference, its
-interval, a p-value and a <code>significant</code> flag:</p>
+<p>The strength matrix shows which observed differences between nodes
+are supported by the bootstrap comparisons. The corresponding
+<code><a href="../reference/difference_test.html">difference_test()</a></code> table reports each pair’s values, the
+observed difference, its interval, a p-value and a
+<code>significant</code> flag. It also provides the numerical evidence
+behind the coloured cells:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/difference_test.html">difference_test</a></span><span class="op">(</span><span class="va">bs</span>, type <span class="op">=</span> <span class="st">"strength"</span><span class="op">)</span></span>
 <span><span class="va">dt</span></span>
@@ -299,24 +375,29 @@ interval, a p-value and a <code>significant</code> flag:</p>
 <span><span class="co">#&gt; 8         TRUE</span></span>
 <span><span class="co">#&gt; 9         TRUE</span></span>
 <span><span class="co">#&gt; 10        TRUE</span></span></code></pre></div>
-<p>Seven of the ten pairs differ. Test anxiety has lower strength than
-every other node, self-regulation is stronger than intrinsic value and
-self-efficacy, and cognitive strategy use is stronger than
-self-efficacy. Three pairs cannot be ordered: cognitive strategy use and
-self-regulation (difference -0.033, p = 0.712), cognitive strategy use
-and intrinsic value (p = 0.080), and intrinsic value and self-efficacy
-(p = 0.208). A report can place test anxiety last but should not name a
-single most central node.</p>
-<p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on the table draws the same matrix by default
-(<code>style = "box"</code>), which shows <em>which</em> pairs
-differ.</p>
+<p>Seven of the 10 pairwise strength comparisons are flagged as
+significant. Test anxiety has lower strength than each of the other four
+nodes; self-regulation has higher strength than intrinsic value and
+self-efficacy; and cognitive strategy use has higher strength than
+self-efficacy. The remaining three comparisons are not significant:
+cognitive strategy use versus self-regulation (difference -0.033, p =
+0.712), cognitive strategy use versus intrinsic value (p = 0.080), and
+intrinsic value versus self-efficacy (p = 0.208). The results support
+describing test anxiety as lowest in strength, but not identifying a
+uniquely highest-strength node.</p>
+<p>Calling <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on the difference-test table produces a
+matrix by default (<code>style = "box"</code>). This is useful for
+seeing <em>which</em> pairs show evidence of a difference at a
+glance.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/difftest-box-1.png" class="r-plt" alt="" width="550" style="display: block; margin: auto;"></p>
-<p>With <code>style = "forest"</code>, each pair is a row with its
-observed difference and interval and a dashed line at zero, and pairs
-whose interval excludes zero are emphasized. This view shows <em>how
-large</em> each difference is and how uncertain.</p>
+<p>With <code>style = "forest"</code>, each comparison appears on a
+separate row, showing the observed difference and its interval against a
+dashed reference line at zero. Comparisons whose intervals exclude zero
+are emphasised. Unlike the matrix, the forest plot also conveys the
+<em>magnitude</em> and direction of the observed differences, together
+with their uncertainty.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dt</span>, style <span class="op">=</span> <span class="st">"forest"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/difftest-forest-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
@@ -324,11 +405,14 @@ large</em> each difference is and how uncertain.</p>
 <div class="section level2">
 <h2 id="is-the-centrality-order-stable-when-cases-are-dropped">Is the centrality order stable when cases are dropped?<a class="anchor" aria-label="anchor" href="#is-the-centrality-order-stable-when-cases-are-dropped"></a>
 </h2>
-<p><code><a href="../reference/net_stability.html">net_stability()</a></code> re-estimates the network on subsets that
-drop an increasing proportion of the respondents and correlates the
-subset centralities with those of the full sample. The CS-coefficient is
-the largest proportion that can be dropped while the correlation stays
-at or above 0.7 in at least 95% of the subsets.</p>
+<p><code><a href="../reference/net_stability.html">net_stability()</a></code> evaluates how centrality estimates
+change when progressively larger proportions of cases are omitted. For
+each subset, the network is re-estimated and its centrality values are
+correlated with those from the full data. The correlation-stability (CS)
+coefficient summarises the largest proportion of cases that can be
+dropped while a correlation of at least 0.7 is retained in at least 95%
+of the subsets. It assesses the robustness of centrality estimates to
+case deletion, not the precision of individual edges.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_stability.html">net_stability</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, method <span class="op">=</span> <span class="st">"glasso"</span>,</span>
 <span>                    drop_prop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.8</span>, <span class="fl">0.1</span><span class="op">)</span>, iter <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
@@ -337,13 +421,16 @@ at or above 0.7 in at least 95% of the subsets.</p>
 <span><span class="co">#&gt;   CS-coefficient (pearson cor &gt; 0.70 in &gt; 95% of subsets):</span></span>
 <span><span class="co">#&gt;     strength             0.80</span></span>
 <span><span class="co">#&gt;     expected_influence   0.80</span></span></code></pre></div>
-<p>The CS-coefficient is 0.80 for both strength and expected influence,
-well above the value of 0.5 recommended for interpreting centrality
-(Epskamp et al., 2018). The plot shows the drop proportion on the
-horizontal axis and the mean correlation with the full sample on the
-vertical axis, one line per measure with a band of one standard
-deviation, and the threshold as a dashed line. A curve that stays above
-the line as more cases are dropped indicates a stable order.</p>
+<p>The reported CS-coefficient is 0.80 for both strength and expected
+influence, above the recommended value of 0.5 (Epskamp et al., 2018).
+This is the highest drop proportion examined here, so the result should
+not be extrapolated to larger omissions. The plot shows the proportion
+dropped on the horizontal axis and the mean correlation with the
+full-sample centrality values on the vertical axis. Each measure has a
+line with a band representing one standard deviation, alongside a dashed
+threshold. Correlations that remain high as more rows are removed
+indicate comparatively stable centrality estimates in this example; the
+calculation uses only 25 subsets per proportion.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/stability-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
@@ -351,46 +438,55 @@ the line as more cases are dropped indicates a stable order.</p>
 <div class="section level2">
 <h2 id="do-the-networks-of-two-groups-differ">Do the networks of two groups differ?<a class="anchor" aria-label="anchor" href="#do-the-networks-of-two-groups-differ"></a>
 </h2>
-<p><code><a href="../reference/net_compare.html">net_compare()</a></code> performs the network comparison test (van
-Borkulo et al., 2023). It reassigns the respondents of the two groups at
-random many times, estimates both networks on each permutation, and
-compares the observed differences with their distribution under random
-assignment. Two global statistics are tested: M, network structure, the
-largest absolute difference of any edge; and S, global strength, the
-difference in the sum of absolute edge weights. Each edge is also tested
-separately.</p>
+<p><code><a href="../reference/net_compare.html">net_compare()</a></code> implements a permutation-based network
+comparison test (van Borkulo et al., 2023). The procedure repeatedly
+shuffles group membership and re-estimates the two networks, providing
+reference distributions for the observed group differences. The network
+structure statistic, M, is the largest absolute difference between
+corresponding edge weights. The global strength statistic, S, measures
+the absolute difference between the groups’ sums of absolute edge
+weights. The procedure also tests individual edges. Here the groups
+comprise GPT-generated and Claude-generated responses, not samples of
+students.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/net_compare.html">net_compare</a></span><span class="op">(</span><span class="va">SRL_GPT</span>, <span class="va">SRL_Claude</span>, iter <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cmp</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                test statistic observed     p_value significant</span></span>
 <span><span class="co">#&gt; 1 network structure         M 0.562165 0.003984064        TRUE</span></span>
 <span><span class="co">#&gt; 2   global strength         S 1.092696 0.003984064        TRUE</span></span></code></pre></div>
-<p>Both tests reject the hypothesis of equal networks (p = 0.004, the
-smallest value possible with 250 permutations). The largest edge
-difference is 0.562, and the global strength is 1.093 higher in the
-network of the Claude responses (3.537 against 2.444). The default plot
-shows the permutation distribution of S, with the observed value marked
-and the p-value in the title; an observed value in the tail of the
-distribution is evidence of a difference.</p>
+<p>Both global tests are significant at the conventional 0.05 level (p =
+0.004 for both). The largest absolute edge difference is 0.562. The sum
+of absolute edge weights is 1.093 greater in the Claude-response network
+(3.537 versus 2.444). The default plot shows the permutation
+distribution of S, with the observed statistic indicated and its p-value
+in the title. An observed value well into the tail suggests that the
+group difference is unusual under random reassignment.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cmp</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/nct-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
-<p>The observed difference in global strength, 1.09, lies beyond every
-value in the permutation distribution, which ends near 0.6.</p>
-<p>With <code>type = "structure"</code>, the plot shows the same for
-M.</p>
+<p>The observed global strength difference is approximately 1.09, to the
+right of the displayed permutation distribution, whose upper end is
+around 0.6. This visualises the small permutation p-value; it does not
+identify which edges account for the difference.</p>
+<p>With <code>type = "structure"</code>, the same display is produced
+for M, the largest absolute edge difference. It assesses whether the
+most pronounced edge-level discrepancy is unusually large under
+permutation.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cmp</span>, type <span class="op">=</span> <span class="st">"structure"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/nct-structure-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
-<p>With <code>type = "edges"</code>, the plot shows the observed
-absolute difference of each edge as a bar, coloured by whether the edge
-differs at <code>alpha</code>, and the title gives the number of
-differing edges.</p>
+<p>With <code>type = "edges"</code>, a bar represents the observed
+absolute difference for each corresponding edge. Colour indicates
+whether the edge comparison is significant at <code>alpha</code>, and
+the title reports how many edges meet that criterion. The plot therefore
+complements the two global tests with a view of where the differences
+occur.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cmp</span>, type <span class="op">=</span> <span class="st">"edges"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualizing-networks_files/figure-html/nct-edges-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
-<p>The per-edge results behind the bars, with the weight in each
-network, the difference and its permutation p-value:</p>
+<p>The underlying table gives the weight of each edge in both networks,
+the absolute difference, its permutation p-value and the significance
+indicator:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">cmp</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    from to    weight_1     weight_2 difference     p_value       p_raw</span></span>
@@ -415,12 +511,14 @@ network, the difference and its permutation p-value:</p>
 <span><span class="co">#&gt; 8        FALSE</span></span>
 <span><span class="co">#&gt; 9         TRUE</span></span>
 <span><span class="co">#&gt; 10       FALSE</span></span></code></pre></div>
-<p>Seven of the ten edges differ. The largest differences are
-<code>IV</code>–<code>SE</code> (0.160 against -0.402),
-<code>SE</code>–<code>TA</code> (0.099 against -0.418) and
-<code>CSU</code>–<code>TA</code> (0.049 against 0.526): the two sets of
-responses differ not only in how strongly the constructs are related but
-in the sign of several relations.</p>
+<p>Seven of the 10 individual edge comparisons are significant. The
+three largest absolute differences are <code>IV</code>–<code>SE</code>
+(0.160 in GPT versus -0.402 in Claude), <code>SE</code>–<code>TA</code>
+(0.099 versus -0.418) and <code>CSU</code>–<code>TA</code> (0.049 versus
+0.526). The first two change sign, whereas the third remains positive
+but is substantially larger in the Claude-response network. The
+comparisons indicate different patterns in these generated response
+sets, not necessarily differences between human learner populations.</p>
 </div>
 <div class="section level2">
 <h2 id="summary-of-the-plot-methods">Summary of the plot methods<a class="anchor" aria-label="anchor" href="#summary-of-the-plot-methods"></a>
@@ -478,25 +576,63 @@ in the sign of several relations.</p>
 </tr>
 </tbody>
 </table>
-<p>Each figure has a table behind it, read with the verb’s own output or
-with <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>, and reported values are taken from
-the table. The network itself is drawn with <code>plot(fit)</code>,
-which uses the <code>cograph</code> package and is covered in the
-article <em>Visualizing networks with cograph</em>.</p>
+<p>Each display should be interpreted alongside its underlying numerical
+results, obtained from the corresponding result object or
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>. In particular, observed rankings should be
+distinguished from tested pairwise differences, and global group
+differences from edge-specific findings. The network itself can be drawn
+with <code>plot(fit)</code>, which uses the <code>cograph</code> package
+and is covered in the article <em>Visualizing networks with
+cograph</em>.</p>
+</div>
+<div class="section level2">
+<h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
+</h2>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Visualizing centrality,
+bootstrap and comparison results</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24567530" class="external-link uri">https://doi.org/10.5281/zenodo.24567530</a> · <a href="https://pak.dynasite.org/psychnets/articles/visualizing-networks.html">HTML</a>
+· <a href="https://pak.dynasite.org/psychnets/pdf/visualizing-networks.pdf">PDF</a></p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E.
+I., McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J.,
+Costantini, G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van
+Bork, R., &amp; Waldorp, L. J. (2021). Network analysis of multivariate
+data in psychological science. <em>Nature Reviews Methods Primers</em>,
+1, 58. <a href="https://doi.org/10.1038/s43586-021-00055-w" class="external-link">doi:10.1038/s43586-021-00055-w</a></p>
+<p>Burger, J., Isvoranu, A.-M., Lunansky, G., Haslbeck, J. M. B.,
+Epskamp, S., Hoekstra, R. H. A., Fried, E. I., Borsboom, D., &amp;
+Blanken, T. F. (2023). Reporting standards for psychological network
+analyses in cross-sectional data. <em>Psychological Methods</em>, 28(4),
+806-824. <a href="https://doi.org/10.1037/met0000471" class="external-link">doi:10.1037/met0000471</a></p>
 <p>Epskamp, S., Borsboom, D., &amp; Fried, E. I. (2018). Estimating
 psychological networks and their accuracy: A tutorial paper.
 <em>Behavior Research Methods</em>, 50(1), 195-212. <a href="https://doi.org/10.3758/s13428-017-0862-1" class="external-link">doi:10.3758/s13428-017-0862-1</a></p>
-<p>Saqr, M. (2025). Delving into the psychology of machines: Exploring
-the structure of self-regulated learning via LLM-generated survey
-responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
+<p>Jones, P. J., Mair, P., &amp; McNally, R. J. (2018). Visualizing
+psychological networks: A tutorial in R. <em>Frontiers in
+Psychology</em>, 9, 1742. <a href="https://doi.org/10.3389/fpsyg.2018.01742" class="external-link">doi:10.3389/fpsyg.2018.01742</a></p>
+<p>Malmberg, J., Saqr, M., Järvenoja, H., &amp; Järvelä, S. (2022). How
+the monitoring events of individual students are associated with phases
+of regulation: A network analysis approach. <em>Journal of Learning
+Analytics</em>, 9(1), 77-92. <a href="https://doi.org/10.18608/jla.2022.7429" class="external-link">doi:10.18608/jla.2022.7429</a></p>
+<p>Saqr, M., Beck, E., &amp; López-Pernas, S. (2024). Psychological
+networks: A modern approach to analysis of learning and complex learning
+processes. In M. Saqr &amp; S. López-Pernas (Eds.), <em>Learning
+analytics methods and tutorials: A practical guide using R</em>
+(pp. 639-671). Springer. <a href="https://doi.org/10.1007/978-3-031-54464-4_19" class="external-link">doi:10.1007/978-3-031-54464-4_19</a></p>
+<p>Saqr, M., Peeters, W., &amp; Viberg, O. (2021). The relational,
+co-temporal, contemporaneous, and longitudinal dynamics of
+self-regulation for academic writing. <em>Research and Practice in
+Technology Enhanced Learning</em>, 16, 29. <a href="https://doi.org/10.1186/s41039-021-00175-7" class="external-link">doi:10.1186/s41039-021-00175-7</a></p>
 <p>van Borkulo, C. D., van Bork, R., Boschloo, L., Kossakowski, J. J.,
 Tio, P., Schoevers, R. A., Borsboom, D., &amp; Waldorp, L. J. (2023).
 Comparing network structures on three aspects: A permutation test.
 <em>Psychological Methods</em>, 28(6), 1273-1285. <a href="https://doi.org/10.1037/met0000476" class="external-link">doi:10.1037/met0000476</a></p>
+<p>Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas,
+S., &amp; Saqr, M. (2025). Delving into the psychology of machines:
+Exploring the structure of self-regulated learning via LLM-generated
+survey responses. <em>Computers in Human Behavior</em>, 173, 108769. <a href="https://doi.org/10.1016/j.chb.2025.108769" class="external-link">doi:10.1016/j.chb.2025.108769</a></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

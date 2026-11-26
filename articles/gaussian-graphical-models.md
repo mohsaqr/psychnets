@@ -1,38 +1,117 @@
 # Gaussian graphical models: estimation and interpretation
 
-Constructs measured by self-report questionnaires, such as motivation,
-self-efficacy, strategy use and anxiety, are correlated with one
-another, and a correlation matrix cannot separate the associations that
-are direct from those that run through other constructs. Motivation and
-achievement may correlate because both depend on effort and prior
-achievement rather than because of any relation of their own. A Gaussian
-graphical model (GGM) addresses this by estimating, for every pair of
-variables, the partial correlation that remains after all other
-variables in the model are held constant. Pairs whose partial
-correlation is indistinguishable from zero are left unconnected, so the
-resulting network shows which associations each variable has after the
-others have been accounted for (Epskamp & Fried, 2018).
+Does the association between motivation and achievement persist once
+effort, prior achievement and other measured constructs are taken into
+account? This question arises when psychological and educational
+researchers examine interrelated characteristics such as self-efficacy,
+learning strategies, self-regulation and anxiety. Pairwise correlations
+may reflect associations shared with other scores, making them difficult
+to interpret. Network analysis examines such interdependence without
+assigning every construct a fixed role as predictor or outcome (Borsboom
+et al., 2021). A Gaussian graphical model (GGM) represents variables as
+nodes and conditional associations as edges, estimating partial
+correlations between pairs of variables while accounting for the
+remaining variables (Epskamp & Fried, 2018). An edge does not establish
+causality, and a missing edge does not prove that two constructs are
+unrelated.
 
-This article estimates a regularized GGM for five self-regulated
-learning constructs. It reads the edges, contrasts them with the
-ordinary correlations, describes the position of each construct through
-centrality and predictability, and examines whether the conclusions
-depend on the correlation estimator, on a post-hoc edge threshold, and
-on the assumption of normality.
+GGMs are useful when researchers want to distinguish associations that
+remain after adjustment from those visible in an ordinary correlation
+matrix. For example, two learning strategies may be strongly correlated
+but have a much weaker partial correlation once motivation and
+self-regulation are included. Regularisation can set small estimated
+edges to zero and make a network easier to interpret, although the
+selected model need not be sparse. The resulting pattern depends on the
+variables, measurement scale, sample and estimation procedure.
+Researchers therefore need to consider the accuracy of estimated edges
+and the consequences of methodological choices, rather than interpreting
+a network diagram on its own (Epskamp et al., 2018; Isvoranu & Epskamp,
+2023; Williams & Rast, 2020).
+
+Psychological networks have also been applied to educational questions
+about how learning processes operate together. Studies have examined
+associations among monitoring events during self-regulated learning,
+including how those events relate to phases of regulation (Malmberg,
+Saqr, Järvenoja, Haataja, et al., 2022; Malmberg, Saqr, Järvenoja, &
+Järvelä, 2022). Network approaches have likewise been used to study the
+relational and temporal aspects of self-regulation in academic writing
+(Saqr et al., 2021). These applications illustrate why the relationships
+among learning processes may be of interest alongside the levels of
+individual constructs (Saqr et al., 2024). The choice of network model
+must nevertheless match the research design: a cross-sectional GGM does
+not describe within-person change over time.
+
+This article provides a worked example of a regularised GGM using five
+self-regulated learning construct scores from language-model-generated
+survey responses. It explains how to estimate and interpret
+partial-correlation edges, compare them with ordinary correlations,
+assess computational optimality, and describe node strength, expected
+influence and predictability. It then compares Pearson and Spearman
+estimation, applies a post-hoc edge threshold and fits a nonparanormal
+model. The aim is to support careful interpretation and reporting by
+applied researchers, not to draw conclusions about students from these
+generated responses.
 
 ``` r
 
 library(psychnets)
 ```
 
+## The model
+
+For variables $`X_1, \ldots, X_p`$ with covariance matrix
+$`\boldsymbol\Sigma`$, the inverse covariance matrix, or precision
+matrix, $`\mathbf{K} = \boldsymbol\Sigma^{-1}`$, describes their
+conditional association structure. The partial correlation between
+$`X_i`$ and $`X_j`$ given the remaining variables is
+
+``` math
+\rho_{ij \cdot \mathrm{rest}} = -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}},
+```
+
+Under multivariate normality, $`K_{ij} = 0`$ means that $`X_i`$ and
+$`X_j`$ are conditionally independent given the remaining variables. A
+non-zero partial correlation is represented by an edge. Its sign
+indicates the direction of the conditional association and its magnitude
+indicates its strength on the partial-correlation scale.
+
+Sample partial correlations are subject to sampling variation, and small
+non-zero estimates may not reflect a reproducible association. The
+graphical lasso (Friedman et al., 2008) estimates the precision matrix
+while penalising the absolute values of its off-diagonal entries,
+
+``` math
+\widehat{\mathbf{K}} = \underset{\mathbf{K} \succ 0}{\operatorname{argmin}}
+\left\{ \operatorname{tr}(\mathbf{S}\mathbf{K}) - \log\det(\mathbf{K})
++ \lambda \sum_{i \ne j}|K_{ij}| \right\},
+```
+
+where $`\mathbf{S}`$ is the sample correlation matrix and $`\lambda`$
+controls the amount of shrinkage. Larger penalties can set more
+off-diagonal entries to zero, removing their corresponding edges. The
+penalty $`\lambda`$ is selected from candidate values using the extended
+Bayesian information criterion (EBIC; Foygel & Drton, 2010),
+
+``` math
+\operatorname{EBIC}_{\gamma} = -2\ell(\widehat{\mathbf{K}}) + E\log n
++ 4E\gamma\log p,
+```
+
+Here $`\ell`$ is the Gaussian log-likelihood, $`E`$ is the number of
+edges, $`n`$ is the sample size and $`p`$ is the number of nodes. The
+hyperparameter $`\gamma`$ (0.5 by default) adds a complexity penalty
+beyond the usual BIC term. Larger values favour sparser networks, but
+the selected number of edges still depends on the data.
+
 ## Data
 
-`SRL_GPT` holds 300 sets of responses to the Motivated Strategies for
-Learning Questionnaire. Each value is a construct score, the mean of
-that construct’s items on a scale from 1 to 7. The responses were
-generated by a large language model (GPT) in a study of how such models
-answer psychological surveys (Saqr, 2025); they serve here as a
-well-structured example and are not evidence about students.
+`SRL_GPT` contains 300 sets of responses to the Motivated Strategies for
+Learning Questionnaire. Each variable is a construct score calculated as
+the mean of its items on a scale from 1 to 7. The responses were
+generated by a large language model (GPT) for a study of how these
+models complete psychological questionnaires (Vogelsmeier et al., 2025).
+They provide an illustrative dataset for learning the method and must
+not be interpreted as observations of students.
 
 - **Nodes:** five construct scores, each treated as continuous:
   - `CSU`, cognitive strategy use;
@@ -54,50 +133,10 @@ head(SRL_GPT)
 #> 6 4.846154 5.444444 5.666667 5.111111 3.50
 ```
 
-Each score averages several items and takes many distinct values, which
-makes the continuous treatment defensible. Item-level ordinal responses
-would call for polychoric correlations (`cor_method = "auto"`).
-
-## The model
-
-For variables $`X_1, \ldots, X_p`$ with covariance matrix
-$`\boldsymbol\Sigma`$, the precision matrix
-$`\mathbf{K} = \boldsymbol\Sigma^{-1}`$ holds the conditional structure.
-The partial correlation between $`X_i`$ and $`X_j`$ given all other
-variables is
-
-``` math
-\rho_{ij \cdot \mathrm{rest}} = -\frac{K_{ij}}{\sqrt{K_{ii}K_{jj}}},
-```
-
-and under multivariate normality $`K_{ij} = 0`$ means that $`X_i`$ and
-$`X_j`$ are independent once the remaining variables are known. An edge
-in the network is a non-zero partial correlation.
-
-In a sample, every partial correlation differs from zero by chance. The
-graphical lasso (Friedman et al., 2008) estimates the precision matrix
-with a penalty on the absolute size of its off-diagonal entries,
-
-``` math
-\widehat{\mathbf{K}} = \underset{\mathbf{K} \succ 0}{\operatorname{argmin}}
-\left\{ \operatorname{tr}(\mathbf{S}\mathbf{K}) - \log\det(\mathbf{K})
-+ \lambda \sum_{i \ne j}|K_{ij}| \right\},
-```
-
-where $`\mathbf{S}`$ is the sample correlation matrix and $`\lambda`$
-sets how strongly small entries are pulled to exactly zero. The penalty
-$`\lambda`$ is chosen from a path of candidate values by the extended
-Bayesian information criterion (EBIC; Foygel & Drton, 2010),
-
-``` math
-\operatorname{EBIC}_{\gamma} = -2\ell(\widehat{\mathbf{K}}) + E\log n
-+ 4E\gamma\log p,
-```
-
-where $`\ell`$ is the Gaussian log-likelihood, $`E`$ the number of
-edges, $`n`$ the sample size and $`p`$ the number of nodes. The
-hyperparameter $`\gamma`$ (0.5 by default) adds a penalty for model
-complexity beyond BIC; larger values favour sparser networks.
+Because the construct scores are averages of several items and have many
+distinct values, treating them as continuous is reasonable for this
+example. For analyses of item-level ordinal responses, polychoric
+correlations may be more appropriate (`cor_method = "auto"`).
 
 ## Which constructs are directly associated?
 
@@ -117,9 +156,11 @@ summary(net)
 #>   edge weight: range [-0.350, 0.412], mean 0.174
 ```
 
-The selected penalty is $`\lambda = 0.00861`$, and at this penalty all
-10 possible pairs keep an edge. The edge weights range from -0.350 to
-0.412. The edge table lists every pair with its partial correlation:
+The selected penalty is $`\lambda = 0.00861`$. The fitted network
+retains all 10 possible edges among the five nodes, so regularisation
+has not removed any pairwise connection in this example. The partial
+correlations range from -0.350 to 0.412. The edge table gives the
+estimated weight of each pair:
 
 ``` r
 
@@ -137,22 +178,25 @@ as.data.frame(net)
 #> 10   SR TA -0.34985157
 ```
 
-The four learning constructs form a positively connected cluster. The
-strongest edge joins cognitive strategy use and intrinsic value (0.412),
-followed by cognitive strategy use with self-efficacy (0.383) and with
-self-regulation (0.355): respondents with higher strategy use report
-higher values on these constructs even when the other three variables
-are equal. Self-regulation and test anxiety are joined by the only
-negative edge (-0.350): at equal levels of the other constructs, higher
-self-regulation goes with lower test anxiety. The remaining edges of
-test anxiety are small and positive, with `CSU` (0.049), `SE` (0.099)
-and `IV` (0.111), too small to carry a substantive interpretation on
-their own.
+The four learning constructs are joined by positive edges. The largest
+positive partial correlation is between cognitive strategy use and
+intrinsic value (0.412), followed by cognitive strategy use and
+self-efficacy (0.383), and cognitive strategy use and self-regulation
+(0.355). These estimates indicate positive associations after adjustment
+for the other three constructs, rather than unadjusted pairwise
+relationships. Self-regulation and test anxiety have the only negative
+edge (-0.350), indicating that higher self-regulation is associated with
+lower test anxiety when the other variables are held constant. The
+remaining edges involving test anxiety are small and positive: `CSU`
+(0.049), `SE` (0.099) and `IV` (0.111). Their substantive importance
+should not be inferred from the presence of an edge alone.
 
 ## How do partial correlations differ from correlations?
 
-The marginal correlation network, `method = "cor"`, contains the same
-pairs without any adjustment and shows what the GGM has removed.
+A marginal correlation describes the association between two variables
+without controlling for the others. The correlation network estimated
+with `method = "cor"` provides a useful comparison with the adjusted
+associations in the GGM.
 
 ``` r
 
@@ -170,37 +214,43 @@ as.data.frame(psychnet(data = SRL_GPT, method = "cor"))
 #> 10   SR TA -0.30196344
 ```
 
-The learning constructs correlate between 0.779 and 0.861, two to five
-times the size of their partial correlations: much of each pairwise
-association is shared with the other constructs. Test anxiety correlates
-negatively with all four learning constructs (-0.097 to -0.302), yet
-three of its partial correlations are positive. Once self-regulation is
-held constant, the negative association of test anxiety with the
-learning constructs is carried by self-regulation alone. A correlation
-network would have attributed it to every construct.
+The six correlations among the four learning constructs range from 0.779
+to 0.861, considerably larger than their partial correlations, which
+range from 0.160 to 0.412. This reduction indicates that their pairwise
+relationships overlap with associations involving the other constructs.
+Test anxiety has a negative marginal correlation with each learning
+construct (-0.097 to -0.302), whereas its partial correlations with
+`CSU`, `IV` and `SE` are small and positive. Its partial correlation
+with self-regulation remains negative (-0.350). Thus, the adjusted
+results give a different account of how test anxiety relates to the
+constructs. They do not establish that self-regulation causes the other
+marginal associations.
 
 ## Is the fitted network the optimum of its objective?
 
-The graphical lasso is solved iteratively, so a fitted network is an
-approximation to the minimum of the objective above. Any solution must
-satisfy the problem’s optimality (Karush–Kuhn–Tucker) conditions; the
-amount by which a fitted network violates them is its certificate, and a
-value near zero shows that the network is the optimum of its objective.
+The graphical lasso uses numerical optimisation to estimate the network.
+Before interpreting the edges, it is useful to check whether the
+algorithm has converged sufficiently closely to the solution of its
+objective. The Karush–Kuhn–Tucker optimality conditions provide such a
+check.
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
-reports it, with `certified = TRUE` when it is below $`10^{-6}`$.
+reports the largest numerical violation of these conditions and returns
+`certified = TRUE` when that value is below $`10^{-6}`$. This is a check
+on computational accuracy, not on the reliability of the estimated
+associations.
 
 ``` r
 
 certificate(net)
 #>   method  certificate kind certified
-#> 1 glasso 2.213401e-10  kkt      TRUE
+#> 1 glasso 2.213389e-10  kkt      TRUE
 ```
 
-The violation is $`2.21 \times 10^{-10}`$, so the reported edges are the
-graphical-lasso solution for this penalty and not an artefact of an
-unfinished optimization. The certificate concerns the computation only;
-it says nothing about sampling uncertainty or about whether the model’s
-assumptions hold.
+The reported violation is $`2.21 \times 10^{-10}`$, well below the
+stated tolerance. The estimated network therefore satisfies the
+numerical optimality check for the selected penalty. This result does
+not assess sampling uncertainty, model fit or the plausibility of the
+distributional assumptions.
 
 ## Which constructs are most connected?
 
@@ -220,16 +270,17 @@ net_centralities(net)
 #> 5   TA 0.6082238        -0.09147935
 ```
 
-Self-regulation has the largest strength (1.231), followed by cognitive
-strategy use (1.198). Their expected influences differ: cognitive
-strategy use has only positive edges, so its expected influence equals
-its strength, while the negative edge of self-regulation with test
-anxiety lowers its expected influence to 0.532. Test anxiety has the
-smallest strength (0.608) and a slightly negative expected influence
-(-0.091). Self-regulation is therefore the construct most strongly tied
-to the others, and also the one through which test anxiety connects to
-the network. Centrality describes the estimated graph; it does not
-identify causes or intervention targets.
+Self-regulation has the highest strength (1.231), closely followed by
+cognitive strategy use (1.198). Cognitive strategy use has only positive
+edges, so its expected influence also equals 1.198. By contrast, the
+negative edge between self-regulation and test anxiety reduces the
+expected influence of self-regulation to 0.532. Test anxiety has the
+lowest strength (0.608) and a slightly negative expected influence
+(-0.091). Strength therefore identifies self-regulation as the most
+connected node in terms of absolute edge weights, while expected
+influence shows why the signs of those edges matter. These are
+descriptions of this fitted network, not evidence that changing a highly
+connected construct would change the others.
 
 ## How well is each construct predicted by the others?
 
@@ -250,12 +301,15 @@ net_predict(net)
 #> 5   TA gaussian     R2      0.1421163       NA
 ```
 
-The other four constructs explain 82% of the variance in cognitive
-strategy use ($`R^2 = 0.822`$), 78% in self-regulation, 77% in intrinsic
-value and 71% in self-efficacy, but only 14% in test anxiety
-($`R^2 = 0.142`$). Test anxiety is largely independent of the learning
-constructs, which matches its weak edges. These are in-sample values;
-prediction of new respondents would need a separate validation sample.
+In this fitted model, the other nodes account for approximately 82% of
+the variance in cognitive strategy use ($`R^2 = 0.822`$), 78% in
+self-regulation, 77% in intrinsic value and 71% in self-efficacy. The
+corresponding value for test anxiety is much lower, at 14%
+($`R^2 = 0.142`$). This suggests that the other four scores contain
+comparatively little information about variation in test anxiety in
+these generated responses, despite the negative self-regulation edge.
+Predictability is calculated in sample and should not be presented as
+out-of-sample predictive performance without validation.
 
 ## What does the network look like?
 
@@ -306,18 +360,22 @@ as.data.frame(spearman_net)
 #> 9   SR TA -0.23654039
 ```
 
-The rank-based model selects a larger penalty ($`\lambda = 0.01882`$)
-and keeps 9 edges. The positive cluster of learning constructs and the
-negative self-regulation–test anxiety edge remain; the latter weakens
-from -0.350 to -0.237. The weakest Pearson edge, `CSU`–`TA` (0.049), is
-absent. The main structure does not depend on the correlation estimator,
-whereas the weak edges of test anxiety do.
+The Spearman-based model selects a larger penalty
+($`\lambda = 0.01882`$) and retains 9 edges. All six positive edges
+among the learning constructs remain, as does the negative edge between
+self-regulation and test anxiety, although its weight changes from
+-0.350 to -0.237. The smallest Pearson-based edge, `CSU`–`TA` (0.049),
+is absent. These results suggest that the main pattern is similar under
+the two correlation estimators, while the weaker connections involving
+test anxiety are more sensitive to the choice of estimator.
 
 ## What does a post-hoc threshold change?
 
-A threshold removes every edge whose absolute weight falls below a
-chosen value after estimation. It is a reporting decision, to be fixed
-before the results are seen, and not part of model selection.
+A post-hoc threshold removes estimated edges whose absolute weights fall
+below a specified value. This may simplify a display but changes the
+reported graph without refitting the model. The threshold should be
+justified and, preferably, specified before examining the results; it is
+not part of the EBIC selection procedure.
 
 ``` r
 
@@ -339,14 +397,14 @@ as.data.frame(threshold_net)
 #> 8   SR TA -0.3498516
 ```
 
-With a threshold of 0.1 the network keeps 8 edges; the `CSU`–`TA`
-(0.049) and `SE`–`TA` (0.099) edges are removed, and the penalty is
-unchanged. The thresholded network is no longer the solution of the
-graphical-lasso objective, so the printout reports optimality as
-unavailable and quotes the residual before thresholding
+At a threshold of 0.1, 8 edges remain. The `CSU`–`TA` (0.049) and
+`SE`–`TA` (0.099) edges are omitted, while the selected penalty remains
+unchanged. Because the thresholded graph is not itself the solution of
+the graphical-lasso objective, its optimality is reported as
+unavailable. The printout gives the pre-threshold residual
 ($`2.21 \times 10^{-10}`$), and `certificate(threshold_net)` returns
-`NA`. A thresholded network must be reported as such, not as the EBIC
-selection.
+`NA`. Reports should distinguish these post-hoc exclusions from edges
+set to zero during model estimation.
 
 ## Do the conclusions depend on normality?
 
@@ -379,16 +437,18 @@ as.data.frame(npn_net)
 #> 10   SR TA -0.34267471
 certificate(npn_net)
 #>   method  certificate kind certified
-#> 1   huge 2.471425e-10  kkt      TRUE
+#> 1   huge 2.471392e-10  kkt      TRUE
 ```
 
-The nonparanormal network keeps all 10 edges with weights from -0.343 to
-0.426, and its certificate ($`2.47 \times 10^{-10}`$) shows that it is
-the optimum of its objective. The positive learning cluster and the
-negative self-regulation–test anxiety edge are unchanged in sign and
-close in size. The `CSU`–`TA` edge halves from 0.049 to 0.024, which
-again marks it as the least stable edge in the network. Departures from
-normality do not drive the main conclusions.
+The nonparanormal fit retains all 10 edges, with weights from -0.343 to
+0.426. Its certificate ($`2.47 \times 10^{-10}`$) satisfies the
+numerical optimality criterion. The six positive edges among the
+learning constructs remain, and the self-regulation to test anxiety edge
+is still negative (-0.343). The `CSU`–`TA` edge decreases from 0.049 in
+the Pearson-based GGM to 0.024. The principal pattern is therefore
+similar across these fits, but this comparison alone cannot establish
+that the assumptions hold or quantify the sampling stability of
+individual edges.
 
 ## Reporting the analysis
 
@@ -398,13 +458,17 @@ estimator and the value of $`\gamma`$, and any threshold. The edges are
 reported as partial correlations, with centrality and predictability
 defined before they are interpreted.
 
-In this analysis, an EBIC graphical lasso ($`\gamma = 0.5`$) on Pearson
-correlations of 300 complete responses selected $`\lambda = 0.00861`$
-and kept all 10 edges. The largest positive partial correlation joined
-cognitive strategy use and intrinsic value (0.412) and the only negative
-one joined self-regulation and test anxiety (-0.350). Rank-based and
-nonparanormal fits preserved this structure and changed only the weak
-edges of test anxiety.
+For these 300 complete, language-model-generated responses, an EBIC
+graphical lasso ($`\gamma = 0.5`$) based on Pearson correlations
+selected $`\lambda = 0.00861`$ and retained all 10 possible edges. The
+largest positive partial correlation was between cognitive strategy use
+and intrinsic value (0.412), and the only negative partial correlation
+was between self-regulation and test anxiety (-0.350). The
+Spearman-based model retained 9 edges and the nonparanormal model
+retained 10; both preserved the positive learning-construct cluster and
+the negative self-regulation to test anxiety association. Changes in
+individual edge weights, particularly those involving test anxiety,
+should be reported rather than treated as evidence of exact replication.
 
 ## Assumptions and when to use the GGM
 
@@ -421,9 +485,10 @@ edges of test anxiety.
   the goal. When the sample is large relative to the number of variables
   and unshrunk partial correlations are wanted, the stepwise model
   selection of `method = "ggm"` is the alternative.
-- An edge is a conditional association, not a causal effect, and a
-  missing edge shows that the data do not support a unique association,
-  not that the two variables are unrelated.
+- An edge represents a conditional association, not a causal effect. A
+  missing edge is an estimated zero in the selected model, not proof
+  that the variables are unrelated in the population. Sampling
+  uncertainty and the choice of estimation method remain important.
 
 ## Mathematical details
 
@@ -440,9 +505,10 @@ W_{ij} - S_{ij} = \lambda\,\operatorname{sign}(\widehat{K}_{ij})
 ```
 
 [`certificate()`](https://pak.dynasite.org/psychnets/reference/certificate.md)
-returns the largest violation of these conditions. Because the objective
-is strictly convex, its minimum is unique, and a violation near zero
-identifies it without reference to any other software.
+reports the largest violation of these conditions. For the strictly
+convex graphical-lasso objective, sufficiently small violations indicate
+that the numerical solution is close to the unique optimum. This
+assessment concerns optimisation rather than statistical uncertainty.
 
 ### Selection of the penalty
 
@@ -460,7 +526,28 @@ proportion is
 R_j^2 = 1 - \frac{1}{K_{jj}S_{jj}}.
 ```
 
+## How to cite this article
+
+Saqr, M., & López-Pernas, S. (2026). *Gaussian graphical models:
+Estimation and interpretation*. psychnets.
+<https://doi.org/10.5281/zenodo.24567506> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/gaussian-graphical-models.pdf)
+
 ## References
+
+Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E. I.,
+McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J., Costantini,
+G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van Bork, R., &
+Waldorp, L. J. (2021). Network analysis of multivariate data in
+psychological science. *Nature Reviews Methods Primers*, 1, 58.
+[doi:10.1038/s43586-021-00055-w](https://doi.org/10.1038/s43586-021-00055-w)
+
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating
+psychological networks and their accuracy: A tutorial paper. *Behavior
+Research Methods*, 50(1), 195-212.
+[doi:10.3758/s13428-017-0862-1](https://doi.org/10.3758/s13428-017-0862-1)
 
 Epskamp, S., & Fried, E. I. (2018). A tutorial on regularized partial
 correlation networks. *Psychological Methods*, 23(4), 617-634.
@@ -480,16 +567,53 @@ predict observations? On the importance of predictability in network
 models. *Behavior Research Methods*, 50(2), 853-861.
 [doi:10.3758/s13428-017-0910-x](https://doi.org/10.3758/s13428-017-0910-x)
 
+Isvoranu, A.-M., & Epskamp, S. (2023). Which estimation method to choose
+in network psychometrics? Deriving guidelines for applied researchers.
+*Psychological Methods*, 28(4), 925-946.
+[doi:10.1037/met0000439](https://doi.org/10.1037/met0000439)
+
 Liu, H., Lafferty, J., & Wasserman, L. (2009). The nonparanormal:
 Semiparametric estimation of high dimensional undirected graphs.
 *Journal of Machine Learning Research*, 10, 2295-2328.
+
+Malmberg, J., Saqr, M., Järvenoja, H., Haataja, E., Pijeira-Díaz, H. J.,
+& Järvelä, S. (2022). Modeling the complex interplay between monitoring
+events for regulated learning with psychological networks. In M.
+Giannakos, D. Spikol, D. Di Mitri, K. Sharma, X. Ochoa, & R. Hammad
+(Eds.), *The multimodal learning analytics handbook* (pp. 79-104).
+Springer.
+[doi:10.1007/978-3-031-08076-0_4](https://doi.org/10.1007/978-3-031-08076-0_4)
+
+Malmberg, J., Saqr, M., Järvenoja, H., & Järvelä, S. (2022). How the
+monitoring events of individual students are associated with phases of
+regulation: A network analysis approach. *Journal of Learning
+Analytics*, 9(1), 77-92.
+[doi:10.18608/jla.2022.7429](https://doi.org/10.18608/jla.2022.7429)
 
 Robinaugh, D. J., Millner, A. J., & McNally, R. J. (2016). Identifying
 highly influential nodes in the complicated grief network. *Journal of
 Abnormal Psychology*, 125(6), 747-757.
 [doi:10.1037/abn0000181](https://doi.org/10.1037/abn0000181)
 
-Saqr, M. (2025). Delving into the psychology of machines: Exploring the
-structure of self-regulated learning via LLM-generated survey responses.
-*Computers in Human Behavior*, 173, 108769.
+Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A
+modern approach to analysis of learning and complex learning processes.
+In M. Saqr & S. López-Pernas (Eds.), *Learning analytics methods and
+tutorials: A practical guide using R* (pp. 639-671). Springer.
+[doi:10.1007/978-3-031-54464-4_19](https://doi.org/10.1007/978-3-031-54464-4_19)
+
+Saqr, M., Peeters, W., & Viberg, O. (2021). The relational, co-temporal,
+contemporaneous, and longitudinal dynamics of self-regulation for
+academic writing. *Research and Practice in Technology Enhanced
+Learning*, 16, 29.
+[doi:10.1186/s41039-021-00175-7](https://doi.org/10.1186/s41039-021-00175-7)
+
+Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas, S.,
+& Saqr, M. (2025). Delving into the psychology of machines: Exploring
+the structure of self-regulated learning via LLM-generated survey
+responses. *Computers in Human Behavior*, 173, 108769.
 [doi:10.1016/j.chb.2025.108769](https://doi.org/10.1016/j.chb.2025.108769)
+
+Williams, D. R., & Rast, P. (2020). Back to the basics: Rethinking
+partial correlation network methodology. *British Journal of
+Mathematical and Statistical Psychology*, 73(2), 187-212.
+[doi:10.1111/bmsp.12173](https://doi.org/10.1111/bmsp.12173)

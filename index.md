@@ -284,6 +284,81 @@ structure at the same F-measure. The full derivation, the worked
 graphical-lasso case, and the complete tables are given in the package’s
 technical report.
 
+## Citation
+
+If you use psychnets in your research, please cite
+(`citation("psychnets")`):
+
+> Saqr, M., & López-Pernas, S. (2026). *psychnets: Tidy clean-room
+> psychological network modeling* (R package).
+> <https://CRAN.R-project.org/package=psychnets>
+
+Saqr, M., & López-Pernas, S. (2026). *Gaussian graphical models:
+Estimation and interpretation*. psychnets.
+<https://doi.org/10.5281/zenodo.24567506> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/gaussian-graphical-models.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Stepwise Gaussian graphical model
+selection*. psychnets. <https://doi.org/10.5281/zenodo.24567508> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/ggm-model-selection.html)
+· [PDF](https://pak.dynasite.org/psychnets/pdf/ggm-model-selection.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Information-filtering networks
+with TMFG and LoGo*. psychnets.
+<https://doi.org/10.5281/zenodo.24567514> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/information-filtering-networks.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/information-filtering-networks.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Relative-importance networks*.
+psychnets. <https://doi.org/10.5281/zenodo.24567522> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/relative-importance-networks.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data*.
+psychnets. <https://doi.org/10.5281/zenodo.24567516> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/ising-networks.html)
+· [PDF](https://pak.dynasite.org/psychnets/pdf/ising-networks.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models*.
+psychnets. <https://doi.org/10.5281/zenodo.24567518> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/mixed-graphical-models.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Panel graphical VAR: Temporal,
+contemporaneous, and between-person networks*. psychnets.
+<https://doi.org/10.5281/zenodo.24567520> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html)
+· [PDF](https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Networks of regulation actions
+from event logs*. psychnets. <https://doi.org/10.5281/zenodo.24567512> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/group-networks-from-event-data.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/group-networks-from-event-data.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Edge-weight stability and
+split-half reliability*. psychnets.
+<https://doi.org/10.5281/zenodo.24567528> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/network-reliability.html)
+· [PDF](https://pak.dynasite.org/psychnets/pdf/network-reliability.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Visualizing networks with
+cograph*. psychnets. <https://doi.org/10.5281/zenodo.24567526> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.html)
+·
+[PDF](https://pak.dynasite.org/psychnets/pdf/visualizing-with-cograph.pdf)
+
+Saqr, M., & López-Pernas, S. (2026). *Visualizing centrality, bootstrap
+and comparison results*. psychnets.
+<https://doi.org/10.5281/zenodo.24567530> ·
+[HTML](https://pak.dynasite.org/psychnets/articles/visualizing-networks.html)
+· [PDF](https://pak.dynasite.org/psychnets/pdf/visualizing-networks.pdf)
+
 ## Learn more
 
 - **Articles** — worked tutorials for the Gaussian graphical, stepwise

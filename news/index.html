@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,9 @@
     <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
     <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
+    <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -51,37 +54,43 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.8" id="psychnets-088">psychnets 0.8.8<a class="anchor" aria-label="anchor" href="#psychnets-088"></a></h2>
+<ul><li>The articles were revised: fuller introductions, the model before the data, and references to current methodological work. Their code is unchanged.</li>
+<li>The Ising and mixed graphical model articles now quote the results of the current version (they predated 0.8.6).</li>
+<li>
+<code>SRL_GPT</code> cites its source correctly: Vogelsmeier, Oliveira, Misiejuk, López-Pernas and Saqr (2025).</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.7" id="psychnets-087">psychnets 0.8.7<a class="anchor" aria-label="anchor" href="#psychnets-087"></a></h2>
 <ul><li>
-<code><a href="../reference/net_centralities.html">net_centralities()</a></code> documents its closeness of an isolated node (a node that reaches no other): <code>0</code>, where igraph’s <code>closeness()</code> gives <code>NaN</code>. A unit test holds the documented value; whether it should be <code>NaN</code>, as in snajs, is pending the owner’s decision. No number changed.</li>
-<li>Equivalence tests (not part of the package): the tolerances against psych (1.22e-4, <code><a href="https://rdrr.io/r/stats/optimize.html" class="external-link">optimize()</a></code>’s default tolerance), lavaan (1e-6) and psychonetrics run to convergence (1e-4) were tightened; <code><a href="../reference/ising_fit.html">ising_fit()</a></code> is also compared with <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> with glmnet converged (1e-6); the network comparison test runs 100 permutations (with <code>weighted = FALSE</code>, one permuted split differs from NCT, whose glasso leaves an edge at -1.6e-7 that is 0 at the optimum: declared as a known difference); bootstrap and case-dropping summaries are held to each row’s own Monte Carlo standard error, the observed strength to 1e-12, and the CS-coefficient is compared with <code>bootnet::corStability()</code>; <code><a href="../reference/lmg_certificate.html">lmg_certificate()</a></code> is compared where it is not zero.</li>
+<code><a href="../reference/net_centralities.html">net_centralities()</a></code> documents that the closeness of an isolated node is 0 (igraph gives <code>NaN</code>). No number changed.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.6" id="psychnets-086">psychnets 0.8.6<a class="anchor" aria-label="anchor" href="#psychnets-086"></a></h2>
 <ul><li>
-<code><a href="../reference/tmfg_certificate.html">tmfg_certificate()</a></code> tests planarity for any graph, by the left-right planarity test (de Fraysseix &amp; Rosenstiehl 1985; Brandes 2009), as NetworkX’s <code>check_planarity()</code> does. The earlier stacked-triangulation check was valid only for chordal graphs, so a non-planar graph that is also not chordal was counted planar: K3,3 now violates 3 properties (was 2), as does the bfi TMFG with an edge added. The verdict (0 = a TMFG) is unchanged.</li>
+<code><a href="../reference/tmfg_certificate.html">tmfg_certificate()</a></code> tests planarity for any graph (left-right planarity test). Before, a non-planar graph that was not chordal could be counted planar. The verdict for a TMFG is unchanged.</li>
 <li>
-<code><a href="../reference/ising_fit.html">ising_fit()</a></code> and <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> with the native solver select each node’s penalty on glmnet’s default path, as <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> and <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> do: <code>lambda_min_ratio</code> now defaults to <code>NULL</code>, glmnet’s rule (1e-4, or 0.01 with fewer observations than predictors), and the path stops early by glmnet’s rule. The old grid ended at 0.01 of the largest penalty and could miss the EBIC choice: on six bfi items the Ising edge weights moved by up to 0.0165 and now agree with IsingFit to 1.6e-5; on a mixed Gaussian/binary model an edge of 0.0497 that mgm finds was missing, and the magnitudes now agree with mgm run with glmnet converged to 6e-10. Pass <code>lambda_min_ratio = 0.01</code> for a grid that ends at 0.01.</li>
+<code><a href="../reference/ising_fit.html">ising_fit()</a></code> and <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> with the native solver select each node’s penalty on glmnet’s default path, as <code><a href="https://rdrr.io/pkg/IsingFit/man/isingfit.html" class="external-link">IsingFit::IsingFit()</a></code> and <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> do. <code>lambda_min_ratio</code> now defaults to glmnet’s rule. Edge weights can change (up to 0.0165 on six bfi items) and now agree with IsingFit and mgm. Pass <code>lambda_min_ratio = 0.01</code> for the old grid.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.5" id="psychnets-085">psychnets 0.8.5<a class="anchor" aria-label="anchor" href="#psychnets-085"></a></h2>
 <ul><li>
-<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> of a grouped (<code>psychnet_group</code>) or multilevel (<code>psychnet_multilevel</code>) result now passes <code>...</code> on to each network, so <code>include_zero = TRUE</code> returns every node pair of every group or level. It was ignored: zero edges were dropped silently (57 rows where 2 x 45 = 90 pairs exist on the bundled data by gender).</li>
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> of grouped and multilevel results passes <code>...</code> to each network, so <code>include_zero = TRUE</code> returns every node pair. It was ignored.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.3" id="psychnets-083">psychnets 0.8.3<a class="anchor" aria-label="anchor" href="#psychnets-083"></a></h2>
-<ul><li>A nodewise logistic fit that approaches a finite optimum slowly (nearly collinear predictors) is no longer reported as separated. 0.8.2 could stop such a fit early with a separation warning in <code><a href="../reference/ising_sampler.html">ising_sampler()</a></code>.</li>
+<ul><li>A slow but finite nodewise logistic fit is no longer reported as separated in <code><a href="../reference/ising_sampler.html">ising_sampler()</a></code>.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.2" id="psychnets-082">psychnets 0.8.2<a class="anchor" aria-label="anchor" href="#psychnets-082"></a></h2><p class="text-muted">CRAN release: 2026-11-18</p>
 <div class="section level3">
 <h3 id="new-features-0-8-2">New features<a class="anchor" aria-label="anchor" href="#new-features-0-8-2"></a></h3>
 <ul><li>
-<code><a href="../reference/panel_gvar.html">panel_gvar()</a></code> estimates the panel graphical VAR model (Epskamp, 2020) from few-wave panel data: a temporal, a contemporaneous and a between-person network, by maximum likelihood. Edges are selected with <code>select = c("none", "prune", "ebic")</code>; <code>standardize</code> follows psychonetrics. New dataset <code>srl_panel</code> and a vignette.</li>
+<code><a href="../reference/panel_gvar.html">panel_gvar()</a></code> estimates the panel graphical VAR model (Epskamp, 2020) from few-wave panel data: temporal, contemporaneous and between-person networks. Edges are selected with <code>select = c("none", "prune", "ebic")</code>. New dataset <code>srl_panel</code> and a vignette.</li>
 <li>
-<code>psychnet(within = )</code> estimates within-person networks: each variable is centered and scaled within persons, as <code>mlVAR::mlVAR(scaleWithin = TRUE)</code>. With <code>group</code>, <code><a href="../reference/net_compare.html">net_compare()</a></code> then pairs the occasions by person.</li>
+<code>psychnet(within = )</code> estimates within-person networks.</li>
 <li>
-<code><a href="../reference/net_compare.html">net_compare()</a></code> accepts two networks of one grouped <code><a href="../reference/psychnet.html">psychnet()</a></code> result, gains <code>na_method</code>, and reports the unadjusted p-value (<code>p_raw</code>) next to the adjusted one.</li>
+<code><a href="../reference/net_compare.html">net_compare()</a></code> accepts two networks of one grouped <code><a href="../reference/psychnet.html">psychnet()</a></code> result, gains <code>na_method</code>, and reports the unadjusted p-value (<code>p_raw</code>).</li>
 <li>
 <code><a href="../reference/net_stability.html">net_stability()</a></code> and <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code> gain <code>cor_method</code>.</li>
 <li>New <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> methods and <code>what =</code> options for stability, bootstrap, moderated MGM and panel GVAR results; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> for multilevel networks.</li>
@@ -89,102 +98,71 @@
 <div class="section level3">
 <h3 id="changes-to-results-0-8-2">Changes to results<a class="anchor" aria-label="anchor" href="#changes-to-results-0-8-2"></a></h3>
 <ul><li>
-<code><a href="../reference/net_compare.html">net_compare()</a></code> stores the network-structure test as <code>$structure</code> (M) and the global-strength test as <code>$strength</code> (S), with the letters of van Borkulo et al. (2022); <code>$M</code> and <code>$S</code> raise a <code>psychnet_renamed</code> error.</li>
+<code><a href="../reference/net_compare.html">net_compare()</a></code> stores the network-structure test as <code>$structure</code> (M) and the global-strength test as <code>$strength</code> (S), as in van Borkulo et al. (2022). <code>$M</code> and <code>$S</code> raise an error.</li>
 <li>
-<code><a href="../reference/net_stability.html">net_stability()</a></code> computes the CS-coefficient as <code>bootnet::corStability()</code>; <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code> now defaults to <code>cor_method = "pearson"</code>.</li>
+<code><a href="../reference/net_stability.html">net_stability()</a></code> computes the CS-coefficient as <code>bootnet::corStability()</code>; <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code> defaults to <code>cor_method = "pearson"</code>.</li>
 <li>
 <code><a href="../reference/ebic_glasso.html">ebic_glasso()</a></code> refits the lambdas near the EBIC minimum before choosing one, and returns absent edges as exact zeros.</li>
 <li>
-<code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> solves gaussian nodes to optimality (edge weights move by up to about 1e-7).</li>
+<code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> solves gaussian nodes to optimality (weights move by up to 1e-7).</li>
 <li>
 <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code>, <code><a href="../reference/ising_fit.html">ising_fit()</a></code> and <code><a href="../reference/ising_sampler.html">ising_sampler()</a></code> rescale <code>weights</code> to a maximum of 1, as <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> does.</li>
 <li>
 <code>net_bridge(normalize = TRUE)</code> divides the 2-step bridge expected influence by the number of nodes, as <code><a href="https://rdrr.io/pkg/networktools/man/bridge.html" class="external-link">networktools::bridge()</a></code>.</li>
 <li>
-<code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code> gives a split with one empty half a correlation of 0.</li>
+<code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code> gives a split with an empty half a correlation of 0.</li>
 <li>
 <code><a href="../reference/condition.html">condition()</a></code> reads <code>value</code> in the moderator’s own coding.</li>
 <li>
-<code><a href="../reference/ising_sampler.html">ising_sampler()</a></code> warns under (quasi-)complete separation, does not certify such a fit, and stops it early.</li>
+<code><a href="../reference/ising_sampler.html">ising_sampler()</a></code> warns under (quasi-)complete separation and does not certify such a fit.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="input-and-conditions-0-8-2">Input and conditions<a class="anchor" aria-label="anchor" href="#input-and-conditions-0-8-2"></a></h3>
-<ul><li>Errors and warnings are classed conditions (<code>psychnet_error</code>, <code>psychnet_bad_input</code>, …), and arguments are validated.</li>
+<h3 id="other-0-8-2">Other<a class="anchor" aria-label="anchor" href="#other-0-8-2"></a></h3>
+<ul><li>Errors and warnings are classed conditions (<code>psychnet_bad_input</code>, …).</li>
 <li>Ordered factors are kept as ordinal items; <code><a href="../reference/ising_fit.html">ising_fit()</a></code> codes logical and two-level factor columns 0/1.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="plots-0-8-2">Plots<a class="anchor" aria-label="anchor" href="#plots-0-8-2"></a></h3>
-<ul><li>All plots use the Okabe-Ito palette and show significance by fill and line type as well as colour.</li>
+<li>Plots use the Okabe-Ito palette and show significance by fill and line type as well as colour.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.2" id="psychnets-052">psychnets 0.5.2<a class="anchor" aria-label="anchor" href="#psychnets-052"></a></h2><p class="text-muted">CRAN release: 2026-08-23</p>
-<div class="section level3">
-<h3 id="cran-incoming-check-runtime-0-5-2">CRAN incoming-check runtime<a class="anchor" aria-label="anchor" href="#cran-incoming-check-runtime-0-5-2"></a></h3>
-<ul><li>Resubmission addressing the automated incoming pre-test NOTE (12 examples over 10 s and an overall checktime over 10 min on the Windows builder). No estimator numerics changed.</li>
-<li>Resampling examples (<code><a href="../reference/net_boot.html">net_boot()</a></code>, <code><a href="../reference/difference_test.html">difference_test()</a></code>, <code><a href="../reference/net_stability.html">net_stability()</a></code>, <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code>, <code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code>, and their plot methods) now demonstrate the workflow with the closed-form <code>method = "pcor"</code> estimator and note that the <code>"glasso"</code> default with full iteration counts is what a real analysis should use. <code><a href="../reference/net_compare.html">net_compare()</a></code> examples use fewer permutations on smaller data.</li>
-<li>The cograph visualization vignette’s bootstrap chunk uses <code>method = "pcor"</code>.</li>
-<li>Four heavyweight numerical test files are skipped on CRAN (they run on every GitHub Actions matrix job, R-hub platform, and local <code>devtools::test()</code>); the frozen 1e-12 golden estimator baselines still run on CRAN.</li>
+<ul><li>Faster examples: the resampling examples use <code>method = "pcor"</code>. No estimator changed.</li>
 </ul></div>
-</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.1" id="psychnets-051">psychnets 0.5.1<a class="anchor" aria-label="anchor" href="#psychnets-051"></a></h2>
 <div class="section level3">
-<h3 id="pre-release-correctness-hardening-0-5-1">Pre-release correctness hardening<a class="anchor" aria-label="anchor" href="#pre-release-correctness-hardening-0-5-1"></a></h3>
-<ul><li>The base nodewise kernel (<code><a href="../reference/ising_fit.html">ising_fit()</a></code>, <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code>, moderated MGM with <code>native = TRUE</code>) now returns exact zeros for inactive lasso coordinates. Coordinate descent could leave a BLAS-rounding crumb (~1e-17) on a coordinate whose gradient sits exactly at the penalty boundary; whether the crumb was <code>0.0</code> or <code>4e-17</code> differed between BLAS implementations, and the AND rule then counted it as an edge on some platforms but not others. The EBIC degrees of freedom already ignored such coefficients (<code>|beta| &lt;= 1e-10</code>); the returned support now agrees. One golden-fixture edge changes: the base-kernel mixed-data mgm network loses a spurious weak edge, matching the glmnet reference path, which always reported that edge as absent.</li>
-<li>
-<code><a href="../reference/cor_auto.html">cor_auto()</a></code> now rejects variable pairs with fewer than two joint observations instead of optimizing an empty polychoric likelihood. Marginal-correlation p-values use pair-specific effective sample sizes; full-order partial-correlation inference rejects heterogeneous pairwise sample sizes.</li>
-<li>Bootstrap, stability, case-drop, and split-half refits retain the observed node set when a resample makes a node constant. Failed-fit counts are exposed, invalid small-sample splits are rejected, and <code>estimator_args</code> carries estimator options whose names collide with diagnostic options. The legacy <code>net_boot(engine=)</code> argument is translated to the public <code>native</code> switch.</li>
-<li>Bootstrap difference tests split exact ties between both tails, so identical draw distributions return <code>p = 1</code>.</li>
-<li>Corrected undirected node-betweenness normalization, preserved directedness in relative-importance aggregation, and prevented rank dichotomization from splitting tied values by row order.</li>
-<li>Certificates that are unavailable, including post-threshold GGM graphs and conditioned moderated networks, now report <code>certified = NA</code>. GGM objects retain the pre-threshold residual in <code>$fit_kkt</code>.</li>
-<li>The glmnet Ising/MGM paths and moderated MGM now honor <code>nlambda</code> and <code>lambda_min_ratio</code>; moderated MGM honors both <code>LW</code> and <code>HW</code>. MGM consistently stores <code>$levels</code>, and prediction accepts original two-level factor columns.</li>
-<li>GGM predictability now uses the fitted marginal variance when the precision diagonal is penalized.</li>
-</ul><p>Unblocks Nestimate’s delegation of its cross-sectional psychometric estimators to psychnets (see <code>AGENT-NOTE-NESTIMATE-DELEGATION.md</code>, gaps A and B). Default <em>numeric</em> output of every estimator is unchanged; all new behaviour is opt-in. Two functions are <strong>renamed</strong> — see below.</p>
-</div>
-<div class="section level3">
-<h3 id="breaking-two-reliability-verbs-renamed-0-5-1">BREAKING: two reliability verbs renamed<a class="anchor" aria-label="anchor" href="#breaking-two-reliability-verbs-renamed-0-5-1"></a></h3>
+<h3 id="renamed-0-5-1">Renamed<a class="anchor" aria-label="anchor" href="#renamed-0-5-1"></a></h3>
 <ul><li>
-<code>casedrop_reliability()</code> is now <strong><code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code></strong>.</li>
+<code>casedrop_reliability()</code> is now <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code> and <code>network_reliability()</code> is now <code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code>. The old names, also exported by Nestimate with a different first argument, are removed. Arguments, results and numbers are unchanged.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-0-5-1">New<a class="anchor" aria-label="anchor" href="#new-0-5-1"></a></h3>
+<ul><li>
+<code><a href="../reference/ebic_glasso.html">ebic_glasso()</a></code> gains <code>lambda_path =</code> (a fixed penalty grid, for resampling), <code>penalize_diagonal =</code> (with a matching <code><a href="../reference/glasso_kkt.html">glasso_kkt()</a></code> argument) and <code>refit =</code> (<code>"unregularized"</code> refits the selected graph without a penalty).</li>
 <li>
-<code>network_reliability()</code> is now <strong><code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code></strong>.</li>
-</ul><p>The old names are <strong>removed, not deprecated.</strong> Both were also exported by Nestimate with a <em>different first argument</em> (a fitted network there, raw data here), so <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> load order silently decided which one a user got and the failure surfaced as an argument-matching error inside their own code. Nestimate is the older package and now depends on psychnets, so psychnets is the side that renames. An erroring alias would not have fixed anything — psychnets would still own the name and still shadow Nestimate’s verb.</p>
-<p>Neither the arguments, the return value, nor the numbers changed; only the name. Update calls with a search and replace. The new names also bring both verbs into the <code>net_*</code> style every other framework verb already uses.</p>
-<p><code><a href="../reference/net_edge_betweenness.html">net_edge_betweenness()</a></code> is <strong>not</strong> renamed: both packages give it the same contract, so it is genuinely one verb rather than a collision.</p>
-</div>
-<div class="section level3">
-<h3 id="ebic_glasso-can-now-serve-a-resampling-caller-0-5-1">
-<code>ebic_glasso()</code> can now serve a resampling caller<a class="anchor" aria-label="anchor" href="#ebic_glasso-can-now-serve-a-resampling-caller-0-5-1"></a></h3>
-<ul><li><p>New <code>lambda_path =</code> argument: scan a caller-supplied penalty grid, in the order given, instead of recomputing one from the input correlation matrix. Resampling callers compute the path once from the original matrix and reuse it for every resample, so selected penalties stay comparable across draws rather than drifting with each sample’s largest absolute correlation.</p></li>
-<li><p>New <code>penalize_diagonal =</code> argument (default <code>FALSE</code>, unchanged behaviour). <code><a href="../reference/glasso_kkt.html">glasso_kkt()</a></code> gained a matching argument: with a penalized diagonal the optimality condition becomes <code>W_ii = S_ii + rho</code>, so grading such a fit with the default would report a spurious violation of exactly <code>rho</code>. Verified against the <code>glasso</code> Fortran package to ~1e-11.</p></li>
-<li><p>New <code>refit =</code> argument. <code>TRUE</code> (default) keeps today’s behaviour of re-solving the selected penalty to machine precision. <code>FALSE</code> returns the path fit exactly as scanned – a bit-compatibility switch for consumers holding frozen baselines against an unrefitted path scan, not a performance knob. <code>"unregularized"</code> keeps the selected support and refits the unpenalized graph-restricted MLE on it, certified by <code><a href="../reference/ggm_support_kkt.html">ggm_support_kkt()</a></code> instead of <code><a href="../reference/glasso_kkt.html">glasso_kkt()</a></code>. <code>$support</code> is stored on the object in that case only.</p></li>
+<code>mgm_fit(native = FALSE)</code> models categorical nodes with more than two levels, as <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> does. A numeric column with 10 or fewer integer values is treated as categorical, with a warning (<code>psychnet_type_promotion</code>).</li>
+<li>Any two-level coding (<code>{1, 2}</code>, <code>{"no", "yes"}</code>) gives the same fit as <code>{0, 1}</code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="mgm_fit-supports-multi-level-categorical-nodes-0-5-1">
-<code>mgm_fit()</code> supports multi-level categorical nodes<a class="anchor" aria-label="anchor" href="#mgm_fit-supports-multi-level-categorical-nodes-0-5-1"></a></h3>
-<ul><li><p><code>mgm_fit(native = FALSE)</code> now models a <code>factor</code>/<code>character</code> column, or a numeric column with more than two levels, as a single k-level categorical node. Previously these errored, and the suggested workaround (one-hot encoding) was not equivalent: it turns one k-level node into k separate nodes, a different model. Matches <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code> to ~1e-15 with exact structure on 3- and 4-level factors.</p></li>
-<li><p>Node type detection now follows <code><a href="https://rdrr.io/pkg/mgm/man/mgm.html" class="external-link">mgm::mgm()</a></code>’s own rule: a <code>factor</code>/<code>character</code> column is categorical, and so is a numeric column with 10 or fewer distinct integer values. A numeric column promoted by that integer rule is <strong>warned about by name</strong> (condition class <code>psychnet_type_promotion</code>), because it switches the node from gaussian to categorical – a different model, not a different encoding. Likert and count items hit this rule routinely. No previously-working call changes its result: every input newly classified as categorical raised an error before, and constant / all-NA columns are still dropped as before. A <code>character</code> column with more than 10 distinct values is refused as an identifier (use <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code> to insist), and a column declared <code>"c"</code> via <code>types =</code> with more than 10 distinct values is refused as a mislabelled continuous variable rather than routed to a multinomial.</p></li>
-<li><p><code>na_method</code> applies identically on both engines: the glmnet path is fed the same imputed (or listwise-reduced) rows as the base path, and a missing multi-level code is imputed with the modal level rather than a mean.</p></li>
-<li><p>The certificate of a multi-level node is the multinomial (softmax) stationarity residual. Grading each class as an independent logistic regression reported ~0.2 for a fit glmnet had converged; the true residual is ~1e-5. Related: on the glmnet paths (<code>mgm_fit</code> / <code>ising_fit</code>, <code>native = FALSE</code>) a node whose EBIC-selected model is <em>empty</em> now certifies as optimal (residual ~0) instead of reporting its whole gradient as a violation – the empty solution is exact at glmnet’s own <code>lambda_max</code>. Only <code>$kkt</code> changes; weights are untouched.</p></li>
-<li><p>The resampling verbs (<code><a href="../reference/net_boot.html">net_boot()</a></code>, <code><a href="../reference/net_stability.html">net_stability()</a></code>, <code><a href="../reference/net_casedrop_reliability.html">net_casedrop_reliability()</a></code>, <code><a href="../reference/net_split_reliability.html">net_split_reliability()</a></code>) now hand each draw to the estimator <strong>exactly as the full data would be</strong>: a data.frame keeps its factor columns and its incomplete rows, a matrix is coerced without dropping rows. So resampling <code>mgm_fit(native = FALSE)</code> keeps a factor node (previously it was silently dropped), and <code>na_method = "pairwise"</code> – every estimator’s default – resamples the rows a direct call would use instead of a listwise-reduced subset (previously the verbs listwise-deleted up front, so the bootstrapped network was not the network <code><a href="../reference/psychnet.html">psychnet()</a></code> returns on the same data). Node labels are read off the observed fit. For <code>method = "mgm"</code> node types are decided once on the full data and pinned via <code>types=</code> for every draw, so a borderline column cannot flip between gaussian and categorical from draw to draw, and the promotion warning is raised once per verb call. Complete numeric data is byte-identical to before.</p></li>
-<li><p><code><a href="../reference/mgm_fit.html">mgm_fit()</a></code>: constant / all-NA columns are dropped before anything is indexed against the columns, and <code>moderators</code> (a positional index) and a <code>labels</code> vector given for all original columns now follow that drop; a moderator that is itself constant is refused by name. <code>na_method = "listwise"</code> is applied first, so a node left with one level after deletion is dropped like any other constant column on both engines. An explicit <code>factor</code> with more than 10 levels is accepted (that is the documented escape hatch); only <code>character</code> columns and <code>types = "c"</code> declarations on non-factor columns are subject to the 10-level guard.</p></li>
-<li><p>A 2-level column is recoded through its factor levels, so any binary coding (<code>{1,2}</code>, <code>{"no","yes"}</code>) now works and gives the same fit as <code>{0,1}</code>.</p></li>
-<li><p>The base kernel (<code>native = TRUE</code>) is a binomial solver and still refuses a node with more than two levels, now naming the column and pointing at <code>native = FALSE</code>.</p></li>
-<li><p><code><a href="../reference/net_predict.html">net_predict()</a></code> refuses an mgm network containing a multi-level categorical node: a k-level predictor occupies k-1 design columns, so there is no one-coefficient-per-variable matrix to predict from. It errors rather than computing from a truncated model.</p></li>
-</ul></div>
-<div class="section level3">
-<h3 id="documentation-and-stability-0-5-1">Documentation and stability<a class="anchor" aria-label="anchor" href="#documentation-and-stability-0-5-1"></a></h3>
-<ul><li><p>Node order is now a documented guarantee, not observed behaviour: <code>$weights</code>, <code>$nodes</code>, and <code>$precision</code> follow the input column order and are never sorted. Stated in <code><a href="../reference/ebic_glasso.html">?ebic_glasso</a></code>, <code><a href="../reference/cor_network.html">?cor_network</a></code>, <code><a href="../reference/pcor_network.html">?pcor_network</a></code>, <code><a href="../reference/mgm_fit.html">?mgm_fit</a></code> and pinned by a test using non-alphabetical names.</p></li>
-<li><p>A <strong>numerical-stability policy</strong> is now documented: estimator numerics are stable within a minor version; any change to a selected support, or to a weight beyond 1e-10, ships in a minor bump and is listed here. Enforced by <code>tests/testthat/test-golden.R</code> against frozen fixtures at 1e-12, so downstream consumers can pin <code>psychnets (&gt;= x.y)</code> against the promise.</p></li>
-<li><p><code><a href="../reference/net_crosswalk.html">net_crosswalk()</a></code> gained rows for <code>penalize.diagonal</code>, <code>refit</code>, and <code>lambda_path</code>, which it previously listed as reference-only.</p></li>
+<h3 id="fixes-0-5-1">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-5-1"></a></h3>
+<ul><li>The base nodewise solver returns exact zeros for inactive coefficients, so the selected edges no longer depend on the platform. One weak edge of the mixed-data mgm network goes.</li>
+<li>Resampling verbs pass each draw to the estimator as a direct call would (factor columns and incomplete rows kept), and keep the observed node set.</li>
+<li>
+<code><a href="../reference/cor_auto.html">cor_auto()</a></code> rejects pairs with fewer than two joint observations; correlation p-values use pair-specific sample sizes.</li>
+<li>Bootstrap difference tests split ties, so identical distributions give <code>p = 1</code>.</li>
+<li>Corrected node-betweenness normalisation; relative-importance aggregation keeps direction; rank dichotomisation no longer splits ties by row order.</li>
+<li>Unavailable certificates report <code>certified = NA</code>.</li>
+<li>The glmnet paths honour <code>nlambda</code> and <code>lambda_min_ratio</code>.</li>
+<li>
+<code><a href="../reference/net_predict.html">net_predict()</a></code> refuses an mgm network with a categorical node of more than two levels.</li>
+<li>Node order follows the input columns and is never sorted.</li>
+<li>Estimator numerics are stable within a minor version: a change to a selected edge set, or to a weight beyond 1e-10, comes with a minor version and is listed here.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.3" id="psychnets-043">psychnets 0.4.3<a class="anchor" aria-label="anchor" href="#psychnets-043"></a></h2><p class="text-muted">CRAN release: 2026-07-30</p>
-<ul><li><p>First CRAN release.</p></li>
-<li><p><code>mgm_fit(..., moderators = )</code> (the moderated mixed graphical model, read with <code><a href="../reference/condition.html">condition()</a></code>) now runs on psychnets’ own base-R penalized-IRLS kernel and is KKT-certified. It previously required the compiled <code>glmnet</code> package and silently ignored <code>native =</code>. Every estimator in the package is now pure base R by default; <code>glmnet</code> and <code>glasso</code> remain optional reference engines selected with <code>native = FALSE</code>.</p></li>
-<li><p>The base moderated kernel covers gaussian and binary nodes (the documented <code><a href="../reference/mgm_fit.html">mgm_fit()</a></code> scope) and errors explicitly on a categorical node with more than two levels, which needs <code>native = FALSE</code>.</p></li>
-<li><p>The two resampling-heavy long-form guides, “Network reliability” and “Visualizing networks”, are now website articles rather than installed vignettes, so they keep their full iteration counts while the package check stays inside CRAN’s time budget. Read them at <a href="https://pak.dynasite.org/psychnets" class="uri">https://pak.dynasite.org/psychnets</a>. The eight remaining vignettes are unchanged and still ship with the package.</p></li>
+<ul><li>First CRAN release.</li>
+<li>The moderated mixed graphical model (<code>mgm_fit(moderators = )</code>) runs on psychnets’ own base-R solver; every estimator is base R by default, with <code>glmnet</code> and <code>glasso</code> as optional engines (<code>native = FALSE</code>).</li>
+<li>“Network reliability” and “Visualizing networks” are website articles at <a href="https://pak.dynasite.org/psychnets" class="uri">https://pak.dynasite.org/psychnets</a>.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

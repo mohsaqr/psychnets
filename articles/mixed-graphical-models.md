@@ -1,4 +1,4 @@
-# Mixed graphical models
+# Mixed graphical models with the psychnets R package
 
 When several measures of motivation, learning strategies and well-being
 are analysed together, which associations remain after accounting for
@@ -352,8 +352,9 @@ in a sample of learners.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models*.
-psychnets. <https://doi.org/10.5281/zenodo.24567518> ·
+Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models with the
+psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569499> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html)
 ·
 [PDF](https://pak.dynasite.org/psychnets/pdf/mixed-graphical-models.pdf)

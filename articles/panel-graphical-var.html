@@ -4,20 +4,20 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Panel graphical VAR: temporal, contemporaneous, and between-person networks • psychnets</title>
+<title>Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks • psychnets</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Panel graphical VAR: temporal, contemporaneous, and between-person networks">
-<meta name="citation_title" content="Panel graphical VAR: temporal, contemporaneous, and between-person networks">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks">
+<meta name="citation_title" content="Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks">
 <meta name="citation_author" content="Saqr, Mohammed">
 <meta name="citation_author" content="López-Pernas, Sonsoles">
 <meta name="citation_publication_date" content="2026">
 <meta name="citation_publisher" content="psychnets">
 <meta name="citation_pdf_url" content="https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf">
 <meta name="citation_abstract_html_url" content="https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html">
-<meta name="citation_doi" content="10.5281/zenodo.24567520">
+<meta name="citation_doi" content="10.5281/zenodo.24569500">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">psychnets</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,19 +42,19 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Vignettes</h6></li>
-    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Gaussian graphical models: estimation and interpretation</a></li>
-    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection</a></li>
-    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">Information-filtering networks with TMFG and LoGo</a></li>
-    <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks</a></li>
-    <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data</a></li>
-    <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models</a></li>
-    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR: temporal, contemporaneous, and between-person networks</a></li>
+    <li><a class="dropdown-item" href="../articles/gaussian-graphical-models.html">Estimating and interpreting Gaussian graphical models with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/ggm-model-selection.html">Stepwise Gaussian graphical model selection with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/information-filtering-networks.html">TMFG and LoGo information-filtering networks with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/relative-importance-networks.html">Relative-importance networks with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/ising-networks.html">Ising networks for binary data with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/mixed-graphical-models.html">Mixed graphical models with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/panel-graphical-var.html">Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Guides</h6></li>
-    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Networks of regulation actions from event logs</a></li>
-    <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability</a></li>
-    <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph</a></li>
-    <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results</a></li>
+    <li><a class="dropdown-item" href="../articles/group-networks-from-event-data.html">Networks of regulation actions from event logs with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/network-reliability.html">Edge-weight stability and split-half reliability with the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/visualizing-with-cograph.html">Visualizing networks with cograph and the psychnets R package</a></li>
+    <li><a class="dropdown-item" href="../articles/visualizing-networks.html">Visualizing centrality, bootstrap and comparison results with the psychnets R package</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Resources</h6></li>
     <li><a class="dropdown-item" href="../articles/cite-articles.html">Resources</a></li>
@@ -80,7 +80,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Panel graphical VAR: temporal, contemporaneous, and between-person networks</h1>
+      <h1>Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks</h1>
                         <h4 data-toc-skip class="author">Mohammed
 Saqr</h4>
             <address class="author_afil">
@@ -602,9 +602,9 @@ determines what kinds of changes the temporal network can capture.</li>
 <div class="section level2">
 <h2 id="how-to-cite-this-article">How to cite this article<a class="anchor" aria-label="anchor" href="#how-to-cite-this-article"></a>
 </h2>
-<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Panel graphical VAR:
-Temporal, contemporaneous, and between-person networks</em>. psychnets.
-<a href="https://doi.org/10.5281/zenodo.24567520" class="external-link uri">https://doi.org/10.5281/zenodo.24567520</a> · <a href="https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html">HTML</a>
+<p>Saqr, M., &amp; López-Pernas, S. (2026). <em>Panel graphical VAR with
+the psychnets R package: Temporal, contemporaneous, and between-person
+networks</em>. psychnets. <a href="https://doi.org/10.5281/zenodo.24569500" class="external-link uri">https://doi.org/10.5281/zenodo.24569500</a> · <a href="https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html">HTML</a>
 · <a href="https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf">PDF</a></p>
 </div>
 <div class="section level2">

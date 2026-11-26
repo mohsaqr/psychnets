@@ -1,4 +1,4 @@
-# Edge-weight stability and split-half reliability
+# Edge-weight stability and split-half reliability with the psychnets R package
 
 Can the strongest edges and most prominent nodes in a psychological
 network be trusted to remain similar in another sample? Consider a
@@ -471,8 +471,8 @@ using `psychnet(..., group = )` and returns results for each group.
 ## How to cite this article
 
 Saqr, M., & López-Pernas, S. (2026). *Edge-weight stability and
-split-half reliability*. psychnets.
-<https://doi.org/10.5281/zenodo.24567528> ·
+split-half reliability with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569505> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/network-reliability.html)
 · [PDF](https://pak.dynasite.org/psychnets/pdf/network-reliability.pdf)
 

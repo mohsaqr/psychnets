@@ -1,4 +1,4 @@
-# Relative-importance networks
+# Relative-importance networks with the psychnets R package
 
 How much of a model’s explanatory power can be attributed to each
 predictor when the predictors overlap? In psychological and educational
@@ -386,8 +386,9 @@ to 0.116.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Relative-importance networks*.
-psychnets. <https://doi.org/10.5281/zenodo.24567522> ·
+Saqr, M., & López-Pernas, S. (2026). *Relative-importance networks with
+the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569501> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html)
 ·
 [PDF](https://pak.dynasite.org/psychnets/pdf/relative-importance-networks.pdf)

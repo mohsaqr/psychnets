@@ -1,4 +1,4 @@
-# Visualizing networks with cograph
+# Visualizing networks with cograph and the psychnets R package
 
 How should a network figure be drawn so that its visual structure
 supports, rather than distorts, interpretation? In a Gaussian graphical
@@ -408,8 +408,9 @@ visual presentation.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Visualizing networks with
-cograph*. psychnets. <https://doi.org/10.5281/zenodo.24567526> ·
+Saqr, M., & López-Pernas, S. (2026). *Visualizing networks with cograph
+and the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569502> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/visualizing-with-cograph.html)
 ·
 [PDF](https://pak.dynasite.org/psychnets/pdf/visualizing-with-cograph.pdf)

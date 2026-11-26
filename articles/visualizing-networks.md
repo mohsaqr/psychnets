@@ -1,4 +1,4 @@
-# Visualizing centrality, bootstrap and comparison results
+# Visualizing centrality, bootstrap and comparison results with the psychnets R package
 
 A network diagram may show a striking pattern, but how can researchers
 tell which edges are precise and which nodes are comparatively
@@ -538,8 +538,8 @@ networks with cograph*.
 ## How to cite this article
 
 Saqr, M., & López-Pernas, S. (2026). *Visualizing centrality, bootstrap
-and comparison results*. psychnets.
-<https://doi.org/10.5281/zenodo.24567530> ·
+and comparison results with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569506> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/visualizing-networks.html)
 · [PDF](https://pak.dynasite.org/psychnets/pdf/visualizing-networks.pdf)
 

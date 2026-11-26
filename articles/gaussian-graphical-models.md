@@ -1,4 +1,4 @@
-# Gaussian graphical models: estimation and interpretation
+# Estimating and interpreting Gaussian graphical models with the psychnets R package
 
 Does the association between motivation and achievement persist once
 effort, prior achievement and other measured constructs are taken into
@@ -528,9 +528,9 @@ R_j^2 = 1 - \frac{1}{K_{jj}S_{jj}}.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Gaussian graphical models:
-Estimation and interpretation*. psychnets.
-<https://doi.org/10.5281/zenodo.24567506> ·
+Saqr, M., & López-Pernas, S. (2026). *Estimating and interpreting
+Gaussian graphical models with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569494> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.html)
 ·
 [PDF](https://pak.dynasite.org/psychnets/pdf/gaussian-graphical-models.pdf)

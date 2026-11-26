@@ -1,4 +1,4 @@
-# Panel graphical VAR: temporal, contemporaneous, and between-person networks
+# Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks
 
 An association observed between students may not describe what happens
 when one student’s experiences change over time. To distinguish these
@@ -516,9 +516,9 @@ research question.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Panel graphical VAR: Temporal,
-contemporaneous, and between-person networks*. psychnets.
-<https://doi.org/10.5281/zenodo.24567520> ·
+Saqr, M., & López-Pernas, S. (2026). *Panel graphical VAR with the
+psychnets R package: Temporal, contemporaneous, and between-person
+networks*. psychnets. <https://doi.org/10.5281/zenodo.24569500> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/panel-graphical-var.html)
 · [PDF](https://pak.dynasite.org/psychnets/pdf/panel-graphical-var.pdf)
 

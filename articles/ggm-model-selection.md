@@ -1,4 +1,4 @@
-# Stepwise Gaussian graphical model selection
+# Stepwise Gaussian graphical model selection with the psychnets R package
 
 Which links between psychological constructs should remain in a model
 after the other measured variables have been considered? Stepwise
@@ -401,7 +401,8 @@ connections.
 ## How to cite this article
 
 Saqr, M., & López-Pernas, S. (2026). *Stepwise Gaussian graphical model
-selection*. psychnets. <https://doi.org/10.5281/zenodo.24567508> ·
+selection with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569495> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/ggm-model-selection.html)
 · [PDF](https://pak.dynasite.org/psychnets/pdf/ggm-model-selection.pdf)
 

@@ -1,4 +1,4 @@
-# Information-filtering networks with TMFG and LoGo
+# TMFG and LoGo information-filtering networks with the psychnets R package
 
 A questionnaire with many items can yield so many correlations that the
 most informative relationships are difficult to see. Researchers
@@ -376,9 +376,9 @@ edges.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Information-filtering networks
-with TMFG and LoGo*. psychnets.
-<https://doi.org/10.5281/zenodo.24567514> ·
+Saqr, M., & López-Pernas, S. (2026). *TMFG and LoGo
+information-filtering networks with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569497> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/information-filtering-networks.html)
 ·
 [PDF](https://pak.dynasite.org/psychnets/pdf/information-filtering-networks.pdf)

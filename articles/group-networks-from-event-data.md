@@ -1,4 +1,4 @@
-# Networks of regulation actions from event logs
+# Networks of regulation actions from event logs with the psychnets R package
 
 Digital learning environments produce event logs that identify the
 learner, the action performed and the time of the event. In
@@ -458,7 +458,8 @@ the fitted example, not population-level effects.
 ## How to cite this article
 
 Saqr, M., & López-Pernas, S. (2026). *Networks of regulation actions
-from event logs*. psychnets. <https://doi.org/10.5281/zenodo.24567512> ·
+from event logs with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569496> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/group-networks-from-event-data.html)
 ·
 [PDF](https://pak.dynasite.org/psychnets/pdf/group-networks-from-event-data.pdf)

@@ -1,4 +1,4 @@
-# Ising networks for binary data
+# Ising networks for binary data with the psychnets R package
 
 Many psychological and educational variables are binary. A symptom may
 be present or absent, a diagnostic criterion may be met or not met, an
@@ -356,8 +356,9 @@ pruning at 0.05 retained the same edges.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data*.
-psychnets. <https://doi.org/10.5281/zenodo.24567516> ·
+Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data
+with the psychnets R package*. psychnets.
+<https://doi.org/10.5281/zenodo.24569498> ·
 [HTML](https://pak.dynasite.org/psychnets/articles/ising-networks.html)
 · [PDF](https://pak.dynasite.org/psychnets/pdf/ising-networks.pdf)
 

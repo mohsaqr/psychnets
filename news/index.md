@@ -1,5 +1,9 @@
 # Changelog
 
+## psychnets 0.8.9
+
+- Article titles name the package (“… with the psychnets R package”).
+
 ## psychnets 0.8.8
 
 - The articles were revised: fuller introductions, the model before the

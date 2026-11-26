@@ -1,5 +1,5 @@
 ---
-title: "Ising networks for binary data"
+title: "Ising networks for binary data with the psychnets R package"
 author:
   - name: Mohammed Saqr
     url: https://saqr.me
@@ -14,7 +14,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{Ising networks for binary data}
+  %\VignetteIndexEntry{Ising networks for binary data with the psychnets R package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -309,7 +309,7 @@ graphical model.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data*. psychnets. <https://doi.org/10.5281/zenodo.24567516> · [HTML](https://pak.dynasite.org/psychnets/articles/ising-networks.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/ising-networks.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569498> · [HTML](https://pak.dynasite.org/psychnets/articles/ising-networks.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/ising-networks.pdf)
 
 ## References
 

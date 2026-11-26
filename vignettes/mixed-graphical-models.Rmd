@@ -1,5 +1,5 @@
 ---
-title: "Mixed graphical models"
+title: "Mixed graphical models with the psychnets R package"
 author:
   - name: Mohammed Saqr
     url: https://saqr.me
@@ -14,7 +14,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{Mixed graphical models}
+  %\VignetteIndexEntry{Mixed graphical models with the psychnets R package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -301,7 +301,7 @@ not associations established in a sample of learners.
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models*. psychnets. <https://doi.org/10.5281/zenodo.24567518> · [HTML](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/mixed-graphical-models.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569499> · [HTML](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/mixed-graphical-models.pdf)
 
 ## References
 

@@ -1,5 +1,5 @@
 ---
-title: "Gaussian graphical models: estimation and interpretation"
+title: "Estimating and interpreting Gaussian graphical models with the psychnets R package"
 author:
   - name: Mohammed Saqr
     url: https://saqr.me
@@ -14,7 +14,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{Gaussian graphical models: estimation and interpretation}
+  %\VignetteIndexEntry{Estimating and interpreting Gaussian graphical models with the psychnets R package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -417,7 +417,7 @@ $$
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Gaussian graphical models: Estimation and interpretation*. psychnets. <https://doi.org/10.5281/zenodo.24567506> · [HTML](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/gaussian-graphical-models.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Estimating and interpreting Gaussian graphical models with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569494> · [HTML](https://pak.dynasite.org/psychnets/articles/gaussian-graphical-models.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/gaussian-graphical-models.pdf)
 
 ## References
 

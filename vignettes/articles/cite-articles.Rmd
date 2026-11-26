@@ -6,36 +6,36 @@ title: "Resources"
 
 ### Gaussian graphical models
 
-Saqr, M., & López-Pernas, S. (2026). *Gaussian graphical models: Estimation and interpretation*. psychnets. <https://doi.org/10.5281/zenodo.24567506> · [HTML](gaussian-graphical-models.html) · [PDF](../pdf/gaussian-graphical-models.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Estimating and interpreting Gaussian graphical models with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569494> · [HTML](gaussian-graphical-models.html) · [PDF](../pdf/gaussian-graphical-models.pdf)
 
-Saqr, M., & López-Pernas, S. (2026). *Stepwise Gaussian graphical model selection*. psychnets. <https://doi.org/10.5281/zenodo.24567508> · [HTML](ggm-model-selection.html) · [PDF](../pdf/ggm-model-selection.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Stepwise Gaussian graphical model selection with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569495> · [HTML](ggm-model-selection.html) · [PDF](../pdf/ggm-model-selection.pdf)
 
-Saqr, M., & López-Pernas, S. (2026). *Information-filtering networks with TMFG and LoGo*. psychnets. <https://doi.org/10.5281/zenodo.24567514> · [HTML](information-filtering-networks.html) · [PDF](../pdf/information-filtering-networks.pdf)
+Saqr, M., & López-Pernas, S. (2026). *TMFG and LoGo information-filtering networks with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569497> · [HTML](information-filtering-networks.html) · [PDF](../pdf/information-filtering-networks.pdf)
 
-Saqr, M., & López-Pernas, S. (2026). *Relative-importance networks*. psychnets. <https://doi.org/10.5281/zenodo.24567522> · [HTML](relative-importance-networks.html) · [PDF](../pdf/relative-importance-networks.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Relative-importance networks with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569501> · [HTML](relative-importance-networks.html) · [PDF](../pdf/relative-importance-networks.pdf)
 
 ### Binary and mixed data
 
-Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data*. psychnets. <https://doi.org/10.5281/zenodo.24567516> · [HTML](ising-networks.html) · [PDF](../pdf/ising-networks.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Ising networks for binary data with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569498> · [HTML](ising-networks.html) · [PDF](../pdf/ising-networks.pdf)
 
-Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models*. psychnets. <https://doi.org/10.5281/zenodo.24567518> · [HTML](mixed-graphical-models.html) · [PDF](../pdf/mixed-graphical-models.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569499> · [HTML](mixed-graphical-models.html) · [PDF](../pdf/mixed-graphical-models.pdf)
 
 ### Panel data
 
-Saqr, M., & López-Pernas, S. (2026). *Panel graphical VAR: Temporal, contemporaneous, and between-person networks*. psychnets. <https://doi.org/10.5281/zenodo.24567520> · [HTML](panel-graphical-var.html) · [PDF](../pdf/panel-graphical-var.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Panel graphical VAR with the psychnets R package: Temporal, contemporaneous, and between-person networks*. psychnets. <https://doi.org/10.5281/zenodo.24569500> · [HTML](panel-graphical-var.html) · [PDF](../pdf/panel-graphical-var.pdf)
 
 ## Guides
 
 ### Networks from event data
 
-Saqr, M., & López-Pernas, S. (2026). *Networks of regulation actions from event logs*. psychnets. <https://doi.org/10.5281/zenodo.24567512> · [HTML](group-networks-from-event-data.html) · [PDF](../pdf/group-networks-from-event-data.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Networks of regulation actions from event logs with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569496> · [HTML](group-networks-from-event-data.html) · [PDF](../pdf/group-networks-from-event-data.pdf)
 
 ### Accuracy and stability
 
-Saqr, M., & López-Pernas, S. (2026). *Edge-weight stability and split-half reliability*. psychnets. <https://doi.org/10.5281/zenodo.24567528> · [HTML](network-reliability.html) · [PDF](../pdf/network-reliability.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Edge-weight stability and split-half reliability with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569505> · [HTML](network-reliability.html) · [PDF](../pdf/network-reliability.pdf)
 
 ### Visualisation
 
-Saqr, M., & López-Pernas, S. (2026). *Visualizing networks with cograph*. psychnets. <https://doi.org/10.5281/zenodo.24567526> · [HTML](visualizing-with-cograph.html) · [PDF](../pdf/visualizing-with-cograph.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Visualizing networks with cograph and the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569502> · [HTML](visualizing-with-cograph.html) · [PDF](../pdf/visualizing-with-cograph.pdf)
 
-Saqr, M., & López-Pernas, S. (2026). *Visualizing centrality, bootstrap and comparison results*. psychnets. <https://doi.org/10.5281/zenodo.24567530> · [HTML](visualizing-networks.html) · [PDF](../pdf/visualizing-networks.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Visualizing centrality, bootstrap and comparison results with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569506> · [HTML](visualizing-networks.html) · [PDF](../pdf/visualizing-networks.pdf)

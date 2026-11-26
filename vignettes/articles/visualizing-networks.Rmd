@@ -1,5 +1,5 @@
 ---
-title: "Visualizing centrality, bootstrap and comparison results"
+title: "Visualizing centrality, bootstrap and comparison results with the psychnets R package"
 author:
   - name: Mohammed Saqr
     url: https://saqr.me
@@ -14,7 +14,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{Visualizing centrality, bootstrap and comparison results}
+  %\VignetteIndexEntry{Visualizing centrality, bootstrap and comparison results with the psychnets R package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -239,7 +239,7 @@ Each display should be interpreted alongside its underlying numerical results, o
 
 ## How to cite this article
 
-Saqr, M., & López-Pernas, S. (2026). *Visualizing centrality, bootstrap and comparison results*. psychnets. <https://doi.org/10.5281/zenodo.24567530> · [HTML](https://pak.dynasite.org/psychnets/articles/visualizing-networks.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/visualizing-networks.pdf)
+Saqr, M., & López-Pernas, S. (2026). *Visualizing centrality, bootstrap and comparison results with the psychnets R package*. psychnets. <https://doi.org/10.5281/zenodo.24569506> · [HTML](https://pak.dynasite.org/psychnets/articles/visualizing-networks.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/visualizing-networks.pdf)
 
 ## References
 

@@ -29,8 +29,9 @@
 #'   \item{`SR`}{self-regulation}
 #'   \item{`TA`}{test anxiety}
 #' }
-#' @source Saqr, M. (2025). Delving into the psychology of Machines: Exploring
-#'   the structure of self-regulated learning via LLM-generated survey responses.
+#' @source Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas, S.,
+#'   & Saqr, M. (2025). Delving into the psychology of machines: Exploring the
+#'   structure of self-regulated learning via LLM-generated survey responses.
 #'   *Computers in Human Behavior*, 173, 108769. \doi{10.1016/j.chb.2025.108769}
 #' @examples
 #' # partial-correlation network of the five constructs for one model

@@ -22,8 +22,9 @@ construct scores (each the mean of that construct's Likert items, range
 }
 }
 \source{
-Saqr, M. (2025). Delving into the psychology of Machines: Exploring
-the structure of self-regulated learning via LLM-generated survey responses.
+Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas, S.,
+& Saqr, M. (2025). Delving into the psychology of machines: Exploring the
+structure of self-regulated learning via LLM-generated survey responses.
 \emph{Computers in Human Behavior}, 173, 108769. \doi{10.1016/j.chb.2025.108769}
 }
 \usage{

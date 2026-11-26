@@ -30,3 +30,4 @@
 ^\.ci$
 ^Project_docs$
 ^tests/equivalence$
+^pkgdown$

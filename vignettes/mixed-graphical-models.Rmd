@@ -1,6 +1,14 @@
 ---
 title: "Mixed graphical models"
-author: "Written by [Mohammed Saqr](https://saqr.me) and [Sonsoles López-Pernas](https://sonsoles.me)"
+author:
+  - name: Mohammed Saqr
+    url: https://saqr.me
+    orcid: 0000-0001-5881-3109
+    affiliation: University of Eastern Finland
+  - name: Sonsoles López-Pernas
+    url: https://sonsoles.me
+    orcid: 0000-0002-9621-1392
+    affiliation: University of Eastern Finland
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -17,32 +25,103 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6,
 has_cograph <- requireNamespace("cograph", quietly = TRUE)
 ```
 
-Studies in psychology and education often measure variables of different
-types together: continuous scale scores such as motivation or self-efficacy
-alongside binary variables such as a diagnosis, a passed course or a reported
-behaviour. A Gaussian graphical model requires every variable to be continuous
-and an Ising model requires every variable to be binary, so neither can place
-both kinds in one network without transforming some of them. A mixed graphical
-model (Haslbeck & Waldorp, 2020) does. Each variable is regressed on all the
-others with a model suited to its type, linear for continuous and logistic for
-binary variables, and the regression coefficients form the edges. An edge is
-an association that remains with all other variables held constant; a missing
-edge means that the association is accounted for by the rest of the network.
+When several measures of motivation, learning strategies and well-being are
+analysed together, which associations remain after accounting for the other
+variables? A graphical model addresses this question by representing constructs
+as nodes and their conditional associations as edges, rather than treating each
+construct as an isolated outcome (Borsboom et al., 2021). A correlation network
+displays pairwise relationships, whereas a graphical model seeks to distinguish
+conditional relationships from associations that may be explained by other
+measured variables. This can help applied researchers describe how related
+psychological and educational characteristics are organised. However, an
+estimated edge does not on its own demonstrate causality, and conclusions also
+depend on the accuracy and stability of the estimated associations (Epskamp et
+al., 2018).
 
-This article estimates a mixed network of three continuous and two binary
-indicators of self-regulated learning, reads its edges, describes the nodes by
-centrality and by type-appropriate predictability, and examines how the rule
-that combines the two regressions of each pair changes the result.
+Educational applications have used psychological networks to examine the
+interplay of processes involved in learning. For example, networks have been
+applied to monitoring events during regulated learning (Malmberg et al., 2022)
+and to the relationships and temporal dynamics of self-regulation in academic
+writing (Saqr et al., 2021). More broadly, psychological network methods
+provide a way to study complex learning processes in which several constructs
+may be mutually related rather than arranged in a single sequence of
+predictors and outcomes (Saqr et al., 2024). The choice of network model
+should nevertheless reflect the variables collected and the research
+question. Models of moderation, for instance, address whether an association
+differs according to another variable, which is distinct from the pairwise
+associations estimated here (Haslbeck et al., 2021).
+
+A practical difficulty is that the same study may include continuous scale
+scores, such as motivation or self-efficacy, and binary indicators, such as
+whether a learner completed a course or reported a particular behaviour. A
+Gaussian graphical model assumes continuous variables, whereas an Ising model
+is designed for binary variables. Neither directly accommodates both types
+without changing how some variables are represented. A mixed graphical model
+(Haslbeck & Waldorp, 2020) allows continuous and categorical variables to
+appear in the same network. It estimates a regression for each node using a
+model appropriate to that node's type and combines the estimates to obtain
+edges. An edge indicates a conditional association given the other modelled
+variables, not evidence of an effect or a direction of influence.
+
+This article demonstrates the approach using three continuous and two binary
+indicators related to self-regulated learning. It explains how the package
+estimates the network, how to interpret its edges and numerical diagnostics,
+and how to assess node centrality and predictability using measures suited to
+each variable type. It also compares two rules for combining the nodewise
+regressions and outlines what to report and what to consider before applying
+the method to educational or psychological data.
 
 ```{r setup}
 library(psychnets)
 ```
 
+## The model
+
+A mixed graphical model represents conditional associations through a
+pairwise Markov random field,
+
+$$
+p(x_1, \ldots, x_p) \propto \exp\left(\sum_j \phi_j(x_j)
++ \sum_{j<k}\phi_{jk}(x_j, x_k)\right),
+$$
+
+Here, a zero pairwise term $\phi_{jk}$ indicates that $x_j$ and $x_k$ are
+conditionally independent given all other variables in the model. Estimation
+proceeds one node at a time. For node $j$, the coefficients
+$\boldsymbol\beta$ minimise
+
+$$
+\frac{1}{n}\sum_{i=1}^n \ell\left(x_{ij}, \beta_0
++ \mathbf{x}_{i,-j}^{\mathsf T}\boldsymbol\beta\right)
++ \lambda_j\lVert\boldsymbol\beta\rVert_1 ,
+$$
+
+The loss $\ell$ is the Gaussian or binomial negative log-likelihood,
+depending on the node type. The $\ell_1$ penalty can shrink coefficients to
+zero, giving a network with fewer edges. The penalty $\lambda_j$ is selected
+separately for each node using the extended BIC ($\gamma = 0.25$ by default).
+Selected coefficients below a small sample-size-dependent threshold are also
+set to zero (`threshold = "LW"`, as in mgm). Continuous variables are
+standardised so that their original units do not determine the coefficients.
+Because each pair of variables appears in two nodewise regressions, two
+estimates must be combined. The AND rule retains an edge only when both
+regressions select it; the OR rule retains it when either does. The edge
+weight is the mean of the two estimates.
+
+By default, the function infers node types from the data. Factor and
+character columns, along with numeric columns containing at most 10 distinct
+integer values, are treated as categorical; other numeric columns are treated
+as Gaussian. In this example, the two 0/1 indicators are binary and the three
+scores are Gaussian. The function issues a warning when the integer-value
+rule classifies a numeric column as categorical. Researchers should check
+these classifications against their measurement design and use `types` to
+override them when necessary.
+
 ## Data
 
 `SRL_GPT` holds 300 sets of responses to the Motivated Strategies for Learning
 Questionnaire. The responses were generated by a large language model (GPT) in
-a study of how such models answer psychological surveys (Saqr, 2025); they
+a study of how such models answer psychological surveys (Vogelsmeier et al., 2025); they
 serve as a well-structured example and are not evidence about students. To
 obtain variables of both types, two of the five construct scores are recoded
 as binary indicators.
@@ -61,43 +140,11 @@ mixed_data <- transform(SRL_GPT,
 head(mixed_data)
 ```
 
-The recoding is for illustration. In an applied study a continuous variable is
-kept continuous unless its two states have a substantive meaning.
-
-## The model
-
-A mixed graphical model is a pairwise Markov random field,
-
-$$
-p(x_1, \ldots, x_p) \propto \exp\left(\sum_j \phi_j(x_j)
-+ \sum_{j<k}\phi_{jk}(x_j, x_k)\right),
-$$
-
-in which a zero pairwise term $\phi_{jk}$ means that $x_j$ and $x_k$ are
-independent given all other variables. It is estimated one node at a time: for
-node $j$, the coefficients $\boldsymbol\beta$ minimize
-
-$$
-\frac{1}{n}\sum_{i=1}^n \ell\left(x_{ij}, \beta_0
-+ \mathbf{x}_{i,-j}^{\mathsf T}\boldsymbol\beta\right)
-+ \lambda_j\lVert\boldsymbol\beta\rVert_1 ,
-$$
-
-where $\ell$ is the Gaussian or binomial negative log-likelihood and the
-$\ell_1$ penalty sets weak coefficients to zero. The penalty $\lambda_j$ is
-chosen for each node by the extended BIC ($\gamma = 0.25$ by default), and
-selected coefficients below a small threshold that shrinks with the sample
-size are then set to zero (`threshold = "LW"`, as in mgm). Continuous variables are standardized, so their units do not determine the
-coefficients. Each pair then has two estimates, one from each regression. The
-AND rule keeps the pair when both regressions select it, the OR rule when
-either does, and the edge weight is the mean of the two estimates.
-
-Node types are detected from the data: factor and character columns, and
-numeric columns with at most 10 distinct integer values, are categorical, and
-other numeric columns are Gaussian. Here the two 0/1 indicators are binary and
-the three scores Gaussian. When the integer rule turns a numeric column into a
-categorical node, a warning names it; the `types` argument overrides the
-detection.
+The median splits are used solely to demonstrate a mixed-variable analysis.
+They discard differences between observations within each category and should
+not be taken as recommended data preparation. In an applied study, a
+continuous measure should generally remain continuous unless the binary
+states have a substantive or measurement-based justification.
 
 ## Which variables are directly associated?
 
@@ -109,35 +156,40 @@ summary(mixed_net)
 as.data.frame(mixed_net)
 ```
 
-The network has 6 edges, all positive, with weights from 0.196 to 0.632. The
-strongest joins intrinsic value and high self-regulation (0.632): with the
-other variables held constant, respondents with higher intrinsic value are
-more likely to be in the upper half of self-regulation. Cognitive strategy use
-is joined to intrinsic value (0.518), self-efficacy (0.485) and high
-self-regulation (0.451). High test anxiety has no edge: under the AND rule, no
-pair involving it is selected by both of its regressions.
+The fitted network contains 6 edges, all positive, with weights ranging
+from 0.198 to 0.649. The largest weight links intrinsic value and high
+self-regulation (0.649). Conditional on the other measured variables, higher
+intrinsic value is associated with greater likelihood of belonging to the
+higher self-regulation category. Cognitive strategy use is connected to
+intrinsic value (0.519), self-efficacy (0.486) and high self-regulation
+(0.467). High test anxiety has no selected edges under the AND rule. This
+means that none of its potential edges was retained by both nodewise
+regressions, not that test anxiety is unrelated to learning in general.
 
-Edge weights are on different scales for continuous–continuous,
-continuous–binary and binary–binary pairs, so magnitudes are compared within a
-pair type. For a binary–binary edge, the sign of the logistic coefficient is
+The coefficients for continuous–continuous, continuous–binary and
+binary–binary pairs do not all share the same scale. Consequently, their
+magnitudes should be compared primarily within the same pair type. For a binary–binary edge, the sign of the logistic coefficient is
 kept; some software reports only its magnitude, because that sign depends on
 how the categories are coded.
 
 ## Is the fitted network the optimum of its objective?
 
-Each penalized regression is solved iteratively. Any solution must satisfy the
-problem's optimality (Karush–Kuhn–Tucker) conditions; the amount by which a
-fitted network violates them, the largest over the nodewise regressions, is
-its certificate, and a value near zero shows that the network is the optimum
-of its objective.
+Each penalised regression is fitted by an iterative optimisation procedure.
+The Karush–Kuhn–Tucker conditions provide a numerical check on whether the
+fitted coefficients satisfy the objective's optimality conditions. The
+certificate reports the largest residual across the nodewise regressions;
+a value close to zero indicates that the numerical solution satisfies these
+conditions to high precision.
 
 ```{r certificate}
 certificate(mixed_net)
 ```
 
-The violation is $5.00 \times 10^{-11}$, so the edges are the solutions of the
-penalized regressions. The certificate concerns the computation, not the
-sampling stability of the edges or the measurement of the variables.
+The reported residual is $2.59 \times 10^{-11}$, and the fitted solution
+is certified. This supports the numerical convergence of the penalised
+regressions, but says nothing about whether the same edges would be selected
+in another sample or whether the underlying constructs have been measured
+reliably.
 
 ## Which variables are most connected?
 
@@ -148,11 +200,14 @@ expected influence, the signed sum.
 net_centralities(mixed_net)
 ```
 
-Cognitive strategy use has the largest strength (1.454), followed by intrinsic
-value (1.347) and high self-regulation (1.279). All edges are positive, so
-expected influence equals strength, and high test anxiety has 0 on both.
-Because the edge scales differ by pair type, centrality compares the
-continuous and binary nodes only roughly.
+Cognitive strategy use has the highest strength (1.472), followed by
+intrinsic value (1.365) and high self-regulation (1.320). Because every
+selected edge is positive, expected influence is identical to strength for
+all nodes. High test anxiety has a value of 0 on both measures, consistent
+with its isolation in this fitted network. These descriptive rankings require
+caution: combining weights from different types of edges makes centrality
+across continuous and binary nodes only approximately comparable. High
+centrality also does not, by itself, identify a suitable intervention target.
 
 ## How well is each variable predicted by the others?
 
@@ -167,12 +222,15 @@ needs the data to compute both.
 net_predict(mixed_net, data = mixed_data)
 ```
 
-The other variables explain 81% of the variance in cognitive strategy use
-($R^2 = 0.813$), 78% in intrinsic value and 72% in self-efficacy. High
-self-regulation is classified correctly for 88% of the respondents, an nCC of
-0.739 over its base rate. High test anxiety has nCC = 0 and 50% correct: with
-no edges, it is predicted no better than by its base rate. These are in-sample
-values.
+For the continuous nodes, the fitted models account for approximately 81%
+of the observed variance in cognitive strategy use ($R^2 = 0.813$), 78% in
+intrinsic value ($R^2 = 0.776$) and 72% in self-efficacy ($R^2 = 0.715$).
+For high self-regulation, classification accuracy is 88%, corresponding to
+a normalised classification accuracy of 0.739 after adjustment for the
+majority-category baseline. High test anxiety has 50% accuracy and an nCC
+of 0, indicating no improvement over that baseline. All these values are
+calculated on the data used to fit the network and should not be interpreted
+as performance on new observations.
 
 ## Does the edge-combination rule change the network?
 
@@ -185,14 +243,15 @@ summary(mixed_or)
 as.data.frame(mixed_or)
 ```
 
-The OR network has 7 edges: the six AND edges with the same weights and a
-negative edge between high self-regulation and high test anxiety (-0.168).
-Respondents in the upper half of self-regulation are less likely to be in the
-upper half of test anxiety, with the continuous constructs held constant, but
-only one of the two regressions supports this association. It is the edge
-through which test anxiety connects to the network, and it is reported as
-dependent on the combination rule. The other six edges are selected under
-either rule.
+The OR network contains 7 edges. The 6 edges retained under the AND rule
+have unchanged weights, while one additional negative edge links high
+self-regulation to high test anxiety (-0.186). Conditional on the three
+continuous constructs, higher-category self-regulation is associated with
+lower likelihood of higher-category test anxiety. However, only one of the
+two nodewise regressions selected this edge. Its presence therefore depends
+on the combination rule, unlike the other six edges. Comparing the rules
+makes this modelling choice visible rather than treating the additional
+association as an unequivocal finding.
 
 ## What does the network look like?
 
@@ -209,16 +268,21 @@ and carry no statistical meaning.
 
 ## Reporting the analysis
 
-A report identifies each node as continuous or binary, defines the binary
-coding, and states the sample size, $\gamma$, the combination rule and the
-treatment of missing data. Edge weights are reported numerically, and
-predictability with the measure matching each node type.
+For reproducibility, a report should identify the variables and their node
+types, explain how binary categories were defined, and state the sample
+size, the value of $\gamma$, the edge-combination rule and the handling of
+missing data. It should also give the selected edge weights and report
+predictability using $R^2$ for continuous nodes and normalised classification
+accuracy for binary nodes. Any sensitivity to the combination rule should be
+reported alongside the primary network.
 
-In this analysis, a mixed graphical model of three continuous and two binary
-nodes from 300 complete responses kept 6 positive edges under the AND rule,
-the largest between intrinsic value and high self-regulation (0.632), and left
-high test anxiety isolated. Under the OR rule a seventh, negative edge joined
-high self-regulation and high test anxiety (-0.168).
+For this illustrative dataset of 300 complete, LLM-generated responses,
+the mixed graphical model comprised three continuous and two binary nodes.
+The AND rule retained 6 positive edges, the largest between intrinsic value
+and high self-regulation (0.649), and left high test anxiety isolated. The OR
+rule additionally retained a negative edge between high self-regulation and
+high test anxiety (-0.186). These findings describe the generated responses,
+not associations established in a sample of learners.
 
 ## Assumptions and when to use a mixed graphical model
 
@@ -231,14 +295,30 @@ high self-regulation and high test anxiety (-0.168).
   which fits a multinomial regression through the optional `glmnet` package
   and keeps the variable as one node. One-hot coding is not an equivalent
   alternative, because it turns one variable into several nodes.
-- Edges selected only under the OR rule are less certain than those selected
-  under both rules.
+- An edge retained only under the OR rule is sensitive to the combination
+  rule and merits more cautious interpretation than an edge retained by both.
 - Edges are conditional associations, not causal effects.
 
+## How to cite this article
+
+Saqr, M., & López-Pernas, S. (2026). *Mixed graphical models*. psychnets. <https://doi.org/10.5281/zenodo.24567518> · [HTML](https://pak.dynasite.org/psychnets/articles/mixed-graphical-models.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/mixed-graphical-models.pdf)
+
 ## References
+
+Borsboom, D., Deserno, M. K., Rhemtulla, M., Epskamp, S., Fried, E. I., McNally, R. J., Robinaugh, D. J., Perugini, M., Dalege, J., Costantini, G., Isvoranu, A.-M., Wysocki, A. C., van Borkulo, C. D., van Bork, R., & Waldorp, L. J. (2021). Network analysis of multivariate data in psychological science. *Nature Reviews Methods Primers*, 1, 58. [doi:10.1038/s43586-021-00055-w](https://doi.org/10.1038/s43586-021-00055-w)
+
+Epskamp, S., Borsboom, D., & Fried, E. I. (2018). Estimating psychological networks and their accuracy: A tutorial paper. *Behavior Research Methods*, 50(1), 195-212. [doi:10.3758/s13428-017-0862-1](https://doi.org/10.3758/s13428-017-0862-1)
+
+Haslbeck, J. M. B., Borsboom, D., & Waldorp, L. J. (2021). Moderated network models. *Multivariate Behavioral Research*, 56(2), 256-287. [doi:10.1080/00273171.2019.1677207](https://doi.org/10.1080/00273171.2019.1677207)
 
 Haslbeck, J. M. B., & Waldorp, L. J. (2018). How well do network models predict observations? On the importance of predictability in network models. *Behavior Research Methods*, 50(2), 853-861. [doi:10.3758/s13428-017-0910-x](https://doi.org/10.3758/s13428-017-0910-x)
 
 Haslbeck, J. M. B., & Waldorp, L. J. (2020). mgm: Estimating time-varying mixed graphical models in high-dimensional data. *Journal of Statistical Software*, 93(8), 1-46. [doi:10.18637/jss.v093.i08](https://doi.org/10.18637/jss.v093.i08)
 
-Saqr, M. (2025). Delving into the psychology of machines: Exploring the structure of self-regulated learning via LLM-generated survey responses. *Computers in Human Behavior*, 173, 108769. [doi:10.1016/j.chb.2025.108769](https://doi.org/10.1016/j.chb.2025.108769)
+Malmberg, J., Saqr, M., Järvenoja, H., Haataja, E., Pijeira-Díaz, H. J., & Järvelä, S. (2022). Modeling the complex interplay between monitoring events for regulated learning with psychological networks. In M. Giannakos, D. Spikol, D. Di Mitri, K. Sharma, X. Ochoa, & R. Hammad (Eds.), *The multimodal learning analytics handbook* (pp. 79-104). Springer. [doi:10.1007/978-3-031-08076-0_4](https://doi.org/10.1007/978-3-031-08076-0_4)
+
+Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A modern approach to analysis of learning and complex learning processes. In M. Saqr & S. López-Pernas (Eds.), *Learning analytics methods and tutorials: A practical guide using R* (pp. 639-671). Springer. [doi:10.1007/978-3-031-54464-4_19](https://doi.org/10.1007/978-3-031-54464-4_19)
+
+Saqr, M., Peeters, W., & Viberg, O. (2021). The relational, co-temporal, contemporaneous, and longitudinal dynamics of self-regulation for academic writing. *Research and Practice in Technology Enhanced Learning*, 16, 29. [doi:10.1186/s41039-021-00175-7](https://doi.org/10.1186/s41039-021-00175-7)
+
+Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas, S., & Saqr, M. (2025). Delving into the psychology of machines: Exploring the structure of self-regulated learning via LLM-generated survey responses. *Computers in Human Behavior*, 173, 108769. [doi:10.1016/j.chb.2025.108769](https://doi.org/10.1016/j.chb.2025.108769)

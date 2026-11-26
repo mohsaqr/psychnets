@@ -139,3 +139,10 @@ articles:
   - articles/network-reliability
   - visualizing-with-cograph
   - articles/visualizing-networks
+
+- title: Resources
+  navbar: Resources
+  desc: Every article with its reference and PDF
+  contents:
+  - articles/cite-articles
+

@@ -1,6 +1,14 @@
 ---
 title: "Relative-importance networks"
-author: "Written by [Mohammed Saqr](https://saqr.me) and [Sonsoles López-Pernas](https://sonsoles.me)"
+author:
+  - name: Mohammed Saqr
+    url: https://saqr.me
+    orcid: 0000-0001-5881-3109
+    affiliation: University of Eastern Finland
+  - name: Sonsoles López-Pernas
+    url: https://sonsoles.me
+    orcid: 0000-0002-9621-1392
+    affiliation: University of Eastern Finland
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -17,52 +25,65 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6,
 has_cograph <- requireNamespace("cograph", quietly = TRUE)
 ```
 
-When the variables of a questionnaire are strongly correlated, a regression
-coefficient or a partial correlation credits each predictor only with its
-unique contribution, and the variance that two predictors explain together is
-credited to neither. For a researcher who asks how much self-efficacy
-contributes to explaining strategy use, that unique contribution understates
-the answer. Relative importance analysis divides the explained variance of an
-outcome, its $R^2$, among all predictors, giving each a share of both its
-unique and its jointly explained variance. The LMG decomposition (Lindeman et
-al., 1980; Groemping, 2006) does so by averaging the increase in $R^2$ that a
-predictor brings over every order in which the predictors could be entered.
+How much of a model's explanatory power can be attributed to each predictor when
+the predictors overlap? In psychological and educational questionnaires,
+self-efficacy, motivation, learning strategies and self-regulation may explain
+some of the same variation in an outcome. Multiple regression coefficients
+describe each predictor's adjusted association, but do not allocate the variance
+explained jointly by several predictors. Relative importance analysis instead
+partitions the model's $R^2$ among predictors, including their shared
+contributions. Approaches to this problem include dominance analysis (Budescu,
+1993) and other relative importance indices (Johnson & LeBreton, 2004). The LMG
+decomposition (Lindeman et al., 1980; Groemping, 2006) calculates each
+predictor's average increase in $R^2$ over all possible orders in which
+predictors can enter the model.
 
-A relative-importance network applies this decomposition to every variable in
-turn, with all the others as predictors. The shares become directed edges: an
-edge from A to B is the part of B's explained variance attributed to A, and
-the edges arriving at a node sum to that node's $R^2$. This article builds the
-network for five self-regulated learning constructs, reads the directed
-shares, checks that they sum to each node's explained variance, contrasts
-incoming and outgoing totals, and repeats the analysis on rank correlations.
+Psychological networks offer a complementary way to study relationships among
+measured constructs. Rather than designating a single outcome in advance, a
+network represents variables as nodes and their relationships as edges. In
+education, network approaches have been used to examine complex learning
+processes and the relations among psychological constructs (Saqr et al.,
+2024). Studies of self-regulated learning have investigated the dynamics of
+regulation during academic writing (Saqr et al., 2021) and the association
+between students' monitoring events and phases of regulation (Malmberg et
+al., 2022). These applications illustrate the value of examining a system of
+related learning processes rather than interpreting each construct in
+isolation. However, an edge in a conventional partial correlation network
+represents a conditional association, not a share of explained variance.
+
+A relative-importance network combines the network representation with an
+explained-variance decomposition. Each construct is treated in turn as the
+outcome of a regression on all the other constructs. The LMG shares become
+directed edges: an edge from A to B gives the proportion of B's total
+variance attributed to A within that regression. The incoming edges sum to
+B's $R^2$, whereas outgoing edges summarise how much A contributes across the
+other outcomes. This direction indicates which variable is the predictor and
+which is the outcome; it does not imply a causal effect. Relative-importance
+networks are therefore useful when the research aim is to compare explanatory
+contributions among correlated constructs, rather than to estimate direct
+conditional associations or causal pathways.
+
+This article demonstrates the approach with five self-regulated learning
+constructs using the `psychnets` package. It introduces the LMG decomposition,
+fits and interprets a directed network, verifies that the incoming shares sum
+to each construct's explained variance, and distinguishes predictability from
+outgoing contribution. It then compares Pearson-based results with a network
+based on Spearman rank correlations and outlines reporting and interpretation
+considerations. The example uses language-model-generated questionnaire
+responses, so its numerical findings illustrate the method rather than
+provide evidence about students.
 
 ```{r setup}
 library(psychnets)
 ```
 
-## Data
-
-`SRL_GPT` holds 300 sets of responses to the Motivated Strategies for Learning
-Questionnaire, each a construct score on a scale from 1 to 7. The responses
-were generated by a large language model (GPT) in a study of how such models
-answer psychological surveys (Saqr, 2025); they serve as a well-structured
-example and are not evidence about students.
-
-- **Nodes:** five construct scores, treated as continuous: `CSU` (cognitive
-  strategy use), `IV` (intrinsic value), `SE` (self-efficacy), `SR`
-  (self-regulation) and `TA` (test anxiety). Each is in turn the outcome of a
-  linear regression and a predictor in the four others.
-- **Observations:** one row per respondent; the data are complete.
-
-```{r data}
-head(SRL_GPT)
-```
-
 ## The model
 
-For outcome $j$ with predictor set $P$, the LMG share of predictor $k$ is the
-average increase in $R^2$ when $k$ joins a subset $S$ of the other predictors,
-weighted so that every entry order counts equally:
+For each outcome $j$, the other nodes form the predictor set $P$. The LMG
+share of predictor $k$ is its average incremental contribution to $R^2$ over
+all possible orders of predictor entry. Equivalently, it averages the change
+in $R^2$ when $k$ is added to a subset $S$ of the remaining predictors, with
+weights that give each ordering equal importance:
 
 $$
 \varphi_{kj} = \sum_{S \subseteq P \setminus \{k\}}
@@ -78,112 +99,152 @@ $$
 \sum_{k} \varphi_{kj} = R_j^2 .
 $$
 
-The directed network has edge weight $\varphi_{kj}$ from $k$ to $j$. The
-incoming edges of a node sum to its $R^2$; the outgoing edges of a node sum to
-its total contribution to the other regressions. With $p$ nodes, each outcome
-requires $2^{p-1}$ subset regressions, so the computation is limited to 21
-nodes by default.
+The edge from $k$ to $j$ has weight $\varphi_{kj}$. Its value is a
+share of the outcome's total variance, not a fraction of the explained
+variance alone. Incoming weights sum to the outcome's $R^2$, while outgoing
+weights sum the predictor's contributions across the other outcomes. These
+totals have different interpretations and should not be compared as though
+they measured the same property. For $p$ nodes, each outcome involves
+$2^{p-1}$ predictor subsets. Computation therefore becomes increasingly
+demanding as the network grows, and the default limit is 21 nodes.
+
+## Data
+
+`SRL_GPT` contains 300 sets of responses to the Motivated Strategies for
+Learning Questionnaire, represented by five construct scores on scales from
+1 to 7. These responses were generated by a large language model (GPT) for a
+study of how language models answer psychological surveys (Vogelsmeier et al., 2025). They provide an illustrative dataset with related constructs,
+not observations of students. Accordingly, the results below should not be
+interpreted as findings about student behaviour or learning.
+
+- **Nodes:** five construct scores, treated as continuous: `CSU` (cognitive
+  strategy use), `IV` (intrinsic value), `SE` (self-efficacy), `SR`
+  (self-regulation) and `TA` (test anxiety). Each is in turn the outcome of a
+  linear regression and a predictor in the four others.
+- **Observations:** one row per respondent; the data are complete.
+
+```{r data}
+head(SRL_GPT)
+```
 
 ## How is each construct's explained variance divided?
 
-`psychnet()` with `method = "relimp"` fits the five regressions and decomposes
-their $R^2$.
+`psychnet()` with `method = "relimp"` estimates a relative-importance
+network by treating each of the five constructs in turn as an outcome and
+decomposing its regression $R^2$ among the other four constructs.
 
 ```{r fit}
 importance_net <- psychnet(data = SRL_GPT, method = "relimp")
 summary(importance_net)
 ```
 
-The network has 20 directed edges, one for every ordered pair, because every
-predictor receives some share. The shares range from 0.006 to 0.299. The edge
-table lists them with `from` as the predictor and `to` as the outcome:
+The fitted network contains 20 directed edges, one for each ordered pair
+of distinct constructs. All estimated shares are positive, ranging from
+0.006 to 0.299 when rounded to three decimal places. In the edge table,
+`from` identifies the predictor and `to` identifies the outcome:
 
 ```{r edges}
 as.data.frame(importance_net)
 ```
 
-The largest share runs from cognitive strategy use to intrinsic value (0.299):
-of the variance in intrinsic value explained by the other four constructs, a
-share of 0.299 is attributed to strategy use. The reverse edge, from intrinsic
-value to strategy use, is 0.289. The two directions are close here but come
-from different regressions, and they need not agree. Among the learning
-constructs the shares lie between 0.213 and 0.299, so each is explained by the
-other three in roughly equal parts.
+The largest edge runs from cognitive strategy use to intrinsic value
+(0.299). This means that cognitive strategy use is allocated approximately
+29.9% of the total variance in intrinsic value, within the
+regression containing all four other constructs. The reverse edge, from
+intrinsic value to cognitive strategy use, has weight 0.289. Although these
+values are similar, they refer to different outcomes and need not be equal.
+Among cognitive strategy use, intrinsic value, self-efficacy and
+self-regulation, the directed shares range from 0.213 to 0.299. All three
+other learning constructs therefore make appreciable contributions to each
+of these outcomes.
 
-Test anxiety is the exception. Of its explained variance, self-regulation
-accounts for 0.128, while cognitive strategy use (0.014), intrinsic value
-(0.015) and self-efficacy (0.012) contribute little. In the other direction,
-test anxiety contributes almost nothing to the learning constructs (0.006 to
-0.007), except to self-regulation (0.052). The association between test
-anxiety and the learning constructs passes through self-regulation, in both
-directions.
+The pattern differs for test anxiety. Self-regulation has an incoming
+share of 0.128 for test anxiety, compared with 0.014 for cognitive strategy
+use, 0.015 for intrinsic value and 0.012 for self-efficacy. In the reverse
+direction, test anxiety contributes between 0.006 and 0.007 to the explained
+variance of cognitive strategy use, intrinsic value and self-efficacy, and
+0.052 to that of self-regulation. Thus, self-regulation has the largest
+relative-importance link with test anxiety in both directions. These shares
+do not establish that self-regulation mediates the relations between test
+anxiety and the other learning constructs.
 
 ## Do the shares add up to each construct's explained variance?
 
-By construction, the shares arriving at a node must sum to that node's
-full-model $R^2$. `certificate()` reports the largest difference between the
-two across nodes; a value near zero shows that the decomposition is complete
-and exact.
+An important check is whether the incoming shares reproduce the $R^2$
+of each full regression. `certificate()` reports the largest absolute
+difference between these quantities across the five nodes. A value near
+zero indicates that the estimated weights satisfy the decomposition
+identity to numerical precision.
 
 ```{r certificate}
 certificate(importance_net)
 ```
 
-The largest difference is at the level of machine precision (below
-$10^{-15}$), so every edge in the table is part of an exact division of the
-explained variance. The check concerns the arithmetic of the decomposition,
-not the adequacy of the linear regressions.
+The reported discrepancy is $2.220446 \times 10^{-16}$, below
+$10^{-15}$ and consistent with numerical rounding. The edge weights thus
+reproduce each outcome's explained variance to machine precision. This is a
+check of the decomposition, not evidence that the regressions meet their
+assumptions or fit the data adequately.
 
 ## How much of each construct is explained?
 
-`net_predict()` reports the full-model $R^2$ of each node, the total of its
-incoming shares.
+`net_predict()` gives the $R^2$ for each construct when predicted by
+all four others. This is also the sum of that construct's incoming raw
+relative-importance shares.
 
 ```{r predictability}
 net_predict(importance_net)
 ```
 
-The other four constructs explain 83% of the variance in cognitive strategy
-use ($R^2 = 0.833$), 80% in self-regulation, 78% in intrinsic value and 73% in
-self-efficacy. They explain 17% of the variance in test anxiety
-($R^2 = 0.169$), and the incoming shares above show that three quarters of
-that (0.128) comes from self-regulation. Most of the variation in test anxiety
-lies outside this five-construct model.
+The four predictors jointly account for approximately 83% of the
+variance in cognitive strategy use ($R^2 = 0.833$), 80% in self-regulation
+($R^2 = 0.796$), 78% in intrinsic value ($R^2 = 0.781$) and 73% in
+self-efficacy ($R^2 = 0.726$). Predictability is substantially lower for
+test anxiety ($R^2 = 0.169$): the other constructs explain approximately
+17% of its variance. Self-regulation's share of 0.128 represents about
+three quarters of this explained variance, with most of test anxiety's
+total variance remaining unexplained by the model.
 
 ## Which constructs contribute most to explaining the others?
 
-`net_centralities()` sums the outgoing edges of each node. Because all shares
-are non-negative, strength and expected influence are equal.
+`net_centralities()` reports each node's outgoing strength, the sum of
+its contributions to the regressions for the other constructs. Since every
+edge weight is non-negative, strength and expected influence are identical
+for this network.
 
 ```{r contribution}
 net_centralities(importance_net)
 ```
 
-Self-regulation has the largest outgoing total (0.881), closely followed by
-cognitive strategy use (0.872); test anxiety has the smallest (0.073).
-Self-regulation is thus the construct that contributes most to explaining the
-others, partly because it is the only construct with a substantial share in
-test anxiety. Incoming totals ($R^2$) describe how well a construct is
-explained; outgoing totals describe how much it explains. The two answer
-different questions and are reported separately.
+Self-regulation has the highest outgoing strength (0.881), followed
+closely by cognitive strategy use (0.872). Test anxiety has the lowest
+(0.073). Self-regulation's leading total reflects its contributions to the
+other learning constructs as well as its comparatively large share in test
+anxiety. Outgoing strength summarises how much a construct contributes to
+explaining the other outcomes across separate regressions. It should be
+reported separately from incoming $R^2$, which describes how well the
+construct itself is explained.
 
 ## What does the network look like?
 
-`cograph::splot()` draws the directed network, with arrows from predictor to
-outcome and the share printed on each edge.
+`cograph::splot()` displays the network with arrows indicating the
+predictor-to-outcome direction and edge labels showing the raw LMG shares.
 
 ```{r plot, eval = has_cograph}
 cograph::splot(importance_net, directed = TRUE, edge_labels = TRUE)
 ```
 
-The figure is dense because every ordered pair has an edge. The thick
-reciprocal arrows among the learning constructs and the thin arrows to and
-from test anxiety are visible, but exact values are read from the edge table.
+Because the network contains all 20 possible directed edges, the plot
+is relatively dense. The larger reciprocal shares among the four learning
+constructs contrast with the generally smaller links involving test anxiety.
+The edge table is preferable when precise numerical comparisons are needed.
 
 ## Do the conclusions depend on the correlation estimator?
 
-Refitting with `cor_method = "spearman"` bases the regressions on rank
-correlations.
+As a sensitivity analysis, the network can be re-estimated using
+Spearman correlations with `cor_method = "spearman"`. This substitutes
+rank-based associations for Pearson correlations in the decomposition;
+it does not change the variables or the number of nodes.
 
 ```{r spearman}
 importance_spearman <- psychnet(data = SRL_GPT, method = "relimp",
@@ -192,49 +253,75 @@ as.data.frame(importance_spearman)
 net_predict(importance_spearman)
 ```
 
-The largest share remains cognitive strategy use to intrinsic value (0.299),
-and the learning constructs keep $R^2$ values from 0.712 to 0.828. The
-explained variance of test anxiety falls from 0.169 to 0.116, and the share of
-self-regulation in it from 0.128 to 0.086. The structure among the learning
-constructs does not depend on the estimator; the explanation of test anxiety
-is weaker on ranks and should be reported with that caveat.
+The largest directed share is again from cognitive strategy use to
+intrinsic value (0.299). For the four learning constructs, rank-based $R^2$
+values range from 0.712 to 0.828, compared with 0.726 to 0.833 in the
+Pearson-based network. Test anxiety shows a more noticeable difference:
+its $R^2$ decreases from 0.169 to 0.116, while self-regulation's share
+in that outcome decreases from 0.128 to 0.086. The broad pattern of larger
+shares among the learning constructs is similar under both estimators,
+but the strength of the explained-variance links involving test anxiety
+is sensitive to the correlation method.
 
 ## Reporting the analysis
 
-A report states the variables, the sample size, the correlation estimator, the
-treatment of missing data, and whether raw or normalized shares are used. Each
-edge is described with its direction, from predictor to outcome, and incoming
-$R^2$ and outgoing contribution are reported as separate node summaries.
+When reporting a relative-importance network, researchers should specify
+the constructs, sample size, correlation estimator, handling of missing
+values, and whether the displayed edge weights are raw or normalised. Edge
+directions should be defined as predictor to outcome, with weights
+interpreted on the appropriate variance scale. Incoming $R^2$ and outgoing
+strength answer distinct questions and should be presented separately.
+Sensitivity analyses can help readers assess how strongly conclusions
+depend on the chosen correlation estimator.
 
-In this analysis, raw LMG shares from Pearson correlations of 300 complete
-responses formed 20 directed edges. The largest ran from cognitive strategy use
-to intrinsic value (0.299). The constructs' $R^2$ ranged from 0.169 (test
-anxiety) to 0.833 (cognitive strategy use), and self-regulation carried most of
-the explained variance of test anxiety (0.128). A rank-based analysis kept the
-structure among the learning constructs and reduced the explained variance of
-test anxiety.
+For example, this analysis used raw LMG shares based on Pearson
+correlations from 300 complete sets of language-model-generated responses.
+The network contained 20 directed edges, of which the largest connected
+cognitive strategy use to intrinsic value (0.299). Node predictability
+ranged from $R^2 = 0.169$ for test anxiety to $R^2 = 0.833$ for
+cognitive strategy use. Self-regulation accounted for 0.128 of test
+anxiety's total variance, the largest incoming share for that outcome.
+Under Spearman correlations, the learning constructs retained broadly
+similar patterns, whereas test anxiety's $R^2$ fell to 0.116.
 
 ## Assumptions and when to use relative importance
 
-- Each node is modelled by a linear regression on all the others; the shares
-  inherit its assumptions of linearity and of observations independent of one
-  another.
-- Relative importance answers how explained variance is divided among
-  correlated predictors. For conditional associations between pairs, use a
-  partial correlation network such as the graphical lasso.
-- Raw shares keep the variance scale, so a share of 0.1 means one tenth of the
-  outcome's variance. `normalized = TRUE` rescales the incoming shares of each
-  outcome to sum to one, which compares predictors within an outcome but hides
-  how much of the outcome is explained at all.
-- Direction refers to the regression, not to time or causation: an edge from
-  A to B means that A is a predictor of B in the fitted model.
-- The number of subset regressions doubles with every added node, which limits
-  the method to small and moderate networks.
+- Each outcome is modelled through a regression on the remaining nodes.
+  Interpretation therefore depends on the suitability of the regression
+  and correlation assumptions, including linear relationships and
+  independence of observations.
+- Relative importance partitions explained variance among correlated
+  predictors. It does not estimate unique conditional associations. When
+  those associations are the research focus, a partial correlation
+  network, such as one estimated with the graphical lasso, is more suitable.
+- Raw weights retain the outcome's variance scale: a share of 0.1
+  represents one tenth of its total variance. `normalized = TRUE` instead
+  rescales each outcome's incoming shares to sum to one. Such weights
+  compare the relative allocation within an outcome but no longer show
+  how much variance the predictors collectively explain.
+- Edge direction identifies the predictor and outcome in a regression.
+  It does not establish temporal order, causal influence or mediation.
+- The number of predictor subsets doubles with each additional node.
+  This makes the method most practical for small or moderate networks.
+
+## How to cite this article
+
+Saqr, M., & López-Pernas, S. (2026). *Relative-importance networks*. psychnets. <https://doi.org/10.5281/zenodo.24567522> · [HTML](https://pak.dynasite.org/psychnets/articles/relative-importance-networks.html) · [PDF](https://pak.dynasite.org/psychnets/pdf/relative-importance-networks.pdf)
 
 ## References
 
+Budescu, D. V. (1993). Dominance analysis: A new approach to the problem of relative importance of predictors in multiple regression. *Psychological Bulletin*, 114(3), 542-551. [doi:10.1037/0033-2909.114.3.542](https://doi.org/10.1037/0033-2909.114.3.542)
+
 Groemping, U. (2006). Relative importance for linear regression in R: The package relaimpo. *Journal of Statistical Software*, 17(1), 1-27. [doi:10.18637/jss.v017.i01](https://doi.org/10.18637/jss.v017.i01)
+
+Johnson, J. W., & LeBreton, J. M. (2004). History and use of relative importance indices in organizational research. *Organizational Research Methods*, 7(3), 238-257. [doi:10.1177/1094428104266510](https://doi.org/10.1177/1094428104266510)
 
 Lindeman, R. H., Merenda, P. F., & Gold, R. Z. (1980). *Introduction to bivariate and multivariate analysis*. Scott, Foresman.
 
-Saqr, M. (2025). Delving into the psychology of machines: Exploring the structure of self-regulated learning via LLM-generated survey responses. *Computers in Human Behavior*, 173, 108769. [doi:10.1016/j.chb.2025.108769](https://doi.org/10.1016/j.chb.2025.108769)
+Malmberg, J., Saqr, M., Järvenoja, H., & Järvelä, S. (2022). How the monitoring events of individual students are associated with phases of regulation: A network analysis approach. *Journal of Learning Analytics*, 9(1), 77-92. [doi:10.18608/jla.2022.7429](https://doi.org/10.18608/jla.2022.7429)
+
+Saqr, M., Beck, E., & López-Pernas, S. (2024). Psychological networks: A modern approach to analysis of learning and complex learning processes. In M. Saqr & S. López-Pernas (Eds.), *Learning analytics methods and tutorials: A practical guide using R* (pp. 639-671). Springer. [doi:10.1007/978-3-031-54464-4_19](https://doi.org/10.1007/978-3-031-54464-4_19)
+
+Saqr, M., Peeters, W., & Viberg, O. (2021). The relational, co-temporal, contemporaneous, and longitudinal dynamics of self-regulation for academic writing. *Research and Practice in Technology Enhanced Learning*, 16, 29. [doi:10.1186/s41039-021-00175-7](https://doi.org/10.1186/s41039-021-00175-7)
+
+Vogelsmeier, L. V. D. E., Oliveira, E., Misiejuk, K., López-Pernas, S., & Saqr, M. (2025). Delving into the psychology of machines: Exploring the structure of self-regulated learning via LLM-generated survey responses. *Computers in Human Behavior*, 173, 108769. [doi:10.1016/j.chb.2025.108769](https://doi.org/10.1016/j.chb.2025.108769)

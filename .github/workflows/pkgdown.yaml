@@ -41,6 +41,14 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
+      - name: Add Google Scholar tags to the article pages
+        run: |
+          source(file.path("pkgdown", "scholar-tags.R"))
+          tagged <- add_scholar_tags("docs", site = "https://pak.dynasite.org/psychnets")
+          message("Google Scholar tags added to ", length(tagged), " article(s).")
+          stopifnot("every article with a PDF is tagged" = length(tagged) == length(list.files(file.path("pkgdown", "assets", "pdf"), "[.]pdf$")))
+        shell: Rscript {0}
+
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
